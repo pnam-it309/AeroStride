@@ -37,8 +37,14 @@ export const dichVuSanPham = {
             console.error('Error loading form options:', error);
             // Fallback empty data structure in case of error
             return {
-                thuongHieus: [], xuatXus: [], mucDichChays: [], chatLieus: [],
-                deGiays: [], coGiays: [], mauSacs: [], kichThuocs: [],
+                thuongHieus: [],
+                xuatXus: [],
+                mucDichChays: [],
+                chatLieus: [],
+                deGiays: [],
+                coGiays: [],
+                mauSacs: [],
+                kichThuocs: [],
                 trangThais: ['DANG_HOAT_DONG', 'NGUNG_HOAT_DONG'],
                 gioiTinhKhachHangs: ['NAM', 'NU', 'TRE_EM', 'UNISEX']
             };

@@ -68,10 +68,12 @@ const loadData = async (showLoading = true) => {
 };
 
 const filteredItems = computed(() => {
-    return items.value.filter(item => {
-        return !filters.value.search || 
+    return items.value.filter((item) => {
+        return (
+            !filters.value.search ||
             item.tenCa.toLowerCase().includes(filters.value.search.toLowerCase()) ||
-            (item.moTa && item.moTa.toLowerCase().includes(filters.value.search.toLowerCase()));
+            (item.moTa && item.moTa.toLowerCase().includes(filters.value.search.toLowerCase()))
+        );
     });
 });
 
@@ -149,7 +151,7 @@ const saveShift = async () => {
         } else {
             res = await apiService.post(API_LICH_LAM_VIEC.SHIFTS, form.value);
         }
-        
+
         if (res.data.success) {
             addNotification({
                 title: 'Thành công',
@@ -180,7 +182,11 @@ const handleDelete = (item) => {
                 }
             } catch (error) {
                 console.error('Error deleting shift:', error);
-                addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Có lỗi xảy ra khi xóa ca làm!', color: 'error' });
+                addNotification({
+                    title: 'Lỗi',
+                    subtitle: error.response?.data?.message || 'Có lỗi xảy ra khi xóa ca làm!',
+                    color: 'error'
+                });
             }
         }
     });

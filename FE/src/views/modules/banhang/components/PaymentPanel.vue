@@ -1,82 +1,108 @@
 <template>
-  <div>
-    <!-- Payment Card -->
-    <v-card class="pos-card pa-4">
-        <div class="d-flex justify-space-between align-center mb-3">
-            <h3 class="font-weight-semibold ma-0" style="font-size: 14px !important; color: #2b2a2a !important;">Thanh toán</h3>
-        </div>
-
-        <div class="d-flex align-center justify-space-between mb-4">
-            <span class="text-slate-600" style="font-size: 13px !important">Hình thức thanh toán</span>
-            <div class="d-flex ga-2">
-                <button type="button" @click="emitMethodChange('CASH')"
-                    :class="['px-4 d-flex align-center justify-center transition-all payment-btn',
-                        paymentMethod === 'CASH' ? 'cash-active-btn' : 'payment-inactive-btn']">
-                    <v-icon class="mr-1" size="16">mdi-cash</v-icon>
-                    Tiền mặt
-                </button>
-                <button type="button" @click="emitMethodChange('VNPAY')"
-                    :class="['px-4 d-flex align-center justify-center transition-all payment-btn',
-                        paymentMethod === 'VNPAY' ? 'vnpay-active-btn' : 'payment-inactive-btn']">
-                    <v-icon class="mr-1" size="16">mdi-credit-card-outline</v-icon>
-                    VNPay
-                </button>
+    <div>
+        <!-- Payment Card -->
+        <v-card class="pos-card pa-4">
+            <div class="d-flex justify-space-between align-center mb-3">
+                <h3 class="font-weight-semibold ma-0" style="font-size: 14px !important; color: #2b2a2a !important">Thanh toán</h3>
             </div>
-        </div>
 
-        <!-- Money Input -->
-        <div class="d-flex align-center justify-space-between mb-3">
-            <span class="text-slate-600" style="font-size: 13px !important">
-                {{ paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
-            </span>
-            <v-text-field :model-value="formatNumberWithDots(receivedAmount)"
-                @input="onAmountInput"
-                variant="outlined" density="compact" suffix="đ" hide-details
-                style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
-                class="text-right-input" />
-        </div>
-
-        <!-- Unpaid / Refund Message Alert -->
-        <div v-if="remainingBalance > 0"
-            class="d-flex align-center justify-space-between pa-3 rounded-lg bg-red-50 text-red-800 border-red">
-            <div class="d-flex align-center ga-2">
-                <v-icon color="error" size="18">mdi-alert-circle-outline</v-icon>
-                <span class="text-slate-600" style="font-size: 13px !important">Còn thiếu</span>
+            <div class="d-flex align-center justify-space-between mb-4">
+                <span class="text-slate-600" style="font-size: 13px !important">Hình thức thanh toán</span>
+                <div class="d-flex ga-2">
+                    <button
+                        type="button"
+                        @click="emitMethodChange('CASH')"
+                        :class="[
+                            'px-4 d-flex align-center justify-center transition-all payment-btn',
+                            paymentMethod === 'CASH' ? 'cash-active-btn' : 'payment-inactive-btn'
+                        ]"
+                    >
+                        <v-icon class="mr-1" size="16">mdi-cash</v-icon>
+                        Tiền mặt
+                    </button>
+                    <button
+                        type="button"
+                        @click="emitMethodChange('VNPAY')"
+                        :class="[
+                            'px-4 d-flex align-center justify-center transition-all payment-btn',
+                            paymentMethod === 'VNPAY' ? 'vnpay-active-btn' : 'payment-inactive-btn'
+                        ]"
+                    >
+                        <v-icon class="mr-1" size="16">mdi-credit-card-outline</v-icon>
+                        VNPay
+                    </button>
+                </div>
             </div>
-            <span class="font-weight-bold" style="font-size: 13px !important;">{{
-                formatCurrency(remainingBalance)
-                }}</span>
-        </div>
-        <div v-else-if="changeAmount > 0"
-            class="d-flex align-center justify-space-between pa-3 rounded-lg bg-blue-50 text-blue-800 border-blue">
-            <div class="d-flex align-center ga-2">
-                <v-icon color="primary" size="18">mdi-cash-refund</v-icon>
-                <span class="text-slate-600" style="font-size: 13px !important">Tiền thừa trả khách</span>
+
+            <!-- Money Input -->
+            <div class="d-flex align-center justify-space-between mb-3">
+                <span class="text-slate-600" style="font-size: 13px !important">
+                    {{ paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
+                </span>
+                <v-text-field
+                    :model-value="formatNumberWithDots(receivedAmount)"
+                    @input="onAmountInput"
+                    variant="outlined"
+                    density="compact"
+                    suffix="đ"
+                    hide-details
+                    style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important"
+                    class="text-right-input"
+                />
             </div>
-            <span class="font-weight-bold" style="font-size: 13px !important;">{{
-                formatCurrency(changeAmount) }}</span>
+
+            <!-- Unpaid / Refund Message Alert -->
+            <div
+                v-if="remainingBalance > 0"
+                class="d-flex align-center justify-space-between pa-3 rounded-lg bg-red-50 text-red-800 border-red"
+            >
+                <div class="d-flex align-center ga-2">
+                    <v-icon color="error" size="18">mdi-alert-circle-outline</v-icon>
+                    <span class="text-slate-600" style="font-size: 13px !important">Còn thiếu</span>
+                </div>
+                <span class="font-weight-bold" style="font-size: 13px !important">{{ formatCurrency(remainingBalance) }}</span>
+            </div>
+            <div
+                v-else-if="changeAmount > 0"
+                class="d-flex align-center justify-space-between pa-3 rounded-lg bg-blue-50 text-blue-800 border-blue"
+            >
+                <div class="d-flex align-center ga-2">
+                    <v-icon color="primary" size="18">mdi-cash-refund</v-icon>
+                    <span class="text-slate-600" style="font-size: 13px !important">Tiền thừa trả khách</span>
+                </div>
+                <span class="font-weight-bold" style="font-size: 13px !important">{{ formatCurrency(changeAmount) }}</span>
+            </div>
+        </v-card>
+
+        <!-- Checkout / Print Action Buttons at Bottom Right -->
+        <div class="d-flex ga-3 mt-4 w-100">
+            <v-btn
+                color="#107c41"
+                height="60"
+                class="font-weight-bold rounded-lg elevation-2 text-white px-4 flex-grow-1"
+                style="font-size: 17px !important"
+                :disabled="!hasItems"
+                @click="$emit('print-invoice')"
+                elevation="0"
+            >
+                <v-icon class="mr-1">mdi-printer</v-icon>
+                IN HÓA ĐƠN
+            </v-btn>
+
+            <v-btn
+                color="primary"
+                height="60"
+                class="font-weight-bold rounded-lg btn-checkout elevation-2 text-white px-4 flex-grow-1"
+                style="font-size: 17px !important"
+                :loading="isProcessing"
+                :disabled="!hasItems"
+                @click="$emit('checkout')"
+                elevation="0"
+            >
+                THANH TOÁN
+            </v-btn>
         </div>
-    </v-card>
-
-    <!-- Checkout / Print Action Buttons at Bottom Right -->
-    <div class="d-flex ga-3 mt-4 w-100">
-        <v-btn color="#107c41" height="60"
-            class="font-weight-bold rounded-lg elevation-2 text-white px-4 flex-grow-1"
-            style="font-size: 17px !important;" :disabled="!hasItems"
-            @click="$emit('print-invoice')" elevation="0">
-            <v-icon class="mr-1">mdi-printer</v-icon>
-            IN HÓA ĐƠN
-        </v-btn>
-
-        <v-btn color="primary" height="60"
-            class="font-weight-bold rounded-lg btn-checkout elevation-2 text-white px-4 flex-grow-1"
-            style="font-size: 17px !important;" :loading="isProcessing"
-            :disabled="!hasItems" @click="$emit('checkout')" elevation="0">
-            THANH TOÁN
-        </v-btn>
     </div>
-
-  </div>
 </template>
 
 <script setup>
@@ -109,7 +135,7 @@ const emit = defineEmits([
 
 const formatNumberWithDots = (num) => {
     if (num === null || num === undefined) return '';
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 const parseNumberFromDots = (str) => {
@@ -160,12 +186,12 @@ const emitDialogChange = (key, val) => {
 }
 .vnpay-active-btn {
     background-color: #f0f9ff !important; /* Soft pastel blue */
-    color: #005BAA !important; /* VNPay brand blue text */
+    color: #005baa !important; /* VNPay brand blue text */
     border-color: #bae6fd !important; /* Matching soft blue border */
     font-weight: 600;
 }
 .vnpay-active-btn :deep(.v-icon) {
-    color: #005BAA !important;
+    color: #005baa !important;
 }
 .payment-inactive-btn {
     background-color: #ffffff !important;

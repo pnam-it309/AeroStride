@@ -21,6 +21,7 @@ import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constant
 import { useTheme } from '@/hooks/use-theme';
 import { useCart } from '@/context/CartContext';
 import { productService, type ProductDetail, type ProductVariant } from '@/services/productService';
+import { reviewService, type ReviewResponse } from '@/services/reviewService';
 import { fileService } from '@/services/fileService';
 import { formatCurrency } from '@/utils/format';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -41,6 +42,11 @@ export default function ProductDetailScreen() {
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  const [reviews, setReviews] = useState<ReviewResponse[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+
   useEffect(() => {
     if (!id) return;
     productService
@@ -56,6 +62,24 @@ export default function ProductDetailScreen() {
         Alert.alert('Lỗi', 'Không thể tải sản phẩm');
       })
       .finally(() => setLoading(false));
+
+    setReviewsLoading(true);
+    reviewService
+      .getProductReviews(id)
+      .then((res) => {
+        setReviews(res.content);
+        setTotalReviews(res.totalElements);
+        if (res.content.length > 0) {
+          const sum = res.content.reduce((acc, curr) => acc + curr.diemDanhGia, 0);
+          setAverageRating(Number((sum / res.content.length).toFixed(1)));
+        } else {
+          setAverageRating(0);
+        }
+      })
+      .catch((err) => {
+        console.warn('Failed to load reviews:', err);
+      })
+      .finally(() => setReviewsLoading(false));
   }, [id]);
 
   // Unique colors from variants
@@ -373,6 +397,70 @@ export default function ProductDetailScreen() {
           </View>
         </Animated.View>
 
+        {/* Reviews Section */}
+        <Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.reviewsSection}>
+          <Text style={[styles.sectionLabel, { color: theme.text }]}>
+            Đánh giá sản phẩm ({totalReviews})
+          </Text>
+          
+          {totalReviews > 0 && (
+            <View style={styles.ratingSummaryRow}>
+              <Text style={[styles.ratingAverage, { color: theme.text }]}>{averageRating}</Text>
+              <View style={{ gap: 4 }}>
+                <View style={styles.starsRow}>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Ionicons
+                      key={i}
+                      name={i < Math.round(averageRating) ? 'star' : 'star-outline'}
+                      size={16}
+                      color="#FFB300"
+                    />
+                  ))}
+                </View>
+                <Text style={{ fontSize: FontSizes.xs, color: theme.textSecondary }}>
+                  Điểm đánh giá trung bình
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {reviewsLoading ? (
+            <LoadingSpinner />
+          ) : reviews.length > 0 ? (
+            <View style={styles.reviewsList}>
+              {reviews.map((review) => (
+                <View key={review.id} style={[styles.reviewItem, { borderColor: theme.border, backgroundColor: theme.surfaceElevated }]}>
+                  <View style={styles.reviewHeader}>
+                    <Text style={[styles.reviewAuthor, { color: theme.text }]}>
+                      {review.tenKhachHang || 'Khách hàng AeroStride'}
+                    </Text>
+                    <View style={styles.starsRow}>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Ionicons
+                          key={i}
+                          name={i < review.diemDanhGia ? 'star' : 'star-outline'}
+                          size={12}
+                          color="#FFB300"
+                        />
+                      ))}
+                    </View>
+                  </View>
+                  <Text style={[styles.reviewDate, { color: theme.textTertiary }]}>
+                    {new Date(review.ngayTao).toLocaleDateString('vi-VN')}
+                  </Text>
+                  <Text style={[styles.reviewText, { color: theme.textSecondary }]}>
+                    {review.noiDung}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={[styles.emptyReviewsText, { color: theme.textTertiary }]}>
+              Chưa có đánh giá nào cho sản phẩm này.
+            </Text>
+          )}
+        </Animated.View>
+
         <View style={{ height: 120 }} />
       </ScrollView>
 
@@ -610,5 +698,61 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: FontSizes.base,
     fontWeight: FontWeights.bold,
+  },
+  reviewsSection: {
+    paddingHorizontal: Spacing.three,
+    marginTop: Spacing.four,
+    gap: Spacing.two,
+  },
+  sectionLabel: {
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.semibold,
+    marginBottom: Spacing.one,
+  },
+  ratingSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    marginBottom: Spacing.two,
+  },
+  ratingAverage: {
+    fontSize: FontSizes['3xl'],
+    fontWeight: FontWeights.extrabold,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  reviewsList: {
+    gap: Spacing.two,
+  },
+  reviewItem: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.three,
+    gap: 4,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  reviewAuthor: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.bold,
+  },
+  reviewDate: {
+    fontSize: FontSizes.xs,
+  },
+  reviewText: {
+    fontSize: FontSizes.sm,
+    lineHeight: 18,
+    marginTop: Spacing.one,
+  },
+  emptyReviewsText: {
+    fontSize: FontSizes.sm,
+    fontStyle: 'italic',
+    paddingVertical: Spacing.two,
   },
 });

@@ -17,8 +17,7 @@ const MAX_WAITING_ORDERS = 5;
 defineProps(['orders', 'activeIndex']);
 const emit = defineEmits(['select', 'create', 'close']);
 
-const getOrderItemCount = (order) =>
-    (order?.listsHoaDonChiTiet || []).reduce((sum, item) => sum + (Number(item.soLuong) || 0), 0);
+const getOrderItemCount = (order) => (order?.listsHoaDonChiTiet || []).reduce((sum, item) => sum + (Number(item.soLuong) || 0), 0);
 </script>
 
 <template>
@@ -30,30 +29,22 @@ const getOrderItemCount = (order) =>
             :class="activeIndex === idx ? 'order-tab-active' : 'order-tab-inactive'"
             @click="emit('select', idx)"
         >
-            <span class="order-tab-label font-weight-bold text-body-2">
-                #{{ order.maHoaDon || idx + 1 }}
-            </span>
+            <span class="order-tab-label font-weight-bold text-body-2"> #{{ order.maHoaDon || idx + 1 }} </span>
             <span class="order-item-count" :title="`Tổng số lượng sản phẩm trong giỏ: ${getOrderItemCount(order)}`">
                 {{ getOrderItemCount(order) }} SP
             </span>
-            <v-btn
-                icon
-                size="x-small"
-                variant="text"
-                class="ml-2 hover-close-btn"
-                @click.stop="emit('close', order.id, idx)"
-            >
+            <v-btn icon size="x-small" variant="text" class="ml-2 hover-close-btn" @click.stop="emit('close', order.id, idx)">
                 <XIcon size="14" />
             </v-btn>
         </div>
 
-        <v-btn 
-            v-if="orders.length < MAX_WAITING_ORDERS" 
-            icon 
-            color="#2E4E8E" 
-            variant="flat" 
-            size="40" 
-            class="rounded-lg flex-shrink-0 plus-tab-btn" 
+        <v-btn
+            v-if="orders.length < MAX_WAITING_ORDERS"
+            icon
+            color="#2E4E8E"
+            variant="flat"
+            size="40"
+            class="rounded-lg flex-shrink-0 plus-tab-btn"
             @click="emit('create')"
         >
             <PlusIcon size="20" />

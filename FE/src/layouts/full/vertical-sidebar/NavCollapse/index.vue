@@ -13,7 +13,7 @@ const uiStore = useUIStore();
 const isActive = computed(() => {
     if (!props.item?.children) return false;
     const path = route.path;
-    return props.item.children.some(child => {
+    return props.item.children.some((child) => {
         if (!child.to) return false;
         if (path === child.to) return true;
         if (child.to === '/' || child.to === '/admin/thong-ke') return false;
@@ -34,9 +34,13 @@ const handleActivatorClick = () => {
     <!-- NORMAL MODE: Sidebar Expanded -->
     <v-list-group v-if="!hideTitle" :value="item.title" class="mb-1 nav-collapse-group">
         <template v-slot:activator="{ props: activatorProps, isOpen }">
-            <v-list-item v-bind="activatorProps" rounded class="leftPadding sidebar-link transition-item"
+            <v-list-item
+                v-bind="activatorProps"
+                rounded
+                class="leftPadding sidebar-link transition-item"
                 :class="{ 'v-list-item--active text-primary bg-lightprimary': isActive && !isOpen }"
-                :ripple="false">
+                :ripple="false"
+            >
                 <template v-slot:prepend>
                     <div class="navbox">
                         <span class="icon-box">
@@ -54,17 +58,28 @@ const handleActivatorClick = () => {
 
         <!---Nested Items Wrapper with curtain effect-->
         <div class="nested-items-container">
-            <NavItem v-for="(subitem, i) in item.children" :key="i" :item="subitem" :level="level + 1"
-                :hide-title="false" class="leftPadding" />
+            <NavItem
+                v-for="(subitem, i) in item.children"
+                :key="i"
+                :item="subitem"
+                :level="level + 1"
+                :hide-title="false"
+                class="leftPadding"
+            />
         </div>
     </v-list-group>
 
     <!-- RAIL MODE: Sidebar Collapsed (Flyout Menu) -->
     <v-menu v-else open-on-hover location="end" offset="15" transition="scale-transition">
         <template v-slot:activator="{ props: menuProps }">
-            <v-list-item v-bind="menuProps" rounded class="leftPadding sidebar-link transition-item"
+            <v-list-item
+                v-bind="menuProps"
+                rounded
+                class="leftPadding sidebar-link transition-item"
                 :class="{ 'v-list-item--active text-primary bg-lightprimary': isActive }"
-                :ripple="false" @click="handleActivatorClick">
+                :ripple="false"
+                @click="handleActivatorClick"
+            >
                 <template v-slot:prepend>
                     <div class="navbox">
                         <span class="icon-box">
@@ -80,8 +95,7 @@ const handleActivatorClick = () => {
                 <v-list-item-title class="font-weight-bold text-subtitle-2 text-primary">{{ item.title }}</v-list-item-title>
             </v-list-item>
             <!-- Render NavItems inside flyout, but force level=1 so they don't have deep indents -->
-            <NavItem v-for="(subitem, i) in item.children" :key="i" :item="subitem" :level="1"
-                :hide-title="false" class="px-2" />
+            <NavItem v-for="(subitem, i) in item.children" :key="i" :item="subitem" :level="1" :hide-title="false" class="px-2" />
         </v-list>
     </v-menu>
 </template>

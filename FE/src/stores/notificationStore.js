@@ -60,19 +60,24 @@ export const useNotificationStore = defineStore('notification', {
             }
 
             // Check if it's a product stock update via websocket
-            if (message && (message.type === 'PRODUCT_STOCK_UPDATE' || (message.id && message.soLuongTon !== undefined && message.maChiTietSanPham))) {
+            if (
+                message &&
+                (message.type === 'PRODUCT_STOCK_UPDATE' || (message.id && message.soLuongTon !== undefined && message.maChiTietSanPham))
+            ) {
                 import('@/stores/banHangStore').then(({ useBanHangStore }) => {
                     const banHangStore = useBanHangStore();
                     banHangStore.updateProductStock(message.id, message.soLuongTon);
                 });
-                window.dispatchEvent(new CustomEvent('product-stock-update', {
-                    detail: {
-                        id: message.id,
-                        idSanPham: message.idSanPham,
-                        maChiTietSanPham: message.maChiTietSanPham,
-                        soLuongTon: message.soLuongTon
-                    }
-                }));
+                window.dispatchEvent(
+                    new CustomEvent('product-stock-update', {
+                        detail: {
+                            id: message.id,
+                            idSanPham: message.idSanPham,
+                            maChiTietSanPham: message.maChiTietSanPham,
+                            soLuongTon: message.soLuongTon
+                        }
+                    })
+                );
                 return;
             }
 

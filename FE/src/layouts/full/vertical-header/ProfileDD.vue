@@ -15,9 +15,7 @@ const roleLabels = {
     ROLE_NHAN_VIEN: 'Nhân viên'
 };
 
-const displayName = computed(() =>
-    profile.value?.ten || profile.value?.tenTaiKhoan || profile.value?.username || 'Người dùng'
-);
+const displayName = computed(() => profile.value?.ten || profile.value?.tenTaiKhoan || profile.value?.username || 'Người dùng');
 const chucVu = computed(() => {
     if (profile.value?.chucVu) return profile.value.chucVu;
     return roleLabels[profile.value?.role] || '';
@@ -68,11 +66,19 @@ onMounted(async () => {
             <v-btn class="profileBtn px-2" variant="text" v-bind="props" height="48">
                 <div class="d-flex align-center">
                     <div class="d-none d-sm-block text-right mr-3">
-                        <div class="text-body-2 font-weight-bold text-slate-800" style="line-height:1.2;">{{ displayName }}</div>
-                        <div class="text-caption" style="color:#1e257c; line-height:1.2;">{{ chucVu }}</div>
+                        <div class="text-body-2 font-weight-bold text-slate-800" style="line-height: 1.2">{{ displayName }}</div>
+                        <div class="text-caption" style="color: #1e257c; line-height: 1.2">{{ chucVu }}</div>
                     </div>
                     <v-avatar size="38" color="grey-lighten-3">
-                        <img v-if="!avatarError" :src="avatarUrl" height="38" width="38" alt="user" style="object-fit:cover;" @error="avatarError = true" />
+                        <img
+                            v-if="!avatarError"
+                            :src="avatarUrl"
+                            height="38"
+                            width="38"
+                            alt="user"
+                            style="object-fit: cover"
+                            @error="avatarError = true"
+                        />
                         <v-icon v-else size="38" color="grey-darken-1">mdi-account-circle</v-icon>
                     </v-avatar>
                 </div>
@@ -81,17 +87,31 @@ onMounted(async () => {
         <v-sheet rounded="md" width="230" elevation="10" class="mt-2">
             <div class="pa-4 d-flex align-center border-b">
                 <v-avatar size="40" class="mr-3" color="grey-lighten-3">
-                    <img v-if="!avatarError" :src="avatarUrl" height="40" width="40" alt="user" style="object-fit:cover;" @error="avatarError = true" />
+                    <img
+                        v-if="!avatarError"
+                        :src="avatarUrl"
+                        height="40"
+                        width="40"
+                        alt="user"
+                        style="object-fit: cover"
+                        @error="avatarError = true"
+                    />
                     <v-icon v-else size="40" color="grey-darken-1">mdi-account-circle</v-icon>
                 </v-avatar>
-                <div style="min-width:0;">
+                <div style="min-width: 0">
                     <div class="text-subtitle-2 font-weight-bold text-truncate">{{ displayName }}</div>
-                    <div class="text-caption text-truncate" style="color:#1e257c;">{{ chucVu }}</div>
+                    <div class="text-caption text-truncate" style="color: #1e257c">{{ chucVu }}</div>
                 </div>
             </div>
             <v-list class="py-0" lines="one" density="compact">
-                <v-list-item v-for="(item, i) in profileDD" :key="i" :value="item" color="primary"
-                    class="py-2 px-4 elevation-0" @click="goTo(item)">
+                <v-list-item
+                    v-for="(item, i) in profileDD"
+                    :key="i"
+                    :value="item"
+                    color="primary"
+                    class="py-2 px-4 elevation-0"
+                    @click="goTo(item)"
+                >
                     <template v-slot:prepend>
                         <v-icon :icon="item.avatar" size="20" class="mr-3"></v-icon>
                     </template>
@@ -99,9 +119,9 @@ onMounted(async () => {
                 </v-list-item>
             </v-list>
             <div class="pt-4 pb-4 px-5 text-center">
-                <v-btn color="primary" variant="outlined" block @click="handleLogout"
-                    class="rounded-pill font-weight-bold">Đăng
-                    xuất</v-btn>
+                <v-btn color="primary" variant="outlined" block @click="handleLogout" class="rounded-pill font-weight-bold"
+                    >Đăng xuất</v-btn
+                >
             </div>
         </v-sheet>
     </v-menu>

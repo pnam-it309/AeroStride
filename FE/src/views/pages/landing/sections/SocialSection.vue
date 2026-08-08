@@ -101,129 +101,136 @@ const currentPromo = computed(() => promotions[activeIndex.value]);
                 </div>
             </div>
 
-        <v-container fluid class="fill-height position-relative z-index-10 px-0 py-0 d-flex flex-column">
-            <!-- Interactive Milestone Navigation (Bấm được) -->
-            <div class="milestone-nav-top py-10 px-16">
-                <div class="nav-track">
-                    <div
-                        v-for="(promo, i) in promotions"
-                        :key="'nav-' + i"
-                        class="nav-node"
-                        :class="{ active: activeIndex === i, past: promo.status === 'COMPLETED' }"
-                        @click="selectPhase(i)"
-                    >
-                        <div class="node-content">
-                            <span class="p-code">{{ promo.phase }}</span>
-                            <div class="node-dot" :style="{ background: promo.color }">
-                                <div class="node-pulse" :style="{ background: promo.color }"></div>
-                            </div>
-                            <span class="p-label">{{ promo.label }}</span>
-                        </div>
-                        <div v-if="i < promotions.length - 1" class="node-line"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Horizontal Carousel (Chạy liên tục như slider) -->
-            <div class="horizontal-slider-wrapper flex-grow-1">
-                <div class="marquee-track">
-                    <!-- Triple items for seamless loop -->
-                    <div v-for="n in 3" :key="'group-' + n" class="marquee-group">
+            <v-container fluid class="fill-height position-relative z-index-10 px-0 py-0 d-flex flex-column">
+                <!-- Interactive Milestone Navigation (Bấm được) -->
+                <div class="milestone-nav-top py-10 px-16">
+                    <div class="nav-track">
                         <div
                             v-for="(promo, i) in promotions"
-                            :key="n + '-' + i"
-                            class="timeline-card-item"
-                            @click="
-                                showDetail = true;
-                                activeIndex = i;
-                            "
+                            :key="'nav-' + i"
+                            class="nav-node"
+                            :class="{ active: activeIndex === i, past: promo.status === 'COMPLETED' }"
+                            @click="selectPhase(i)"
                         >
-                            <div class="glass-promo-card">
-                                <div class="card-top">
-                                    <div class="icon-circle" :style="{ background: promo.color + '15' }">
-                                        <v-icon :color="promo.color" size="40">{{ promo.icon }}</v-icon>
-                                    </div>
-                                    <div class="status-badge" :style="{ border: `1px solid ${promo.color}`, color: promo.color }">
-                                        {{ promo.status }}
-                                    </div>
+                            <div class="node-content">
+                                <span class="p-code">{{ promo.phase }}</span>
+                                <div class="node-dot" :style="{ background: promo.color }">
+                                    <div class="node-pulse" :style="{ background: promo.color }"></div>
                                 </div>
-
-                                <div class="card-mid">
-                                    <h3 class="card-title">{{ promo.title }}</h3>
-                                    <div class="card-date">{{ promo.date }}</div>
-                                    <p class="card-desc">{{ promo.desc }}</p>
-                                </div>
-
-                                <div class="card-bot">
-                                    <v-btn block rounded="pill" size="large" :color="promo.color" variant="tonal" class="font-weight-black">
-                                        DATA ANALYSIS <v-icon class="ml-2">mdi-chart-timeline-variant</v-icon>
-                                    </v-btn>
-                                </div>
+                                <span class="p-label">{{ promo.label }}</span>
                             </div>
+                            <div v-if="i < promotions.length - 1" class="node-line"></div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Detailed Analysis Overlay (Bấm được - Cảm nhận được) -->
-            <transition name="sheet-up">
-                <div v-if="showDetail" class="detail-sheet-overlay" @click.self="showDetail = false">
-                    <div class="sheet-content">
-                        <div class="sheet-header">
-                            <div class="d-flex align-center">
-                                <v-icon :color="currentPromo.color" size="32" class="mr-4">{{ currentPromo.icon }}</v-icon>
-                                <div>
-                                    <h4 class="text-h5 font-weight-black">{{ currentPromo.title }}</h4>
-                                    <span class="text-caption font-weight-bold opacity-60"
-                                        >{{ currentPromo.phase }} // {{ currentPromo.status }}</span
-                                    >
-                                </div>
-                            </div>
-                            <v-btn icon="mdi-close" variant="text" @click="showDetail = false"></v-btn>
-                        </div>
-
-                        <div class="sheet-body py-8">
-                            <v-row>
-                                <v-col cols="12" md="7">
-                                    <h5 class="section-label">OBJECTIVE</h5>
-                                    <p class="long-desc">{{ currentPromo.longDesc }}</p>
-
-                                    <div class="mt-8">
-                                        <h5 class="section-label">TECHNICAL SPECIFICATIONS</h5>
-                                        <div class="spec-grid">
-                                            <div v-for="spec in currentPromo.specs" :key="spec" class="spec-tag">
-                                                <v-icon size="14" class="mr-2">mdi-check-circle-outline</v-icon> {{ spec }}
-                                            </div>
+                <!-- Horizontal Carousel (Chạy liên tục như slider) -->
+                <div class="horizontal-slider-wrapper flex-grow-1">
+                    <div class="marquee-track">
+                        <!-- Triple items for seamless loop -->
+                        <div v-for="n in 3" :key="'group-' + n" class="marquee-group">
+                            <div
+                                v-for="(promo, i) in promotions"
+                                :key="n + '-' + i"
+                                class="timeline-card-item"
+                                @click="
+                                    showDetail = true;
+                                    activeIndex = i;
+                                "
+                            >
+                                <div class="glass-promo-card">
+                                    <div class="card-top">
+                                        <div class="icon-circle" :style="{ background: promo.color + '15' }">
+                                            <v-icon :color="promo.color" size="40">{{ promo.icon }}</v-icon>
+                                        </div>
+                                        <div class="status-badge" :style="{ border: `1px solid ${promo.color}`, color: promo.color }">
+                                            {{ promo.status }}
                                         </div>
                                     </div>
-                                </v-col>
-                                <v-col cols="12" md="5" class="d-flex align-center justify-center">
-                                    <div class="analysis-visual">
-                                        <div class="scanning-circle" :style="{ borderColor: currentPromo.color }"></div>
-                                        <v-icon size="80" :color="currentPromo.color">mdi-database-eye-outline</v-icon>
-                                    </div>
-                                </v-col>
-                            </v-row>
-                        </div>
 
-                        <div class="sheet-footer">
-                            <v-btn block color="black" size="x-large" rounded="xl" class="font-weight-black">
-                                ĐĂNG KÝ NHẬN THÔNG BÁO GIAI ĐOẠN NÀY
-                            </v-btn>
+                                    <div class="card-mid">
+                                        <h3 class="card-title">{{ promo.title }}</h3>
+                                        <div class="card-date">{{ promo.date }}</div>
+                                        <p class="card-desc">{{ promo.desc }}</p>
+                                    </div>
+
+                                    <div class="card-bot">
+                                        <v-btn
+                                            block
+                                            rounded="pill"
+                                            size="large"
+                                            :color="promo.color"
+                                            variant="tonal"
+                                            class="font-weight-black"
+                                        >
+                                            DATA ANALYSIS <v-icon class="ml-2">mdi-chart-timeline-variant</v-icon>
+                                        </v-btn>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </transition>
-        </v-container>
 
-        <!-- Bottom Status Bar -->
-        <div class="system-status-bar">
-            <div class="item">ROADMAP_v2.0</div>
-            <div class="item">ACTIVE_PHASE: {{ currentPromo.phase }}</div>
-            <div class="item">SYSTEM: READY</div>
-            <div class="spacer"></div>
-            <div class="item font-weight-black">AEROSTRIDE TECHNOLOGY CORP.</div>
-        </div>
+                <!-- Detailed Analysis Overlay (Bấm được - Cảm nhận được) -->
+                <transition name="sheet-up">
+                    <div v-if="showDetail" class="detail-sheet-overlay" @click.self="showDetail = false">
+                        <div class="sheet-content">
+                            <div class="sheet-header">
+                                <div class="d-flex align-center">
+                                    <v-icon :color="currentPromo.color" size="32" class="mr-4">{{ currentPromo.icon }}</v-icon>
+                                    <div>
+                                        <h4 class="text-h5 font-weight-black">{{ currentPromo.title }}</h4>
+                                        <span class="text-caption font-weight-bold opacity-60"
+                                            >{{ currentPromo.phase }} // {{ currentPromo.status }}</span
+                                        >
+                                    </div>
+                                </div>
+                                <v-btn icon="mdi-close" variant="text" @click="showDetail = false"></v-btn>
+                            </div>
+
+                            <div class="sheet-body py-8">
+                                <v-row>
+                                    <v-col cols="12" md="7">
+                                        <h5 class="section-label">OBJECTIVE</h5>
+                                        <p class="long-desc">{{ currentPromo.longDesc }}</p>
+
+                                        <div class="mt-8">
+                                            <h5 class="section-label">TECHNICAL SPECIFICATIONS</h5>
+                                            <div class="spec-grid">
+                                                <div v-for="spec in currentPromo.specs" :key="spec" class="spec-tag">
+                                                    <v-icon size="14" class="mr-2">mdi-check-circle-outline</v-icon> {{ spec }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </v-col>
+                                    <v-col cols="12" md="5" class="d-flex align-center justify-center">
+                                        <div class="analysis-visual">
+                                            <div class="scanning-circle" :style="{ borderColor: currentPromo.color }"></div>
+                                            <v-icon size="80" :color="currentPromo.color">mdi-database-eye-outline</v-icon>
+                                        </div>
+                                    </v-col>
+                                </v-row>
+                            </div>
+
+                            <div class="sheet-footer">
+                                <v-btn block color="black" size="x-large" rounded="xl" class="font-weight-black">
+                                    ĐĂNG KÝ NHẬN THÔNG BÁO GIAI ĐOẠN NÀY
+                                </v-btn>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+            </v-container>
+
+            <!-- Bottom Status Bar -->
+            <div class="system-status-bar">
+                <div class="item">ROADMAP_v2.0</div>
+                <div class="item">ACTIVE_PHASE: {{ currentPromo.phase }}</div>
+                <div class="item">SYSTEM: READY</div>
+                <div class="spacer"></div>
+                <div class="item font-weight-black">AEROSTRIDE TECHNOLOGY CORP.</div>
+            </div>
         </template>
     </section>
 </template>

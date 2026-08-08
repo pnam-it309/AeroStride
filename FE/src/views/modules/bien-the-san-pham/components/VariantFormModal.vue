@@ -270,7 +270,7 @@ const onKeyUpEnter = (event, field, service, type, label) => {
                 return;
             }
         }
-        
+
         if (val.length > 5) {
             addNotification({ title: 'Lỗi', subtitle: 'Kích thước quá dài (tối đa 5 ký tự)', color: 'error' });
             return;
@@ -442,7 +442,7 @@ const cleanAttributeName = (src) => {
         .replace(/Đ/g, 'D')
         .toUpperCase()
         .trim();
-    
+
     if (result.startsWith('SIZE ')) {
         result = result.substring(5).trim();
     } else if (result.startsWith('SIZE-')) {
@@ -450,7 +450,7 @@ const cleanAttributeName = (src) => {
     } else if (result.startsWith('SIZE')) {
         result = result.substring(4).trim();
     }
-    
+
     result = result.replace(/[^A-Z0-9]+/g, '-');
     if (result.startsWith('-')) result = result.substring(1);
     if (result.endsWith('-')) result = result.substring(0, result.length - 1);
@@ -461,18 +461,18 @@ watch(
     () => [formData.value.idMauSac, formData.value.idKichThuoc, props.productCode, props.open],
     ([colorId, sizeId, prodCode, isOpen]) => {
         if (!isOpen || props.mode !== 'create' || !prodCode) return;
-        
+
         const colorLabel = getResolvedOptionLabel(props.options.mauSacs, colorId);
         const sizeLabel = getResolvedOptionLabel(props.options.kichThuocs, sizeId);
-        
+
         if (colorId && sizeId && colorLabel && sizeLabel && colorLabel !== '--' && sizeLabel !== '--') {
             const cleanColor = cleanAttributeName(colorLabel);
             const cleanSize = cleanAttributeName(sizeLabel);
-            
+
             let newSku = prodCode;
             if (cleanColor) newSku += '-' + cleanColor;
             if (cleanSize) newSku += '-' + cleanSize;
-            
+
             formData.value.maChiTietSanPham = newSku;
         }
     }
@@ -713,13 +713,9 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                     <v-row class="mt-2">
                         <v-col cols="12" md="4">
                             <div class="form-group mb-0">
-                                <div class="field-label" style="visibility: hidden;">Spacer</div>
+                                <div class="field-label" style="visibility: hidden">Spacer</div>
                                 <div v-if="formData.urlAnh" class="d-flex">
-                                    <v-btn
-                                        variant="outlined"
-                                        class="text-none delete-image-btn w-100"
-                                        @click.stop="formData.urlAnh = ''"
-                                    >
+                                    <v-btn variant="outlined" class="text-none delete-image-btn w-100" @click.stop="formData.urlAnh = ''">
                                         <v-icon start size="14">mdi-trash-can-outline</v-icon>
                                         Xóa ảnh
                                     </v-btn>
@@ -750,16 +746,8 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
             <v-divider></v-divider>
 
             <v-card-actions class="px-8 py-6 bg-slate-50 d-flex justify-end ga-3">
-                <v-btn variant="tonal" color="slate-500" class="px-6 font-weight-medium" @click="emit('close')">
-                    Hủy bỏ
-                </v-btn>
-                <v-btn
-                    color="primary"
-                    variant="flat"
-                    class="px-8 font-weight-medium"
-                    :loading="submitting"
-                    @click="handleSubmit"
-                >
+                <v-btn variant="tonal" color="slate-500" class="px-6 font-weight-medium" @click="emit('close')"> Hủy bỏ </v-btn>
+                <v-btn color="primary" variant="flat" class="px-8 font-weight-medium" :loading="submitting" @click="handleSubmit">
                     <template #prepend>
                         <DeviceFloppyIcon v-if="!submitting" size="18" />
                         <v-progress-circular v-else indeterminate size="18" width="2" />

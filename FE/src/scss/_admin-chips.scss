@@ -9,16 +9,36 @@
 
 :root {
     /* Mỗi tông màu gồm: nền (-bg), chữ (-fg), viền (-bd) */
-    --chip-green-bg: #dcfce7;   --chip-green-fg: #15803d;   --chip-green-bd: #bbf7d0;
-    --chip-amber-bg: #fef9c3;   --chip-amber-fg: #a16207;   --chip-amber-bd: #fde68a;
-    --chip-blue-bg: #eff6ff;    --chip-blue-fg: #1d4ed8;    --chip-blue-bd: #dbeafe;
-    --chip-cyan-bg: #ecfeff;    --chip-cyan-fg: #0e7490;    --chip-cyan-bd: #cffafe;
-    --chip-red-bg: #fef2f2;     --chip-red-fg: #dc2626;     --chip-red-bd: #fecaca;
-    --chip-purple-bg: #ede9fe;  --chip-purple-fg: #6d28d9;  --chip-purple-bd: #ddd6fe;
-    --chip-pink-bg: #fdf2f8;    --chip-pink-fg: #be185d;    --chip-pink-bd: #fce7f3;
-    --chip-orange-bg: #fff7ed;  --chip-orange-fg: #c2410c;  --chip-orange-bd: #fed7aa;
-    --chip-navy-bg: #eef2ff;    --chip-navy-fg: #1e257c;    --chip-navy-bd: #e0e7ff;
-    --chip-slate-bg: #f1f5f9;   --chip-slate-fg: #475569;   --chip-slate-bd: #e2e8f0;
+    --chip-green-bg: #dcfce7;
+    --chip-green-fg: #15803d;
+    --chip-green-bd: #bbf7d0;
+    --chip-amber-bg: #fef9c3;
+    --chip-amber-fg: #a16207;
+    --chip-amber-bd: #fde68a;
+    --chip-blue-bg: #eff6ff;
+    --chip-blue-fg: #1d4ed8;
+    --chip-blue-bd: #dbeafe;
+    --chip-cyan-bg: #ecfeff;
+    --chip-cyan-fg: #0e7490;
+    --chip-cyan-bd: #cffafe;
+    --chip-red-bg: #fef2f2;
+    --chip-red-fg: #dc2626;
+    --chip-red-bd: #fecaca;
+    --chip-purple-bg: #ede9fe;
+    --chip-purple-fg: #6d28d9;
+    --chip-purple-bd: #ddd6fe;
+    --chip-pink-bg: #fdf2f8;
+    --chip-pink-fg: #be185d;
+    --chip-pink-bd: #fce7f3;
+    --chip-orange-bg: #fff7ed;
+    --chip-orange-fg: #c2410c;
+    --chip-orange-bd: #fed7aa;
+    --chip-navy-bg: #eef2ff;
+    --chip-navy-fg: #1e257c;
+    --chip-navy-bd: #e0e7ff;
+    --chip-slate-bg: #f1f5f9;
+    --chip-slate-fg: #475569;
+    --chip-slate-bd: #e2e8f0;
 }
 
 @mixin admin-chip-base {
@@ -39,56 +59,118 @@
     background-color: var(--chip-#{$tone}-bg) !important;
     color: var(--chip-#{$tone}-fg) !important;
     border: 1px solid var(--chip-#{$tone}-bd) !important;
-    .v-chip__content { color: var(--chip-#{$tone}-fg) !important; }
-    .v-icon { color: var(--chip-#{$tone}-fg) !important; }
+    .v-chip__content {
+        color: var(--chip-#{$tone}-fg) !important;
+    }
+    .v-icon {
+        color: var(--chip-#{$tone}-fg) !important;
+    }
 }
 
 /* ---- Base Classes ---- */
-.status-chip { @include admin-chip-base; min-width: 120px !important; }
-.gender-chip { @include admin-chip-base; min-width: 80px !important; }
-.order-type-chip { @include admin-chip-base; min-width: 90px !important; }
+.status-chip {
+    @include admin-chip-base;
+    min-width: 120px !important;
+}
+.gender-chip {
+    @include admin-chip-base;
+    min-width: 80px !important;
+}
+.order-type-chip {
+    @include admin-chip-base;
+    min-width: 90px !important;
+}
 
 /* ========== MAPPING TRẠNG THÁI -> TÔNG MÀU ========== */
 
 /* Xanh lá: hoàn thành / đang hoạt động */
-.status-success, .status-completed, .status-chip-completed,
-.status-active, .status-chip-active { @include chip-tone(green); }
+.status-success,
+.status-completed,
+.status-chip-completed,
+.status-active,
+.status-chip-active {
+    @include chip-tone(green);
+}
 
 /* Hổ phách: chờ / cảnh báo / chờ giao */
-.status-pending, .status-warning, .status-waiting,
-.status-chip-pending, .status-chip-waiting-delivery { @include chip-tone(amber); }
+.status-pending,
+.status-warning,
+.status-waiting,
+.status-chip-pending,
+.status-chip-waiting-delivery {
+    @include chip-tone(amber);
+}
 
 /* Xanh dương: thông tin / đã xác nhận */
-.status-info, .status-confirmed, .status-chip-confirmed { @include chip-tone(blue); }
+.status-info,
+.status-confirmed,
+.status-chip-confirmed {
+    @include chip-tone(blue);
+}
 
 /* Xanh ngọc: đang giao / sắp diễn ra */
-.status-delivering, .status-chip-delivering, .status-chip-upcoming { @include chip-tone(cyan); }
+.status-delivering,
+.status-chip-delivering,
+.status-chip-upcoming {
+    @include chip-tone(cyan);
+}
 
 /* Tím: hoàn đơn / trả hàng / công khai */
-.status-refunded, .status-returned, .status-chip-refunded, .status-chip-public { @include chip-tone(purple); }
+.status-refunded,
+.status-returned,
+.status-chip-refunded,
+.status-chip-public {
+    @include chip-tone(purple);
+}
 
 /* Đỏ: hủy / ngừng hoạt động / hết hạn / lỗi */
-.status-cancelled, .status-chip-cancelled,
-.status-inactive, .status-error, .status-expired,
-.status-chip-inactive, .status-chip-expired { @include chip-tone(red); }
+.status-cancelled,
+.status-chip-cancelled,
+.status-inactive,
+.status-error,
+.status-expired,
+.status-chip-inactive,
+.status-chip-expired {
+    @include chip-tone(red);
+}
 
 /* Cam: riêng tư / giao thất bại */
-.status-chip-private, .status-chip-failed { @include chip-tone(orange); }
+.status-chip-private,
+.status-chip-failed {
+    @include chip-tone(orange);
+}
 
 /* Khách không nhận */
-.status-chip-refused { @include chip-tone(red); }
-
+.status-chip-refused {
+    @include chip-tone(red);
+}
 
 /* Slate: không xác định / mặc định */
-.status-chip-unknown, .status-default, .status-chip-default { @include chip-tone(slate); }
+.status-chip-unknown,
+.status-default,
+.status-chip-default {
+    @include chip-tone(slate);
+}
 
 /* ---- Giới tính ---- */
-.gender-male, .gender-chip-male { @include chip-tone(blue); }
-.gender-female, .gender-chip-female { @include chip-tone(pink); }
+.gender-male,
+.gender-chip-male {
+    @include chip-tone(blue);
+}
+.gender-female,
+.gender-chip-female {
+    @include chip-tone(pink);
+}
 
 /* ---- Loại hóa đơn (thiết kế tham chiếu) ---- */
-.order-online, .order-type-online { @include chip-tone(blue); }
-.order-offline, .order-type-offline { @include chip-tone(pink); }
+.order-online,
+.order-type-online {
+    @include chip-tone(blue);
+}
+.order-offline,
+.order-type-offline {
+    @include chip-tone(pink);
+}
 
 /* ========== CA LÀM VIỆC (Lịch làm việc / Chấm công) - gộp từ file riêng ========== */
 .matrix-shift-chip {
@@ -105,10 +187,26 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.shift-morning   { background: var(--chip-green-bg);  color: var(--chip-green-fg);  border-left-color: #22c55e; }
-.shift-afternoon { background: var(--chip-amber-bg);  color: var(--chip-amber-fg);  border-left-color: #eab308; }
-.shift-night     { background: var(--chip-purple-bg); color: var(--chip-purple-fg); border-left-color: #8b5cf6; }
-.shift-default   { background: var(--chip-blue-bg);   color: var(--chip-blue-fg);   border-left-color: #3b82f6; }
+.shift-morning {
+    background: var(--chip-green-bg);
+    color: var(--chip-green-fg);
+    border-left-color: #22c55e;
+}
+.shift-afternoon {
+    background: var(--chip-amber-bg);
+    color: var(--chip-amber-fg);
+    border-left-color: #eab308;
+}
+.shift-night {
+    background: var(--chip-purple-bg);
+    color: var(--chip-purple-fg);
+    border-left-color: #8b5cf6;
+}
+.shift-default {
+    background: var(--chip-blue-bg);
+    color: var(--chip-blue-fg);
+    border-left-color: #3b82f6;
+}
 
 /* Chip ca dạng tròn (Chấm công) – nền nhạt + chữ màu theo tông ca */
 .shift-chip {
@@ -117,10 +215,18 @@
     padding: 0 14px !important;
     white-space: nowrap !important;
 }
-.shift-chip-morning   { @include chip-tone(green); }
-.shift-chip-afternoon { @include chip-tone(amber); }
-.shift-chip-night     { @include chip-tone(purple); }
-.shift-chip-default   { @include chip-tone(blue); }
+.shift-chip-morning {
+    @include chip-tone(green);
+}
+.shift-chip-afternoon {
+    @include chip-tone(amber);
+}
+.shift-chip-night {
+    @include chip-tone(purple);
+}
+.shift-chip-default {
+    @include chip-tone(blue);
+}
 
 /* ---- Tab Count Badge ---- */
 .tab-count-avatar {

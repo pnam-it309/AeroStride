@@ -211,10 +211,10 @@ const sendMessage = () => {
 
     // Tạm thời hiển thị tin nhắn user để UI phản hồi nhanh
     const tempId = Date.now();
-    
+
     // Copy ảnh base64 để render ngay lập tức (nếu có)
     const currentImagePreview = imagePreview.value;
-    
+
     chatHistory.value.push({
         id: tempId,
         sender: 'user',
@@ -241,13 +241,13 @@ const sendMessage = () => {
 
     scrollToBottom();
     updateActivity();
-    
+
     // Tạo data base64 thuần túy (bỏ header "data:image/jpeg;base64,") nếu cần
     let base64Image = null;
     if (currentImagePreview) {
         base64Image = currentImagePreview.split(',')[1];
     }
-    
+
     // Clear image sau khi gửi
     clearImage();
 
@@ -435,7 +435,7 @@ const isSubmittingRating = ref(false);
 
 const submitRating = async () => {
     if (!ratingConversationId.value) return;
-    
+
     isSubmittingRating.value = true;
     try {
         await apiService.post(`${API_CHAT.CUSTOMER_BASE}/rating`, {
@@ -475,14 +475,8 @@ const openChatImage = (url) => {
                 <v-card-title class="text-center pb-0 mt-3">Đánh giá hỗ trợ</v-card-title>
                 <v-card-text class="text-center pt-2">
                     <p class="text-body-2 text-grey-darken-1 mb-4">Bạn cảm thấy cuộc trò chuyện vừa rồi như thế nào?</p>
-                    <v-rating
-                        v-model="ratingScore"
-                        color="amber"
-                        active-color="amber"
-                        hover
-                        size="x-large"
-                    ></v-rating>
-                    
+                    <v-rating v-model="ratingScore" color="amber" active-color="amber" hover size="x-large"></v-rating>
+
                     <v-textarea
                         v-model="ratingComment"
                         placeholder="Nhập góp ý của bạn (không bắt buộc)..."
@@ -495,7 +489,9 @@ const openChatImage = (url) => {
                 </v-card-text>
                 <v-card-actions class="justify-center pb-4 px-4">
                     <v-btn variant="text" color="grey-darken-1" @click="skipRating">Bỏ qua</v-btn>
-                    <v-btn color="black" variant="flat" :loading="isSubmittingRating" @click="submitRating" class="px-6">Gửi đánh giá</v-btn>
+                    <v-btn color="black" variant="flat" :loading="isSubmittingRating" @click="submitRating" class="px-6"
+                        >Gửi đánh giá</v-btn
+                    >
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -563,7 +559,12 @@ const openChatImage = (url) => {
                                 </div>
                                 <!-- Ảnh gửi trực tiếp (local base64 preview) hoặc từ history (imageUrl từ server) -->
                                 <div v-if="msg.image || msg.imageUrl" class="message-image">
-                                    <img :src="msg.image || msg.imageUrl" alt="Uploaded Image" style="max-width: 100%; border-radius: 8px; margin-bottom: 8px; cursor: pointer;" @click="openChatImage(msg.image || msg.imageUrl)" />
+                                    <img
+                                        :src="msg.image || msg.imageUrl"
+                                        alt="Uploaded Image"
+                                        style="max-width: 100%; border-radius: 8px; margin-bottom: 8px; cursor: pointer"
+                                        @click="openChatImage(msg.image || msg.imageUrl)"
+                                    />
                                 </div>
                                 <div v-if="msg.text" class="message-bubble" v-html="marked(msg.text)"></div>
 
@@ -641,13 +642,7 @@ const openChatImage = (url) => {
                                 class="mr-2"
                                 @click="triggerImageUpload"
                             ></v-btn>
-                            <input
-                                type="file"
-                                ref="fileInput"
-                                accept="image/*"
-                                style="display: none"
-                                @change="handleImageUpload"
-                            />
+                            <input type="file" ref="fileInput" accept="image/*" style="display: none" @change="handleImageUpload" />
 
                             <textarea
                                 v-model="message"
@@ -952,7 +947,7 @@ const openChatImage = (url) => {
             top: 0;
             left: 0;
             background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
     }
 
@@ -985,7 +980,7 @@ const openChatImage = (url) => {
             }
         }
     }
-    
+
     .staff-name-label {
         font-size: 0.7rem;
         color: #747d8c;

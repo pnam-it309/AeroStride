@@ -16,13 +16,10 @@ import { reactive, ref, computed, watch } from 'vue';
  *   maxPrice?: number
  * }} deps
  */
-export function useVariantTable(variantItems, {
-    getVariantColorLabel,
-    getVariantSizeLabel,
-    getVariantKey,
-    minPrice = 0,
-    maxPrice = 100000000
-}) {
+export function useVariantTable(
+    variantItems,
+    { getVariantColorLabel, getVariantSizeLabel, getVariantKey, minPrice = 0, maxPrice = 100000000 }
+) {
     const variantTableFilters = reactive({
         keyword: '',
         mauSacId: '',
@@ -38,24 +35,30 @@ export function useVariantTable(variantItems, {
     const variantPriceStep = computed(() => (variantPriceBounds.value.max > 1000000 ? 50000 : 1000));
 
     // Danh sách biến thể sau khi áp dụng tìm kiếm, màu, size, trạng thái và khoảng giá.
-    const filteredVariantItems = computed(() => variantItems.value.filter((item) => {
-        const keyword = variantTableFilters.keyword.trim().toLowerCase();
-        const colorLabel = getVariantColorLabel(item.idMauSac).toLowerCase();
-        const sizeLabel = getVariantSizeLabel(item.idKichThuoc).toLowerCase();
-        const matchesKeyword = !keyword
-            || String(item.maChiTietSanPham || '').toLowerCase().includes(keyword)
-            || colorLabel.includes(keyword)
-            || sizeLabel.includes(keyword);
-        const variantPrice = Number(item.giaBan ?? 0);
-        const matchesPrice = variantPrice >= variantTableFilters.khoangGia[0]
-            && variantPrice <= variantTableFilters.khoangGia[1];
+    const filteredVariantItems = computed(() =>
+        variantItems.value.filter((item) => {
+            const keyword = variantTableFilters.keyword.trim().toLowerCase();
+            const colorLabel = getVariantColorLabel(item.idMauSac).toLowerCase();
+            const sizeLabel = getVariantSizeLabel(item.idKichThuoc).toLowerCase();
+            const matchesKeyword =
+                !keyword ||
+                String(item.maChiTietSanPham || '')
+                    .toLowerCase()
+                    .includes(keyword) ||
+                colorLabel.includes(keyword) ||
+                sizeLabel.includes(keyword);
+            const variantPrice = Number(item.giaBan ?? 0);
+            const matchesPrice = variantPrice >= variantTableFilters.khoangGia[0] && variantPrice <= variantTableFilters.khoangGia[1];
 
-        return matchesKeyword
-            && (!variantTableFilters.mauSacId || item.idMauSac === variantTableFilters.mauSacId)
-            && (!variantTableFilters.kichThuocId || item.idKichThuoc === variantTableFilters.kichThuocId)
-            && (!variantTableFilters.trangThai || item.trangThai === variantTableFilters.trangThai)
-            && matchesPrice;
-    }));
+            return (
+                matchesKeyword &&
+                (!variantTableFilters.mauSacId || item.idMauSac === variantTableFilters.mauSacId) &&
+                (!variantTableFilters.kichThuocId || item.idKichThuoc === variantTableFilters.kichThuocId) &&
+                (!variantTableFilters.trangThai || item.trangThai === variantTableFilters.trangThai) &&
+                matchesPrice
+            );
+        })
+    );
     const totalVariantElements = computed(() => filteredVariantItems.value.length);
     const totalVariantPages = computed(() => Math.max(Math.ceil(totalVariantElements.value / variantPageSize.value), 1));
     const paginatedVariantItems = computed(() => {
@@ -63,11 +66,19 @@ export function useVariantTable(variantItems, {
         return filteredVariantItems.value.slice(start, start + variantPageSize.value);
     });
     const visibleVariantKeys = computed(() => paginatedVariantItems.value.map((item) => getVariantKey(item)));
-    const selectedVariants = computed(() => filteredVariantItems.value.filter((item) => selectedVariantKeys.value.includes(getVariantKey(item))));
-    const allVisibleVariantsSelected = computed(() => filteredVariantItems.value.length > 0
-        && filteredVariantItems.value.every((item) => selectedVariantKeys.value.includes(getVariantKey(item))));
-    const someVisibleVariantsSelected = computed(() => filteredVariantItems.value.some((item) => selectedVariantKeys.value.includes(getVariantKey(item)))
-        && !allVisibleVariantsSelected.value);
+    const selectedVariants = computed(() =>
+        filteredVariantItems.value.filter((item) => selectedVariantKeys.value.includes(getVariantKey(item)))
+    );
+    const allVisibleVariantsSelected = computed(
+        () =>
+            filteredVariantItems.value.length > 0 &&
+            filteredVariantItems.value.every((item) => selectedVariantKeys.value.includes(getVariantKey(item)))
+    );
+    const someVisibleVariantsSelected = computed(
+        () =>
+            filteredVariantItems.value.some((item) => selectedVariantKeys.value.includes(getVariantKey(item))) &&
+            !allVisibleVariantsSelected.value
+    );
 
     const updateVariantPriceBounds = () => {
         const highestPrice = variantItems.value.reduce((maxValue, item) => Math.max(maxValue, Number(item.giaBan ?? 0)), minPrice);
@@ -145,13 +156,17 @@ export function useVariantTable(variantItems, {
         clearVariantSelection();
     };
 
-    watch(variantItems, () => {
-        updateVariantPriceBounds();
-        syncVariantSelection();
-        if (variantPage.value > totalVariantPages.value) {
-            variantPage.value = totalVariantPages.value;
-        }
-    }, { deep: true });
+    watch(
+        variantItems,
+        () => {
+            updateVariantPriceBounds();
+            syncVariantSelection();
+            if (variantPage.value > totalVariantPages.value) {
+                variantPage.value = totalVariantPages.value;
+            }
+        },
+        { deep: true }
+    );
 
     watch(variantPageSize, () => {
         variantPage.value = 1;

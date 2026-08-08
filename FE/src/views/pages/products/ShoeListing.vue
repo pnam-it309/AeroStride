@@ -3,7 +3,6 @@ import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
-import AiRecommendQuiz from '@/components/shared/AiRecommendQuiz.vue';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import { dichVuFile } from '@/services/core/dichVuFile';
@@ -104,12 +103,12 @@ watch(selectedSize, (newSize) => {
 
 // Map backend filter categories dynamically
 const brandList = computed(() => {
-    const group = filters.value.find(f => f.key === 'thuongHieuId');
+    const group = filters.value.find((f) => f.key === 'thuongHieuId');
     return group ? group.items : [];
 });
 
 const purposeList = computed(() => {
-    const group = filters.value.find(f => f.key === 'mucDichChayId');
+    const group = filters.value.find((f) => f.key === 'mucDichChayId');
     return group ? group.items : [];
 });
 
@@ -121,12 +120,10 @@ const fetchFilters = async () => {
             { title: 'Chất liệu', key: 'chatLieuId', items: data?.chatLieus || [] },
             { title: 'Xuất xứ', key: 'xuatXuId', items: data?.xuatXus || [] },
             { title: 'Mục đích', key: 'mucDichChayId', items: data?.mucDichChays || [] },
-            { 
-                title: 'Giới tính', 
-                key: 'gioiTinhKhachHang', 
-                items: (data?.gioiTinhKhachHangs || [])
-                    .filter(g => g !== 'TRE_EM')
-                    .map((g) => ({ id: g, ten: translateGender(g) })) 
+            {
+                title: 'Giới tính',
+                key: 'gioiTinhKhachHang',
+                items: (data?.gioiTinhKhachHangs || []).filter((g) => g !== 'TRE_EM').map((g) => ({ id: g, ten: translateGender(g) }))
             }
         ];
     } catch (error) {
@@ -210,21 +207,17 @@ watch(
 );
 
 // Image Path Resolver
-const isAbsoluteUrl = (v) => 
-    typeof v !== 'string' || 
-    /^(https?:)?\/\//i.test(v) || 
-    v.startsWith('data:') || 
-    v.startsWith('blob:') || 
+const isAbsoluteUrl = (v) =>
+    typeof v !== 'string' ||
+    /^(https?:)?\/\//i.test(v) ||
+    v.startsWith('data:') ||
+    v.startsWith('blob:') ||
     (v.startsWith('/') && !v.startsWith('/uploads/'));
 
 const isInvalidImage = (v) => {
     if (!v || typeof v !== 'string') return true;
     const lower = v.toLowerCase();
-    return (
-        lower.includes('via.placeholder.com') || 
-        lower.includes('placeholder.com') || 
-        lower.includes('dummyimage.com')
-    );
+    return lower.includes('via.placeholder.com') || lower.includes('placeholder.com') || lower.includes('dummyimage.com');
 };
 
 const resolveImg = (v) => {
@@ -239,7 +232,7 @@ const getImageUrl = (p) => {
     let raw = null;
     if (p.variants && p.variants.length > 0) {
         const v = p.variants[0];
-        const vImg = v.hinhAnh || (v.images && v.images.length > 0 ? (v.images[0].duongDanAnh || v.images[0].hinhAnh) : null);
+        const vImg = v.hinhAnh || (v.images && v.images.length > 0 ? v.images[0].duongDanAnh || v.images[0].hinhAnh : null);
         if (!isInvalidImage(vImg)) {
             raw = vImg;
         }
@@ -254,7 +247,7 @@ const getImageUrl = (p) => {
         raw = p.hinhAnh;
     }
     const resolved = resolveImg(raw);
-    return (resolved && !isInvalidImage(resolved)) ? resolved : defaultShoeImg;
+    return resolved && !isInvalidImage(resolved) ? resolved : defaultShoeImg;
 };
 
 const formatPrice = (price) => {
@@ -296,7 +289,7 @@ const toggleFavorite = (productId, event) => {
     if (event) event.stopPropagation();
     let favorites = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
     if (favorites.includes(productId)) {
-        favorites = favorites.filter(id => id !== productId);
+        favorites = favorites.filter((id) => id !== productId);
         localStorage.setItem('aerostride_favorites', JSON.stringify(favorites));
     } else {
         favorites.push(productId);
@@ -428,22 +421,19 @@ const activeSortLabel = computed(() => {
                         <div class="filter-section-group mb-6">
                             <h4 class="filter-group-title">MỤC ĐÍCH</h4>
                             <div class="checkboxes-list">
-                                <label 
-                                    v-for="purpose in purposeList" 
-                                    :key="purpose.id" 
-                                    class="checkbox-item-row"
-                                >
-                                    <input 
-                                        type="checkbox" 
-                                        :checked="searchParams.mucDichChayId === purpose.id" 
-                                        @change="searchParams.mucDichChayId = (searchParams.mucDichChayId === purpose.id ? null : purpose.id); handleFilterChange()"
+                                <label v-for="purpose in purposeList" :key="purpose.id" class="checkbox-item-row">
+                                    <input
+                                        type="checkbox"
+                                        :checked="searchParams.mucDichChayId === purpose.id"
+                                        @change="
+                                            searchParams.mucDichChayId = searchParams.mucDichChayId === purpose.id ? null : purpose.id;
+                                            handleFilterChange();
+                                        "
                                         class="custom-check-input"
                                     />
                                     <span class="checkbox-label-text">{{ purpose.ten }}</span>
                                 </label>
-                                <div v-if="purposeList.length === 0" class="empty-list-indicator">
-                                    Không có mục đích
-                                </div>
+                                <div v-if="purposeList.length === 0" class="empty-list-indicator">Không có mục đích</div>
                             </div>
                         </div>
 
@@ -451,12 +441,12 @@ const activeSortLabel = computed(() => {
                         <div class="filter-section-group">
                             <h4 class="filter-group-title">KÍCH CỠ</h4>
                             <div class="sizes-boxes-grid">
-                                <div 
-                                    v-for="size in sizeList" 
+                                <div
+                                    v-for="size in sizeList"
                                     :key="size"
                                     class="size-box-cell"
                                     :class="{ active: selectedSize === size }"
-                                    @click="selectedSize = (selectedSize === size ? null : size)"
+                                    @click="selectedSize = selectedSize === size ? null : size"
                                 >
                                     {{ size }}
                                 </div>
@@ -468,39 +458,24 @@ const activeSortLabel = computed(() => {
                 <!-- Right Products Grid (Mockup specs: 3 columns layout, 310px width, rounded-18 card) -->
                 <v-col cols="12" md="9" lg="9.5">
                     <v-row v-if="products.length > 0" class="products-list-row">
-                        <v-col 
-                            v-for="p in products" 
-                            :key="p.id" 
-                            cols="12" 
-                            sm="4" 
-                            md="4"
-                            lg="3"
-                            class="product-col-item"
-                        >
+                        <v-col v-for="p in products" :key="p.id" cols="12" sm="4" md="4" lg="3" class="product-col-item">
                             <div class="product-item-card" @click="goToDetail(p.id)">
                                 <!-- Image box in card (286x238 layout specification, F2F7FC background, 14px border-radius) -->
                                 <div class="card-image-wrapper">
-                                    <img 
-                                        :src="getImageUrl(p)" 
-                                        :alt="p.tenSanPham" 
-                                        class="card-shoe-img" 
+                                    <img
+                                        :src="getImageUrl(p)"
+                                        :alt="p.tenSanPham"
+                                        class="card-shoe-img"
                                         referrerpolicy="no-referrer"
                                         @error="handleImageError"
                                     />
                                     <!-- Badges -->
-                                    <div v-if="p.phanTramGiam > 0" class="badge-label-new">
-                                        -{{ p.phanTramGiam }}%
-                                    </div>
-                                    <div v-else class="badge-label-new">
-                                        MỚI
-                                    </div>
+                                    <div v-if="p.phanTramGiam > 0" class="badge-label-new">-{{ p.phanTramGiam }}%</div>
+                                    <div v-else class="badge-label-new">MỚI</div>
 
                                     <!-- Favorite Button -->
                                     <div class="favorite-overlay-btn" @click.stop="(e) => toggleFavorite(p.id, e)">
-                                        <v-icon 
-                                            :color="isFavorite(p.id) ? 'red' : 'grey-darken-1'"
-                                            size="20"
-                                        >
+                                        <v-icon :color="isFavorite(p.id) ? 'red' : 'grey-darken-1'" size="20">
                                             {{ isFavorite(p.id) ? 'mdi-heart' : 'mdi-heart-outline' }}
                                         </v-icon>
                                     </div>
@@ -510,7 +485,7 @@ const activeSortLabel = computed(() => {
                                 <div class="card-info-wrapper">
                                     <span class="product-brand-badge">{{ p.tenThuongHieu || 'AEROSTRIDE' }}</span>
                                     <h4 class="product-name-title">{{ p.tenSanPham }}</h4>
-                                    
+
                                     <div class="price-row-block">
                                         <span class="current-price-label">{{ formatPrice(getProductPrice(p)) }}</span>
                                         <span v-if="p.phanTramGiam > 0 && getOldPrice(p)" class="old-price-label">
@@ -544,16 +519,15 @@ const activeSortLabel = computed(() => {
 
         <!-- Customer Chat Overlay -->
         <CustomerChat />
-        <AiRecommendQuiz />
     </div>
 </template>
 
 <style scoped lang="scss">
 .shoe-listing-page {
-    background: #F9FAFC;
+    background: #f9fafc;
     min-height: 100vh;
     font-family: 'Inter', sans-serif;
-    color: #0A1329;
+    color: #0a1329;
 }
 
 .header-spacing {
@@ -574,7 +548,7 @@ const activeSortLabel = computed(() => {
     transition: color 0.2s;
 
     &:hover {
-        color: #2962FF;
+        color: #2962ff;
     }
 }
 
@@ -598,7 +572,7 @@ const activeSortLabel = computed(() => {
     font-size: 36px;
     font-weight: 700;
     line-height: 1.2;
-    color: #0A1329;
+    color: #0a1329;
 }
 
 .product-count-label {
@@ -614,17 +588,17 @@ const activeSortLabel = computed(() => {
     padding: 10px 18px;
     font-size: 13px;
     font-weight: 600;
-    color: #0A1329;
+    color: #0a1329;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
     border: 1px solid rgba(229, 235, 245, 0.8);
     display: flex;
     align-items: center;
     transition: all 0.2s;
 
     &:hover {
-        border-color: #2962FF;
-        color: #2962FF;
+        border-color: #2962ff;
+        color: #2962ff;
     }
 }
 
@@ -637,12 +611,12 @@ const activeSortLabel = computed(() => {
 .sort-menu-item {
     font-size: 13px;
     font-weight: 500;
-    color: #0A1329;
+    color: #0a1329;
     cursor: pointer;
 
     &:hover {
-        background-color: #F2F7FC;
-        color: #2962FF;
+        background-color: #f2f7fc;
+        color: #2962ff;
     }
 }
 
@@ -652,28 +626,28 @@ const activeSortLabel = computed(() => {
     border-radius: 18px;
     padding: 24px;
     border: 1px solid rgba(229, 235, 245, 0.6);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.01);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01);
 }
 
 .filter-header-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid #F0F4FA;
+    border-bottom: 1px solid #f0f4fa;
     padding-bottom: 14px;
 }
 
 .filter-main-title {
     font-size: 15px;
     font-weight: 700;
-    color: #0A1329;
+    color: #0a1329;
     letter-spacing: 0.5px;
 }
 
 .filter-reset-action {
     font-size: 12px;
     font-weight: 600;
-    color: #2962FF;
+    color: #2962ff;
     cursor: pointer;
     transition: opacity 0.2s;
 
@@ -685,7 +659,7 @@ const activeSortLabel = computed(() => {
 .filter-group-title {
     font-size: 12px;
     font-weight: 700;
-    color: #0A1329;
+    color: #0a1329;
     margin-bottom: 12px;
     letter-spacing: 0.5px;
 }
@@ -707,7 +681,7 @@ const activeSortLabel = computed(() => {
     width: 16px;
     height: 16px;
     cursor: pointer;
-    accent-color: #2962FF;
+    accent-color: #2962ff;
 }
 
 .checkbox-label-text {
@@ -716,7 +690,7 @@ const activeSortLabel = computed(() => {
     transition: color 0.2s;
 
     &:hover {
-        color: #0A1329;
+        color: #0a1329;
     }
 }
 
@@ -735,7 +709,7 @@ const activeSortLabel = computed(() => {
 
 .size-box-cell {
     height: 38px;
-    border: 1px solid #E5EBF5;
+    border: 1px solid #e5ebf5;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -748,14 +722,14 @@ const activeSortLabel = computed(() => {
     transition: all 0.2s;
 
     &:hover {
-        border-color: #2962FF;
-        color: #2962FF;
-        background: #F2F7FC;
+        border-color: #2962ff;
+        color: #2962ff;
+        background: #f2f7fc;
     }
 
     &.active {
-        background: #2962FF;
-        border-color: #2962FF;
+        background: #2962ff;
+        border-color: #2962ff;
         color: #ffffff;
         font-weight: 700;
     }
@@ -780,11 +754,13 @@ const activeSortLabel = computed(() => {
     min-height: 334px;
     height: auto;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.01);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01);
     border: 1px solid rgba(229, 235, 245, 0.5);
     display: flex;
     flex-direction: column;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    transition:
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.3s ease;
     margin: 0 auto;
 
     &:hover {
@@ -799,7 +775,7 @@ const activeSortLabel = computed(() => {
 }
 
 .card-image-wrapper {
-    background: #F2F7FC;
+    background: #f2f7fc;
     border-radius: 14px;
     width: 100%;
     height: 211px;
@@ -821,7 +797,7 @@ const activeSortLabel = computed(() => {
     position: absolute;
     top: 14px;
     left: 14px;
-    color: #2962FF;
+    color: #2962ff;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.5px;
@@ -855,7 +831,7 @@ const activeSortLabel = computed(() => {
 .product-brand-badge {
     font-size: 11px;
     font-weight: 700;
-    color: #2962FF;
+    color: #2962ff;
     letter-spacing: 0.5px;
     text-transform: uppercase;
     margin-bottom: 4px;
@@ -864,7 +840,7 @@ const activeSortLabel = computed(() => {
 .product-name-title {
     font-size: 15px;
     font-weight: 600;
-    color: #0A1329;
+    color: #0a1329;
     line-height: 1.3;
     height: 20px;
     white-space: nowrap;
@@ -883,7 +859,7 @@ const activeSortLabel = computed(() => {
 .current-price-label {
     font-size: 16px;
     font-weight: 700;
-    color: #0A1329;
+    color: #0a1329;
 }
 
 .old-price-label {
@@ -913,24 +889,24 @@ const activeSortLabel = computed(() => {
     :deep(.v-field) {
         border-radius: 8px !important;
         font-size: 13px !important;
-        background-color: #F8FAFC !important;
+        background-color: #f8fafc !important;
         box-shadow: none !important;
 
         .v-field__outline {
             --v-field-border-width: 1px !important;
             --v-field-border-opacity: 0.15 !important;
-            border-color: #CBD5E1 !important;
+            border-color: #cbd5e1 !important;
         }
 
         &.v-field--focused {
             .v-field__outline {
                 --v-field-border-opacity: 1 !important;
-                border-color: #2962FF !important;
+                border-color: #2962ff !important;
             }
         }
     }
     :deep(.v-select__selection-text) {
-        color: #0A1329 !important;
+        color: #0a1329 !important;
         font-weight: 500 !important;
     }
 }

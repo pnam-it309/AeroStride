@@ -133,9 +133,14 @@ const handleFileChange = async (event) => {
     try {
         // 1. Nén ảnh + tạo base64 (lưu thẳng vào DB)
         const uploadResult = await dichVuFile.taiLenFile(file);
-        
+
         // Trích xuất URL an toàn (hỗ trợ cả object và string)
-        const fileUrl = uploadResult?.fileUrl || uploadResult?.url || uploadResult?.secure_url || uploadResult?.duongDanAnh || (typeof uploadResult === 'string' ? uploadResult : '');
+        const fileUrl =
+            uploadResult?.fileUrl ||
+            uploadResult?.url ||
+            uploadResult?.secure_url ||
+            uploadResult?.duongDanAnh ||
+            (typeof uploadResult === 'string' ? uploadResult : '');
 
         if (!fileUrl) {
             addNotification({ title: 'Lỗi', subtitle: 'Không thể lấy URL ảnh từ máy chủ', color: 'error' });
@@ -198,142 +203,161 @@ const setMainImage = async (imgId) => {
 </script>
 
 <template>
-    <v-navigation-drawer :model-value="show" @update:model-value="emit('update:show', $event)" location="right"
-        temporary width="450" class="variant-drawer">
+    <v-navigation-drawer
+        :model-value="show"
+        @update:model-value="emit('update:show', $event)"
+        location="right"
+        temporary
+        width="450"
+        class="variant-drawer"
+    >
         <div v-if="variant" class="d-flex flex-column h-100 bg-white">
             <!-- Header Area: High-end design -->
             <div class="pa-6 border-b d-flex align-center justify-space-between bg-slate-50-50">
                 <div>
                     <div class="d-flex align-center ga-2 mb-1">
                         <v-icon icon="mdi-package-variant" size="18" color="primary" />
-                        <h2 class="text-h6 text-slate-900 mb-0" style="font-size: 1.15rem !important">Quản lý biến thể sản phẩm
-                        </h2>
+                        <h2 class="text-h6 text-slate-900 mb-0" style="font-size: 1.15rem !important">Quản lý biến thể sản phẩm</h2>
                     </div>
                     <p class="text-primary font-weight-bold mb-0" style="font-size: 13px !important">
                         {{ variant.maChiTietSanPham || '--' }}
                     </p>
                 </div>
-                <v-btn icon variant="tonal" density="comfortable" color="slate-400" @click="emit('update:show', false)"
-                    class="rounded-lg">
+                <v-btn icon variant="tonal" density="comfortable" color="slate-400" @click="emit('update:show', false)" class="rounded-lg">
                     <XIcon size="20" />
                     <v-tooltip activator="parent" location="top" text="Đóng bảng quản lý biến thể" />
                 </v-btn>
             </div>
-        <!-- Main Scrollable Content -->
-        <div class="flex-grow-1 overflow-y-auto pa-6 custom-scrollbar">
-            <!-- Persistent Variant Summary Grid -->
-            <div class="variant-detail-grid mb-6 pa-4 rounded-lg border bg-slate-50-30">
-                <v-row dense>
-                    <v-col cols="6">
-                        <div class="info-group">
-                            <label class="info-label">Màu biến thể</label>
-                            <div class="info-value-box">{{ variant.tenMauSac }}</div>
-                        </div>
-                    </v-col>
-                    <v-col cols="6">
-                        <div class="info-group">
-                            <label class="info-label">Kích thước</label>
-                            <div class="info-value-box">{{ variant.tenKichThuoc }}</div>
-                        </div>
-                    </v-col>
-                    <v-col cols="6" class="mt-3">
-                        <div class="info-group">
-                            <label class="info-label">Tồn kho</label>
-                            <div class="info-value-box">{{ variant.soLuong }}</div>
-                        </div>
-                    </v-col>
-                    <v-col cols="6" class="mt-3">
-                        <div class="info-group">
-                            <label class="info-label">Giá bán</label>
-                            <div class="info-value-box text-primary font-bold-force">{{ formatCurrency(variant.giaBan)
-                                }}</div>
-                        </div>
-                    </v-col>
-                </v-row>
-            </div>
-
-            <!-- Mã QR Sản Phẩm -->
-            <div class="qr-section mb-6 pa-4 rounded-xl border bg-slate-50 text-center">
-                <div class="d-flex align-center justify-space-between mb-3 px-1">
-                    <div class="d-flex align-center ga-2">
-                        <v-icon icon="mdi-qrcode" size="18" color="primary" />
-                        <span class="text-subtitle-2 font-weight-bold text-slate-800">Mã QR sản phẩm</span>
-                    </div>
-                    <v-btn size="small" variant="flat" color="primary" class="text-none rounded-lg font-weight-bold px-3"
-                        @click="downloadQrCode">
-                        <v-icon size="16" class="mr-1">mdi-download</v-icon>
-                        Tải mã QR
-                    </v-btn>
-                </div>
-                <div ref="qrCodeRef" class="d-flex flex-column align-center justify-center pa-4 bg-white rounded-lg border elevation-1">
-                    <QrcodeVue :value="qrValue" :size="160" level="H" render-as="canvas" class="qr-canvas-display" />
-                    <div class="mt-3 px-3 py-1 rounded bg-slate-100 border text-slate-800 font-weight-bold text-caption monospace">
-                        {{ qrValue }}
-                    </div>
-                </div>
-            </div>
-
-        <!-- Custom Styled Tabs -->
-        <v-tabs v-model="activeTab" color="primary" align-tabs="start" class="mb-6 mb-tabs-border" grow hide-slider>
-            <v-tab :value="1" class="custom-tab px-6" rounded="lg" style="font-size: 13px !important">
-                <PhotoIcon size="18" class="mr-2" />
-                <span>Hình ảnh</span>
-            </v-tab>
-        </v-tabs>
-
-        <v-window v-model="activeTab">
-            <!-- TAB 1: IMAGE GALLERY -->
-            <v-window-item :value="1">
-                <!-- Advanced Upload Zone -->
-                <div class="mb-6">
-                    <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="handleFileChange" />
-                    <div class="upload-dropzone rounded-xl border border-dashed border-slate-100 pa-8 text-center cursor-pointer hover-border-primary transition-all"
-                        @click="triggerFileInput">
-                        <div class="upload-icon-wrapper mb-3">
-                            <v-icon v-if="!uploading" icon="mdi-cloud-upload" size="40" color="primary" />
-                            <v-progress-circular v-else indeterminate color="primary" size="40" />
-                        </div>
-                        <h4 class="text-slate-900 mb-1" style="font-size: 13px !important">
-                            {{ uploading ? 'Đang xử lý tập tin...' : 'Tải lên hình ảnh mới' }}
-                        </h4>
-                        <p class="text-slate-400 mb-0" style="font-size: 13px !important">Hỗ trợ JPG, PNG • Tối đa 5MB
-                        </p>
-                    </div>
-                </div>
-
-                <div class="d-flex align-center justify-space-between mb-4 px-1">
-                    <h5 class="text-slate-700" style="font-size: 13px !important">Thư viện ({{ images.length }})</h5>
-                    <span class="text-slate-400" style="font-size: 13px !important">* Click để đặt làm ảnh chính</span>
-                </div>
-
-                <v-row v-if="images.length > 0" dense class="gallery-grid">
-                    <v-col v-for="img in images" :key="img.id" cols="6" sm="4">
-                        <div class="image-card rounded-xl overflow-hidden border position-relative"
-                            :class="{ 'is-main': img.hinhAnhDaiDien }">
-                            <div class="cursor-pointer hover-zoom" style="height: 100px" @click="setMainImage(img.id)">
-                                <SafeProductImage :src="getVariantImageUrl(img.duongDanAnh)"
-                                    :fallback-src="logoPlaceholder" :alt="img.moTa || 'variant-gallery-image'" />
+            <!-- Main Scrollable Content -->
+            <div class="flex-grow-1 overflow-y-auto pa-6 custom-scrollbar">
+                <!-- Persistent Variant Summary Grid -->
+                <div class="variant-detail-grid mb-6 pa-4 rounded-lg border bg-slate-50-30">
+                    <v-row dense>
+                        <v-col cols="6">
+                            <div class="info-group">
+                                <label class="info-label">Màu biến thể</label>
+                                <div class="info-value-box">{{ variant.tenMauSac }}</div>
                             </div>
-
-                            <!-- Labels & Actions -->
-                            <div v-if="img.hinhAnhDaiDien" class="main-badge">CHÍNH</div>
-                            <v-btn icon size="24" color="rose-darken-1" variant="flat" class="delete-btn elevation-2"
-                                @click.stop="deleteImage(img.id)">
-                                <XIcon size="14" class="text-white" />
-                                <v-tooltip activator="parent" location="top" text="Xóa ảnh" />
-                            </v-btn>
-                        </div>
-                    </v-col>
-                </v-row>
-
-                <div v-else
-                    class="empty-gallery text-center py-12 rounded-xl border border-dashed border-slate-200 bg-slate-50-50">
-                    <v-icon icon="mdi-image-plus-outline" size="48" color="slate-200" class="mb-2" />
-                    <p class="text-slate-400" style="font-size: 13px !important">Biến thể chưa có hình ảnh nào</p>
+                        </v-col>
+                        <v-col cols="6">
+                            <div class="info-group">
+                                <label class="info-label">Kích thước</label>
+                                <div class="info-value-box">{{ variant.tenKichThuoc }}</div>
+                            </div>
+                        </v-col>
+                        <v-col cols="6" class="mt-3">
+                            <div class="info-group">
+                                <label class="info-label">Tồn kho</label>
+                                <div class="info-value-box">{{ variant.soLuong }}</div>
+                            </div>
+                        </v-col>
+                        <v-col cols="6" class="mt-3">
+                            <div class="info-group">
+                                <label class="info-label">Giá bán</label>
+                                <div class="info-value-box text-primary font-bold-force">{{ formatCurrency(variant.giaBan) }}</div>
+                            </div>
+                        </v-col>
+                    </v-row>
                 </div>
-            </v-window-item>
-        </v-window>
-        </div>
+
+                <!-- Mã QR Sản Phẩm -->
+                <div class="qr-section mb-6 pa-4 rounded-xl border bg-slate-50 text-center">
+                    <div class="d-flex align-center justify-space-between mb-3 px-1">
+                        <div class="d-flex align-center ga-2">
+                            <v-icon icon="mdi-qrcode" size="18" color="primary" />
+                            <span class="text-subtitle-2 font-weight-bold text-slate-800">Mã QR sản phẩm</span>
+                        </div>
+                        <v-btn
+                            size="small"
+                            variant="flat"
+                            color="primary"
+                            class="text-none rounded-lg font-weight-bold px-3"
+                            @click="downloadQrCode"
+                        >
+                            <v-icon size="16" class="mr-1">mdi-download</v-icon>
+                            Tải mã QR
+                        </v-btn>
+                    </div>
+                    <div ref="qrCodeRef" class="d-flex flex-column align-center justify-center pa-4 bg-white rounded-lg border elevation-1">
+                        <QrcodeVue :value="qrValue" :size="160" level="H" render-as="canvas" class="qr-canvas-display" />
+                        <div class="mt-3 px-3 py-1 rounded bg-slate-100 border text-slate-800 font-weight-bold text-caption monospace">
+                            {{ qrValue }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Styled Tabs -->
+                <v-tabs v-model="activeTab" color="primary" align-tabs="start" class="mb-6 mb-tabs-border" grow hide-slider>
+                    <v-tab :value="1" class="custom-tab px-6" rounded="lg" style="font-size: 13px !important">
+                        <PhotoIcon size="18" class="mr-2" />
+                        <span>Hình ảnh</span>
+                    </v-tab>
+                </v-tabs>
+
+                <v-window v-model="activeTab">
+                    <!-- TAB 1: IMAGE GALLERY -->
+                    <v-window-item :value="1">
+                        <!-- Advanced Upload Zone -->
+                        <div class="mb-6">
+                            <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="handleFileChange" />
+                            <div
+                                class="upload-dropzone rounded-xl border border-dashed border-slate-100 pa-8 text-center cursor-pointer hover-border-primary transition-all"
+                                @click="triggerFileInput"
+                            >
+                                <div class="upload-icon-wrapper mb-3">
+                                    <v-icon v-if="!uploading" icon="mdi-cloud-upload" size="40" color="primary" />
+                                    <v-progress-circular v-else indeterminate color="primary" size="40" />
+                                </div>
+                                <h4 class="text-slate-900 mb-1" style="font-size: 13px !important">
+                                    {{ uploading ? 'Đang xử lý tập tin...' : 'Tải lên hình ảnh mới' }}
+                                </h4>
+                                <p class="text-slate-400 mb-0" style="font-size: 13px !important">Hỗ trợ JPG, PNG • Tối đa 5MB</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-center justify-space-between mb-4 px-1">
+                            <h5 class="text-slate-700" style="font-size: 13px !important">Thư viện ({{ images.length }})</h5>
+                            <span class="text-slate-400" style="font-size: 13px !important">* Click để đặt làm ảnh chính</span>
+                        </div>
+
+                        <v-row v-if="images.length > 0" dense class="gallery-grid">
+                            <v-col v-for="img in images" :key="img.id" cols="6" sm="4">
+                                <div
+                                    class="image-card rounded-xl overflow-hidden border position-relative"
+                                    :class="{ 'is-main': img.hinhAnhDaiDien }"
+                                >
+                                    <div class="cursor-pointer hover-zoom" style="height: 100px" @click="setMainImage(img.id)">
+                                        <SafeProductImage
+                                            :src="getVariantImageUrl(img.duongDanAnh)"
+                                            :fallback-src="logoPlaceholder"
+                                            :alt="img.moTa || 'variant-gallery-image'"
+                                        />
+                                    </div>
+
+                                    <!-- Labels & Actions -->
+                                    <div v-if="img.hinhAnhDaiDien" class="main-badge">CHÍNH</div>
+                                    <v-btn
+                                        icon
+                                        size="24"
+                                        color="rose-darken-1"
+                                        variant="flat"
+                                        class="delete-btn elevation-2"
+                                        @click.stop="deleteImage(img.id)"
+                                    >
+                                        <XIcon size="14" class="text-white" />
+                                        <v-tooltip activator="parent" location="top" text="Xóa ảnh" />
+                                    </v-btn>
+                                </div>
+                            </v-col>
+                        </v-row>
+
+                        <div v-else class="empty-gallery text-center py-12 rounded-xl border border-dashed border-slate-200 bg-slate-50-50">
+                            <v-icon icon="mdi-image-plus-outline" size="48" color="slate-200" class="mb-2" />
+                            <p class="text-slate-400" style="font-size: 13px !important">Biến thể chưa có hình ảnh nào</p>
+                        </div>
+                    </v-window-item>
+                </v-window>
+            </div>
         </div>
     </v-navigation-drawer>
 </template>
@@ -483,7 +507,7 @@ const setMainImage = async (imgId) => {
     color: white !important;
 }
 
-.space-y-6>*+* {
+.space-y-6 > * + * {
     margin-top: 1.5rem;
 }
 </style>

@@ -78,9 +78,15 @@
             z-index: 1;
             width: 100%;
 
-            &.left { right: 50%; }
-            &.right { left: 50%; }
-            &.active { background: #cbd5e1; }
+            &.left {
+                right: 50%;
+            }
+            &.right {
+                left: 50%;
+            }
+            &.active {
+                background: #cbd5e1;
+            }
         }
     }
 }

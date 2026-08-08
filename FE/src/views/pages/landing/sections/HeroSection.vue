@@ -1,5 +1,4 @@
 <script setup>
-
 import { ref, watch } from 'vue';
 import { formatCurrency as formatPrice } from '@/utils/formatters';
 
@@ -48,13 +47,17 @@ watch(
 <template>
     <section class="snap-section hero-section d-flex align-center">
         <template v-if="props.active || props.warm">
-            <div class="hero-bg-animated"
-                :style="{ transform: `translate(${props.mouseX * 0.5}px, ${props.mouseY * 0.5}px)` }"></div>
+            <div class="hero-bg-animated" :style="{ transform: `translate(${props.mouseX * 0.5}px, ${props.mouseY * 0.5}px)` }"></div>
             <div class="hero-diagonal-band"></div>
             <v-container>
                 <v-row align="center">
-                    <v-col cols="12" lg="5" offset-lg="1" :class="{ 'reveal-container': true, active: props.active }"
-                        class="position-relative ps-lg-8">
+                    <v-col
+                        cols="12"
+                        lg="5"
+                        offset-lg="1"
+                        :class="{ 'reveal-container': true, active: props.active }"
+                        class="position-relative ps-lg-8"
+                    >
                         <h1 class="hero-title reveal-item delay-1">
                             {{ props.product?.tenSanPham || 'AeroStride' }}
                         </h1>
@@ -63,26 +66,41 @@ watch(
                         </p>
                         <div class="hero-price reveal-item delay-3 text-black mb-8 d-flex align-center flex-wrap ga-3">
                             <span>{{ props.product?.giaBanThapNhat ? formatPrice(props.product.giaBanThapNhat) : '1.200.000 ₫' }}</span>
-
                         </div>
-                        <v-btn size="x-large" rounded="xl" class="px-12 hero-btn reveal-item delay-4"
-                            :to="props.product?.id ? `/product/${props.product.id}` : '/shoes'">
+                        <v-btn
+                            size="x-large"
+                            rounded="xl"
+                            class="px-12 hero-btn reveal-item delay-4"
+                            :to="props.product?.id ? `/product/${props.product.id}` : '/shoes'"
+                        >
                             KHÁM PHÁ NGAY
                         </v-btn>
                     </v-col>
                     <v-col cols="12" lg="6" class="text-center reveal-container" :class="{ active: props.active }">
                         <div class="hero-shoe-wrapper reveal-item delay-4">
-                            <model-viewer v-if="viewerReady" :src="props.product?.modelUrl || '/models/Shoe.glb'"
+                            <model-viewer
+                                v-if="viewerReady"
+                                :src="props.product?.modelUrl || '/models/Shoe.glb'"
                                 :poster="props.product?.imageUrl || '/assets/images/products/1.jpg'"
-                                alt="AeroStride 3D Shoe" camera-controls :auto-rotate="props.active" rotation-per-second="30deg"
-                                shadow-intensity="1" environment-image="neutral" class="the-shoe mx-auto hero-shoe-main"
-                                style="width: 100%; max-width: 600px; height: 400px; display: block; outline: none;"></model-viewer>
+                                alt="AeroStride 3D Shoe"
+                                camera-controls
+                                :auto-rotate="props.active"
+                                rotation-per-second="30deg"
+                                shadow-intensity="1"
+                                environment-image="neutral"
+                                class="the-shoe mx-auto hero-shoe-main"
+                                style="width: 100%; max-width: 600px; height: 400px; display: block; outline: none"
+                            ></model-viewer>
                             <!-- Same poster the viewer itself would show, in the same
                                  600x400 box, so the 3D model swaps in without shifting
                                  anything around it. -->
-                            <img v-else :src="props.product?.imageUrl || '/assets/images/products/1.jpg'"
-                                alt="AeroStride 3D Shoe" class="the-shoe mx-auto hero-shoe-main"
-                                style="width: 100%; max-width: 600px; height: 400px; display: block; object-fit: contain;" />
+                            <img
+                                v-else
+                                :src="props.product?.imageUrl || '/assets/images/products/1.jpg'"
+                                alt="AeroStride 3D Shoe"
+                                class="the-shoe mx-auto hero-shoe-main"
+                                style="width: 100%; max-width: 600px; height: 400px; display: block; object-fit: contain"
+                            />
                         </div>
                     </v-col>
                 </v-row>

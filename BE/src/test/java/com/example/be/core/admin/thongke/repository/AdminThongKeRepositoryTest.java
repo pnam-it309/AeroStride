@@ -50,16 +50,21 @@ class AdminThongKeRepositoryTest {
 
     private void persistCompletedOrder(String loaiDon, OrderType orderType, String amount, long ngayTao) {
         BigDecimal total = new BigDecimal(amount);
+        String ma = "HD-TEST-" + ngayTao;
         HoaDon hoaDon = HoaDon.builder()
-                .maHoaDon("HD-TEST-" + ngayTao)
+                .maHoaDon(ma)
                 .loaiDon(loaiDon)
                 .orderType(orderType)
                 .trangThai(OrderStatus.HOAN_THANH)
                 .tongTien(total)
                 .tongTienSauGiam(total)
                 .build();
-        hoaDon.setNgayTao(ngayTao);
         entityManager.persist(hoaDon);
+        entityManager.flush();
+        entityManager.createNativeQuery("UPDATE hoa_don SET ngay_tao = :ngayTao WHERE ma_hoa_don = :ma")
+                .setParameter("ngayTao", ngayTao)
+                .setParameter("ma", ma)
+                .executeUpdate();
     }
 
     private void assertMoneyEquals(String expected, Object actual) {

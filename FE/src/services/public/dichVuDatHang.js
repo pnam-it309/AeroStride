@@ -63,10 +63,14 @@ export const dichVuDatHang = {
 
     // Khách cập nhật số lượng sản phẩm (chỉ đơn tiền mặt, đang chờ xác nhận)
     async capNhatSanPham(id, items) {
-        const response = await api.put(`${API_CUSTOMER.ORDER}/${id}/items`, { items }, {
-            bigOp: true,
-            loadingMessage: 'Đang cập nhật sản phẩm...'
-        });
+        const response = await api.put(
+            `${API_CUSTOMER.ORDER}/${id}/items`,
+            { items },
+            {
+                bigOp: true,
+                loadingMessage: 'Đang cập nhật sản phẩm...'
+            }
+        );
         return response.data;
     },
 

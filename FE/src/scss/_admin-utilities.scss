@@ -53,7 +53,6 @@
     line-height: 1.625 !important;
 }
 
-
 .font-black {
     font-weight: 900 !important;
 }
@@ -134,28 +133,49 @@
    are project-owned rather than a dangling reference to a framework that was
    never installed.
    -------------------------------------------------------------------------- */
-.tracking-tight   { letter-spacing: -0.015em !important; }
-.tracking-wide    { letter-spacing: 0.025em !important; }
-.tracking-wider   { letter-spacing: 0.05em !important; }
-.tracking-widest  { letter-spacing: 0.1em !important; }
+.tracking-tight {
+    letter-spacing: -0.015em !important;
+}
+.tracking-wide {
+    letter-spacing: 0.025em !important;
+}
+.tracking-wider {
+    letter-spacing: 0.05em !important;
+}
+.tracking-widest {
+    letter-spacing: 0.1em !important;
+}
 
-
-.transition-all   { transition: all 0.2s ease !important; }
+.transition-all {
+    transition: all 0.2s ease !important;
+}
 
 /* z-index helpers. `.z-index-2` already existed in two page stylesheets; these
    round out the scale so overlays do not fall back to inline styles. */
 /* .z-index-2 deliberately omitted: _auth-layout.scss and _sidebar.scss already
    declare it, and a third copy here would win on !important alone. */
-.z-index-1  { z-index: 1 !important; }
-.z-index-10 { z-index: 10 !important; }
+.z-index-1 {
+    z-index: 1 !important;
+}
+.z-index-10 {
+    z-index: 10 !important;
+}
 
 /* Sizing / object-fit helpers Vuetify does not provide. Sibling one-offs such as
    .min-h-0 and .max-w-800 already live in component styles; these are the ones
    used from more than one place. */
-.min-w-0        { min-width: 0 !important; }
-.max-w-200      { max-width: 200px !important; }
-.object-contain { object-fit: contain !important; }
-.object-cover   { object-fit: cover !important; }
+.min-w-0 {
+    min-width: 0 !important;
+}
+.max-w-200 {
+    max-width: 200px !important;
+}
+.object-contain {
+    object-fit: contain !important;
+}
+.object-cover {
+    object-fit: cover !important;
+}
 
 /* --------------------------------------------------------------------------
    .icon-blob - rounded tile that centres an icon.

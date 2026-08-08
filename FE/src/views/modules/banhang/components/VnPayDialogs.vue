@@ -70,17 +70,24 @@ const choiceMethod = computed({
                 <div v-else class="w-100 d-flex flex-column align-center">
                     <template v-if="vnpayMethod === 'QR'">
                         <div class="pa-2 bg-white rounded-lg elevation-2 mb-4 d-inline-block">
-                            <QrcodeVue v-if="vnpayDialog.paymentUrl" :value="vnpayDialog.paymentUrl" :size="220"
-                                level="H" render-as="canvas" />
-                            <div v-else class="d-flex align-center justify-center text-grey"
-                                style="width: 220px; height: 220px;">
+                            <QrcodeVue
+                                v-if="vnpayDialog.paymentUrl"
+                                :value="vnpayDialog.paymentUrl"
+                                :size="220"
+                                level="H"
+                                render-as="canvas"
+                            />
+                            <div v-else class="d-flex align-center justify-center text-grey" style="width: 220px; height: 220px">
                                 Chưa có mã QR
                             </div>
                         </div>
                         <div class="text-h5 font-weight-bold text-error mb-1">
-                            {{ new Intl.NumberFormat('vi-VN', {
-                                style: 'currency', currency: 'VND'
-                            }).format(vnpayDialog.amount) }}
+                            {{
+                                new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency',
+                                    currency: 'VND'
+                                }).format(vnpayDialog.amount)
+                            }}
                         </div>
                         <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
                             Sử dụng ứng dụng ngân hàng hoặc ví VNPay để quét mã.
@@ -88,32 +95,42 @@ const choiceMethod = computed({
                     </template>
                     <template v-else>
                         <div class="text-h5 font-weight-bold text-error mb-4">
-                            {{ new Intl.NumberFormat('vi-VN', {
-                                style: 'currency', currency: 'VND'
-                            }).format(vnpayDialog.amount) }}
+                            {{
+                                new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency',
+                                    currency: 'VND'
+                                }).format(vnpayDialog.amount)
+                            }}
                         </div>
-                        <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
-                            Vui lòng hoàn tất thanh toán trên VNPay.
-                        </div>
-                        <v-btn color="#005BAA" class="mb-6 rounded-lg text-white font-weight-bold"
-                            @click="emit('openGateway')">
+                        <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">Vui lòng hoàn tất thanh toán trên VNPay.</div>
+                        <v-btn color="#005BAA" class="mb-6 rounded-lg text-white font-weight-bold" @click="emit('openGateway')">
                             Mở lại thanh toán
                         </v-btn>
                     </template>
 
-                    <v-btn block color="#005BAA" class="mb-3 rounded-lg text-white font-weight-bold" height="48"
-                        @click="emit('confirmManual')">
+                    <v-btn
+                        block
+                        color="#005BAA"
+                        class="mb-3 rounded-lg text-white font-weight-bold"
+                        height="48"
+                        @click="emit('confirmManual')"
+                    >
                         XÁC NHẬN ĐÃ NHẬN TIỀN
                     </v-btn>
 
-                    <v-btn v-if="vnpayMethod === 'QR'" block variant="outlined" color="grey-darken-1"
-                        class="rounded-lg font-weight-bold" height="48" @click="emit('retryQr')">
+                    <v-btn
+                        v-if="vnpayMethod === 'QR'"
+                        block
+                        variant="outlined"
+                        color="grey-darken-1"
+                        class="rounded-lg font-weight-bold"
+                        height="48"
+                        @click="emit('retryQr')"
+                    >
                         TẠO LẠI MÃ QR
                     </v-btn>
 
-                    <v-btn variant="text" color="error" class="mt-4" size="small" @click="emit('cancel')">
-                        Hủy giao dịch
-                    </v-btn>
+                    <v-btn variant="text" color="error" class="mt-4" size="small" @click="emit('cancel')"> Hủy giao dịch </v-btn>
                 </div>
             </v-card-text>
         </v-card>
@@ -130,12 +147,21 @@ const choiceMethod = computed({
                 <v-radio value="GATEWAY" label="Nhập mã thẻ qua cổng VNPay" color="#2E4E8E"></v-radio>
             </v-radio-group>
             <div class="d-flex ga-3">
-                <v-btn class="flex-grow-1 rounded-lg font-weight-bold" variant="outlined" color="grey-darken-1"
-                    height="44" @click="vnpayChoiceDialogState = false">
+                <v-btn
+                    class="flex-grow-1 rounded-lg font-weight-bold"
+                    variant="outlined"
+                    color="grey-darken-1"
+                    height="44"
+                    @click="vnpayChoiceDialogState = false"
+                >
                     Hủy
                 </v-btn>
-                <v-btn class="flex-grow-1 rounded-lg font-weight-bold text-white" color="#4285F4" height="44"
-                    @click="emit('proceedChoice')">
+                <v-btn
+                    class="flex-grow-1 rounded-lg font-weight-bold text-white"
+                    color="#4285F4"
+                    height="44"
+                    @click="emit('proceedChoice')"
+                >
                     Tiếp tục
                 </v-btn>
             </div>

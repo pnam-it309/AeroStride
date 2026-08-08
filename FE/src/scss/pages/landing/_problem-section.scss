@@ -154,7 +154,6 @@
 }
 
 @keyframes shoe-hover {
-
     0%,
     100% {
         transform: translateY(0) rotate(-15deg);
@@ -204,7 +203,6 @@
 }
 
 @keyframes node-float {
-
     0%,
     100% {
         transform: translateY(0);
@@ -398,7 +396,6 @@
 }
 
 @media (max-width: 960px) {
-
     .shoe-meta-fixed,
     .tech-specs-fixed,
     .controls-overlay {

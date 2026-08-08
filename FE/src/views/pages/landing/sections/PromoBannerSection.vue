@@ -10,12 +10,8 @@ const props = defineProps({
         default: () => []
     }
 });
-const isAbsoluteUrl = (v) => 
-    typeof v !== 'string' || 
-    /^(https?:)?\/\//i.test(v) || 
-    v.startsWith('data:') || 
-    v.startsWith('blob:') || 
-    v.startsWith('/');
+const isAbsoluteUrl = (v) =>
+    typeof v !== 'string' || /^(https?:)?\/\//i.test(v) || v.startsWith('data:') || v.startsWith('blob:') || v.startsWith('/');
 
 const resolveImg = (v) => {
     if (!v) return '';
@@ -27,7 +23,7 @@ const GRADIENTS = [
     'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
     'linear-gradient(135deg, #7f0000 0%, #b71c1c 50%, #d50000 100%)',
     'linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #388e3c 100%)',
-    'linear-gradient(135deg, #311b92 0%, #4527a0 50%, #512da8 100%)',
+    'linear-gradient(135deg, #311b92 0%, #4527a0 50%, #512da8 100%)'
 ];
 const ACCENTS = ['#64b5f6', '#ff5252', '#69f0ae', '#ce93d8'];
 
@@ -65,8 +61,7 @@ const formatPrice = (v) => {
                                     <span class="section-tag reveal-item delay-1">Sản phẩm đặc sắc</span>
                                     <h2 class="section-title reveal-item delay-2">Nổi Bật Tháng Này</h2>
                                 </div>
-                                <v-btn variant="text" color="blue-darken-3" class="reveal-item delay-2 see-all-btn"
-                                    to="/shoes">
+                                <v-btn variant="text" color="blue-darken-3" class="reveal-item delay-2 see-all-btn" to="/shoes">
                                     Xem tất cả <v-icon>mdi-arrow-right</v-icon>
                                 </v-btn>
                             </div>
@@ -75,40 +70,53 @@ const formatPrice = (v) => {
                         <!-- Banners từ DB -->
                         <div class="banner-grid reveal-container" :class="{ active: props.active }">
                             <v-row>
-                                <v-col v-for="(banner, index) in displayBanners" :key="banner.id" cols="12" md="4"
-                                    class="banner-col">
-                                    <router-link :to="banner.link" class="banner-card"
-                                        :style="{ background: banner.bg, '--accent': banner.accent, transitionDelay: `${0.1 * index}s` }">
+                                <v-col v-for="(banner, index) in displayBanners" :key="banner.id" cols="12" md="4" class="banner-col">
+                                    <router-link
+                                        :to="banner.link"
+                                        class="banner-card"
+                                        :style="{ background: banner.bg, '--accent': banner.accent, transitionDelay: `${0.1 * index}s` }"
+                                    >
                                         <div class="banner-tag">{{ banner.tenThuongHieu }}</div>
                                         <div class="banner-image-wrap" v-if="banner.hinhAnh">
-                                            <img :src="banner.hinhAnh" :alt="banner.tenSanPham" class="banner-img" referrerpolicy="no-referrer" />
+                                            <img
+                                                :src="banner.hinhAnh"
+                                                :alt="banner.tenSanPham"
+                                                class="banner-img"
+                                                referrerpolicy="no-referrer"
+                                            />
                                         </div>
                                         <div class="banner-icon" v-else>👟</div>
                                         <h3 class="banner-title">{{ banner.tenSanPham }}</h3>
                                         <div class="banner-meta d-flex align-center justify-space-between mt-2 mb-4">
                                             <div class="banner-price-box">
-                                                <span class="price-label text-caption d-block"
-                                                    style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">Giá
-                                                    từ</span>
-                                                <span class="banner-price font-weight-bold"
-                                                    style="font-size: 1.1rem; color: #fff;">
+                                                <span
+                                                    class="price-label text-caption d-block"
+                                                    style="color: rgba(255, 255, 255, 0.7); font-size: 0.75rem"
+                                                    >Giá từ</span
+                                                >
+                                                <span class="banner-price font-weight-bold" style="font-size: 1.1rem; color: #fff">
                                                     {{ banner.gia != null ? formatPrice(banner.gia) : 'Liên hệ' }}
                                                 </span>
                                             </div>
                                             <div class="banner-stock-box text-right">
-                                                <span class="stock-label text-caption d-block"
-                                                    style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">Số lượng
-                                                    tồn</span>
+                                                <span
+                                                    class="stock-label text-caption d-block"
+                                                    style="color: rgba(255, 255, 255, 0.7); font-size: 0.75rem"
+                                                    >Số lượng tồn</span
+                                                >
                                                 <span
                                                     class="banner-stock px-2 py-1 rounded-pill text-caption font-weight-bold d-inline-block"
-                                                    :style="banner.soLuong > 0 ? 'background: rgba(46, 125, 50, 0.25); color: #81c784; border: 1px solid rgba(129, 199, 132, 0.4);' : 'background: rgba(198, 40, 40, 0.25); color: #e57373; border: 1px solid rgba(229, 115, 115, 0.4);'">
+                                                    :style="
+                                                        banner.soLuong > 0
+                                                            ? 'background: rgba(46, 125, 50, 0.25); color: #81c784; border: 1px solid rgba(129, 199, 132, 0.4);'
+                                                            : 'background: rgba(198, 40, 40, 0.25); color: #e57373; border: 1px solid rgba(229, 115, 115, 0.4);'
+                                                    "
+                                                >
                                                     {{ banner.soLuong > 0 ? `${banner.soLuong} sản phẩm` : 'Hết hàng' }}
                                                 </span>
                                             </div>
                                         </div>
-                                        <div class="banner-cta">
-                                            Khám phá ngay <v-icon size="16">mdi-arrow-right</v-icon>
-                                        </div>
+                                        <div class="banner-cta">Khám phá ngay <v-icon size="16">mdi-arrow-right</v-icon></div>
                                         <div class="banner-glow"></div>
                                     </router-link>
                                 </v-col>
@@ -136,7 +144,6 @@ const formatPrice = (v) => {
     align-items: center;
     background: #f8fafc;
 }
-
 
 .see-all-btn {
     font-weight: 700;
@@ -261,8 +268,6 @@ const formatPrice = (v) => {
     transition: opacity 0.4s ease;
     pointer-events: none;
 }
-
-
 
 @media (max-width: 960px) {
     .banner-card {

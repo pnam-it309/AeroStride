@@ -218,10 +218,12 @@ onMounted(() => taiDanhSachPhieuGiamGia());
 <template>
     <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <!-- Breadcrumbs -->
-        <AdminBreadcrumbs :items="[
-            { title: 'Quản lý phiếu giảm giá', disabled: false, href: '#' },
-            { title: 'Phiếu giảm giá', disabled: true }
-        ]" />
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý phiếu giảm giá', disabled: false, href: '#' },
+                { title: 'Phiếu giảm giá', disabled: true }
+            ]"
+        />
 
         <div class="mb-2"></div>
 
@@ -230,30 +232,52 @@ onMounted(() => taiDanhSachPhieuGiamGia());
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" sm="6" md="3" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
-                    <v-text-field v-model="filters.keyword" placeholder="Mã hoặc tên phiếu..." variant="outlined"
-                        density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input" clearable
-                        @input="handleSearch"></v-text-field>
+                    <v-text-field
+                        v-model="filters.keyword"
+                        placeholder="Mã hoặc tên phiếu..."
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        prepend-inner-icon="mdi-magnify"
+                        class="compact-input"
+                        clearable
+                        @input="handleSearch"
+                    ></v-text-field>
                 </v-col>
                 <v-col cols="6" sm="3" md="2" class="filter-cell">
                     <div class="filter-field-label">Hình thức</div>
-                    <v-select v-model="filters.hinhThuc" :items="[
-                        { title: 'Tất cả', value: null },
-                        { title: 'Công khai', value: 'CONG_KHAI' },
-                        { title: 'Cá nhân', value: 'CA_NHAN' }
-                    ]" variant="outlined" density="compact" hide-details class="compact-input"
+                    <v-select
+                        v-model="filters.hinhThuc"
+                        :items="[
+                            { title: 'Tất cả', value: null },
+                            { title: 'Công khai', value: 'CONG_KHAI' },
+                            { title: 'Cá nhân', value: 'CA_NHAN' }
+                        ]"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
                         :menu-props="{ contentClass: 'voucher-select-menu' }"
-                        @update:model-value="handleSearch"></v-select>
+                        @update:model-value="handleSearch"
+                    ></v-select>
                 </v-col>
                 <v-col cols="6" sm="3" md="2" class="filter-cell">
                     <div class="filter-field-label">Trạng thái</div>
-                    <v-select v-model="filters.timelineStatus" :items="[
-                        { title: 'Tất cả', value: null },
-                        { title: 'Đang hoạt động', value: SYSTEM_STATUS.ACTIVE },
-                        { title: 'Sắp diễn ra', value: 'SAP_DIEN_RA' },
-                        { title: 'Đã kết thúc', value: 'DA_KET_THUC' }
-                    ]" variant="outlined" density="compact" hide-details class="compact-input"
+                    <v-select
+                        v-model="filters.timelineStatus"
+                        :items="[
+                            { title: 'Tất cả', value: null },
+                            { title: 'Đang hoạt động', value: SYSTEM_STATUS.ACTIVE },
+                            { title: 'Sắp diễn ra', value: 'SAP_DIEN_RA' },
+                            { title: 'Đã kết thúc', value: 'DA_KET_THUC' }
+                        ]"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
                         :menu-props="{ contentClass: 'voucher-select-menu' }"
-                        @update:model-value="handleSearch"></v-select>
+                        @update:model-value="handleSearch"
+                    ></v-select>
                 </v-col>
                 <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Từ ngày</div>
@@ -277,19 +301,28 @@ onMounted(() => taiDanhSachPhieuGiamGia());
         </div>
 
         <!-- 2. TABLE -->
-        <AdminTable title="Danh sách phiếu giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
-            { text: 'STT', width: '60px' },
-            { text: 'Mã phiếu', width: '130px' },
-            { text: 'Tên phiếu', width: '180px' },
-            { text: 'Hình thức', width: '150px' },
-            { text: 'Giá trị giảm', width: '150px' },
-            { text: 'Đơn tối thiểu', width: '140px' },
-            { text: 'Số lượng', width: '100px' },
-            { text: 'Thời gian áp dụng', width: '180px' },
-            { text: 'Trạng thái', width: '140px' },
-            { text: 'Hành động', width: '110px' }
-        ]" :items="danhSachPhieuGiamGia" :total-count="pagination.totalElements" :loading="loading"
-            @add="openCreateDialog" @export="handleExport">
+        <AdminTable
+            title="Danh sách phiếu giảm giá"
+            addButtonText="Tạo mới"
+            show-export-button
+            :headers="[
+                { text: 'STT', width: '60px' },
+                { text: 'Mã phiếu', width: '130px' },
+                { text: 'Tên phiếu', width: '180px' },
+                { text: 'Hình thức', width: '150px' },
+                { text: 'Giá trị giảm', width: '150px' },
+                { text: 'Đơn tối thiểu', width: '140px' },
+                { text: 'Số lượng', width: '100px' },
+                { text: 'Thời gian áp dụng', width: '180px' },
+                { text: 'Trạng thái', width: '140px' },
+                { text: 'Hành động', width: '110px' }
+            ]"
+            :items="danhSachPhieuGiamGia"
+            :total-count="pagination.totalElements"
+            :loading="loading"
+            @add="openCreateDialog"
+            @export="handleExport"
+        >
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell text-slate-400">{{ getIndex(index) }}</td>
@@ -309,9 +342,11 @@ onMounted(() => taiDanhSachPhieuGiamGia());
                         <div class="text-primary text-truncate" :title="'Giảm ' + getDiscountDisplay(item)">
                             Giảm {{ getDiscountDisplay(item) }}
                         </div>
-                        <div class="max-discount-value text-slate-500 text-truncate"
+                        <div
+                            class="max-discount-value text-slate-500 text-truncate"
                             v-if="item.loaiPhieu === 'PHAN_TRAM' || item.loaiPhieu === 'PERCENTAGE'"
-                            :title="'Tối đa: ' + getMaxDiscountDisplay(item)">
+                            :title="'Tối đa: ' + getMaxDiscountDisplay(item)"
+                        >
                             Tối đa: {{ getMaxDiscountDisplay(item) }}
                         </div>
                     </td>
@@ -323,12 +358,14 @@ onMounted(() => taiDanhSachPhieuGiamGia());
                     </td>
                     <td class="data-cell text-center">
                         <div class="d-inline-flex flex-column align-center" style="width: 100%; overflow: hidden">
-                            <div class="text-slate-700 text-truncate" style="width: 100%"
-                                :title="'Từ: ' + formatDateTime(item.ngayBatDau)">
+                            <div class="text-slate-700 text-truncate" style="width: 100%" :title="'Từ: ' + formatDateTime(item.ngayBatDau)">
                                 <span class="text-slate-400">Từ:</span> {{ formatDateTime(item.ngayBatDau) }}
                             </div>
-                            <div class="text-slate-400 text-truncate" style="width: 100%"
-                                :title="'Đến: ' + formatDateTime(item.ngayKetThuc)">
+                            <div
+                                class="text-slate-400 text-truncate"
+                                style="width: 100%"
+                                :title="'Đến: ' + formatDateTime(item.ngayKetThuc)"
+                            >
                                 <span class="text-slate-300">Đến:</span> {{ formatDateTime(item.ngayKetThuc) }}
                             </div>
                         </div>
@@ -341,25 +378,43 @@ onMounted(() => taiDanhSachPhieuGiamGia());
                     <td class="data-cell action-cell text-center">
                         <div class="d-flex align-center justify-center action-controls">
                             <span class="d-inline-block" v-if="getPhieuGiamGiaTimelineStatus(item).isEnded">
-                                <v-btn icon variant="text" :ripple="false" size="28" color="slate-700"
-                                    class="action-icon-btn opacity-50" style="pointer-events: none">
+                                <v-btn
+                                    icon
+                                    variant="text"
+                                    :ripple="false"
+                                    size="28"
+                                    color="slate-700"
+                                    class="action-icon-btn opacity-50"
+                                    style="pointer-events: none"
+                                >
                                     <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 </v-btn>
-                                <v-tooltip activator="parent" location="top">Không thể cập nhật phiếu giảm giá đã kết
-                                    thúc</v-tooltip>
+                                <v-tooltip activator="parent" location="top">Không thể cập nhật phiếu giảm giá đã kết thúc</v-tooltip>
                             </span>
-                            <v-btn v-else icon variant="text" :ripple="false" size="28" color="slate-700"
+                            <v-btn
+                                v-else
+                                icon
+                                variant="text"
+                                :ripple="false"
+                                size="28"
+                                color="slate-700"
                                 class="action-icon-btn"
-                                @click.stop="goToEdit(item.id)">
+                                @click.stop="goToEdit(item.id)"
+                            >
                                 <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
-                                <v-switch :model-value="getPhieuGiamGiaTimelineStatus(item).switchOn"
-                                    :disabled="getPhieuGiamGiaTimelineStatus(item).switchDisabled" color="primary"
-                                    hide-details density="compact" class="tight-switch action-switch"
+                                <v-switch
+                                    :model-value="getPhieuGiamGiaTimelineStatus(item).switchOn"
+                                    :disabled="getPhieuGiamGiaTimelineStatus(item).switchDisabled"
+                                    color="primary"
+                                    hide-details
+                                    density="compact"
+                                    class="tight-switch action-switch"
                                     :class="{ 'opacity-50': getPhieuGiamGiaTimelineStatus(item).switchDisabled }"
-                                    @click.prevent.stop="handleToggleStatus(item)" />
+                                    @click.prevent.stop="handleToggleStatus(item)"
+                                />
                                 <v-tooltip activator="parent" location="top">
                                     {{ getPhieuGiamGiaTimelineStatus(item).switchTooltip }}
                                 </v-tooltip>
@@ -369,17 +424,28 @@ onMounted(() => taiDanhSachPhieuGiamGia());
                 </tr>
             </template>
             <template #pagination>
-                <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-                    @update:pageSize="pagination.size = $event" :total-pages="pagination.totalPages"
-                    :total-elements="pagination.totalElements" :current-size="danhSachPhieuGiamGia.length"
-                    @change="taiDanhSachPhieuGiamGia" />
+                <AdminPagination
+                    v-model="pagination.page"
+                    :page-size="pagination.size"
+                    @update:pageSize="pagination.size = $event"
+                    :total-pages="pagination.totalPages"
+                    :total-elements="pagination.totalElements"
+                    :current-size="danhSachPhieuGiamGia.length"
+                    @change="taiDanhSachPhieuGiamGia"
+                />
             </template>
         </AdminTable>
 
         <!-- SHARED CONFIRM -->
-        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="handleConfirm(true)"
-            @cancel="handleConfirm(false)" />
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)"
+        />
     </v-container>
 </template>
 

@@ -38,3 +38,61 @@ export const toNumber = (value, fallback = 0) => {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
 };
+
+export const readMoneyInVietnameseWords = (number) => {
+    const num = Math.abs(Number(number || 0));
+    if (num === 0) return 'Không đồng';
+
+    const units = ['', ' nghìn', ' triệu', ' tỷ', ' nghìn tỷ', ' triệu tỷ'];
+    const digits = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+
+    const readThreeDigits = (n, showZeroHundred) => {
+        let hundred = Math.floor(n / 100);
+        let ten = Math.floor((n % 100) / 10);
+        let unit = n % 10;
+        let res = '';
+
+        if (hundred > 0 || showZeroHundred) {
+            res += digits[hundred] + ' trăm ';
+        }
+
+        if (ten > 1) {
+            res += digits[ten] + ' mươi ';
+        } else if (ten === 1) {
+            res += 'mười ';
+        } else if (hundred > 0 && unit > 0) {
+            res += 'lẻ ';
+        }
+
+        if (unit > 0) {
+            if (unit === 1 && ten > 1) {
+                res += 'mốt';
+            } else if (unit === 5 && ten > 0) {
+                res += 'lăm';
+            } else {
+                res += digits[unit];
+            }
+        }
+        return res.trim();
+    };
+
+    let result = '';
+    let temp = num;
+    let unitIdx = 0;
+
+    while (temp > 0) {
+        let chunk = temp % 1000;
+        if (chunk > 0) {
+            let chunkText = readThreeDigits(chunk, temp >= 1000);
+            result = chunkText + units[unitIdx] + (result ? ' ' + result : '');
+        }
+        temp = Math.floor(temp / 1000);
+        unitIdx++;
+    }
+
+    result = result.trim();
+    if (result) {
+        result = result.charAt(0).toUpperCase() + result.slice(1) + ' đồng';
+    }
+    return number < 0 ? 'Âm ' + result.toLowerCase() : result;
+};

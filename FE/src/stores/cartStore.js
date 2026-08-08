@@ -48,19 +48,24 @@ export const useCartStore = defineStore('cart', {
          * để drawer có thể hiển thị ngay khi tải lại trang, trước khi sync hoàn tất.
          */
         _persist() {
-            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(this.items.map(i => ({
-                idChiTietSanPham: i.idChiTietSanPham,
-                soLuong: i.soLuong,
-                // Lưu metadata để hiển thị ngay khi reload (trước khi sync hoàn tất)
-                tenSanPham: i.tenSanPham || null,
-                hinhAnh: i.hinhAnh || null,
-                tenMauSac: i.tenMauSac || null,
-                tenKichThuoc: i.tenKichThuoc || null,
-                giaBan: i.giaBan || null,
-                giaGoc: i.giaGoc || null,
-                phanTramGiam: i.phanTramGiam || null,
-                soLuongTonKho: i.soLuongTonKho || null
-            }))));
+            localStorage.setItem(
+                CART_STORAGE_KEY,
+                JSON.stringify(
+                    this.items.map((i) => ({
+                        idChiTietSanPham: i.idChiTietSanPham,
+                        soLuong: i.soLuong,
+                        // Lưu metadata để hiển thị ngay khi reload (trước khi sync hoàn tất)
+                        tenSanPham: i.tenSanPham || null,
+                        hinhAnh: i.hinhAnh || null,
+                        tenMauSac: i.tenMauSac || null,
+                        tenKichThuoc: i.tenKichThuoc || null,
+                        giaBan: i.giaBan || null,
+                        giaGoc: i.giaGoc || null,
+                        phanTramGiam: i.phanTramGiam || null,
+                        soLuongTonKho: i.soLuongTonKho || null
+                    }))
+                )
+            );
         },
 
         async syncWithBackend() {
@@ -78,13 +83,13 @@ export const useCartStore = defineStore('cart', {
                     // Sau khi sync, lưu lại localStorage với đầy đủ metadata từ server
                     this._persist();
 
-                    const failedItems = result.items.filter(i => !i.isAvailable);
+                    const failedItems = result.items.filter((i) => !i.isAvailable);
                     if (failedItems.length > 0) {
                         return { success: false, message: failedItems[0].message };
                     }
                 }
             } catch (e) {
-                console.error("Cart sync failed", e);
+                console.error('Cart sync failed', e);
             } finally {
                 this.isSyncing = false;
             }
@@ -99,7 +104,7 @@ export const useCartStore = defineStore('cart', {
         async addToCart(product) {
             const existing = this.items.find((i) => i.idChiTietSanPham === product.idChiTietSanPham);
             if (existing) {
-                existing.soLuong += (product.soLuong || 1);
+                existing.soLuong += product.soLuong || 1;
                 // Cập nhật metadata nếu được cung cấp
                 if (product.tenSanPham) existing.tenSanPham = product.tenSanPham;
                 if (product.hinhAnh) existing.hinhAnh = product.hinhAnh;
@@ -126,9 +131,9 @@ export const useCartStore = defineStore('cart', {
             if (!syncResult.success) {
                 // Nếu backend từ chối (hết hàng...), rollback
                 if (existing) {
-                    existing.soLuong -= (product.soLuong || 1);
+                    existing.soLuong -= product.soLuong || 1;
                 } else {
-                    this.items = this.items.filter(i => i.idChiTietSanPham !== product.idChiTietSanPham);
+                    this.items = this.items.filter((i) => i.idChiTietSanPham !== product.idChiTietSanPham);
                 }
                 this._persist();
                 await this.syncWithBackend();

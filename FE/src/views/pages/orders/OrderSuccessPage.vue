@@ -21,7 +21,10 @@ const formatPrice = (price) => {
 const formatDate = (timestamp) => {
     if (!timestamp) return '';
     return new Intl.DateTimeFormat('vi-VN', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
     }).format(new Date(timestamp));
 };
 
@@ -51,7 +54,9 @@ onMounted(async () => {
     } finally {
         loading.value = false;
     }
-    setTimeout(() => { showConfetti.value = false; }, 5000);
+    setTimeout(() => {
+        showConfetti.value = false;
+    }, 5000);
 });
 </script>
 
@@ -73,22 +78,26 @@ onMounted(async () => {
 
                 <h1 class="success-title">Đặt hàng thành công!</h1>
 
-                <p class="order-code"><strong>Mã đơn hàng: #{{ order.maHoaDon }}</strong></p>
+                <p class="order-code">
+                    <strong>Mã đơn hàng: #{{ order.maHoaDon }}</strong>
+                </p>
                 <p class="order-status">Trạng thái: {{ order.trangThaiDisplay }}</p>
                 <p class="order-total">Tổng thanh toán: {{ formatPrice(order.tongTienSauGiam) }}</p>
 
-                <p class="order-desc">
-                    Đơn hàng của bạn đã được ghi nhận. Chúng tôi sẽ xác nhận và giao hàng trong thời gian sớm nhất.
-                </p>
+                <p class="order-desc">Đơn hàng của bạn đã được ghi nhận. Chúng tôi sẽ xác nhận và giao hàng trong thời gian sớm nhất.</p>
 
-                <v-btn style="background: #1e257c; color: white;" rounded="pill" size="large"
-                    class="font-weight-bold text-none px-8" @click="router.push('/')">
+                <v-btn
+                    style="background: #1e257c; color: white"
+                    rounded="pill"
+                    size="large"
+                    class="font-weight-bold text-none px-8"
+                    @click="router.push('/')"
+                >
                     Quay về trang chủ
                 </v-btn>
             </div>
         </div>
 
-        
         <CustomerChat />
     </div>
 </template>

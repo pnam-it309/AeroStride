@@ -15,11 +15,15 @@ const fetchFeatures = async () => {
     }
 };
 
-watch(() => props.active || props.warm, (isWarm) => {
-    if (isWarm && dynamicColumns.value.length === 0) {
-        fetchFeatures();
-    }
-}, { immediate: true });
+watch(
+    () => props.active || props.warm,
+    (isWarm) => {
+        if (isWarm && dynamicColumns.value.length === 0) {
+            fetchFeatures();
+        }
+    },
+    { immediate: true }
+);
 
 const onCardClick = (item) => {
     if (item.queryParam && item.queryValue) {

@@ -3,7 +3,7 @@ package com.example.be.core.customer.review.controller;
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.core.customer.review.model.request.ReviewRequest;
 import com.example.be.core.customer.review.service.ReviewService;
-import com.example.be.entity.DanhGiaSanPham;
+import com.example.be.core.customer.review.model.response.CustomerReviewResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,11 +25,11 @@ public class ReviewController {
     }
 
     @GetMapping("/product/{idSanPham}")
-    public ResponseEntity<ApiResponse<Page<DanhGiaSanPham>>> getReviews(
+    public ResponseEntity<ApiResponse<Page<CustomerReviewResponse>>> getReviews(
             @PathVariable String idSanPham,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<DanhGiaSanPham> reviews = reviewService.getReviewsByProduct(idSanPham, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "ngayTao")));
+        Page<CustomerReviewResponse> reviews = reviewService.getReviewsByProduct(idSanPham, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "ngayTao")));
         return ResponseEntity.ok(ApiResponse.success(reviews));
     }
 

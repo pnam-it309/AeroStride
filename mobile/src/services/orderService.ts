@@ -8,6 +8,8 @@ import { API_PATHS } from '@/config/api';
 // Matches BE CustomerOrderResponse.OrderItemResponse
 export interface OrderItem {
   id: string;
+  idChiTietSanPham: string;
+  idSanPham: string;
   tenSanPham: string;
   hinhAnh: string;
   tenMauSac: string;

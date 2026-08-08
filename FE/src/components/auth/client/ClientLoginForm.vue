@@ -46,8 +46,14 @@ const handleLogin = async () => {
 
 <template>
     <v-form @submit.prevent="handleLogin" class="mt-4 w-100">
-        <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-6 rounded-lg animate-fade-in" closable
-            @click:close="errorMessage = ''">
+        <v-alert
+            v-if="errorMessage"
+            type="error"
+            variant="tonal"
+            class="mb-6 rounded-lg animate-fade-in"
+            closable
+            @click:close="errorMessage = ''"
+        >
             {{ errorMessage }}
         </v-alert>
 
@@ -56,9 +62,16 @@ const handleLogin = async () => {
                 <v-col cols="12" class="pb-2">
                     <div class="input-wrapper">
                         <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3">Tài khoản</v-label>
-                        <v-text-field v-model="loginForm.username" variant="outlined" class="modern-input" hide-details
-                            color="blue-darken-3" placeholder="Nhập số điện thoại"
-                            prepend-inner-icon="mdi-email-outline" :disabled="loading"></v-text-field>
+                        <v-text-field
+                            v-model="loginForm.username"
+                            variant="outlined"
+                            class="modern-input"
+                            hide-details
+                            color="blue-darken-3"
+                            placeholder="Nhập số điện thoại"
+                            prepend-inner-icon="mdi-email-outline"
+                            :disabled="loading"
+                        ></v-text-field>
                     </div>
                 </v-col>
                 <v-col cols="12" class="pt-2">
@@ -66,31 +79,44 @@ const handleLogin = async () => {
                         <div class="d-flex justify-space-between align-center mb-2">
                             <v-label class="font-weight-bold mb-0 text-subtitle-2 text-grey-darken-3">Mật khẩu</v-label>
                         </div>
-                        <v-text-field v-model="loginForm.password" variant="outlined" class="modern-input"
-                            type="password" hide-details color="blue-darken-3" placeholder="••••••••"
-                            prepend-inner-icon="mdi-lock-outline" :disabled="loading"></v-text-field>
+                        <v-text-field
+                            v-model="loginForm.password"
+                            variant="outlined"
+                            class="modern-input"
+                            type="password"
+                            hide-details
+                            color="blue-darken-3"
+                            placeholder="••••••••"
+                            prepend-inner-icon="mdi-lock-outline"
+                            :disabled="loading"
+                        ></v-text-field>
                     </div>
                 </v-col>
                 <v-col cols="12" class="py-0 mt-2">
-                    <v-checkbox v-model="checkbox" hide-details color="blue-darken-3" class="modern-checkbox"
-                        :disabled="loading">
+                    <v-checkbox v-model="checkbox" hide-details color="blue-darken-3" class="modern-checkbox" :disabled="loading">
                         <template v-slot:label>
                             <span class="text-body-2 font-weight-medium text-grey-darken-2">Ghi nhớ đăng nhập</span>
                         </template>
                     </v-checkbox>
                 </v-col>
                 <v-col cols="12" class="mt-4">
-                    <v-btn size="x-large" color="blue-darken-3"
-                        class="modern-login-btn text-white font-weight-bold text-button tracking-wide" block
-                        type="submit" :loading="loading" :disabled="loading" elevation="2">
+                    <v-btn
+                        size="x-large"
+                        color="blue-darken-3"
+                        class="modern-login-btn text-white font-weight-bold text-button tracking-wide"
+                        block
+                        type="submit"
+                        :loading="loading"
+                        :disabled="loading"
+                        elevation="2"
+                    >
                         Đăng Nhập
                         <v-icon end icon="mdi-arrow-right" class="ml-2"></v-icon>
                     </v-btn>
 
                     <!-- Guest Access Link -->
                     <div class="text-center mt-3">
-                        <v-btn variant="text" color="blue-darken-3" class="text-caption font-weight-bold premium-link"
-                            to="/">
+                        <v-btn variant="text" color="blue-darken-3" class="text-caption font-weight-bold premium-link" to="/">
                             Tiếp tục với tư cách khách
                         </v-btn>
                     </div>

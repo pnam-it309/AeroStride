@@ -38,7 +38,7 @@ const fetchProfile = async () => {
         router.push(PATH.LOGIN);
         return;
     }
-    
+
     try {
         const res = await dichVuKhachHang.layThongTinCaNhan();
         if (res.success && res.data) {
@@ -71,8 +71,8 @@ const fullAddress = () => {
         defaultAddress.value.phuongXa,
         defaultAddress.value.quanHuyen,
         defaultAddress.value.tinhThanh
-    ].filter(p => p && p.trim() !== '');
-    
+    ].filter((p) => p && p.trim() !== '');
+
     return parts.length > 0 ? parts.join(', ') : 'Chưa cập nhật địa chỉ';
 };
 
@@ -135,7 +135,11 @@ onMounted(() => {
                     <v-card class="profile-card rounded-xl text-center pa-6" elevation="0">
                         <div class="d-flex justify-center mb-4">
                             <v-avatar size="100" color="grey-lighten-4" class="elevation-2">
-                                <v-img v-if="profileInfo.hinhAnh || defaultAvatarUrl" :src="profileInfo.hinhAnh || defaultAvatarUrl" cover></v-img>
+                                <v-img
+                                    v-if="profileInfo.hinhAnh || defaultAvatarUrl"
+                                    :src="profileInfo.hinhAnh || defaultAvatarUrl"
+                                    cover
+                                ></v-img>
                                 <span v-else class="text-h3 font-weight-bold text-blue-darken-4">
                                     {{ profileInfo.tenTaiKhoan ? profileInfo.tenTaiKhoan.charAt(0).toUpperCase() : 'N' }}
                                 </span>
@@ -145,7 +149,7 @@ onMounted(() => {
                             <h3 class="text-h5 font-weight-black text-blue-darken-4 mb-1">{{ profileInfo.tenTaiKhoan || 'Người dùng' }}</h3>
                             <p class="text-body-2 text-grey-darken-1">{{ profileInfo.email || 'Chưa cập nhật Email' }}</p>
                         </div>
-                        
+
                         <v-list class="bg-transparent" density="compact" nav>
                             <v-list-item
                                 color="blue-darken-4"
@@ -185,14 +189,33 @@ onMounted(() => {
                                 <p class="text-body-1 text-grey-darken-1 mb-0">Quản lý thông tin bảo mật cho tài khoản của bạn</p>
                             </div>
                             <div class="d-flex align-center ga-4">
-                                <v-btn v-if="!isEditing" color="blue-darken-4" size="x-large" rounded="pill" class="text-none font-weight-bold elevation-3" @click="isEditing = true">
+                                <v-btn
+                                    v-if="!isEditing"
+                                    color="blue-darken-4"
+                                    size="x-large"
+                                    rounded="pill"
+                                    class="text-none font-weight-bold elevation-3"
+                                    @click="isEditing = true"
+                                >
                                     Cập nhật hồ sơ
                                 </v-btn>
                                 <template v-else>
-                                    <v-btn color="grey-lighten-1" size="x-large" rounded="pill" class="text-none font-weight-bold" @click="isEditing = false">
+                                    <v-btn
+                                        color="grey-lighten-1"
+                                        size="x-large"
+                                        rounded="pill"
+                                        class="text-none font-weight-bold"
+                                        @click="isEditing = false"
+                                    >
                                         Hủy
                                     </v-btn>
-                                    <v-btn color="blue-darken-4" size="x-large" rounded="pill" class="text-none font-weight-bold elevation-3" @click="submitUpdateProfile">
+                                    <v-btn
+                                        color="blue-darken-4"
+                                        size="x-large"
+                                        rounded="pill"
+                                        class="text-none font-weight-bold elevation-3"
+                                        @click="submitUpdateProfile"
+                                    >
                                         Lưu thay đổi
                                     </v-btn>
                                 </template>
@@ -273,27 +296,54 @@ onMounted(() => {
         <!-- Đổi mật khẩu dialog -->
         <v-dialog v-model="passwordDialog" max-width="500">
             <v-card class="rounded-xl pa-4">
-                <v-card-title class="text-h5 font-weight-bold text-center text-blue-darken-4 pt-4">
-                    Đổi Mật Khẩu
-                </v-card-title>
+                <v-card-title class="text-h5 font-weight-bold text-center text-blue-darken-4 pt-4"> Đổi Mật Khẩu </v-card-title>
                 <v-card-text>
                     <v-form ref="passwordFormRef">
                         <label class="text-body-2 font-weight-bold mb-2 d-block">Mật khẩu cũ</label>
-                        <v-text-field v-model="passwordData.matKhauCu" type="password" variant="outlined" density="comfortable" color="blue-darken-4" :rules="[v => !!v || 'Vui lòng nhập mật khẩu cũ']"></v-text-field>
+                        <v-text-field
+                            v-model="passwordData.matKhauCu"
+                            type="password"
+                            variant="outlined"
+                            density="comfortable"
+                            color="blue-darken-4"
+                            :rules="[(v) => !!v || 'Vui lòng nhập mật khẩu cũ']"
+                        ></v-text-field>
 
                         <label class="text-body-2 font-weight-bold mb-2 d-block">Mật khẩu mới</label>
-                        <v-text-field v-model="passwordData.matKhauMoi" type="password" variant="outlined" density="comfortable" color="blue-darken-4" :rules="[v => !!v || 'Vui lòng nhập mật khẩu mới']"></v-text-field>
+                        <v-text-field
+                            v-model="passwordData.matKhauMoi"
+                            type="password"
+                            variant="outlined"
+                            density="comfortable"
+                            color="blue-darken-4"
+                            :rules="[(v) => !!v || 'Vui lòng nhập mật khẩu mới']"
+                        ></v-text-field>
 
                         <label class="text-body-2 font-weight-bold mb-2 d-block">Xác nhận mật khẩu mới</label>
-                        <v-text-field v-model="passwordData.xacNhanMatKhau" type="password" variant="outlined" density="comfortable" color="blue-darken-4" :rules="[
-                            v => !!v || 'Vui lòng xác nhận mật khẩu mới',
-                            v => v === passwordData.matKhauMoi || 'Xác nhận mật khẩu không khớp'
-                        ]"></v-text-field>
+                        <v-text-field
+                            v-model="passwordData.xacNhanMatKhau"
+                            type="password"
+                            variant="outlined"
+                            density="comfortable"
+                            color="blue-darken-4"
+                            :rules="[
+                                (v) => !!v || 'Vui lòng xác nhận mật khẩu mới',
+                                (v) => v === passwordData.matKhauMoi || 'Xác nhận mật khẩu không khớp'
+                            ]"
+                        ></v-text-field>
                     </v-form>
                 </v-card-text>
                 <v-card-actions class="pb-6 justify-center">
-                    <v-btn color="grey-darken-1" variant="text" class="text-none px-6 rounded-pill" @click="passwordDialog = false">Hủy</v-btn>
-                    <v-btn color="blue-darken-4" variant="flat" class="text-none px-8 rounded-pill font-weight-bold" @click="submitChangePassword">Đổi mật khẩu</v-btn>
+                    <v-btn color="grey-darken-1" variant="text" class="text-none px-6 rounded-pill" @click="passwordDialog = false"
+                        >Hủy</v-btn
+                    >
+                    <v-btn
+                        color="blue-darken-4"
+                        variant="flat"
+                        class="text-none px-8 rounded-pill font-weight-bold"
+                        @click="submitChangePassword"
+                        >Đổi mật khẩu</v-btn
+                    >
                 </v-card-actions>
             </v-card>
         </v-dialog>

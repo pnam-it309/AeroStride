@@ -50,7 +50,9 @@ const handleImageUpload = (event) => {
     }
     imageFile.value = file;
     const reader = new FileReader();
-    reader.onload = (e) => { imagePreview.value = e.target.result; };
+    reader.onload = (e) => {
+        imagePreview.value = e.target.result;
+    };
     reader.readAsDataURL(file);
 };
 
@@ -100,7 +102,7 @@ const fetchConversations = async (quiet = false) => {
             }),
             api.get(API_CHAT.CONVERSATIONS + '/stats')
         ]);
-        
+
         customers.value = convRes.data?.data || [];
         stats.value = statsRes.data?.data || { ACTIVE: 0, PENDING: 0, CLOSED: 0 };
 
@@ -221,7 +223,7 @@ const chatSummary = ref('');
 
 const summarizeChat = async () => {
     if (!activeChat.value) return;
-    
+
     isSummarizing.value = true;
     try {
         // API này phải match với API bên BE
@@ -487,9 +489,20 @@ onMounted(() => {
                                 v-for="(m, idx) in displayMessages"
                                 :key="m.id || idx"
                                 class="msg-row"
-                                :class="(m.sender === authStore.user?.username || m.sender === 'bot' || m.sender === 'SYSTEM') ? 'is-mine' : 'is-other'"
+                                :class="
+                                    m.sender === authStore.user?.username || m.sender === 'bot' || m.sender === 'SYSTEM'
+                                        ? 'is-mine'
+                                        : 'is-other'
+                                "
                             >
-                                <div class="msg-bubble" :class="(m.sender === authStore.user?.username || m.sender === 'bot' || m.sender === 'SYSTEM') ? 'bubble-mine' : 'bubble-other'">
+                                <div
+                                    class="msg-bubble"
+                                    :class="
+                                        m.sender === authStore.user?.username || m.sender === 'bot' || m.sender === 'SYSTEM'
+                                            ? 'bubble-mine'
+                                            : 'bubble-other'
+                                    "
+                                >
                                     <!-- Hiển thị ảnh nếu tin nhắn có ảnh -->
                                     <div v-if="m.imageUrl" class="bubble-image-wrap mb-1">
                                         <img :src="m.imageUrl" class="bubble-image" @click="openImage(m.imageUrl)" />
@@ -524,22 +537,31 @@ onMounted(() => {
                             <div class="lock-sub">Cuộc trò chuyện đã kết thúc, không thể gửi tin nhắn</div>
                         </div>
 
-                        <v-row no-gutters align="center" :class="{ 'input-blur': activeChat.status === 'PENDING' || activeChat.status === 'CLOSED' }">
+                        <v-row
+                            no-gutters
+                            align="center"
+                            :class="{ 'input-blur': activeChat.status === 'PENDING' || activeChat.status === 'CLOSED' }"
+                        >
                             <!-- Input ẩn để chọn file ảnh -->
-                            <input
-                                ref="fileInput"
-                                type="file"
-                                accept="image/*"
-                                style="display: none"
-                                @change="handleImageUpload"
-                            />
+                            <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleImageUpload" />
 
                             <v-col>
                                 <!-- Preview ảnh trước khi gửi -->
-                                <div v-if="imagePreview" class="image-preview-bar d-flex align-center ga-2 mb-2 pa-2 rounded-lg" style="background: #e8f0fe;">
-                                    <img :src="imagePreview" style="height: 56px; width: 56px; object-fit: cover; border-radius: 8px;" />
-                                    <span style="font-size: 12px; color: #3b5bdb;">{{ imageFile?.name }}</span>
-                                    <v-btn icon="mdi-close" size="x-small" variant="text" color="error" @click="clearImage" class="ml-auto"></v-btn>
+                                <div
+                                    v-if="imagePreview"
+                                    class="image-preview-bar d-flex align-center ga-2 mb-2 pa-2 rounded-lg"
+                                    style="background: #e8f0fe"
+                                >
+                                    <img :src="imagePreview" style="height: 56px; width: 56px; object-fit: cover; border-radius: 8px" />
+                                    <span style="font-size: 12px; color: #3b5bdb">{{ imageFile?.name }}</span>
+                                    <v-btn
+                                        icon="mdi-close"
+                                        size="x-small"
+                                        variant="text"
+                                        color="error"
+                                        @click="clearImage"
+                                        class="ml-auto"
+                                    ></v-btn>
                                 </div>
                                 <v-textarea
                                     v-model="newMessage"
@@ -576,7 +598,11 @@ onMounted(() => {
                                 class="ml-2 rounded-xl"
                                 @click="sendMessage"
                                 :loading="isSendingImage"
-                                :disabled="(!newMessage.trim() && !imagePreview) || activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"
+                                :disabled="
+                                    (!newMessage.trim() && !imagePreview) ||
+                                    activeChat.status === 'PENDING' ||
+                                    activeChat.status === 'CLOSED'
+                                "
                             ></v-btn>
                         </v-row>
                     </div>
@@ -614,7 +640,7 @@ onMounted(() => {
                     <v-btn icon="mdi-close" variant="text" color="white" @click="showSummaryModal = false" density="compact"></v-btn>
                 </v-card-title>
                 <v-card-text class="pa-4">
-                    <div style="white-space: pre-wrap; line-height: 1.6;" class="text-body-1 text-grey-darken-3">{{ chatSummary }}</div>
+                    <div style="white-space: pre-wrap; line-height: 1.6" class="text-body-1 text-grey-darken-3">{{ chatSummary }}</div>
                 </v-card-text>
                 <v-card-actions class="px-4 pb-4">
                     <v-spacer></v-spacer>

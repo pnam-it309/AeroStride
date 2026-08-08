@@ -140,13 +140,13 @@ const detectShiftName = (gioVao) => {
 
 const getEmployeeCode = (s) => {
     if (s.maNhanVien) return s.maNhanVien;
-    const emp = employeeOptions.value.find(e => e.id === s.nhanVienId);
+    const emp = employeeOptions.value.find((e) => e.id === s.nhanVienId);
     return emp ? emp.ma : 'N/A';
 };
 
 // Build danh sách chấm công từ schedules (mock từ dữ liệu lịch làm việc)
 const buildAttendanceRows = (schedules) => {
-    return schedules.map(s => ({
+    return schedules.map((s) => ({
         id: s.id,
         maNhanVien: getEmployeeCode(s),
         nhanVien: s.nhanVien,
@@ -164,9 +164,8 @@ const attendanceRows = computed(() => {
     let rows = buildAttendanceRows(items.value);
     if (filters.value.search) {
         const q = filters.value.search.toLowerCase();
-        rows = rows.filter(r =>
-            (r.nhanVien && r.nhanVien.toLowerCase().includes(q)) ||
-            (r.maNhanVien && r.maNhanVien.toLowerCase().includes(q))
+        rows = rows.filter(
+            (r) => (r.nhanVien && r.nhanVien.toLowerCase().includes(q)) || (r.maNhanVien && r.maNhanVien.toLowerCase().includes(q))
         );
     }
     if (filters.value.ngayTu || filters.value.ngayDen) {
@@ -197,19 +196,23 @@ const paginatedRows = computed(() => {
 import { watch } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 
-watch(attendanceRows, (newVal) => {
-    pagination.value.totalElements = newVal.length;
-    pagination.value.totalPages = Math.ceil(newVal.length / pagination.value.size);
-    if (pagination.value.page > pagination.value.totalPages) {
-        pagination.value.page = Math.max(1, pagination.value.totalPages);
-    }
-}, { immediate: true });
+watch(
+    attendanceRows,
+    (newVal) => {
+        pagination.value.totalElements = newVal.length;
+        pagination.value.totalPages = Math.ceil(newVal.length / pagination.value.size);
+        if (pagination.value.page > pagination.value.totalPages) {
+            pagination.value.page = Math.max(1, pagination.value.totalPages);
+        }
+    },
+    { immediate: true }
+);
 
 // Map ca -> class chip chung (nền nhạt + chữ màu), thay cho màu Vuetify chữ trắng
 const shiftChipMap = {
     'Ca Sáng': 'shift-chip-morning',
     'Ca Chiều': 'shift-chip-afternoon',
-    'Ca Tối': 'shift-chip-night',
+    'Ca Tối': 'shift-chip-night'
 };
 const getShiftChipClass = (ca) => shiftChipMap[ca] || 'shift-chip-default';
 
@@ -277,9 +280,9 @@ const openAddDialog = () => {
     const authStore = useAuthStore();
     const currentUser = authStore.user?.username;
     let defaultNhanVienId = null;
-    
+
     if (currentUser) {
-        const emp = employeeOptions.value.find(e => e.sdt === currentUser || e.ma === currentUser || e.username === currentUser);
+        const emp = employeeOptions.value.find((e) => e.sdt === currentUser || e.ma === currentUser || e.username === currentUser);
         if (emp) defaultNhanVienId = emp.id;
     }
 
@@ -288,7 +291,7 @@ const openAddDialog = () => {
     const today = now.toISOString().substr(0, 10);
 
     // Kiểm tra xem nhân viên này đã có ca chưa checkout trong ngày hôm nay chưa
-    const activeShift = attendanceRows.value.find(r => r.nhanVienId === defaultNhanVienId && r.ngay === today && r.gioVao && !r.gioRa);
+    const activeShift = attendanceRows.value.find((r) => r.nhanVienId === defaultNhanVienId && r.ngay === today && r.gioVao && !r.gioRa);
 
     if (activeShift) {
         // Mở dialog dưới dạng cập nhật giờ ra (checkout)
@@ -305,14 +308,15 @@ const openAddDialog = () => {
     } else {
         // Validation checkin: Chỉ cho phép chấm công trước 10 phút và trễ 15 phút so với giờ bắt đầu ca
         const currentMins = toMinutes(currentTime);
-        const myShiftsToday = attendanceRows.value.filter(r => r.nhanVienId === defaultNhanVienId && r.ngay === today && !r.gioVao);
-        
+        const myShiftsToday = attendanceRows.value.filter((r) => r.nhanVienId === defaultNhanVienId && r.ngay === today && !r.gioVao);
+
         let canCheckIn = false;
         let errorMessage = 'Hiện tại không có ca làm việc nào phù hợp để chấm công.';
-        
-        const shiftsToCheck = myShiftsToday.length > 0 
-            ? myShiftsToday.map(sched => rawShifts.value.find(s => s.tenCa === sched.ca)).filter(Boolean)
-            : rawShifts.value; // Nếu không có lịch, xét toàn bộ các ca có trong hệ thống
+
+        const shiftsToCheck =
+            myShiftsToday.length > 0
+                ? myShiftsToday.map((sched) => rawShifts.value.find((s) => s.tenCa === sched.ca)).filter(Boolean)
+                : rawShifts.value; // Nếu không có lịch, xét toàn bộ các ca có trong hệ thống
 
         for (const shiftObj of shiftsToCheck) {
             const startMins = toMinutes(shiftObj.gioBatDau);
@@ -336,7 +340,7 @@ const openAddDialog = () => {
         editId.value = null;
         form.value = { nhanVienId: defaultNhanVienId, ngay: today, gioVao: currentTime, gioRa: '', tangCa: 0, ghiChu: '' };
     }
-    
+
     showDialog.value = true;
 };
 
@@ -410,7 +414,9 @@ onMounted(loadData);
                     <v-text-field
                         v-model="filters.search"
                         placeholder="Tên hoặc mã nhân viên..."
-                        variant="outlined" density="compact" hide-details
+                        variant="outlined"
+                        density="compact"
+                        hide-details
                         prepend-inner-icon="mdi-magnify"
                         class="compact-input"
                         @input="handleFilter"
@@ -420,7 +426,14 @@ onMounted(loadData);
                     <div class="filter-field-label">Từ ngày</div>
                     <AppDatePicker
                         :model-value="filters.ngayTu"
-                        @update:model-value="val => { filters.ngayTu = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : todayStr; handleFilter(); }"
+                        @update:model-value="
+                            (val) => {
+                                filters.ngayTu = val
+                                    ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10)
+                                    : todayStr;
+                                handleFilter();
+                            }
+                        "
                         placeholder="Chọn từ ngày"
                     />
                 </v-col>
@@ -428,7 +441,14 @@ onMounted(loadData);
                     <div class="filter-field-label">Đến ngày</div>
                     <AppDatePicker
                         :model-value="filters.ngayDen"
-                        @update:model-value="val => { filters.ngayDen = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : todayStr; handleFilter(); }"
+                        @update:model-value="
+                            (val) => {
+                                filters.ngayDen = val
+                                    ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10)
+                                    : todayStr;
+                                handleFilter();
+                            }
+                        "
                         placeholder="Chọn đến ngày"
                     />
                 </v-col>
@@ -461,7 +481,13 @@ onMounted(loadData);
                 @add="openAddDialog"
             >
                 <template #extra-actions>
-                    <v-btn prepend-icon="mdi-face-recognition" variant="flat" color="primary" class="add-btn-primary mr-2" @click="openFaceScan">
+                    <v-btn
+                        prepend-icon="mdi-face-recognition"
+                        variant="flat"
+                        color="primary"
+                        class="add-btn-primary mr-2"
+                        @click="openFaceScan"
+                    >
                         Quét mặt
                     </v-btn>
                 </template>
@@ -483,7 +509,7 @@ onMounted(loadData);
                         <td class="data-cell text-center">
                             <div v-if="item.gioVao" class="time-chip time-in">
                                 <v-icon size="11" class="mr-1">mdi-login</v-icon>
-                                {{ item.gioVao.substring(0,5) }}
+                                {{ item.gioVao.substring(0, 5) }}
                             </div>
                             <span v-else class="text-slate-400 text-caption">--</span>
                         </td>
@@ -491,7 +517,7 @@ onMounted(loadData);
                         <td class="data-cell text-center">
                             <div v-if="item.gioRa" class="time-chip time-out">
                                 <v-icon size="11" class="mr-1">mdi-logout</v-icon>
-                                {{ item.gioRa.substring(0,5) }}
+                                {{ item.gioRa.substring(0, 5) }}
                             </div>
                             <span v-else class="text-slate-400 text-caption">--</span>
                         </td>
@@ -502,28 +528,23 @@ onMounted(loadData);
                                 size="small"
                                 variant="flat"
                                 :class="['shift-chip', getShiftChipClass(item.ca)]"
-                            >{{ item.ca }}</v-chip>
+                                >{{ item.ca }}</v-chip
+                            >
                             <span v-else class="text-slate-400 text-caption">--</span>
                         </td>
                         <!-- Số giờ thực tế -->
                         <td class="data-cell text-center">
-                            <span v-if="calcActualHours(item) > 0" class="hours-badge actual">
-                                {{ calcActualHours(item) }}h
-                            </span>
+                            <span v-if="calcActualHours(item) > 0" class="hours-badge actual"> {{ calcActualHours(item) }}h </span>
                             <span v-else class="text-slate-400 text-caption">--</span>
                         </td>
                         <!-- Giờ làm thêm -->
                         <td class="data-cell text-center">
-                            <span v-if="calcOvertimeHours(item) > 0" class="hours-badge overtime">
-                                +{{ calcOvertimeHours(item) }}h
-                            </span>
+                            <span v-if="calcOvertimeHours(item) > 0" class="hours-badge overtime"> +{{ calcOvertimeHours(item) }}h </span>
                             <span v-else class="text-slate-400 text-caption">--</span>
                         </td>
                         <!-- Tổng số giờ -->
                         <td class="data-cell text-center">
-                            <span v-if="calcTotalHours(item) > 0" class="hours-badge total">
-                                {{ calcTotalHours(item) }}h
-                            </span>
+                            <span v-if="calcTotalHours(item) > 0" class="hours-badge total"> {{ calcTotalHours(item) }}h </span>
                             <span v-else class="text-slate-400 text-caption">--</span>
                         </td>
                         <!-- Trạng thái -->
@@ -557,7 +578,6 @@ onMounted(loadData);
             </AdminTable>
         </div>
 
-
         <!-- Dialog ghi nhận giờ -->
         <v-dialog v-model="showDialog" max-width="480">
             <v-card class="rounded-xl pa-2">
@@ -575,15 +595,22 @@ onMounted(loadData);
                                 :item-title="(i) => `${i.ma} - ${i.ten}`"
                                 item-value="id"
                                 placeholder="Chọn nhân viên"
-                                variant="outlined" density="compact" hide-details
+                                variant="outlined"
+                                density="compact"
+                                hide-details
                             />
                         </v-col>
                         <v-col cols="12">
                             <div class="filter-field-label">Ngày làm</div>
-                            <AppDatePicker 
-                                :model-value="form.ngay" 
-                                @update:model-value="val => form.ngay = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : null" 
-                                placeholder="Chọn ngày" 
+                            <AppDatePicker
+                                :model-value="form.ngay"
+                                @update:model-value="
+                                    (val) =>
+                                        (form.ngay = val
+                                            ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10)
+                                            : null)
+                                "
+                                placeholder="Chọn ngày"
                             />
                         </v-col>
                         <v-col cols="6">
@@ -596,11 +623,26 @@ onMounted(loadData);
                         </v-col>
                         <v-col cols="12">
                             <div class="filter-field-label">Giờ tăng ca</div>
-                            <v-text-field v-model.number="form.tangCa" type="number" step="0.5" min="0" variant="outlined" density="compact" hide-details />
+                            <v-text-field
+                                v-model.number="form.tangCa"
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                variant="outlined"
+                                density="compact"
+                                hide-details
+                            />
                         </v-col>
                         <v-col cols="12">
                             <div class="filter-field-label">Ghi chú</div>
-                            <v-textarea v-model="form.ghiChu" placeholder="Ghi chú (nếu có)..." variant="outlined" density="compact" rows="2" hide-details />
+                            <v-textarea
+                                v-model="form.ghiChu"
+                                placeholder="Ghi chú (nếu có)..."
+                                variant="outlined"
+                                density="compact"
+                                rows="2"
+                                hide-details
+                            />
                         </v-col>
                     </v-row>
                 </v-card-text>
@@ -719,7 +761,7 @@ onMounted(loadData);
     border-radius: 14px;
     border: 1px solid #e2e8f0;
     background: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .summary-icon {
@@ -732,10 +774,18 @@ onMounted(loadData);
     background: #f8fafc;
 }
 
-.summary-total .summary-icon { background: #eff6ff; }
-.summary-present .summary-icon { background: #f0fdf4; }
-.summary-overtime .summary-icon { background: #fff7ed; }
-.summary-missing .summary-icon { background: #fef2f2; }
+.summary-total .summary-icon {
+    background: #eff6ff;
+}
+.summary-present .summary-icon {
+    background: #f0fdf4;
+}
+.summary-overtime .summary-icon {
+    background: #fff7ed;
+}
+.summary-missing .summary-icon {
+    background: #fef2f2;
+}
 
 .summary-value {
     font-size: 22px;

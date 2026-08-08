@@ -11,8 +11,6 @@ const props = defineProps({
     }
 });
 
-
-
 const currentIndex = ref(0);
 const rotationY = ref(0);
 const rotationX = ref(-10);
@@ -30,7 +28,15 @@ const decoratedProducts = computed(() => {
             { label: 'CHẤT LIỆU', value: p.chatLieu || 'CAO CẤP' },
             { label: 'ĐẾ GIÀY', value: p.deGiay || 'ÊM ÁI' },
             { label: 'SỐ LƯỢNG TỒN', value: `${p.tongSoLuongTon ?? p.raw?.tongSoLuongTon ?? p.soLuong ?? 0} sản phẩm` },
-            { label: 'GIÁ CHỈ TỪ', value: (p.giaBanThapNhat ?? p.raw?.giaBanThapNhat) ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.giaBanThapNhat ?? p.raw?.giaBanThapNhat) : 'Liên hệ' }
+            {
+                label: 'GIÁ CHỈ TỪ',
+                value:
+                    (p.giaBanThapNhat ?? p.raw?.giaBanThapNhat)
+                        ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                              p.giaBanThapNhat ?? p.raw?.giaBanThapNhat
+                          )
+                        : 'Liên hệ'
+            }
         ],
         image: p.imageUrl || '',
         modelUrl: p.modelUrl || ''
@@ -168,7 +174,14 @@ onUnmounted(() => {
                                         shadow-intensity="1"
                                         environment-image="neutral"
                                         class="shoe-img object-contain"
-                                        :style="{ width: '100%', maxWidth: '450px', height: '350px', zIndex: 10, position: 'relative', outline: 'none' }"
+                                        :style="{
+                                            width: '100%',
+                                            maxWidth: '450px',
+                                            height: '350px',
+                                            zIndex: 10,
+                                            position: 'relative',
+                                            outline: 'none'
+                                        }"
                                     ></model-viewer>
                                     <div class="shoe-glow"></div>
                                 </div>
@@ -212,8 +225,15 @@ onUnmounted(() => {
                                     ></v-btn>
                                     <v-btn icon="mdi-chevron-right" variant="flat" color="black" rounded="lg" @click="nextProduct"></v-btn>
                                 </div>
-                                <div class="mt-4" style="width: 100%;">
-                                    <v-btn block color="blue-darken-4" size="large" rounded="lg" class="mt-4" :to="`/product/${activeProduct.id}`">
+                                <div class="mt-4" style="width: 100%">
+                                    <v-btn
+                                        block
+                                        color="blue-darken-4"
+                                        size="large"
+                                        rounded="lg"
+                                        class="mt-4"
+                                        :to="`/product/${activeProduct.id}`"
+                                    >
                                         MUA NGAY
                                     </v-btn>
                                 </div>

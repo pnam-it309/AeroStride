@@ -8,7 +8,7 @@ import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import { useNotifications } from '@/services/notificationService';
 import { formatCurrency, formatDateTime, readMoneyInVietnameseWords } from '@/utils/formatters';
 import {
-    StoreIcon,
+    BuildingStoreIcon,
     CashIcon,
     ClockIcon,
     UserCheckIcon,
@@ -17,7 +17,7 @@ import {
     PlusIcon,
     RefreshIcon,
     CalculatorIcon,
-    CheckCircleIcon,
+    CircleCheckIcon,
     HistoryIcon,
     FileTextIcon
 } from 'vue-tabler-icons';
@@ -83,7 +83,7 @@ const calculatedTotalFromDenominations = computed(() => {
 
 const openCashCounter = (target) => {
     cashCounterTarget.value = target;
-    denominations.value.forEach(d => d.count = 0);
+    denominations.value.forEach((d) => (d.count = 0));
     showCashCounterModal.value = true;
 };
 
@@ -94,7 +94,11 @@ const applyCashCounter = () => {
         closeShiftForm.value.tienThucTe = calculatedTotalFromDenominations.value;
     }
     showCashCounterModal.value = false;
-    addNotification({ title: 'Thành công', subtitle: `Đã áp dụng tổng tiền ${formatCurrency(calculatedTotalFromDenominations.value)}`, color: 'success' });
+    addNotification({
+        title: 'Thành công',
+        subtitle: `Đã áp dụng tổng tiền ${formatCurrency(calculatedTotalFromDenominations.value)}`,
+        color: 'success'
+    });
 };
 
 // In-Shift Transactions & Income/Expense State
@@ -128,11 +132,11 @@ const addPhatSinh = () => {
 };
 
 const removePhatSinh = (id) => {
-    listPhatSinh.value = listPhatSinh.value.filter(item => item.id !== id);
+    listPhatSinh.value = listPhatSinh.value.filter((item) => item.id !== id);
 };
 
-const tongThuPhatSinh = computed(() => listPhatSinh.value.filter(i => i.loai === 'THU').reduce((s, i) => s + i.soTien, 0));
-const tongChiPhatSinh = computed(() => listPhatSinh.value.filter(i => i.loai === 'CHI').reduce((s, i) => s + i.soTien, 0));
+const tongThuPhatSinh = computed(() => listPhatSinh.value.filter((i) => i.loai === 'THU').reduce((s, i) => s + i.soTien, 0));
+const tongChiPhatSinh = computed(() => listPhatSinh.value.filter((i) => i.loai === 'CHI').reduce((s, i) => s + i.soTien, 0));
 
 // Revenue & Financials Calculation
 const tienDauCa = computed(() => activeCa.value?.tienBanDau || openShiftForm.value.tienBanDau || 0);
@@ -141,7 +145,7 @@ const doanhThuChuyenKhoan = computed(() => activeCa.value?.doanhThuChuyenKhoan |
 const tongDoanhThuCa = computed(() => doanhThuTienMat.value + doanhThuChuyenKhoan.value);
 
 const tongTienKetiDukien = computed(() => {
-    return (tienDauCa.value + doanhThuTienMat.value + tongThuPhatSinh.value) - tongChiPhatSinh.value;
+    return tienDauCa.value + doanhThuTienMat.value + tongThuPhatSinh.value - tongChiPhatSinh.value;
 });
 
 const chenhLechTien = computed(() => {
@@ -156,7 +160,7 @@ const fetchCurrentShift = async () => {
         const data = res?.data || res;
         if (data && data.id) {
             activeCa.value = data;
-            closeShiftForm.value.tienThucTe = data.tienThucTe || (data.tienBanDau + (data.tongDoanhThu || 0));
+            closeShiftForm.value.tienThucTe = data.tienThucTe || data.tienBanDau + (data.tongDoanhThu || 0);
         } else {
             activeCa.value = null;
         }
@@ -205,8 +209,8 @@ const handleMoCa = async () => {
     submitting.value = true;
     try {
         const currentUsername = authStore.user?.username;
-        const me = listNhanVien.value.find(e => e.tenTaiKhoan === currentUsername);
-        
+        const me = listNhanVien.value.find((e) => e.tenTaiKhoan === currentUsername);
+
         await dichVuGiaoCa.moCa({
             nhanVienId: me ? me.id : null,
             tienBanDau: openShiftForm.value.tienBanDau,
@@ -269,7 +273,7 @@ const getStatusBadge = (status) => {
             <div class="pa-5 bg-gradient-primary text-white d-flex flex-wrap align-center justify-space-between gap-3">
                 <div class="d-flex align-center">
                     <v-avatar color="white" class="mr-4 elevation-2" size="48">
-                        <StoreIcon class="text-primary" size="28" />
+                        <BuildingStoreIcon class="text-primary" size="28" />
                     </v-avatar>
                     <div>
                         <h2 class="text-h5 font-weight-bold mb-1">Màn Hình Bàn Giao Ca Làm Việc</h2>
@@ -278,7 +282,14 @@ const getStatusBadge = (status) => {
                         </div>
                     </div>
                 </div>
-                <v-btn color="white" variant="tonal" class="rounded-pill px-4" prepend-icon="mdi-refresh" @click="fetchCurrentShift" :loading="loading">
+                <v-btn
+                    color="white"
+                    variant="tonal"
+                    class="rounded-pill px-4"
+                    prepend-icon="mdi-refresh"
+                    @click="fetchCurrentShift"
+                    :loading="loading"
+                >
                     Cập nhật dữ liệu
                 </v-btn>
             </div>
@@ -291,7 +302,7 @@ const getStatusBadge = (status) => {
                         <div class="d-flex align-center justify-center">
                             <v-avatar
                                 :color="currentStep >= s.number ? 'primary' : 'grey-lighten-2'"
-                                :class="{'text-white': currentStep >= s.number, 'text-grey-darken-1': currentStep < s.number}"
+                                :class="{ 'text-white': currentStep >= s.number, 'text-grey-darken-1': currentStep < s.number }"
                                 size="36"
                                 class="font-weight-bold mr-3 elevation-1"
                             >
@@ -325,7 +336,8 @@ const getStatusBadge = (status) => {
                         <h3 class="text-h6 font-weight-bold">Bắt Đầu Ca Làm Việc Mới (Mở Ca)</h3>
                     </div>
                     <v-alert type="info" variant="tonal" class="rounded-lg mb-5 text-body-2" icon="mdi-information-outline">
-                        Bạn chưa có ca làm việc đang mở. Vui lòng kiểm đếm tiền két đầu ca và thực hiện Mở ca để bắt đầu thực hiện bán hàng & giao dịch.
+                        Bạn chưa có ca làm việc đang mở. Vui lòng kiểm đếm tiền két đầu ca và thực hiện Mở ca để bắt đầu thực hiện bán hàng
+                        & giao dịch.
                     </v-alert>
 
                     <v-form @submit.prevent="handleMoCa">
@@ -346,14 +358,22 @@ const getStatusBadge = (status) => {
                                 hide-details="auto"
                             >
                                 <template v-slot:append-inner>
-                                    <v-btn size="small" color="primary" variant="tonal" class="rounded-pill px-3" @click="openCashCounter('open')">
+                                    <v-btn
+                                        size="small"
+                                        color="primary"
+                                        variant="tonal"
+                                        class="rounded-pill px-3"
+                                        @click="openCashCounter('open')"
+                                    >
                                         <CalculatorIcon size="16" class="mr-1" /> Đếm tiền mệnh giá
                                     </v-btn>
                                 </template>
                             </v-text-field>
-                            
+
                             <!-- DIỄN GIẢI BẰNG CHỮ -->
-                            <div class="mt-2 text-caption bg-primary-lighten-5 text-primary font-weight-medium pa-2 rounded-lg border border-primary-lighten-4">
+                            <div
+                                class="mt-2 text-caption bg-primary-lighten-5 text-primary font-weight-medium pa-2 rounded-lg border border-primary-lighten-4"
+                            >
                                 <strong>Bằng chữ:</strong> {{ readMoneyInVietnameseWords(openShiftForm.tienBanDau) }}
                             </div>
                         </div>
@@ -380,8 +400,15 @@ const getStatusBadge = (status) => {
                             hide-details
                         ></v-checkbox>
 
-                        <v-btn type="submit" color="primary" block size="large" class="rounded-lg font-weight-bold text-subtitle-1 py-3" :loading="submitting">
-                            <CheckCircleIcon class="mr-2" /> Xác Nhận Mở Ca Làm Việc
+                        <v-btn
+                            type="submit"
+                            color="primary"
+                            block
+                            size="large"
+                            class="rounded-lg font-weight-bold text-subtitle-1 py-3"
+                            :loading="submitting"
+                        >
+                            <CircleCheckIcon class="mr-2" /> Xác Nhận Mở Ca Làm Việc
                         </v-btn>
                     </v-form>
                 </v-card>
@@ -393,7 +420,10 @@ const getStatusBadge = (status) => {
                             <ClockIcon size="28" class="text-primary mr-2" />
                             <div>
                                 <h3 class="text-h6 font-weight-bold">Ca Làm Việc Hiện Tại</h3>
-                                <div class="text-caption text-grey">Mã ca: #{{ activeCa.id }} | Nhân viên: <strong>{{ activeCa.nhanVienTen || authStore.user?.ten }}</strong></div>
+                                <div class="text-caption text-grey">
+                                    Mã ca: #{{ activeCa.id }} | Nhân viên:
+                                    <strong>{{ activeCa.nhanVienTen || authStore.user?.ten }}</strong>
+                                </div>
                             </div>
                         </div>
                         <v-chip color="success" class="font-weight-bold" variant="flat">
@@ -436,33 +466,46 @@ const getStatusBadge = (status) => {
                                 hide-details="auto"
                             >
                                 <template v-slot:append-inner>
-                                    <v-btn size="small" color="primary" variant="tonal" class="rounded-pill px-3" @click="openCashCounter('close')">
+                                    <v-btn
+                                        size="small"
+                                        color="primary"
+                                        variant="tonal"
+                                        class="rounded-pill px-3"
+                                        @click="openCashCounter('close')"
+                                    >
                                         <CalculatorIcon size="16" class="mr-1" /> Đếm tiền mệnh giá
                                     </v-btn>
                                 </template>
                             </v-text-field>
 
                             <!-- DIỄN GIẢI CHỮ TIỀN THỰC TẾ -->
-                            <div class="mt-2 text-caption bg-primary-lighten-5 text-primary font-weight-medium pa-2 rounded-lg border border-primary-lighten-4">
+                            <div
+                                class="mt-2 text-caption bg-primary-lighten-5 text-primary font-weight-medium pa-2 rounded-lg border border-primary-lighten-4"
+                            >
                                 <strong>Bằng chữ:</strong> {{ readMoneyInVietnameseWords(closeShiftForm.tienThucTe) }}
                             </div>
                         </div>
 
                         <!-- CHÊNH LỆCH SO VỚI DỰ KIẾN HỆ THỐNG -->
                         <v-alert
-                            :type="chenhLechTien === 0 ? 'success' : (chenhLechTien > 0 ? 'info' : 'warning')"
+                            :type="chenhLechTien === 0 ? 'success' : chenhLechTien > 0 ? 'info' : 'warning'"
                             variant="tonal"
                             class="rounded-lg mb-4 text-body-2"
                         >
                             <div class="d-flex justify-space-between align-center">
-                                <div>
-                                    <strong>Tiền mặt dự kiến két hệ thống:</strong> {{ formatCurrency(tongTienKetiDukien) }}
-                                </div>
+                                <div><strong>Tiền mặt dự kiến két hệ thống:</strong> {{ formatCurrency(tongTienKetiDukien) }}</div>
                                 <div class="text-right">
-                                    <strong>Chênh lệch:</strong> 
-                                    <span :class="{'text-success': chenhLechTien === 0, 'text-info': chenhLechTien > 0, 'text-error font-weight-bold': chenhLechTien < 0}">
-                                        {{ chenhLechTien > 0 ? '+' : '' }}{{ formatCurrency(chenhLechTien) }}
-                                        ({{ chenhLechTien === 0 ? 'Khớp tiền' : (chenhLechTien > 0 ? 'Thừa tiền' : 'Thiếu tiền') }})
+                                    <strong>Chênh lệch:</strong>
+                                    <span
+                                        :class="{
+                                            'text-success': chenhLechTien === 0,
+                                            'text-info': chenhLechTien > 0,
+                                            'text-error font-weight-bold': chenhLechTien < 0
+                                        }"
+                                    >
+                                        {{ chenhLechTien > 0 ? '+' : '' }}{{ formatCurrency(chenhLechTien) }} ({{
+                                            chenhLechTien === 0 ? 'Khớp tiền' : chenhLechTien > 0 ? 'Thừa tiền' : 'Thiếu tiền'
+                                        }})
                                     </span>
                                 </div>
                             </div>
@@ -503,8 +546,15 @@ const getStatusBadge = (status) => {
                             ></v-textarea>
                         </div>
 
-                        <v-btn type="submit" color="error" block size="large" class="rounded-lg font-weight-bold text-subtitle-1 py-3" :loading="submitting">
-                            <CheckCircleIcon class="mr-2" /> Chốt Ca & Gửi Bàn Giao Ca
+                        <v-btn
+                            type="submit"
+                            color="error"
+                            block
+                            size="large"
+                            class="rounded-lg font-weight-bold text-subtitle-1 py-3"
+                            :loading="submitting"
+                        >
+                            <CircleCheckIcon class="mr-2" /> Chốt Ca & Gửi Bàn Giao Ca
                         </v-btn>
                     </v-form>
                 </v-card>
@@ -518,7 +568,14 @@ const getStatusBadge = (status) => {
                             <ReceiptIcon size="24" class="text-primary mr-2" />
                             <h3 class="text-h6 font-weight-bold">Tổng Hợp Doanh Thu Ca</h3>
                         </div>
-                        <v-btn color="primary" size="small" variant="tonal" class="rounded-pill" prepend-icon="mdi-plus" @click="showIncomeExpenseModal = true">
+                        <v-btn
+                            color="primary"
+                            size="small"
+                            variant="tonal"
+                            class="rounded-pill"
+                            prepend-icon="mdi-plus"
+                            @click="showIncomeExpenseModal = true"
+                        >
                             Ghi Thu/Chi
                         </v-btn>
                     </div>
@@ -552,7 +609,9 @@ const getStatusBadge = (status) => {
 
                         <v-divider class="my-3"></v-divider>
 
-                        <div class="d-flex justify-space-between align-center pa-3 rounded-lg bg-primary-lighten-5 border border-primary-lighten-3">
+                        <div
+                            class="d-flex justify-space-between align-center pa-3 rounded-lg bg-primary-lighten-5 border border-primary-lighten-3"
+                        >
                             <span class="text-subtitle-2 font-weight-bold text-primary">TỔNG TIỀN DỰ KIẾN KÉT:</span>
                             <span class="text-h6 font-weight-black text-primary">{{ formatCurrency(tongTienKetiDukien) }}</span>
                         </div>
@@ -570,7 +629,9 @@ const getStatusBadge = (status) => {
                                 </template>
                                 <v-list-item-title class="text-body-2 font-weight-medium">{{ item.lyDo }}</v-list-item-title>
                                 <template v-slot:append>
-                                    <span :class="['font-weight-bold text-body-2 mr-2', item.loai === 'THU' ? 'text-success' : 'text-error']">
+                                    <span
+                                        :class="['font-weight-bold text-body-2 mr-2', item.loai === 'THU' ? 'text-success' : 'text-error']"
+                                    >
                                         {{ item.loai === 'THU' ? '+' : '-' }}{{ formatCurrency(item.soTien) }}
                                     </span>
                                     <v-btn icon size="x-small" color="error" variant="text" @click="removePhatSinh(item.id)">
@@ -606,7 +667,12 @@ const getStatusBadge = (status) => {
                     <td class="data-cell text-right text-success font-weight-bold">{{ formatCurrency(item.tongDoanhThu) }}</td>
                     <td class="data-cell text-right">{{ formatCurrency(item.tienThucTe) }}</td>
                     <td class="data-cell text-right">
-                        <span :class="['font-weight-bold', (item.tienThucTe - (item.tienBanDau + item.tongDoanhThu)) < 0 ? 'text-error' : 'text-success']">
+                        <span
+                            :class="[
+                                'font-weight-bold',
+                                item.tienThucTe - (item.tienBanDau + item.tongDoanhThu) < 0 ? 'text-error' : 'text-success'
+                            ]"
+                        >
                             {{ formatCurrency(item.tienThucTe - (item.tienBanDau + item.tongDoanhThu)) }}
                         </span>
                     </td>
@@ -620,14 +686,11 @@ const getStatusBadge = (status) => {
             </template>
         </AdminTable>
 
-
         <!-- MODAL ĐẾM TIỀN MỆNH GIÁ -->
         <v-dialog v-model="showCashCounterModal" max-width="600" persistent>
             <v-card class="rounded-xl pa-2">
                 <v-card-title class="pa-4 bg-primary text-white font-weight-bold d-flex align-center justify-space-between rounded-t-lg">
-                    <div class="d-flex align-center">
-                        <CalculatorIcon class="mr-2" /> Công Cụ Đếm Tiền Theo Mệnh Giá
-                    </div>
+                    <div class="d-flex align-center"><CalculatorIcon class="mr-2" /> Công Cụ Đếm Tiền Theo Mệnh Giá</div>
                     <v-btn icon size="small" variant="text" color="white" @click="showCashCounterModal = false">
                         <v-icon>mdi-close</v-icon>
                     </v-btn>
@@ -660,7 +723,9 @@ const getStatusBadge = (status) => {
                     <div class="pa-3 bg-primary-lighten-5 rounded-lg border border-primary-lighten-3">
                         <div class="d-flex justify-space-between align-center mb-1">
                             <span class="font-weight-bold text-subtitle-1 text-primary">TỔNG TIỀN ĐẾM ĐƯỢC:</span>
-                            <span class="text-h6 font-weight-black text-primary">{{ formatCurrency(calculatedTotalFromDenominations) }}</span>
+                            <span class="text-h6 font-weight-black text-primary">{{
+                                formatCurrency(calculatedTotalFromDenominations)
+                            }}</span>
                         </div>
                         <div class="text-caption text-primary">
                             <strong>Bằng chữ:</strong> {{ readMoneyInVietnameseWords(calculatedTotalFromDenominations) }}

@@ -10,7 +10,7 @@ export const dichVuKhachHang = {
             throw error;
         }
     },
-    
+
     // Cập nhật thông tin cá nhân
     capNhatHoSo: async (data) => {
         try {
@@ -20,7 +20,7 @@ export const dichVuKhachHang = {
             throw error;
         }
     },
-    
+
     // Đổi mật khẩu
     doiMatKhau: async (data) => {
         try {

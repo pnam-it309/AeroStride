@@ -41,7 +41,7 @@ export const useAuthStore = defineStore('auth', {
             await dichVuXacThuc.dangXuat();
             this.user = null;
             this.accessToken = null;
-            
+
             // Xóa giỏ hàng khi đăng xuất
             const { useCartStore } = await import('@/stores/cartStore');
             const cartStore = useCartStore();

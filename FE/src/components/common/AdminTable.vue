@@ -31,21 +31,42 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                     <h3 class="text-h6 font-weight-bold text-black tracking-tight">{{ title }}</h3>
                 </div>
                 <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions">
-                    <v-btn v-if="showTemplateButton" prepend-icon="mdi-download" variant="flat"
-                        class="admin-btn-secondary" @click="$emit('downloadTemplate')">
+                    <v-btn
+                        v-if="showTemplateButton"
+                        prepend-icon="mdi-download"
+                        variant="flat"
+                        class="admin-btn-secondary"
+                        @click="$emit('downloadTemplate')"
+                    >
                         Tải mẫu
                     </v-btn>
-                    <v-btn v-if="showImportButton" prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary"
-                        @click="$emit('import')">
+                    <v-btn
+                        v-if="showImportButton"
+                        prepend-icon="mdi-upload"
+                        variant="flat"
+                        class="admin-btn-secondary"
+                        @click="$emit('import')"
+                    >
                         Nhập Excel
                     </v-btn>
-                    <v-btn v-if="showExportButton" prepend-icon="mdi-microsoft-excel" variant="flat"
-                        class="admin-btn-export" @click="$emit('export')">
+                    <v-btn
+                        v-if="showExportButton"
+                        prepend-icon="mdi-microsoft-excel"
+                        variant="flat"
+                        class="admin-btn-export"
+                        @click="$emit('export')"
+                    >
                         {{ exportButtonText }}
                     </v-btn>
                     <slot name="extra-actions"></slot>
-                    <v-btn v-if="showAddButton" prepend-icon="mdi-plus" variant="flat" color="primary"
-                        class="add-btn-primary" @click="$emit('add', $event)">
+                    <v-btn
+                        v-if="showAddButton"
+                        prepend-icon="mdi-plus"
+                        variant="flat"
+                        color="primary"
+                        class="add-btn-primary"
+                        @click="$emit('add', $event)"
+                    >
                         {{ addButtonText }}
                     </v-btn>
                 </div>
@@ -54,7 +75,6 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
             <!-- Top Slot Area -->
             <div v-if="$slots.top" class="table-top">
                 <slot name="top"></slot>
-
             </div>
 
             <!-- Main Table -->
@@ -66,10 +86,15 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                                 <th v-if="selectable" style="width: 50px" class="header-cell text-center px-0">
                                     <slot name="header-select"></slot>
                                 </th>
-                                <th v-for="(header, idx) in headers" :key="idx"
-                                    :style="{ width: header.width || 'auto' }" :class="['header-cell',
-                                        header.align === 'start' ? 'text-left' :
-                                            header.align === 'end' ? 'text-right' : 'text-center']">
+                                <th
+                                    v-for="(header, idx) in headers"
+                                    :key="idx"
+                                    :style="{ width: header.width || 'auto' }"
+                                    :class="[
+                                        'header-cell',
+                                        header.align === 'start' ? 'text-left' : header.align === 'end' ? 'text-right' : 'text-center'
+                                    ]"
+                                >
                                     {{ header.text || header }}
                                 </th>
                             </tr>
@@ -81,16 +106,23 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                         </template>
                     </tbody>
                 </table>
-                
+
                 <!-- Render empty state outside the table to avoid table-layout: fixed colspan bugs -->
-                <div v-if="loading || items.length === 0" class="empty-state-wrapper py-10 w-100 d-flex flex-column align-center justify-center border-t">
+                <div
+                    v-if="loading || items.length === 0"
+                    class="empty-state-wrapper py-10 w-100 d-flex flex-column align-center justify-center border-t"
+                >
                     <div v-if="loading" class="d-flex flex-column align-center justify-center w-100">
                         <v-progress-circular indeterminate color="primary" size="48" width="6" class="mb-4" />
                         <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">Đang tải dữ liệu...</span>
                     </div>
                     <div v-else class="d-flex flex-column align-center justify-center py-8 w-100">
-                        <v-icon :icon="emptyIcon" size="48" style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
-                        <span class="text-slate-500 text-center" style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block;">{{ emptyText }}</span>
+                        <v-icon :icon="emptyIcon" size="48" style="color: #94a3b8 !important; opacity: 0.6" class="mb-3" />
+                        <span
+                            class="text-slate-500 text-center"
+                            style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block"
+                            >{{ emptyText }}</span
+                        >
                     </div>
                 </div>
             </div>

@@ -133,173 +133,190 @@ onMounted(() => {
                 <p class="text-subtitle-1 text-slate-500">Quản lý giao dịch và phương thức thanh toán hệ thống</p>
             </div>
         </div>
-                <!-- Statistics Cards -->
-                <v-row class="mb-4">
-                    <v-col cols="12" sm="6" md="3">
-                        <v-card class="premium-card pa-6 h-100">
-                            <div class="d-flex align-center justify-space-between mb-2">
-                                <div class="icon-blob bg-primary-light">
-                                    <v-icon color="primary">mdi-currency-usd</v-icon>
+        <!-- Statistics Cards -->
+        <v-row class="mb-4">
+            <v-col cols="12" sm="6" md="3">
+                <v-card class="premium-card pa-6 h-100">
+                    <div class="d-flex align-center justify-space-between mb-2">
+                        <div class="icon-blob bg-primary-light">
+                            <v-icon color="primary">mdi-currency-usd</v-icon>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-caption text-slate-500 text-uppercase mb-1">Tổng doanh thu</p>
+                        <p class="text-h5 font-weight-bold text-dark">{{ formatCurrency(statistics.totalRevenue) }}</p>
+                    </div>
+                </v-card>
+            </v-col>
+            <v-col cols="12" sm="6" md="3">
+                <v-card class="premium-card pa-6 h-100">
+                    <div class="d-flex align-center justify-space-between mb-2">
+                        <div class="icon-blob bg-success-light">
+                            <v-icon color="success">mdi-trending-up</v-icon>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-caption text-slate-500 text-uppercase mb-1">Doanh thu hôm nay</p>
+                        <p class="text-h5 font-weight-bold text-dark">{{ formatCurrency(statistics.todayRevenue) }}</p>
+                    </div>
+                </v-card>
+            </v-col>
+            <v-col cols="12" sm="6" md="3">
+                <v-card class="premium-card pa-6 h-100">
+                    <div class="d-flex align-center justify-space-between mb-2">
+                        <div class="icon-blob bg-info-light">
+                            <v-icon color="info">mdi-check-circle</v-icon>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-caption text-slate-500 text-uppercase mb-1">Thành công</p>
+                        <p class="text-h5 font-weight-bold text-dark">{{ statistics.successfulPayments }} GD</p>
+                    </div>
+                </v-card>
+            </v-col>
+            <v-col cols="12" sm="6" md="3">
+                <v-card class="premium-card pa-6 h-100">
+                    <div class="d-flex align-center justify-space-between mb-2">
+                        <div class="icon-blob bg-warning-light">
+                            <v-icon color="warning">mdi-cash-refund</v-icon>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-caption text-slate-500 text-uppercase mb-1">Số tiền hoàn</p>
+                        <p class="text-h5 font-weight-bold text-dark">{{ formatCurrency(statistics.refundAmount) }}</p>
+                    </div>
+                </v-card>
+            </v-col>
+        </v-row>
+
+        <!-- Content Tabs -->
+        <v-card class="premium-card mt-6">
+            <v-tabs
+                v-model="selectedTab"
+                class="equal-tabs bg-slate-50"
+                color="primary"
+                @update:model-value="selectedTab === 'methods' ? loadPaymentMethods() : loadTransactions()"
+            >
+                <v-tab value="transactions">Giao dịch hệ thống</v-tab>
+                <v-tab value="methods">Phương thức thanh toán</v-tab>
+            </v-tabs>
+
+            <v-divider></v-divider>
+
+            <!-- Search & Filters -->
+            <div v-if="selectedTab === 'transactions'" class="pa-6 pb-0">
+                <div class="filter-field-label">Tìm kiếm giao dịch</div>
+                <v-text-field
+                    v-model="searchQuery"
+                    placeholder="Mã giao dịch, tên khách hàng..."
+                    prepend-inner-icon="mdi-magnify"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    class="bg-white"
+                    @keyup.enter="handleSearch"
+                ></v-text-field>
+            </div>
+
+            <!-- Transactions Table -->
+            <v-card-text v-if="selectedTab === 'transactions'" class="pa-0">
+                <div class="admin-table-container border-0 rounded-0 mt-4 overflow-hidden">
+                    <table class="native-admin-table">
+                        <thead>
+                            <tr>
+                                <th class="header-cell">Mã giao dịch</th>
+                                <th class="header-cell">Khách hàng</th>
+                                <th class="header-cell text-right">Số tiền</th>
+                                <th class="header-cell">Phương thức</th>
+                                <th class="header-cell">Trạng thái</th>
+                                <th class="header-cell">Ngày tạo</th>
+                                <th class="header-cell text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-if="loading">
+                                <td colspan="7" class="text-center py-12">
+                                    <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                                </td>
+                            </tr>
+                            <tr v-else-if="transactions.length === 0">
+                                <td colspan="7" class="text-center py-12">
+                                    <v-icon size="48" color="slate-200" class="mb-4">mdi-receipt-outline</v-icon>
+                                    <p class="text-slate-500">Không tìm thấy giao dịch nào</p>
+                                </td>
+                            </tr>
+                            <tr v-for="transaction in transactions" :key="transaction.id" class="data-row">
+                                <td class="data-cell">
+                                    <span class="mono-font">{{ transaction.transactionCode }}</span>
+                                </td>
+                                <td class="data-cell">{{ transaction.customerName }}</td>
+                                <td class="data-cell text-right text-primary">{{ formatCurrency(transaction.amount) }}</td>
+                                <td class="data-cell">{{ transaction.paymentMethod }}</td>
+                                <td class="data-cell">
+                                    <v-chip
+                                        :color="getStatusColor(transaction.status)"
+                                        variant="tonal"
+                                        size="small"
+                                        class="status-chip px-3"
+                                    >
+                                        {{ getStatusText(transaction.status) }}
+                                    </v-chip>
+                                </td>
+                                <td class="data-cell text-slate-500">{{ formatDate(transaction.createdAt) }}</td>
+                                <td class="data-cell text-right">
+                                    <div class="action-controls justify-end">
+                                        <v-btn icon class="action-icon-btn" color="info">
+                                            <v-icon size="20">mdi-eye</v-icon>
+                                        </v-btn>
+                                        <v-btn
+                                            v-if="transaction.status === 'success'"
+                                            icon
+                                            class="action-icon-btn"
+                                            color="warning"
+                                            @click="refundPayment(transaction.id)"
+                                        >
+                                            <v-icon size="20">mdi-cash-refund</v-icon>
+                                        </v-btn>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pa-6 pt-0 d-flex justify-end">
+                    <v-pagination
+                        v-if="pagination.total > pagination.itemsPerPage"
+                        v-model="pagination.page"
+                        :length="Math.ceil(pagination.total / pagination.itemsPerPage)"
+                        @update:model-value="loadTransactions"
+                        density="compact"
+                        active-color="primary"
+                    ></v-pagination>
+                </div>
+            </v-card-text>
+
+            <!-- Payment Methods -->
+            <v-card-text v-if="selectedTab === 'methods'" class="pa-6">
+                <v-row>
+                    <v-col v-for="method in paymentMethods" :key="method.id" cols="12" sm="6" md="4">
+                        <v-card class="pa-5 border rounded-xl bg-slate-50 hover-addr-card h-100">
+                            <div class="d-flex align-center justify-space-between mb-4">
+                                <div class="icon-blob" :class="method.status === 'active' ? 'bg-primary-light' : 'bg-slate-200'">
+                                    <v-icon :color="method.status === 'active' ? 'primary' : 'slate-500'">{{ method.icon }}</v-icon>
                                 </div>
+                                <v-chip :color="method.status === 'active' ? 'success' : 'error'" variant="tonal" size="x-small">
+                                    {{ method.status === 'active' ? 'Hoạt động' : 'Đã tắt' }}
+                                </v-chip>
                             </div>
-                            <div>
-                                <p class="text-caption text-slate-500 text-uppercase mb-1">Tổng doanh thu</p>
-                                <p class="text-h5 font-weight-bold text-dark">{{ formatCurrency(statistics.totalRevenue) }}</p>
-                            </div>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="12" sm="6" md="3">
-                        <v-card class="premium-card pa-6 h-100">
-                            <div class="d-flex align-center justify-space-between mb-2">
-                                <div class="icon-blob bg-success-light">
-                                    <v-icon color="success">mdi-trending-up</v-icon>
-                                </div>
-                            </div>
-                            <div>
-                                <p class="text-caption text-slate-500 text-uppercase mb-1">Doanh thu hôm nay</p>
-                                <p class="text-h5 font-weight-bold text-dark">{{ formatCurrency(statistics.todayRevenue) }}</p>
-                            </div>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="12" sm="6" md="3">
-                        <v-card class="premium-card pa-6 h-100">
-                            <div class="d-flex align-center justify-space-between mb-2">
-                                <div class="icon-blob bg-info-light">
-                                    <v-icon color="info">mdi-check-circle</v-icon>
-                                </div>
-                            </div>
-                            <div>
-                                <p class="text-caption text-slate-500 text-uppercase mb-1">Thành công</p>
-                                <p class="text-h5 font-weight-bold text-dark">{{ statistics.successfulPayments }} GD</p>
-                            </div>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="12" sm="6" md="3">
-                        <v-card class="premium-card pa-6 h-100">
-                            <div class="d-flex align-center justify-space-between mb-2">
-                                <div class="icon-blob bg-warning-light">
-                                    <v-icon color="warning">mdi-cash-refund</v-icon>
-                                </div>
-                            </div>
-                            <div>
-                                <p class="text-caption text-slate-500 text-uppercase mb-1">Số tiền hoàn</p>
-                                <p class="text-h5 font-weight-bold text-dark">{{ formatCurrency(statistics.refundAmount) }}</p>
-                            </div>
+                            <h3 class="text-h6 font-weight-bold text-dark mb-1">{{ method.name }}</h3>
+                            <p class="text-body-2 text-slate-500 leading-relaxed">{{ method.description }}</p>
                         </v-card>
                     </v-col>
                 </v-row>
-
-                <!-- Content Tabs -->
-                <v-card class="premium-card mt-6">
-                    <v-tabs v-model="selectedTab" class="equal-tabs bg-slate-50" color="primary"
-                        @update:model-value="selectedTab === 'methods' ? loadPaymentMethods() : loadTransactions()">
-                        <v-tab value="transactions">Giao dịch hệ thống</v-tab>
-                        <v-tab value="methods">Phương thức thanh toán</v-tab>
-                    </v-tabs>
-
-                    <v-divider></v-divider>
-
-                    <!-- Search & Filters -->
-                    <div v-if="selectedTab === 'transactions'" class="pa-6 pb-0">
-                        <div class="filter-field-label">Tìm kiếm giao dịch</div>
-                        <v-text-field v-model="searchQuery" placeholder="Mã giao dịch, tên khách hàng..."
-                            prepend-inner-icon="mdi-magnify" variant="outlined" density="compact" hide-details
-                            class="bg-white" @keyup.enter="handleSearch"></v-text-field>
-                    </div>
-
-                    <!-- Transactions Table -->
-                    <v-card-text v-if="selectedTab === 'transactions'" class="pa-0">
-                        <div class="admin-table-container border-0 rounded-0 mt-4 overflow-hidden">
-                            <table class="native-admin-table">
-                                <thead>
-                                    <tr>
-                                        <th class="header-cell">Mã giao dịch</th>
-                                        <th class="header-cell">Khách hàng</th>
-                                        <th class="header-cell text-right">Số tiền</th>
-                                        <th class="header-cell">Phương thức</th>
-                                        <th class="header-cell">Trạng thái</th>
-                                        <th class="header-cell">Ngày tạo</th>
-                                        <th class="header-cell text-right">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-if="loading">
-                                        <td colspan="7" class="text-center py-12">
-                                            <v-progress-circular indeterminate color="primary"></v-progress-circular>
-                                        </td>
-                                    </tr>
-                                    <tr v-else-if="transactions.length === 0">
-                                        <td colspan="7" class="text-center py-12">
-                                            <v-icon size="48" color="slate-200"
-                                                class="mb-4">mdi-receipt-outline</v-icon>
-                                            <p class="text-slate-500">Không tìm thấy giao dịch nào</p>
-                                        </td>
-                                    </tr>
-                                    <tr v-for="transaction in transactions" :key="transaction.id" class="data-row">
-                                        <td class="data-cell">
-                                            <span class="mono-font">{{ transaction.transactionCode }}</span>
-                                        </td>
-                                        <td class="data-cell">{{ transaction.customerName }}</td>
-                                        <td class="data-cell text-right text-primary">{{
-                                            formatCurrency(transaction.amount) }}</td>
-                                        <td class="data-cell">{{ transaction.paymentMethod }}</td>
-                                        <td class="data-cell">
-                                            <v-chip :color="getStatusColor(transaction.status)" variant="tonal"
-                                                size="small" class="status-chip px-3">
-                                                {{ getStatusText(transaction.status) }}
-                                            </v-chip>
-                                        </td>
-                                        <td class="data-cell text-slate-500">{{ formatDate(transaction.createdAt) }}
-                                        </td>
-                                        <td class="data-cell text-right">
-                                            <div class="action-controls justify-end">
-                                                <v-btn icon class="action-icon-btn" color="info">
-                                                    <v-icon size="20">mdi-eye</v-icon>
-                                                </v-btn>
-                                                <v-btn v-if="transaction.status === 'success'" icon
-                                                    class="action-icon-btn" color="warning"
-                                                    @click="refundPayment(transaction.id)">
-                                                    <v-icon size="20">mdi-cash-refund</v-icon>
-                                                </v-btn>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Pagination -->
-                        <div class="pa-6 pt-0 d-flex justify-end">
-                            <v-pagination v-if="pagination.total > pagination.itemsPerPage" v-model="pagination.page"
-                                :length="Math.ceil(pagination.total / pagination.itemsPerPage)"
-                                @update:model-value="loadTransactions" density="compact"
-                                active-color="primary"></v-pagination>
-                        </div>
-                    </v-card-text>
-
-                    <!-- Payment Methods -->
-                    <v-card-text v-if="selectedTab === 'methods'" class="pa-6">
-                        <v-row>
-                            <v-col v-for="method in paymentMethods" :key="method.id" cols="12" sm="6" md="4">
-                                <v-card class="pa-5 border rounded-xl bg-slate-50 hover-addr-card h-100">
-                                    <div class="d-flex align-center justify-space-between mb-4">
-                                        <div class="icon-blob"
-                                            :class="method.status === 'active' ? 'bg-primary-light' : 'bg-slate-200'">
-                                            <v-icon :color="method.status === 'active' ? 'primary' : 'slate-500'">{{
-                                                method.icon }}</v-icon>
-                                        </div>
-                                        <v-chip :color="method.status === 'active' ? 'success' : 'error'"
-                                            variant="tonal" size="x-small">
-                                            {{ method.status === 'active' ? 'Hoạt động' : 'Đã tắt' }}
-                                        </v-chip>
-                                    </div>
-                                    <h3 class="text-h6 font-weight-bold text-dark mb-1">{{ method.name }}</h3>
-                                    <p class="text-body-2 text-slate-500 leading-relaxed">{{ method.description }}</p>
-                                </v-card>
-                            </v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
+            </v-card-text>
+        </v-card>
     </div>
 </template>
 

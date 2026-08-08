@@ -49,7 +49,7 @@ const fetchNextQuestion = async () => {
 
 const selectOption = async (optionValue) => {
     if (!currentQuestion.value) return;
-    
+
     // Save current state to history
     history.value.push({
         answers: { ...answers.value },
@@ -87,12 +87,7 @@ const progressPercentage = computed(() => {
 <template>
     <div>
         <!-- Floating Action Button for Quiz Recommendation -->
-        <v-btn
-            color="primary"
-            class="recommend-floating-btn font-weight-bold"
-            elevation="6"
-            @click="openQuiz"
-        >
+        <v-btn color="primary" class="recommend-floating-btn font-weight-bold" elevation="6" @click="openQuiz">
             <v-icon start size="20">mdi-shoe-sneaker</v-icon>
             Tìm Giày Phù Hợp
         </v-btn>
@@ -157,22 +152,14 @@ const progressPercentage = computed(() => {
                         <div v-else-if="recommendedProducts.length > 0" class="animate-fade-in">
                             <div class="text-center mb-6">
                                 <v-icon color="success" size="48" class="mb-2">mdi-check-circle-outline</v-icon>
-                                <h3 class="text-h5 font-weight-bold text-slate-800">
-                                    Sản Phẩm Phù Hợp Với Bạn!
-                                </h3>
+                                <h3 class="text-h5 font-weight-bold text-slate-800">Sản Phẩm Phù Hợp Với Bạn!</h3>
                                 <p class="text-subtitle-1 text-medium-emphasis">
                                     Dưới đây là các đôi giày được gợi ý dựa trên lựa chọn của bạn:
                                 </p>
                             </div>
 
                             <v-row>
-                                <v-col
-                                    v-for="prod in recommendedProducts"
-                                    :key="prod.id"
-                                    cols="12"
-                                    sm="6"
-                                    class="pa-2"
-                                >
+                                <v-col v-for="prod in recommendedProducts" :key="prod.id" cols="12" sm="6" class="pa-2">
                                     <v-card class="result-product-card h-100 d-flex flex-column" @click="viewProductDetail(prod.id)">
                                         <div class="product-img-wrapper position-relative">
                                             <v-img
@@ -191,14 +178,16 @@ const progressPercentage = computed(() => {
                                                 color="primary"
                                                 size="x-small"
                                                 class="brand-badge position-absolute font-weight-bold"
-                                                style="top: 8px; left: 8px;"
+                                                style="top: 8px; left: 8px"
                                             >
                                                 {{ prod.tenThuongHieu }}
                                             </v-chip>
                                         </div>
                                         <div class="pa-3 d-flex flex-column justify-space-between flex-grow-1">
                                             <div>
-                                                <h4 class="font-weight-bold text-body-1 text-slate-800 text-truncate">{{ prod.tenSanPham }}</h4>
+                                                <h4 class="font-weight-bold text-body-1 text-slate-800 text-truncate">
+                                                    {{ prod.tenSanPham }}
+                                                </h4>
                                                 <div class="text-caption text-medium-emphasis mt-1">
                                                     {{ prod.tenMucDichChay }} | {{ prod.tenChatLieu }}
                                                 </div>
@@ -207,12 +196,7 @@ const progressPercentage = computed(() => {
                                                 <div class="price-text text-h6 font-weight-bold text-primary">
                                                     {{ formatCurrency(prod.giaBanMin || prod.giaBan) }}
                                                 </div>
-                                                <v-btn
-                                                    color="primary"
-                                                    variant="text"
-                                                    size="small"
-                                                    class="text-none font-weight-bold"
-                                                >
+                                                <v-btn color="primary" variant="text" size="small" class="text-none font-weight-bold">
                                                     Xem ngay
                                                 </v-btn>
                                             </div>
@@ -227,9 +211,17 @@ const progressPercentage = computed(() => {
                             <v-icon color="warning" size="48" class="mb-2">mdi-alert-circle-outline</v-icon>
                             <h3 class="text-h6 font-weight-bold text-slate-800">Không tìm thấy sản phẩm phù hợp</h3>
                             <p class="text-body-1 text-medium-emphasis mt-2 px-6">
-                                Rất tiếc, hiện tại không có đôi giày nào trong CSDL đáp ứng đầy đủ tất cả các lựa chọn của bạn. Bạn hãy thử làm lại quiz với lựa chọn rộng hơn nhé!
+                                Rất tiếc, hiện tại không có đôi giày nào trong CSDL đáp ứng đầy đủ tất cả các lựa chọn của bạn. Bạn hãy thử
+                                làm lại quiz với lựa chọn rộng hơn nhé!
                             </p>
-                            <v-btn color="primary" class="mt-6 font-weight-bold text-none px-6" @click="resetQuiz(); fetchNextQuestion()">
+                            <v-btn
+                                color="primary"
+                                class="mt-6 font-weight-bold text-none px-6"
+                                @click="
+                                    resetQuiz();
+                                    fetchNextQuestion();
+                                "
+                            >
                                 Thử Lại Quiz
                             </v-btn>
                         </div>
@@ -248,13 +240,16 @@ const progressPercentage = computed(() => {
                         <v-icon start>mdi-arrow-left</v-icon>
                         Quay lại
                     </v-btn>
-                    
+
                     <v-btn
                         variant="text"
                         color="error"
                         class="text-none font-weight-bold px-4"
                         :disabled="loading"
-                        @click="resetQuiz(); fetchNextQuestion()"
+                        @click="
+                            resetQuiz();
+                            fetchNextQuestion();
+                        "
                     >
                         Làm mới quiz
                     </v-btn>
@@ -388,7 +383,8 @@ const progressPercentage = computed(() => {
 }
 
 @keyframes bounce {
-    0%, 100% {
+    0%,
+    100% {
         transform: translateY(0);
     }
     50% {
@@ -397,7 +393,8 @@ const progressPercentage = computed(() => {
 }
 
 @keyframes pulse {
-    0%, 100% {
+    0%,
+    100% {
         opacity: 1;
     }
     50% {

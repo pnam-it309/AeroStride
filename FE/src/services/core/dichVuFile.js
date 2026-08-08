@@ -87,7 +87,7 @@ export const dichVuFile = {
         if (cleanPath.startsWith('uploads/')) {
             cleanPath = cleanPath.substring(8);
         }
-        
+
         const apiBase = import.meta.env.VITE_API_URL || '';
         if (apiBase.startsWith('http')) {
             try {
@@ -95,7 +95,7 @@ export const dichVuFile = {
                 return `${origin}/uploads/${cleanPath}`;
             } catch (e) {}
         }
-        
+
         return `/uploads/${cleanPath}`;
     }
 };

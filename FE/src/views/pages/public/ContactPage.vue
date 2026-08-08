@@ -23,7 +23,7 @@ const submitForm = () => {
         isSubmitting.value = false;
         showSuccess.value = true;
         form.value = { name: '', email: '', phone: '', message: '' };
-        setTimeout(() => showSuccess.value = false, 5000);
+        setTimeout(() => (showSuccess.value = false), 5000);
     }, 1500);
 };
 
@@ -39,13 +39,15 @@ onMounted(() => {
 <template>
     <div class="app-container bg-white">
         <MainHeader />
-        
+
         <main class="main-content">
             <!-- Header Section -->
             <div class="page-header py-12 bg-grey-lighten-4 border-b">
                 <v-container>
                     <h1 class="text-h3 font-weight-black text-center text-grey-darken-4 mb-4">LIÊN HỆ VỚI CHÚNG TÔI</h1>
-                    <p class="text-center text-grey-darken-1 text-subtitle-1">Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn bất cứ lúc nào.</p>
+                    <p class="text-center text-grey-darken-1 text-subtitle-1">
+                        Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn bất cứ lúc nào.
+                    </p>
                 </v-container>
             </div>
 
@@ -57,7 +59,7 @@ onMounted(() => {
                             <v-icon size="36" color="primary" class="mr-4 mt-1">mdi-map-marker-outline</v-icon>
                             <div>
                                 <h3 class="text-h6 font-weight-bold mb-1">Trụ sở chính</h3>
-                                <p class="text-body-2 text-grey-darken-1">123 Đường Cầu Giấy, Quận Cầu Giấy<br>Thủ đô Hà Nội, Việt Nam</p>
+                                <p class="text-body-2 text-grey-darken-1">123 Đường Cầu Giấy, Quận Cầu Giấy<br />Thủ đô Hà Nội, Việt Nam</p>
                             </div>
                         </div>
 
@@ -65,7 +67,7 @@ onMounted(() => {
                             <v-icon size="36" color="primary" class="mr-4 mt-1">mdi-phone-outline</v-icon>
                             <div>
                                 <h3 class="text-h6 font-weight-bold mb-1">Hotline CSKH</h3>
-                                <p class="text-body-2 text-grey-darken-1">1900 6789<br>(Từ 8:00 - 22:00 tất cả các ngày)</p>
+                                <p class="text-body-2 text-grey-darken-1">1900 6789<br />(Từ 8:00 - 22:00 tất cả các ngày)</p>
                             </div>
                         </div>
 
@@ -73,7 +75,7 @@ onMounted(() => {
                             <v-icon size="36" color="primary" class="mr-4 mt-1">mdi-email-outline</v-icon>
                             <div>
                                 <h3 class="text-h6 font-weight-bold mb-1">Email hỗ trợ</h3>
-                                <p class="text-body-2 text-grey-darken-1">support@aerostride.vn<br>cskh@aerostride.vn</p>
+                                <p class="text-body-2 text-grey-darken-1">support@aerostride.vn<br />cskh@aerostride.vn</p>
                             </div>
                         </div>
                     </v-col>
@@ -82,7 +84,7 @@ onMounted(() => {
                     <v-col cols="12" md="8">
                         <v-card class="rounded-xl pa-8 elevation-4 border">
                             <h3 class="text-h5 font-weight-bold mb-6">Gửi tin nhắn cho chúng tôi</h3>
-                            
+
                             <v-alert v-if="showSuccess" type="success" variant="tonal" class="mb-6 rounded-lg" closable>
                                 Cảm ơn bạn! Tin nhắn đã được gửi thành công. Chúng tôi sẽ phản hồi sớm nhất có thể.
                             </v-alert>
@@ -154,8 +156,12 @@ onMounted(() => {
                     <v-col cols="12">
                         <div class="map-container rounded-xl overflow-hidden elevation-2">
                             <!-- Dummy Map Image to simulate Google Maps -->
-                            <v-img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=1200" height="400" cover>
-                                <div class="fill-height d-flex align-center justify-center" style="background: rgba(0,0,0,0.3)">
+                            <v-img
+                                src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=1200"
+                                height="400"
+                                cover
+                            >
+                                <div class="fill-height d-flex align-center justify-center" style="background: rgba(0, 0, 0, 0.3)">
                                     <v-btn color="white" variant="elevated" rounded="xl" prepend-icon="mdi-map-marker">
                                         Mở trên Google Maps
                                     </v-btn>
@@ -166,7 +172,7 @@ onMounted(() => {
                 </v-row>
             </v-container>
         </main>
-        
+
         <footer class="footer-landing py-10 text-center text-grey-darken-1 bg-white border-t">
             <LogoClient class="mb-4 d-inline-block" style="max-width: 150px" />
             <p>&copy; 2026 AeroStride All rights reserved.</p>
@@ -175,7 +181,9 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.main-content { padding-top: 60px; }
+.main-content {
+    padding-top: 60px;
+}
 
 .modern-input :deep(.v-field) {
     border-radius: 10px;

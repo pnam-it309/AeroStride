@@ -23,13 +23,13 @@ const props = defineProps({
 
 const router = useRouter();
 let cartStore;
-try { cartStore = useCartStore(); } catch { cartStore = null; }
-const isAbsoluteUrl = (v) => 
-    typeof v !== 'string' || 
-    /^(https?:)?\/\//i.test(v) || 
-    v.startsWith('data:') || 
-    v.startsWith('blob:') || 
-    v.startsWith('/');
+try {
+    cartStore = useCartStore();
+} catch {
+    cartStore = null;
+}
+const isAbsoluteUrl = (v) =>
+    typeof v !== 'string' || /^(https?:)?\/\//i.test(v) || v.startsWith('data:') || v.startsWith('blob:') || v.startsWith('/');
 
 const resolveImg = (v) => {
     if (!v) return '';
@@ -84,15 +84,14 @@ const addToCart = (e, product) => {
                         <!-- Header -->
                         <div class="section-header reveal-container mb-6" :class="{ active: props.active }">
                             <div class="d-flex align-center justify-space-between">
-                                <div class="d-flex align-center" style="gap: 12px;">
+                                <div class="d-flex align-center" style="gap: 12px">
                                     <div class="header-bar"></div>
                                     <div>
                                         <h2 class="section-title reveal-item delay-1">{{ props.title }}</h2>
                                         <p class="section-subtitle reveal-item delay-2">{{ props.subtitle }}</p>
                                     </div>
                                 </div>
-                                <v-btn variant="text" color="red-darken-2" class="reveal-item delay-2 see-all-btn"
-                                    to="/shoes">
+                                <v-btn variant="text" color="red-darken-2" class="reveal-item delay-2 see-all-btn" to="/shoes">
                                     Xem tất cả <v-icon>mdi-arrow-right</v-icon>
                                 </v-btn>
                             </div>
@@ -101,34 +100,45 @@ const addToCart = (e, product) => {
                         <!-- Product Grid -->
                         <div class="product-grid reveal-container" :class="{ active: props.active }">
                             <v-row v-if="displayProducts.length > 0">
-                                <v-col v-for="(product, index) in displayProducts" :key="product.id" cols="6" md="3"
-                                    class="product-col">
-                                    <div class="premium-product-card" :style="{ transitionDelay: `${0.05 * index}s` }"
-                                        @click="goToProduct(product)">
+                                <v-col v-for="(product, index) in displayProducts" :key="product.id" cols="6" md="3" class="product-col">
+                                    <div
+                                        class="premium-product-card"
+                                        :style="{ transitionDelay: `${0.05 * index}s` }"
+                                        @click="goToProduct(product)"
+                                    >
                                         <div class="card-image-wrap">
                                             <!-- Badges overlay -->
                                             <div class="premium-badges">
                                                 <div class="badge-new">NEW</div>
-                                                <div v-if="product.phanTramGiam > 0" class="badge-sale">
-                                                    -{{ product.phanTramGiam }}%
-                                                </div>
+                                                <div v-if="product.phanTramGiam > 0" class="badge-sale">-{{ product.phanTramGiam }}%</div>
                                             </div>
 
                                             <!-- Main Image -->
-                                            <img v-if="product.hinhAnh" :src="product.hinhAnh" :alt="product.tenSanPham"
-                                                class="premium-img" referrerpolicy="no-referrer" />
-                                            <div v-else class="premium-placeholder"
-                                                :style="{ backgroundColor: product.maMauHex || '#e2e8f0' }"></div>
+                                            <img
+                                                v-if="product.hinhAnh"
+                                                :src="product.hinhAnh"
+                                                :alt="product.tenSanPham"
+                                                class="premium-img"
+                                                referrerpolicy="no-referrer"
+                                            />
+                                            <div
+                                                v-else
+                                                class="premium-placeholder"
+                                                :style="{ backgroundColor: product.maMauHex || '#e2e8f0' }"
+                                            ></div>
 
                                             <!-- Hover Actions -->
                                             <div class="premium-hover-overlay">
                                                 <div class="action-buttons">
-                                                    <v-btn icon class="hover-btn eye-btn" size="40"
-                                                        @click.stop="goToProduct(product)">
+                                                    <v-btn icon class="hover-btn eye-btn" size="40" @click.stop="goToProduct(product)">
                                                         <v-icon size="20">mdi-eye-outline</v-icon>
                                                     </v-btn>
-                                                    <v-btn icon class="hover-btn cart-btn" size="40"
-                                                        @click.stop="(e) => addToCart(e, product)">
+                                                    <v-btn
+                                                        icon
+                                                        class="hover-btn cart-btn"
+                                                        size="40"
+                                                        @click.stop="(e) => addToCart(e, product)"
+                                                    >
                                                         <v-icon size="20">mdi-cart-outline</v-icon>
                                                     </v-btn>
                                                 </div>
@@ -138,10 +148,8 @@ const addToCart = (e, product) => {
                                         <!-- Info Section -->
                                         <div class="card-info-wrap">
                                             <div class="d-flex align-center justify-space-between mb-2">
-                                                <span class="premium-brand">{{ product.tenThuongHieu || 'AeroStride'
-                                                    }}</span>
-                                                <span class="premium-stock"
-                                                    :class="product.soLuong > 0 ? 'in-stock' : 'out-stock'">
+                                                <span class="premium-brand">{{ product.tenThuongHieu || 'AeroStride' }}</span>
+                                                <span class="premium-stock" :class="product.soLuong > 0 ? 'in-stock' : 'out-stock'">
                                                     {{ product.soLuong > 0 ? `Còn ${product.soLuong}` : 'Hết' }}
                                                 </span>
                                             </div>
@@ -150,7 +158,8 @@ const addToCart = (e, product) => {
 
                                             <div class="premium-price-row mt-2 mb-3">
                                                 <span v-if="product.giaBan != null" class="price-main">{{
-                                                    formatPrice(product.giaBan) }}</span>
+                                                    formatPrice(product.giaBan)
+                                                }}</span>
                                                 <span v-else class="price-contact">Liên hệ</span>
                                                 <span v-if="product.phanTramGiam > 0" class="price-old">
                                                     {{ formatPrice(product.giaBan / (1 - product.phanTramGiam / 100)) }}
@@ -159,13 +168,11 @@ const addToCart = (e, product) => {
 
                                             <div class="premium-attributes mt-auto">
                                                 <div v-if="product.tenMauSac" class="attr-pill">
-                                                    <span class="color-dot"
-                                                        :style="{ backgroundColor: product.maMauHex || '#000' }"></span>
+                                                    <span class="color-dot" :style="{ backgroundColor: product.maMauHex || '#000' }"></span>
                                                     {{ product.tenMauSac }}
                                                 </div>
                                                 <div v-if="product.sizes[0]" class="attr-pill">
-                                                    <v-icon size="12" class="mr-1"
-                                                        color="grey-darken-1">mdi-ruler</v-icon>
+                                                    <v-icon size="12" class="mr-1" color="grey-darken-1">mdi-ruler</v-icon>
                                                     {{ product.sizes[0] }}
                                                 </div>
                                             </div>
@@ -175,8 +182,7 @@ const addToCart = (e, product) => {
                             </v-row>
                             <v-row v-else>
                                 <v-col v-for="n in 4" :key="n" cols="6" md="3">
-                                    <v-skeleton-loader type="card, article"
-                                        class="rounded-xl elevation-2"></v-skeleton-loader>
+                                    <v-skeleton-loader type="card, article" class="rounded-xl elevation-2"></v-skeleton-loader>
                                 </v-col>
                             </v-row>
                         </div>

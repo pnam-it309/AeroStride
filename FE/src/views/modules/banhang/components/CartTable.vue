@@ -68,76 +68,106 @@ const handleDirectInput = (item, event) => {
                     </td>
                 </tr>
                 <tr v-for="(item, idx) in items" :key="item.id" class="item-row">
-                    <td class="text-center font-weight-medium text-slate-500"
-                        style="font-size: 12px; white-space: nowrap !important;">
+                    <td class="text-center font-weight-medium text-slate-500" style="font-size: 12px; white-space: nowrap !important">
                         {{ idx + 1 }}
                     </td>
-                    <td class="text-left font-weight-medium text-slate-700"
-                        style="font-size: 12px; white-space: nowrap !important;">
+                    <td class="text-left font-weight-medium text-slate-700" style="font-size: 12px; white-space: nowrap !important">
                         {{ item.maChiTietSanPham || item.maSanPham || 'N/A' }}
                     </td>
                     <td>
                         <div class="d-flex align-center py-1.5">
-                            <v-avatar color="grey-lighten-4" rounded="lg" size="34"
-                                class="cart-product-avatar border position-relative overflow-visible">
+                            <v-avatar
+                                color="grey-lighten-4"
+                                rounded="lg"
+                                size="34"
+                                class="cart-product-avatar border position-relative overflow-visible"
+                            >
                                 <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover />
                                 <BoxIcon v-else size="18" class="text-grey" />
-                                <div v-if="item.phanTramGiam > 0"
-                                    class="cart-discount-badge-small d-flex align-center justify-center">
-                                    <span class="text-white font-weight-bold" style="font-size: 9px !important;">-{{
-                                        item.phanTramGiam }}%</span>
+                                <div v-if="item.phanTramGiam > 0" class="cart-discount-badge-small d-flex align-center justify-center">
+                                    <span class="text-white font-weight-bold" style="font-size: 9px !important"
+                                        >-{{ item.phanTramGiam }}%</span
+                                    >
                                 </div>
                             </v-avatar>
                             <div class="d-flex flex-column">
-                                <span class="text-slate-700 text-body-2 font-weight-medium"
-                                    style="font-size: 12px !important; line-height: 1.3;">
+                                <span
+                                    class="text-slate-700 text-body-2 font-weight-medium"
+                                    style="font-size: 12px !important; line-height: 1.3"
+                                >
                                     {{ item.tenSanPham }}
                                 </span>
-                                <div v-if="item.giaCu && Number(item.giaCu) !== Number(item.donGia)"
+                                <div
+                                    v-if="item.giaCu && Number(item.giaCu) !== Number(item.donGia)"
                                     class="price-change-notice-badge mt-1 px-2 py-0.5 rounded border font-weight-medium"
-                                    style="background-color: #fef2f2; border-color: #fca5a5; color: #dc2626; font-size: 11px; display: inline-block; max-width: max-content;">
+                                    style="
+                                        background-color: #fef2f2;
+                                        border-color: #fca5a5;
+                                        color: #dc2626;
+                                        font-size: 11px;
+                                        display: inline-block;
+                                        max-width: max-content;
+                                    "
+                                >
                                     Giá đổi từ {{ formatCurrency(item.giaCu) }} thành {{ formatCurrency(item.donGia) }}
                                 </div>
                             </div>
                         </div>
                     </td>
-                    <td class="text-left text-slate-600" style="font-size: 12px; white-space: nowrap !important;">
+                    <td class="text-left text-slate-600" style="font-size: 12px; white-space: nowrap !important">
                         {{ item.tenMauSac || 'Không màu' }}
                     </td>
-                    <td class="text-left text-slate-600" style="font-size: 12px; white-space: nowrap !important;">
+                    <td class="text-left text-slate-600" style="font-size: 12px; white-space: nowrap !important">
                         {{ item.tenKichThuoc || 'N/A' }}
                     </td>
-                    <td class="text-center" style="white-space: nowrap !important;">
+                    <td class="text-center" style="white-space: nowrap !important">
                         <div class="qty-control">
                             <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, -1)">
                                 <MinusIcon size="12" />
                             </v-btn>
-                            <input type="number" class="qty-input-table text-center font-weight-medium"
-                                :value="item.soLuong" @change="(e) => handleDirectInput(item, e)" min="0" />
+                            <input
+                                type="number"
+                                class="qty-input-table text-center font-weight-medium"
+                                :value="item.soLuong"
+                                @change="(e) => handleDirectInput(item, e)"
+                                min="0"
+                            />
                             <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, 1)">
                                 <PlusIcon size="12" />
                             </v-btn>
                         </div>
                     </td>
-                    <td class="text-right font-weight-bold"
-                        style="font-size: 12px !important; white-space: nowrap !important;">
+                    <td class="text-right font-weight-bold" style="font-size: 12px !important; white-space: nowrap !important">
                         <template v-if="item.phanTramGiam > 0">
-                            <span class="d-block font-weight-bold" style="color: #0c3866 !important;">
+                            <span class="d-block font-weight-bold" style="color: #0c3866 !important">
                                 {{ formatCurrency(item.donGia) }}
                             </span>
-                            <span class="font-weight-bold"
-                                style="text-decoration: line-through; text-decoration-color: #94a3b8; -webkit-text-decoration-color: #94a3b8; color: #c92c04 !important; font-size: 11px !important; font-weight: normal; display: block; margin-top: 2px;">
+                            <span
+                                class="font-weight-bold"
+                                style="
+                                    text-decoration: line-through;
+                                    text-decoration-color: #94a3b8;
+                                    -webkit-text-decoration-color: #94a3b8;
+                                    color: #c92c04 !important;
+                                    font-size: 11px !important;
+                                    font-weight: normal;
+                                    display: block;
+                                    margin-top: 2px;
+                                "
+                            >
                                 {{ formatCurrency(item.donGia / (1 - item.phanTramGiam / 100)) }}
                             </span>
                         </template>
                         <template v-else>
-                            <span style="color: #0c3866 !important;">
+                            <span style="color: #0c3866 !important">
                                 {{ formatCurrency(item.donGia) }}
                             </span>
                         </template>
                     </td>
-                    <td class="text-right font-weight-bold text-body-2"
-                        style="white-space: nowrap !important; color: #0c3866 !important; font-size: 12px !important;">
+                    <td
+                        class="text-right font-weight-bold text-body-2"
+                        style="white-space: nowrap !important; color: #0c3866 !important; font-size: 12px !important"
+                    >
                         {{ formatCurrency(item.thanhTien) }}
                     </td>
                     <td class="text-center">
@@ -224,15 +254,33 @@ const handleDirectInput = (item, event) => {
     padding: 0 6px;
 }
 
-.pos-table :deep(.col-index) { width: 6%; }
-.pos-table :deep(.col-code) { width: 20%; }
-.pos-table :deep(.col-name) { width: 14%; }
-.pos-table :deep(.col-color) { width: 9.5%; }
-.pos-table :deep(.col-size) { width: 8.5%; }
-.pos-table :deep(.col-quantity) { width: 12%; }
-.pos-table :deep(.col-price) { width: 11%; }
-.pos-table :deep(.col-total) { width: 12%; }
-.pos-table :deep(.col-action) { width: 7%; }
+.pos-table :deep(.col-index) {
+    width: 6%;
+}
+.pos-table :deep(.col-code) {
+    width: 20%;
+}
+.pos-table :deep(.col-name) {
+    width: 14%;
+}
+.pos-table :deep(.col-color) {
+    width: 9.5%;
+}
+.pos-table :deep(.col-size) {
+    width: 8.5%;
+}
+.pos-table :deep(.col-quantity) {
+    width: 12%;
+}
+.pos-table :deep(.col-price) {
+    width: 11%;
+}
+.pos-table :deep(.col-total) {
+    width: 12%;
+}
+.pos-table :deep(.col-action) {
+    width: 7%;
+}
 
 .pos-table :deep(thead th) {
     background-color: #f1f5f9 !important;
@@ -257,13 +305,17 @@ const handleDirectInput = (item, event) => {
 
 .pos-table :deep(tbody tr.item-row) {
     background-color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.02) !important;
     transition: all 0.2s ease;
 }
 
 .pos-table :deep(tbody tr.item-row:hover) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.08),
+        0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
 }
 
 .pos-table :deep(tbody tr.item-row:hover td) {

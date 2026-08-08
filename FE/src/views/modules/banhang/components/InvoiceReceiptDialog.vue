@@ -38,7 +38,8 @@ const fetchInvoiceHtml = async () => {
         invoiceHtml.value = html || '';
     } catch (err) {
         console.error('Error fetching invoice HTML from BE:', err);
-        invoiceHtml.value = '<div style="padding: 24px; text-align: center; color: #dc2626; font-family: sans-serif;">Không thể tải hóa đơn từ máy chủ (Backend). Vui lòng thử lại.</div>';
+        invoiceHtml.value =
+            '<div style="padding: 24px; text-align: center; color: #dc2626; font-family: sans-serif;">Không thể tải hóa đơn từ máy chủ (Backend). Vui lòng thử lại.</div>';
     } finally {
         loadingHtml.value = false;
     }
@@ -89,16 +90,9 @@ const handlePrint = () => {
             <v-progress-linear v-if="loadingHtml" indeterminate color="primary" />
 
             <!-- Nội dung hóa đơn chính thức nạp từ Backend (BE) -->
-            <div class="receipt-body bg-slate-50 d-flex justify-center align-center position-relative" style="min-height: 500px;">
-                <iframe
-                    v-if="invoiceHtml"
-                    :srcdoc="invoiceHtml"
-                    class="invoice-iframe"
-                    title="Hóa đơn bán hàng"
-                ></iframe>
-                <div v-else-if="!loadingHtml" class="text-slate-400 text-body-2 pa-8 text-center">
-                    Không có thông tin hóa đơn.
-                </div>
+            <div class="receipt-body bg-slate-50 d-flex justify-center align-center position-relative" style="min-height: 500px">
+                <iframe v-if="invoiceHtml" :srcdoc="invoiceHtml" class="invoice-iframe" title="Hóa đơn bán hàng"></iframe>
+                <div v-else-if="!loadingHtml" class="text-slate-400 text-body-2 pa-8 text-center">Không có thông tin hóa đơn.</div>
             </div>
         </v-card>
     </v-dialog>

@@ -16,7 +16,7 @@ export const exportQrImageZip = async ({ fileName, items }) => {
     try {
         const payload = {
             fileName,
-            items: items.map(item => ({
+            items: items.map((item) => ({
                 baseName: item.baseName || item.name,
                 dataUrl: item.dataUrl
             }))
@@ -36,12 +36,13 @@ export const exportQrRowsToWorkbook = async ({ fileName, sheetName, rows, qrData
         const payload = {
             fileName,
             sheetName,
-            rows: rows?.map(row => ({
-                productName: row.productName,
-                sku: row.sku,
-                color: row.color,
-                size: row.size
-            })) || [],
+            rows:
+                rows?.map((row) => ({
+                    productName: row.productName,
+                    sku: row.sku,
+                    color: row.color,
+                    size: row.size
+                })) || [],
             qrDataUrls: qrDataUrls || []
         };
         const response = await api.post(`${API_ADMIN.SAN_PHAM}/export/qr-excel`, payload, {

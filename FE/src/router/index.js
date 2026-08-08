@@ -25,6 +25,12 @@ export const router = createRouter({
             component: () => import('@/views/pages/products/ShoeListing.vue')
         },
         {
+            path: PATH.AI_RECOMMEND,
+            name: 'AiRecommendQuiz',
+            component: () => import('@/views/pages/products/AiRecommendQuiz.vue'),
+            meta: { seoTitle: 'Gợi Ý Chọn Giày AI' }
+        },
+        {
             path: PATH.VOUCHERS,
             name: 'VoucherListing',
             component: () => import('@/views/pages/vouchers/VoucherListing.vue')
@@ -195,4 +201,3 @@ router.onError((error, to) => {
         }
     }
 });
-

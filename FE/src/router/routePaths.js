@@ -40,6 +40,7 @@ export const PATH = {
     LICH_SU_HOAT_DONG: '/admin/lich-su-hoat-dong',
     LICH_SU_GIAO_CA: '/admin/giao-ca',
     CHAM_CONG: '/admin/cham-cong',
+    AI_RECOMMEND: '/ai-recommend',
     PROFILE: '/profile',
     ORDERS: '/my-orders',
     CHECKOUT: '/checkout',

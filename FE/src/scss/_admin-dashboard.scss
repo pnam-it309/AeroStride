@@ -45,7 +45,7 @@
     padding: 11px 14px;
 }
 
-.stats-title-tabs span+span {
+.stats-title-tabs span + span {
     border-left: 1px solid #e2e8f0;
 }
 
@@ -156,7 +156,7 @@
 
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 14px;
 }
 
@@ -966,7 +966,6 @@
     .product-pagination-actions {
         flex-wrap: wrap;
     }
-
 }
 
 .cust-stats-table-container {

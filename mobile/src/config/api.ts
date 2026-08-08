@@ -59,6 +59,11 @@ export const API_PATHS = {
   VOUCHER: {
     LIST: '/customer/phieu-giam-gia/hien-thi',
   },
+  REVIEW: {
+    SUBMIT: '/customer/review/submit',
+    PRODUCT_REVIEWS: (id: string) => `/customer/review/product/${id}`,
+    CHECK_ELIGIBILITY: '/customer/review/check-eligibility',
+  },
   PAYMENT: {
     CREATE: '/payment/create',
   },

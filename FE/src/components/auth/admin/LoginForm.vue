@@ -49,8 +49,14 @@ const handleLogin = async () => {
 
 <template>
     <v-form @submit.prevent="handleLogin" class="mt-4">
-        <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-6 rounded-xl animate-fade-in" closable
-            @click:close="errorMessage = ''">
+        <v-alert
+            v-if="errorMessage"
+            type="error"
+            variant="tonal"
+            class="mb-6 rounded-xl animate-fade-in"
+            closable
+            @click:close="errorMessage = ''"
+        >
             {{ errorMessage }}
         </v-alert>
 
@@ -58,26 +64,38 @@ const handleLogin = async () => {
             <v-row class="mb-3">
                 <v-col cols="12">
                     <div class="input-group">
-                        <v-label class="font-weight-black mb-2 text-uppercase text-caption tracking-wider">Tài
-                            khoản</v-label>
-                        <v-text-field v-model="loginForm.username" variant="outlined" class="premium-input" hide-details
-                            color="primary" placeholder="Nhập số điện thoại"
-                            prepend-inner-icon="mdi-account-circle-outline" :disabled="loading"></v-text-field>
+                        <v-label class="font-weight-black mb-2 text-uppercase text-caption tracking-wider">Tài khoản</v-label>
+                        <v-text-field
+                            v-model="loginForm.username"
+                            variant="outlined"
+                            class="premium-input"
+                            hide-details
+                            color="primary"
+                            placeholder="Nhập số điện thoại"
+                            prepend-inner-icon="mdi-account-circle-outline"
+                            :disabled="loading"
+                        ></v-text-field>
                     </div>
                 </v-col>
                 <v-col cols="12">
                     <div class="input-group">
-                        <v-label class="font-weight-black mb-2 text-uppercase text-caption tracking-wider">Mật
-                            khẩu</v-label>
-                        <v-text-field v-model="loginForm.password" variant="outlined" class="premium-input"
-                            type="password" hide-details color="primary" placeholder="••••••••"
-                            prepend-inner-icon="mdi-lock-outline" :disabled="loading"></v-text-field>
+                        <v-label class="font-weight-black mb-2 text-uppercase text-caption tracking-wider">Mật khẩu</v-label>
+                        <v-text-field
+                            v-model="loginForm.password"
+                            variant="outlined"
+                            class="premium-input"
+                            type="password"
+                            hide-details
+                            color="primary"
+                            placeholder="••••••••"
+                            prepend-inner-icon="mdi-lock-outline"
+                            :disabled="loading"
+                        ></v-text-field>
                     </div>
                 </v-col>
                 <v-col cols="12" class="py-0 mt-2">
                     <div class="d-flex flex-wrap align-center w-100">
-                        <v-checkbox v-model="checkbox" hide-details color="primary" class="tiny-checkbox"
-                            :disabled="loading">
+                        <v-checkbox v-model="checkbox" hide-details color="primary" class="tiny-checkbox" :disabled="loading">
                             <template v-slot:label>
                                 <span class="text-caption font-weight-bold">Duy trì đăng nhập</span>
                             </template>
@@ -85,8 +103,16 @@ const handleLogin = async () => {
                     </div>
                 </v-col>
                 <v-col cols="12" class="mt-6">
-                    <v-btn size="x-large" rounded="xl" color="primary" class="login-btn emerald-gradient-btn" block
-                        type="submit" :loading="loading" :disabled="loading">
+                    <v-btn
+                        size="x-large"
+                        rounded="xl"
+                        color="primary"
+                        class="login-btn emerald-gradient-btn"
+                        block
+                        type="submit"
+                        :loading="loading"
+                        :disabled="loading"
+                    >
                         Đăng nhập hệ thống
                         <v-icon end icon="mdi-arrow-right" class="ml-2"></v-icon>
                     </v-btn>

@@ -25,20 +25,22 @@ const currentUser = computed(() => dichVuXacThuc.layUserHienTai());
 
 const currentStaffInfo = computed(() => {
     if (!currentUser.value) return null;
-    return employeeOptions.value.find(emp => 
-        (emp.tenTaiKhoan && emp.tenTaiKhoan === currentUser.value.username) ||
-        (emp.ma && emp.ma === currentUser.value.username) ||
-        (emp.ten && emp.ten === currentUser.value.username)
-    ) || null;
+    return (
+        employeeOptions.value.find(
+            (emp) =>
+                (emp.tenTaiKhoan && emp.tenTaiKhoan === currentUser.value.username) ||
+                (emp.ma && emp.ma === currentUser.value.username) ||
+                (emp.ten && emp.ten === currentUser.value.username)
+        ) || null
+    );
 });
 
 // Main and Sub-tab views
 const mainTab = ref('table'); // 'table', 'calendar'
 const calendarTab = ref('week'); // 'day', 'week', 'month'
 
-const toolbarIcon = computed(() => mainTab.value === 'table' ? 'mdi-table-large' : 'mdi-calendar-range');
-const toolbarTitle = computed(() => mainTab.value === 'table' ? 'Bảng phân lịch làm việc' : 'Lịch làm việc');
-
+const toolbarIcon = computed(() => (mainTab.value === 'table' ? 'mdi-table-large' : 'mdi-calendar-range'));
+const toolbarTitle = computed(() => (mainTab.value === 'table' ? 'Bảng phân lịch làm việc' : 'Lịch làm việc'));
 
 const filters = ref({
     search: '',
@@ -94,15 +96,15 @@ const filteredItems = computed(() => {
     if (isStaff.value && currentUser.value) {
         const uName = currentUser.value.username;
         const staff = currentStaffInfo.value;
-        list = list.filter(item => {
+        list = list.filter((item) => {
             if (staff) {
-                return item.nhanVienId === staff.id ||
-                       item.maNhanVien === staff.ma ||
-                       item.nhanVien === staff.ten;
+                return item.nhanVienId === staff.id || item.maNhanVien === staff.ma || item.nhanVien === staff.ten;
             }
-            return (item.tenTaiKhoan && item.tenTaiKhoan === uName) ||
-                   (item.maNhanVien && item.maNhanVien === uName) ||
-                   (item.nhanVien && item.nhanVien.toLowerCase().includes(uName.toLowerCase()));
+            return (
+                (item.tenTaiKhoan && item.tenTaiKhoan === uName) ||
+                (item.maNhanVien && item.maNhanVien === uName) ||
+                (item.nhanVien && item.nhanVien.toLowerCase().includes(uName.toLowerCase()))
+            );
         });
     }
 
@@ -127,8 +129,8 @@ const tableFilteredItems = computed(() => {
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         targetYearMonth = `${yyyy}-${mm}`;
     }
-    
-    return filteredItems.value.filter(item => {
+
+    return filteredItems.value.filter((item) => {
         return item.ngay && item.ngay.startsWith(targetYearMonth);
     });
 });
@@ -178,7 +180,7 @@ const loadData = async () => {
             items.value = scheduleRes.data.data;
             if (items.value.length > 0) {
                 const todayStr = new Date().toISOString().substr(0, 10);
-                const hasToday = items.value.some(s => s.ngay === todayStr);
+                const hasToday = items.value.some((s) => s.ngay === todayStr);
                 if (!hasToday) {
                     const sorted = [...items.value].sort((a, b) => b.ngay.localeCompare(a.ngay));
                     currentMonth.value = new Date(sorted[0].ngay);
@@ -237,7 +239,12 @@ const handleDayClick = (dayObj) => {
 
 const saveSchedule = async () => {
     try {
-        if (!addForm.value.nhanVien.length || !addForm.value.ca || (Array.isArray(addForm.value.ca) && !addForm.value.ca.length) || !addForm.value.ngay) {
+        if (
+            !addForm.value.nhanVien.length ||
+            !addForm.value.ca ||
+            (Array.isArray(addForm.value.ca) && !addForm.value.ca.length) ||
+            !addForm.value.ngay
+        ) {
             alert('Vui lòng nhập đầy đủ thông tin!');
             return;
         }
@@ -360,7 +367,7 @@ const getEmployeeCode = (item) => {
 // Lookup helper: Find shift time range (e.g., 08:00 - 12:00) by shift name
 const getShiftTimeRange = (caName) => {
     if (!caName) return '';
-    const shift = rawShifts.value.find(s => s.tenCa === caName);
+    const shift = rawShifts.value.find((s) => s.tenCa === caName);
     return shift ? `${shift.gioBatDau.substring(0, 5)} - ${shift.gioKetThuc.substring(0, 5)}` : caName;
 };
 
@@ -407,9 +414,7 @@ const tableWeekDays = computed(() => {
     for (let i = 0; i < 7; i++) {
         const d = new Date(monday);
         d.setDate(monday.getDate() + i);
-        const dateStr = d.getFullYear() + '-' +
-            String(d.getMonth() + 1).padStart(2, '0') + '-' +
-            String(d.getDate()).padStart(2, '0');
+        const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
         result.push(dateStr);
     }
     return result;
@@ -432,19 +437,23 @@ const tableWeekLabel = computed(() => {
 // Computed rows for the weekly schedule matrix (TT, Mã nv, Tên, Thứ 2 -> CN)
 const tableRows = computed(() => {
     const weekDates = tableWeekDays.value;
-    const weekSchedules = filteredItems.value.filter(item => weekDates.includes(item.ngay));
+    const weekSchedules = filteredItems.value.filter((item) => weekDates.includes(item.ngay));
 
     const employeeMap = {};
     const searchFilter = filters.value.search ? filters.value.search.toLowerCase() : '';
 
     let targetEmployees = employeeOptions.value;
     if (isStaff.value && currentStaffInfo.value) {
-        targetEmployees = targetEmployees.filter(emp => emp.id === currentStaffInfo.value.id);
+        targetEmployees = targetEmployees.filter((emp) => emp.id === currentStaffInfo.value.id);
     }
 
     // Add all active employees to the map first
-    targetEmployees.forEach(emp => {
-        if (searchFilter && (!emp.ten || !emp.ten.toLowerCase().includes(searchFilter)) && (!emp.ma || !emp.ma.toLowerCase().includes(searchFilter))) {
+    targetEmployees.forEach((emp) => {
+        if (
+            searchFilter &&
+            (!emp.ten || !emp.ten.toLowerCase().includes(searchFilter)) &&
+            (!emp.ma || !emp.ma.toLowerCase().includes(searchFilter))
+        ) {
             return;
         }
 
@@ -454,15 +463,16 @@ const tableRows = computed(() => {
             nhanVienId: emp.id,
             schedules: {}
         };
-        weekDates.forEach(date => {
+        weekDates.forEach((date) => {
             employeeMap[emp.ten].schedules[date] = [];
         });
     });
 
     // Fill in existing schedules
-    weekSchedules.forEach(item => {
+    weekSchedules.forEach((item) => {
         if (!employeeMap[item.nhanVien]) {
-            const matchesSearch = !searchFilter ||
+            const matchesSearch =
+                !searchFilter ||
                 item.nhanVien.toLowerCase().includes(searchFilter) ||
                 (getEmployeeCode(item) && getEmployeeCode(item).toLowerCase().includes(searchFilter));
 
@@ -474,7 +484,7 @@ const tableRows = computed(() => {
                 nhanVienId: item.nhanVienId,
                 schedules: {}
             };
-            weekDates.forEach(date => {
+            weekDates.forEach((date) => {
                 employeeMap[item.nhanVien].schedules[date] = [];
             });
         }
@@ -582,8 +592,6 @@ const getCellCardClass = (shiftName) => {
     return 'card-slate';
 };
 
-
-
 const getSchedulesForCell = (dateStr, shiftName) => {
     return filteredItems.value.filter((s) => s.ngay === dateStr && s.ca === shiftName);
 };
@@ -600,14 +608,14 @@ const openSwapDialog = (s) => {
 
 const swapEmployeeList = computed(() => {
     if (!swapSource.value || !swapSource.value.ngay) return [];
-    
+
     // Get all schedules on the same day
-    const schedulesOnDate = items.value.filter(item => item.ngay === swapSource.value.ngay);
-    
+    const schedulesOnDate = items.value.filter((item) => item.ngay === swapSource.value.ngay);
+
     return employeeOptions.value
-        .filter(emp => emp.id !== swapSource.value.nhanVienId)
-        .map(emp => {
-            const empSchedule = schedulesOnDate.find(item => item.nhanVienId === emp.id);
+        .filter((emp) => emp.id !== swapSource.value.nhanVienId)
+        .map((emp) => {
+            const empSchedule = schedulesOnDate.find((item) => item.nhanVienId === emp.id);
             let statusText = 'Không có ca';
             let hasShift = false;
             let currentShiftName = '';
@@ -636,10 +644,10 @@ const swapEmployeeList = computed(() => {
 
 const executeSwap = async () => {
     if (!swapTargetEmployeeId.value) return;
-    
-    const targetEmp = swapEmployeeList.value.find(emp => emp.id === swapTargetEmployeeId.value);
+
+    const targetEmp = swapEmployeeList.value.find((emp) => emp.id === swapTargetEmployeeId.value);
     if (!targetEmp) return;
-    
+
     loading.value = true;
     try {
         if (targetEmp.hasShift) {
@@ -650,14 +658,14 @@ const executeSwap = async () => {
                 ngay: swapSource.value.ngay,
                 trangThai: swapSource.value.trangThai
             };
-            
+
             const payload2 = {
                 nhanVien: [targetEmp.id],
                 ca: [swapSource.value.ca],
                 ngay: swapSource.value.ngay,
                 trangThai: targetEmp.trangThai
             };
-            
+
             await Promise.all([
                 apiService.put(`${API_LICH_LAM_VIEC.BASE}/schedules/${swapSource.value.id}`, payload1),
                 apiService.put(`${API_LICH_LAM_VIEC.BASE}/schedules/${targetEmp.scheduleId}`, payload2)
@@ -670,10 +678,10 @@ const executeSwap = async () => {
                 ngay: swapSource.value.ngay,
                 trangThai: swapSource.value.trangThai
             };
-            
+
             await apiService.put(`${API_LICH_LAM_VIEC.BASE}/schedules/${swapSource.value.id}`, payload);
         }
-        
+
         addNotification({
             title: 'Thành công',
             subtitle: 'Đổi ca làm việc thành công!',
@@ -733,7 +741,7 @@ const handleDeleteCellSchedule = async (schedule) => {
                 icon: 'CircleCheckIcon',
                 color: 'success'
             });
-            selectedCellSchedules.value = selectedCellSchedules.value.filter(item => item.id !== schedule.id);
+            selectedCellSchedules.value = selectedCellSchedules.value.filter((item) => item.id !== schedule.id);
             await loadData();
         }
     } catch (error) {
@@ -785,9 +793,7 @@ const weekDays = computed(() => {
     for (let i = 0; i < 7; i++) {
         const d = new Date(startOfWeek);
         d.setDate(startOfWeek.getDate() + i);
-        const dateStr = d.getFullYear() + '-' +
-            String(d.getMonth() + 1).padStart(2, '0') + '-' +
-            String(d.getDate()).padStart(2, '0');
+        const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 
         const schedules = filteredItems.value.filter((s) => s.ngay === dateStr);
         const isToday = dateStr === new Date().toISOString().substr(0, 10);
@@ -848,21 +854,45 @@ onMounted(() => {
 
         <AdminFilter title="Bộ lọc" :isRefreshing="isRefreshing" @refresh="handleRefresh" class="mb-4">
             <v-col cols="12" md="4" class="px-2">
-                <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Nhân viên</div>
-                <v-text-field v-model="filters.search" placeholder="Tìm kiếm nhân viên..." variant="outlined"
-                    density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
-                    @input="handleFilter" />
+                <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px">Nhân viên</div>
+                <v-text-field
+                    v-model="filters.search"
+                    placeholder="Tìm kiếm nhân viên..."
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    prepend-inner-icon="mdi-magnify"
+                    class="compact-input"
+                    @input="handleFilter"
+                />
             </v-col>
             <v-col cols="12" md="3" class="px-2">
-                <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Ca làm</div>
-                <v-select v-model="filters.ca" :items="shiftOptions" variant="outlined" density="compact"
-                    hide-details class="compact-input" @update:model-value="handleFilter" />
+                <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px">Ca làm</div>
+                <v-select
+                    v-model="filters.ca"
+                    :items="shiftOptions"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    class="compact-input"
+                    @update:model-value="handleFilter"
+                />
             </v-col>
             <v-col cols="12" md="3" class="px-2">
-                <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Ngày làm</div>
-                <AppDatePicker :model-value="filters.ngay"
-                    @update:model-value="val => { filters.ngay = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : null; handleFilter(); }"
-                    placeholder="Chọn ngày" clearable />
+                <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px">Ngày làm</div>
+                <AppDatePicker
+                    :model-value="filters.ngay"
+                    @update:model-value="
+                        (val) => {
+                            filters.ngay = val
+                                ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10)
+                                : null;
+                            handleFilter();
+                        }
+                    "
+                    placeholder="Chọn ngày"
+                    clearable
+                />
             </v-col>
         </AdminFilter>
 
@@ -876,28 +906,27 @@ onMounted(() => {
                 </div>
                 <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions ga-2">
                     <template v-if="!isStaff">
-                        <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-export"
-                            @click="handleDownloadTemplate">
+                        <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-export" @click="handleDownloadTemplate">
                             Tải Excel
                         </v-btn>
-                        <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary"
-                            @click="handleImport">
+                        <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary" @click="handleImport">
                             Nhập Excel
                         </v-btn>
-                        <v-btn prepend-icon="mdi-plus" variant="flat" color="primary" class="add-btn-primary"
-                            @click="handleAdd">
+                        <v-btn prepend-icon="mdi-plus" variant="flat" color="primary" class="add-btn-primary" @click="handleAdd">
                             Thêm mới
                         </v-btn>
                     </template>
                     <!-- Tab Bảng / Lịch -->
                     <div class="main-view-tabs ml-2">
-                        <button class="view-tab-btn" :class="{ 'view-tab-btn--active': mainTab === 'table' }"
-                            @click="mainTab = 'table'">
+                        <button class="view-tab-btn" :class="{ 'view-tab-btn--active': mainTab === 'table' }" @click="mainTab = 'table'">
                             <v-icon size="15" class="mr-1">mdi-table-large</v-icon>
                             Bảng
                         </button>
-                        <button class="view-tab-btn" :class="{ 'view-tab-btn--active': mainTab === 'calendar' }"
-                            @click="mainTab = 'calendar'">
+                        <button
+                            class="view-tab-btn"
+                            :class="{ 'view-tab-btn--active': mainTab === 'calendar' }"
+                            @click="mainTab = 'calendar'"
+                        >
                             <v-icon size="15" class="mr-1">mdi-calendar</v-icon>
                             Lịch
                         </button>
@@ -907,20 +936,27 @@ onMounted(() => {
 
             <!-- Table View Mode Content -->
             <div v-if="mainTab === 'table'" class="flex-grow-1 overflow-hidden d-flex flex-column">
-                <AdminTable :hideToolbar="true" :headers="tableHeaders" :items="paginatedItems" :loading="loading" class="elevation-0 border-0" style="border: none !important; box-shadow: none !important; margin-bottom: 0 !important;">
+                <AdminTable
+                    :hideToolbar="true"
+                    :headers="tableHeaders"
+                    :items="paginatedItems"
+                    :loading="loading"
+                    class="elevation-0 border-0"
+                    style="border: none !important; box-shadow: none !important; margin-bottom: 0 !important"
+                >
                     <template #row="{ item, index }">
                         <tr class="data-row">
                             <!-- STT -->
                             <td class="data-cell text-center">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
                             <!-- Mã nhân viên -->
                             <td class="data-cell text-center">
-                                <div class="text-truncate" :title="item.maNhanVien || getEmployeeCode(item)">{{
-                                    item.maNhanVien || getEmployeeCode(item) }}</div>
+                                <div class="text-truncate" :title="item.maNhanVien || getEmployeeCode(item)">
+                                    {{ item.maNhanVien || getEmployeeCode(item) }}
+                                </div>
                             </td>
                             <!-- Nhân viên -->
                             <td class="data-cell text-left px-4">
-                                <div class="text-slate-800 text-truncate" :title="item.nhanVien">{{ item.nhanVien }}
-                                </div>
+                                <div class="text-slate-800 text-truncate" :title="item.nhanVien">{{ item.nhanVien }}</div>
                             </td>
                             <!-- Ca làm -->
                             <td class="data-cell text-center">
@@ -939,13 +975,23 @@ onMounted(() => {
                             <!-- Thao tác -->
                             <td class="data-cell action-cell">
                                 <div class="action-controls">
-                                    <v-btn variant="text" color="primary" class="action-icon-btn" size="small"
-                                        @click="handleEditSchedule(item)">
+                                    <v-btn
+                                        variant="text"
+                                        color="primary"
+                                        class="action-icon-btn"
+                                        size="small"
+                                        @click="handleEditSchedule(item)"
+                                    >
                                         <v-icon size="18">mdi-eye-outline</v-icon>
                                         <v-tooltip activator="parent" location="top">Xem / Sửa</v-tooltip>
                                     </v-btn>
-                                    <v-btn variant="text" color="primary" class="action-icon-btn" size="small"
-                                        @click="openSwapDialog(item)">
+                                    <v-btn
+                                        variant="text"
+                                        color="primary"
+                                        class="action-icon-btn"
+                                        size="small"
+                                        @click="openSwapDialog(item)"
+                                    >
                                         <v-icon size="18">mdi-swap-horizontal</v-icon>
                                         <v-tooltip activator="parent" location="top">Đổi ca</v-tooltip>
                                     </v-btn>
@@ -954,40 +1000,64 @@ onMounted(() => {
                         </tr>
                     </template>
                     <template #pagination>
-                        <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-                            @update:page-size="updatePaginationSize" :total-pages="pagination.totalPages"
-                            :total-elements="pagination.totalElements" :current-size="paginatedItems.length" />
+                        <AdminPagination
+                            v-model="pagination.page"
+                            :page-size="pagination.size"
+                            @update:page-size="updatePaginationSize"
+                            :total-pages="pagination.totalPages"
+                            :total-elements="pagination.totalElements"
+                            :current-size="paginatedItems.length"
+                        />
                     </template>
                 </AdminTable>
             </div>
 
             <!-- Calendar View Mode Content -->
-            <div v-else class="flex-grow-1 overflow-hidden d-flex flex-column"
-                style="background-color: #ffffff !important;">
+            <div v-else class="flex-grow-1 overflow-hidden d-flex flex-column" style="background-color: #ffffff !important">
                 <!-- Calendar Sub-tab: Period Navigation + View toggles -->
-                <div class="d-flex align-center justify-space-between pa-3 border-b"
-                    style="background-color: #ffffff !important; flex-wrap: wrap; gap: 8px;">
+                <div
+                    class="d-flex align-center justify-space-between pa-3 border-b"
+                    style="background-color: #ffffff !important; flex-wrap: wrap; gap: 8px"
+                >
                     <!-- LEFT side: Navigation & Today -->
                     <div class="d-flex align-center ga-3">
-                        <div class="d-flex align-center border rounded-lg bg-white px-2 py-1" style="height: 38px;">
-                            <v-btn icon="mdi-chevron-left" variant="text" size="x-small" color="slate-700" class="mr-2"
-                                @click="prevPeriod"></v-btn>
-                            <span class="text-caption font-weight-bold text-slate-800 px-2 text-center" style="min-width: 210px;">
+                        <div class="d-flex align-center border rounded-lg bg-white px-2 py-1" style="height: 38px">
+                            <v-btn
+                                icon="mdi-chevron-left"
+                                variant="text"
+                                size="x-small"
+                                color="slate-700"
+                                class="mr-2"
+                                @click="prevPeriod"
+                            ></v-btn>
+                            <span class="text-caption font-weight-bold text-slate-800 px-2 text-center" style="min-width: 210px">
                                 {{ periodLabel }}
                             </span>
-                            <v-btn icon="mdi-chevron-right" variant="text" size="x-small" color="slate-700" class="ml-2"
-                                @click="nextPeriod"></v-btn>
+                            <v-btn
+                                icon="mdi-chevron-right"
+                                variant="text"
+                                size="x-small"
+                                color="slate-700"
+                                class="ml-2"
+                                @click="nextPeriod"
+                            ></v-btn>
                         </div>
                     </div>
 
                     <!-- RIGHT side: Toggle buttons -->
                     <div class="calendar-tabs">
-                        <button class="calendar-tab-btn" :class="{ 'calendar-tab-btn--active': calendarTab === 'week' }"
-                            @click="calendarTab = 'week'">
+                        <button
+                            class="calendar-tab-btn"
+                            :class="{ 'calendar-tab-btn--active': calendarTab === 'week' }"
+                            @click="calendarTab = 'week'"
+                        >
                             Tuần
                         </button>
-                        <button class="calendar-tab-btn" :class="{ 'calendar-tab-btn--active': calendarTab === 'month' }"
-                            @click="calendarTab = 'month'">
+                        <button
+                            class="calendar-tab-btn"
+                            :class="{ 'calendar-tab-btn--active': calendarTab === 'month' }"
+                            @click="calendarTab = 'month'"
+                        >
                             Tháng
                         </button>
                     </div>
@@ -996,17 +1066,23 @@ onMounted(() => {
                 <!-- Calendar Display Bodies -->
                 <div class="flex-grow-1 d-flex flex-column overflow-hidden">
                     <!-- 1. WEEK VIEW - Dạng bảng grid (CA LÀM VIỆC | T2 | T3 | T4 | T5 | T6 | T7 | CN) -->
-                    <div v-if="calendarTab === 'week'" class="d-flex flex-column flex-grow-1 overflow-hidden"
-                        style="background-color: #ffffff !important;">
-                        <div class="overflow-x-auto flex-grow-1" style="background-color: #ffffff !important;">
+                    <div
+                        v-if="calendarTab === 'week'"
+                        class="d-flex flex-column flex-grow-1 overflow-hidden"
+                        style="background-color: #ffffff !important"
+                    >
+                        <div class="overflow-x-auto flex-grow-1" style="background-color: #ffffff !important">
                             <table class="cal-grid-table w-100">
                                 <thead>
                                     <tr>
-                                        <th class="cal-grid-th" style="width: 150px; min-width: 150px;">CA LÀM VIỆC</th>
-                                        <th v-for="dayObj in weekDays" :key="dayObj.date"
+                                        <th class="cal-grid-th" style="width: 150px; min-width: 150px">CA LÀM VIỆC</th>
+                                        <th
+                                            v-for="dayObj in weekDays"
+                                            :key="dayObj.date"
                                             class="cal-grid-th"
                                             :class="{ 'cal-grid-th-today': dayObj.isToday }"
-                                            style="min-width: 140px;">
+                                            style="min-width: 140px"
+                                        >
                                             <div class="cal-grid-day-name">{{ getDayAbbr(dayObj.dayName) }}</div>
                                             <div class="cal-grid-day-date">{{ formatDateDDMMYYYY(dayObj.date) }}</div>
                                         </th>
@@ -1026,24 +1102,38 @@ onMounted(() => {
                                         <!-- Daily cells -->
                                         <td v-for="dayObj in weekDays" :key="dayObj.date" class="cal-grid-cell">
                                             <!-- Card container if there are schedules -->
-                                            <div v-if="getSchedulesForCell(dayObj.date, shift.tenCa).length > 0"
+                                            <div
+                                                v-if="getSchedulesForCell(dayObj.date, shift.tenCa).length > 0"
                                                 class="cal-grid-card"
-                                                :class="getCellCardClass(shift.tenCa)">
+                                                :class="getCellCardClass(shift.tenCa)"
+                                            >
                                                 <div class="cal-grid-card-title">{{ shift.tenCa }}</div>
                                                 <div class="cal-grid-card-time">
                                                     {{ shift.gioBatDau.substring(0, 5) }} - {{ shift.gioKetThuc.substring(0, 5) }}
                                                 </div>
                                                 <div class="cal-grid-card-ratio">
-                                                    {{ getSchedulesForCell(dayObj.date, shift.tenCa).length }}/{{ employeeOptions.length }} Nhân viên
+                                                    {{ getSchedulesForCell(dayObj.date, shift.tenCa).length }}/{{ employeeOptions.length }}
+                                                    Nhân viên
                                                 </div>
-                                                <button class="cal-grid-btn-more"
-                                                    @click.stop="openCellEmployeesDialog(dayObj.date, shift.tenCa, getSchedulesForCell(dayObj.date, shift.tenCa))">
+                                                <button
+                                                    class="cal-grid-btn-more"
+                                                    @click.stop="
+                                                        openCellEmployeesDialog(
+                                                            dayObj.date,
+                                                            shift.tenCa,
+                                                            getSchedulesForCell(dayObj.date, shift.tenCa)
+                                                        )
+                                                    "
+                                                >
                                                     Xem thêm
                                                 </button>
                                             </div>
                                             <!-- Empty slot -->
-                                            <div v-else class="cal-grid-cell-empty"
-                                                @click="handleAddForCellAndShift(dayObj.date, shift.tenCa)">
+                                            <div
+                                                v-else
+                                                class="cal-grid-cell-empty"
+                                                @click="handleAddForCellAndShift(dayObj.date, shift.tenCa)"
+                                            >
                                                 <v-icon size="18" color="grey-lighten-1">mdi-plus</v-icon>
                                                 <div class="text-caption text-grey-lighten-1 mt-1">Trống</div>
                                             </div>
@@ -1060,41 +1150,49 @@ onMounted(() => {
                     </div>
 
                     <!-- 2. MONTH VIEW (Chia đều) -->
-                    <div v-else-if="calendarTab === 'month'"
-                        class="calendar-container flex-grow-1 overflow-y-auto pa-4 bg-white">
+                    <div v-else-if="calendarTab === 'month'" class="calendar-container flex-grow-1 overflow-y-auto pa-4 bg-white">
                         <div class="calendar-header-row mb-2">
-                            <div v-for="day in ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật']"
-                                :key="day" class="day-header">
+                            <div
+                                v-for="day in ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật']"
+                                :key="day"
+                                class="day-header"
+                            >
                                 {{ day }}
                             </div>
                         </div>
                         <div class="calendar-grid-month">
-                            <div v-for="(dayObj, idx) in monthDays" :key="idx" class="month-day-cell"
+                            <div
+                                v-for="(dayObj, idx) in monthDays"
+                                :key="idx"
+                                class="month-day-cell"
                                 :class="{ 'empty-cell': !dayObj.dayNum, 'today-cell': dayObj.isToday, 'clickable-day': dayObj.dayNum }"
-                                @click="dayObj.dayNum && handleDayClick(dayObj)">
+                                @click="dayObj.dayNum && handleDayClick(dayObj)"
+                            >
                                 <div v-if="dayObj.dayNum" class="month-day-header">
                                     <span class="month-day-number">{{ dayObj.dayNum }}</span>
                                     <span v-if="dayObj.isToday" class="month-day-today-label">Hôm nay</span>
                                 </div>
                                 <div v-if="dayObj.schedules && dayObj.schedules.length > 0" class="month-schedule-list">
-                                    <div v-for="s in dayObj.schedules" :key="s.id" class="schedule-item-card py-1 px-2"
-                                        style="font-size: 11px; padding: 4px 6px !important;"
-                                        @click.stop="handleEditSchedule(s)">
-                                        <div class="d-flex align-center justify-space-between w-100 text-truncate"
-                                            style="gap: 4px;">
-                                            <span class="font-weight-bold" style="color: #475569; font-size: 9px;">
+                                    <div
+                                        v-for="s in dayObj.schedules"
+                                        :key="s.id"
+                                        class="schedule-item-card py-1 px-2"
+                                        style="font-size: 11px; padding: 4px 6px !important"
+                                        @click.stop="handleEditSchedule(s)"
+                                    >
+                                        <div class="d-flex align-center justify-space-between w-100 text-truncate" style="gap: 4px">
+                                            <span class="font-weight-bold" style="color: #475569; font-size: 9px">
                                                 {{ getShiftTimeRange(s.ca) }}
                                             </span>
-                                            <span class="text-truncate font-weight-black text-slate-800"
-                                                style="flex: 1;">{{
-                                                    s.nhanVien }}</span>
+                                            <span class="text-truncate font-weight-black text-slate-800" style="flex: 1">{{
+                                                s.nhanVien
+                                            }}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </v-card>
@@ -1113,11 +1211,19 @@ onMounted(() => {
                     <div class="d-flex align-center justify-space-between mb-4">
                         <div>
                             <div class="text-subtitle-1 font-weight-bold text-slate-800">{{ selectedCellShift }}</div>
-                            <div class="text-caption text-slate-500">Ngày: {{ formatDateDDMMYYYY(selectedCellDate) }} ({{ getShiftTimeRange(selectedCellShift) }})</div>
+                            <div class="text-caption text-slate-500">
+                                Ngày: {{ formatDateDDMMYYYY(selectedCellDate) }} ({{ getShiftTimeRange(selectedCellShift) }})
+                            </div>
                         </div>
-                        <v-btn prepend-icon="mdi-plus" color="primary" size="small" variant="flat" class="text-none"
-                            style="border-radius: 6px !important;"
-                            @click="handleAddForCellAndShift(selectedCellDate, selectedCellShift)">
+                        <v-btn
+                            prepend-icon="mdi-plus"
+                            color="primary"
+                            size="small"
+                            variant="flat"
+                            class="text-none"
+                            style="border-radius: 6px !important"
+                            @click="handleAddForCellAndShift(selectedCellDate, selectedCellShift)"
+                        >
                             Thêm nhân viên
                         </v-btn>
                     </div>
@@ -1126,10 +1232,10 @@ onMounted(() => {
                         <table class="native-admin-table w-100">
                             <thead>
                                 <tr>
-                                    <th class="header-cell text-center" style="width: 70px; white-space: nowrap;">STT</th>
-                                    <th class="header-cell text-center" style="width: 140px; white-space: nowrap;">Mã NV</th>
+                                    <th class="header-cell text-center" style="width: 70px; white-space: nowrap">STT</th>
+                                    <th class="header-cell text-center" style="width: 140px; white-space: nowrap">Mã NV</th>
                                     <th class="header-cell">Họ tên</th>
-                                    <th class="header-cell text-center" style="width: 110px; white-space: nowrap;">Thao tác</th>
+                                    <th class="header-cell text-center" style="width: 110px; white-space: nowrap">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1139,8 +1245,13 @@ onMounted(() => {
                                     <td class="data-cell">{{ s.nhanVien }}</td>
                                     <td class="data-cell action-cell text-center">
                                         <div class="action-controls justify-center">
-                                            <v-btn variant="text" color="primary" class="action-icon-btn" size="small"
-                                                @click="openSwapDialog(s)">
+                                            <v-btn
+                                                variant="text"
+                                                color="primary"
+                                                class="action-icon-btn"
+                                                size="small"
+                                                @click="openSwapDialog(s)"
+                                            >
                                                 <v-icon size="18">mdi-swap-horizontal</v-icon>
                                                 <v-tooltip activator="parent" location="top">Đổi ca</v-tooltip>
                                             </v-btn>
@@ -1148,7 +1259,9 @@ onMounted(() => {
                                     </td>
                                 </tr>
                                 <tr v-if="!selectedCellSchedules || selectedCellSchedules.length === 0">
-                                    <td colspan="4" class="text-center py-6 text-slate-400 text-caption">Chưa có nhân viên nào đăng ký ca này.</td>
+                                    <td colspan="4" class="text-center py-6 text-slate-400 text-caption">
+                                        Chưa có nhân viên nào đăng ký ca này.
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1168,19 +1281,30 @@ onMounted(() => {
                     <v-icon color="primary" class="mr-3">mdi-swap-horizontal</v-icon>
                     Đổi ca làm việc
                 </v-card-title>
-                
+
                 <v-card-text class="py-2">
                     <div class="mb-4 pa-3 bg-slate-50 rounded-lg text-caption text-slate-600 border border-slate-100">
-                        Nhân viên nguồn: <strong class="text-slate-800">{{ swapSource.nhanVien }}</strong> ({{ swapSource.maNhanVien || getEmployeeCode(swapSource) }})
-                        <br/>
-                        Ca hiện tại: <strong class="text-primary">{{ swapSource.ca }}</strong> ngày {{ formatDateDDMMYYYY(swapSource.ngay) }}
+                        Nhân viên nguồn: <strong class="text-slate-800">{{ swapSource.nhanVien }}</strong> ({{
+                            swapSource.maNhanVien || getEmployeeCode(swapSource)
+                        }})
+                        <br />
+                        Ca hiện tại: <strong class="text-primary">{{ swapSource.ca }}</strong> ngày
+                        {{ formatDateDDMMYYYY(swapSource.ngay) }}
                     </div>
 
                     <div class="filter-field-label">Chọn nhân viên muốn đổi ca:</div>
-                    <v-autocomplete v-model="swapTargetEmployeeId" :items="swapEmployeeList"
-                        :item-title="(item) => item.displayText" item-value="id"
-                        placeholder="Tìm kiếm nhân viên (Tên, Mã)..." variant="outlined" density="compact"
-                        hide-details class="mt-1 swap-autocomplete" :menu-props="{ contentClass: 'swap-autocomplete-menu' }">
+                    <v-autocomplete
+                        v-model="swapTargetEmployeeId"
+                        :items="swapEmployeeList"
+                        :item-title="(item) => item.displayText"
+                        item-value="id"
+                        placeholder="Tìm kiếm nhân viên (Tên, Mã)..."
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="mt-1 swap-autocomplete"
+                        :menu-props="{ contentClass: 'swap-autocomplete-menu' }"
+                    >
                         <template v-slot:item="{ props, item }">
                             <v-list-item v-bind="props" :title="`${item.raw.ma} - ${item.raw.ten}`" :subtitle="item.raw.statusText">
                                 <template v-slot:prepend>
@@ -1194,7 +1318,9 @@ onMounted(() => {
                 <v-card-actions class="pa-4">
                     <v-spacer></v-spacer>
                     <v-btn variant="text" color="grey" @click="showSwapDialog = false">Hủy</v-btn>
-                    <v-btn color="primary" variant="flat" :disabled="!swapTargetEmployeeId" @click="executeSwap" class="px-6 rounded-lg">Xác nhận đổi</v-btn>
+                    <v-btn color="primary" variant="flat" :disabled="!swapTargetEmployeeId" @click="executeSwap" class="px-6 rounded-lg"
+                        >Xác nhận đổi</v-btn
+                    >
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -1203,35 +1329,59 @@ onMounted(() => {
         <v-dialog v-model="showAddDialog" max-width="500">
             <v-card class="rounded-xl pa-4">
                 <v-card-title class="text-h6 font-weight-bold d-flex align-center">
-                    <v-icon color="primary" class="mr-3">{{ isEditSchedule ? 'mdi-pencil-circle' : 'mdi-plus-circle'
-                        }}</v-icon>
+                    <v-icon color="primary" class="mr-3">{{ isEditSchedule ? 'mdi-pencil-circle' : 'mdi-plus-circle' }}</v-icon>
                     {{ isEditSchedule ? 'Cập nhật lịch làm việc' : 'Thêm lịch làm việc' }}
                 </v-card-title>
                 <v-card-text>
                     <v-row>
                         <v-col cols="12">
                             <div class="filter-field-label">Nhân viên {{ isEditSchedule ? '' : '(Chọn nhiều)' }}</div>
-                            <v-autocomplete v-model="addForm.nhanVien" :items="employeeOptions"
-                                :item-title="(item) => `${item.ma} - ${item.ten}`" item-value="id"
-                                placeholder="Tìm kiếm nhân viên (Tên, Mã)" variant="outlined" density="compact"
-                                :multiple="!isEditSchedule" chips closable-chips hide-details>
+                            <v-autocomplete
+                                v-model="addForm.nhanVien"
+                                :items="employeeOptions"
+                                :item-title="(item) => `${item.ma} - ${item.ten}`"
+                                item-value="id"
+                                placeholder="Tìm kiếm nhân viên (Tên, Mã)"
+                                variant="outlined"
+                                density="compact"
+                                :multiple="!isEditSchedule"
+                                chips
+                                closable-chips
+                                hide-details
+                            >
                                 <template v-slot:item="{ props, item }">
-                                    <v-list-item v-bind="props" :title="item.raw.ten"
-                                        :subtitle="item.raw.ma"></v-list-item>
+                                    <v-list-item v-bind="props" :title="item.raw.ten" :subtitle="item.raw.ma"></v-list-item>
                                 </template>
                             </v-autocomplete>
                         </v-col>
                         <v-col cols="12">
                             <div class="filter-field-label">Ca làm {{ isEditSchedule ? '' : '(Chọn nhiều)' }}</div>
-                            <v-select v-model="addForm.ca" :items="rawShifts" item-title="tenCa" item-value="tenCa"
-                                placeholder="Chọn ca làm việc" variant="outlined" density="compact"
-                                :multiple="!isEditSchedule" chips closable-chips hide-details />
+                            <v-select
+                                v-model="addForm.ca"
+                                :items="rawShifts"
+                                item-title="tenCa"
+                                item-value="tenCa"
+                                placeholder="Chọn ca làm việc"
+                                variant="outlined"
+                                density="compact"
+                                :multiple="!isEditSchedule"
+                                chips
+                                closable-chips
+                                hide-details
+                            />
                         </v-col>
                         <v-col cols="12">
                             <div class="filter-field-label">Ngày làm</div>
-                            <AppDatePicker :model-value="addForm.ngay"
-                                @update:model-value="val => addForm.ngay = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : null"
-                                placeholder="Chọn ngày làm" />
+                            <AppDatePicker
+                                :model-value="addForm.ngay"
+                                @update:model-value="
+                                    (val) =>
+                                        (addForm.ngay = val
+                                            ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10)
+                                            : null)
+                                "
+                                placeholder="Chọn ngày làm"
+                            />
                         </v-col>
                     </v-row>
                 </v-card-text>
@@ -1278,22 +1428,27 @@ onMounted(() => {
                                     </td>
                                     <td class="data-cell">{{ row.ngay }}</td>
                                     <td class="data-cell">
-                                        <v-chip size="x-small" variant="flat"
-                                            :class="row.status === 'VALID' ? 'status-success' : 'status-error'">
+                                        <v-chip
+                                            size="x-small"
+                                            variant="flat"
+                                            :class="row.status === 'VALID' ? 'status-success' : 'status-error'"
+                                        >
                                             {{ row.status === 'VALID' ? 'Hợp lệ' : 'Lỗi' }}
                                         </v-chip>
                                     </td>
                                 </tr>
                                 <tr v-if="!importPreviewData || importPreviewData.length === 0">
                                     <td colspan="5" class="empty-state py-16 text-center">
-                                        <div
-                                            class="d-flex flex-column align-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2">
-                                            <v-icon icon="mdi-package-variant" size="48"
-                                                style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
-                                            <span class="text-slate-500"
-                                                style="font-size: 14px !important; font-weight: 400 !important;">Không
-                                                có dữ
-                                                liệu hợp lệ trong file Excel.</span>
+                                        <div class="d-flex flex-column align-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2">
+                                            <v-icon
+                                                icon="mdi-package-variant"
+                                                size="48"
+                                                style="color: #94a3b8 !important; opacity: 0.6"
+                                                class="mb-3"
+                                            />
+                                            <span class="text-slate-500" style="font-size: 14px !important; font-weight: 400 !important"
+                                                >Không có dữ liệu hợp lệ trong file Excel.</span
+                                            >
                                         </div>
                                     </td>
                                 </tr>
@@ -1304,10 +1459,8 @@ onMounted(() => {
 
                 <v-card-actions class="pa-4 border-t bg-slate-50">
                     <v-spacer></v-spacer>
-                    <v-btn variant="outlined" color="grey" @click="showImportPreview = false" class="rounded-lg">Hủy
-                        bỏ</v-btn>
-                    <v-btn color="primary" variant="flat" @click="confirmImport" class="px-6 rounded-lg ml-2">Xác nhận
-                        lưu</v-btn>
+                    <v-btn variant="outlined" color="grey" @click="showImportPreview = false" class="rounded-lg">Hủy bỏ</v-btn>
+                    <v-btn color="primary" variant="flat" @click="confirmImport" class="px-6 rounded-lg ml-2">Xác nhận lưu</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>

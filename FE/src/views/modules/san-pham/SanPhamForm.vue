@@ -20,25 +20,44 @@ import VariantFormModal from '../bien-the-san-pham/components/VariantFormModal.v
 import FormattedNumberField from './components/FormattedNumberField.vue';
 import SafeProductImage from './components/SafeProductImage.vue';
 import {
-    ArrowLeftIcon, BoxIcon, DeviceFloppyIcon, InfoCircleIcon, PencilIcon,
-    PhotoIcon, PlusIcon, SettingsIcon, TrashIcon
+    ArrowLeftIcon,
+    BoxIcon,
+    DeviceFloppyIcon,
+    InfoCircleIcon,
+    PencilIcon,
+    PhotoIcon,
+    PlusIcon,
+    SettingsIcon,
+    TrashIcon
 } from 'vue-tabler-icons';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import QrcodeVue from 'qrcode.vue';
 import {
-    dichVuThuongHieu, dichVuXuatXu,
-    dichVuChatLieu, dichVuDeGiay, dichVuCoGiay,
-    dichVuMucDichChay, dichVuMauSac, dichVuKichThuoc
+    dichVuThuongHieu,
+    dichVuXuatXu,
+    dichVuChatLieu,
+    dichVuDeGiay,
+    dichVuCoGiay,
+    dichVuMucDichChay,
+    dichVuMauSac,
+    dichVuKichThuoc
 } from '@/services/product/dichVuThuocTinh';
 import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
 import { exportQrImageZip } from '@/utils/qrExcelWorkbook';
 import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
 import { generateRandomCode } from '@/utils/codeGenerator';
 import {
-    cleanSizeString, formatSizeDisplay,
-    normalizeSizeInput, blockNonNumericSizeInput, getDisplayItems,
-    getNestedValue, createDraftKey, normalizeUploadedFileUrl
+    cleanSizeString,
+    formatSizeDisplay,
+    normalizeSizeInput,
+    blockNonNumericSizeInput,
+    getDisplayItems,
+    getNestedValue,
+    createDraftKey,
+    normalizeUploadedFileUrl
 } from '@/utils/productFormHelpers';
+import { required, noSpecialChar, lengthBetween3And255, noOuterWhitespace } from '@/utils/validators';
+import { getColorHexByName } from '@/utils/colorDictionary';
 import { useVariantTable } from '@/composables/useVariantTable';
 
 const route = useRoute();
@@ -70,7 +89,7 @@ const duplicateAttributeDialog = ref({
 });
 
 const isEditMode = computed(() => !!route.params.id);
-const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm');
+const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'));
 const originalProductName = ref(null);
 const defaultVariantStatus = 'DANG_HOAT_DONG';
 
@@ -99,59 +118,16 @@ const customColorName = ref('');
 const customColorHex = ref('#FF5733');
 const customSizeName = ref('');
 
-// Bảng màu phổ biến (Việt - Anh) mapping sang HEX
-// Tu dien mau pho bien de tu dien ma HEX khi nguoi dung nhap ten mau.
-const COLOR_DICTIONARY = {
-    // Tiếng Việt
-    'đỏ': '#FF0000', 'xanh dương': '#0000FF', 'xanh lá': '#00FF00',
-    'vàng': '#FFFF00', 'đen': '#000000', 'trắng': '#FFFFFF',
-    'hồng': '#FFC0CB', 'tím': '#800080', 'cam': '#FFA500',
-    'nâu': '#8B4513', 'xám': '#808080', 'ghi': '#808080',
-    'bạc': '#C0C0C0', 'vàng đồng': '#FFD700', 'xanh ngọc': '#40E0D0',
-    'xanh mint': '#98FF98', 'xanh rêu': '#4A5D23', 'xanh navy': '#000080',
-    'be': '#F5F5DC', 'kem': '#FFFDD0', 'kem sữa': '#FFFFF0',
-    'đỏ đô': '#800000', 'đỏ mận': '#800000', 'xanh coban': '#0047AB',
-
-    // Tiếng Anh
-    'red': '#FF0000', 'blue': '#0000FF', 'green': '#00FF00',
-    'yellow': '#FFFF00', 'black': '#000000', 'white': '#FFFFFF',
-    'pink': '#FFC0CB', 'purple': '#800080', 'orange': '#FFA500',
-    'brown': '#8B4513', 'gray': '#808080', 'grey': '#808080',
-    'silver': '#C0C0C0', 'gold': '#FFD700', 'turquoise': '#40E0D0',
-    'mint': '#98FF98', 'navy': '#000080', 'beige': '#F5F5DC',
-    'cream': '#FFFDD0', 'cyan': '#00FFFF', 'magenta': '#FF00FF',
-    'maroon': '#800000'
-};
-
-// Hàm bỏ dấu tiếng việt
-const removeAccents = (str) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : '';
-
 const getColorHexFallback = (colorItem) => {
     if (colorItem?.maMauHex) return colorItem.maMauHex;
-    if (!colorItem?.ten) return '#e2e8f0';
-
-    const normalizedName = colorItem.ten.trim().toLowerCase();
-    const normalizedNoAccent = removeAccents(normalizedName);
-
-    for (const [key, hex] of Object.entries(COLOR_DICTIONARY)) {
-        if (normalizedName === key || normalizedNoAccent === removeAccents(key)) {
-            return hex;
-        }
-    }
-    return '#e2e8f0'; // Default fallback
+    return getColorHexByName(colorItem?.ten) || '#e2e8f0';
 };
 
 watch(customColorName, (newName) => {
     if (!newName) return;
-    const normalizedName = newName.trim().toLowerCase();
-    const normalizedNoAccent = removeAccents(normalizedName);
-
-    // Tìm kiếm trong từ điển
-    for (const [key, hex] of Object.entries(COLOR_DICTIONARY)) {
-        if (normalizedName === key || normalizedNoAccent === removeAccents(key)) {
-            customColorHex.value = hex;
-            break;
-        }
+    const hex = getColorHexByName(newName);
+    if (hex) {
+        customColorHex.value = hex;
     }
 });
 
@@ -172,7 +148,7 @@ const handleAddCustomColor = async () => {
 
     if (!rawName || !rawHex) return;
 
-    const existingColor = colors.value.find(c => (c.maMauHex || '').toUpperCase() === rawHex);
+    const existingColor = colors.value.find((c) => (c.maMauHex || '').toUpperCase() === rawHex);
 
     if (existingColor) {
         if (!selectedColors.value.includes(existingColor.id)) {
@@ -251,7 +227,7 @@ const handleAddCustomSize = async () => {
     const finalNumericSize = sizeNumber.toString();
 
     // 2. Lỗi trùng lặp: Kiểm tra trùng lặp không phân biệt hoa thường
-    const existingSize = sizes.value.find(s => cleanSizeString(s.ten).toLowerCase() === normalizedSize.toLowerCase());
+    const existingSize = sizes.value.find((s) => cleanSizeString(s.ten).toLowerCase() === normalizedSize.toLowerCase());
 
     if (existingSize) {
         // Trùng lặp với dữ liệu đã tồn tại trong hệ thống
@@ -281,7 +257,7 @@ const handleAddCustomSize = async () => {
 };
 
 const addAllFilteredSizes = () => {
-    filteredSizes.value.forEach(s => {
+    filteredSizes.value.forEach((s) => {
         if (!selectedSizes.value.includes(s.id)) {
             selectedSizes.value.push(s.id);
         }
@@ -292,7 +268,7 @@ const addAllFilteredSizes = () => {
 const filteredColors = computed(() => {
     const query = normalizeSearchText(colorSearch.value);
     if (!query) return colors.value;
-    return colors.value.filter(c => normalizeSearchText(c.ten).includes(query));
+    return colors.value.filter((c) => normalizeSearchText(c.ten).includes(query));
 });
 const sortedSizes = computed(() => {
     return [...sizes.value].sort((a, b) => {
@@ -306,7 +282,7 @@ const sortedSizes = computed(() => {
 const filteredSizes = computed(() => {
     const query = normalizeSearchText(customSizeName.value);
     if (!query) return sortedSizes.value;
-    return sortedSizes.value.filter(s => normalizeSearchText(s.ten).includes(query));
+    return sortedSizes.value.filter((s) => normalizeSearchText(s.ten).includes(query));
 });
 
 // Theo dõi nội dung đang gõ trong các combobox
@@ -401,19 +377,16 @@ const variantTableHeaders = [
     { text: 'Trạng thái', width: '160px' },
     { text: 'Thao tác', width: '120px' }
 ];
-const variantFilterProductLabel = computed(() => (
-    [product.value.maSanPham, product.value.tenSanPham].filter(Boolean).join(' • ') || 'Sản phẩm hiện tại'
-));
+const variantFilterProductLabel = computed(
+    () => [product.value.maSanPham, product.value.tenSanPham].filter(Boolean).join(' • ') || 'Sản phẩm hiện tại'
+);
 
-const totalVariantStock = computed(() => variantItems.value.reduce(
-    (sum, item) => sum + Number(item.soLuong || 0),
-    0
-));
+const totalVariantStock = computed(() => variantItems.value.reduce((sum, item) => sum + Number(item.soLuong || 0), 0));
 
 // Gom bien the theo mau de hien tab/chinh sua nhanh theo tung mau.
 const variantsByColor = computed(() => {
     const groups = {};
-    variantItems.value.forEach(item => {
+    variantItems.value.forEach((item) => {
         if (!groups[item.idMauSac]) {
             groups[item.idMauSac] = [];
         }
@@ -435,7 +408,7 @@ const handleQuickApply = () => {
     const { giaBan, giaNhap, soLuong } = quickApplyValues;
     if (giaBan === '' && giaNhap === '' && soLuong === '') return;
 
-    variantItems.value = variantItems.value.map(item => {
+    variantItems.value = variantItems.value.map((item) => {
         if (activeColorTab.value === 'ALL' || String(item.idMauSac) === String(activeColorTab.value)) {
             return {
                 ...item,
@@ -457,7 +430,7 @@ const visibleVariantItems = computed(() => {
     if (activeColorTab.value === 'ALL') {
         return variantItems.value;
     }
-    return variantItems.value.filter(item => String(item.idMauSac) === String(activeColorTab.value));
+    return variantItems.value.filter((item) => String(item.idMauSac) === String(activeColorTab.value));
 });
 
 const createVariantPage = ref(1);
@@ -493,7 +466,7 @@ const openBulkEdit = (colorId = null) => {
 
 const applyBulkEdit = () => {
     const { soLuong, giaNhap, giaBan } = bulkEditModal.form;
-    variantItems.value = variantItems.value.map(item => {
+    variantItems.value = variantItems.value.map((item) => {
         if (bulkEditModal.targetColorId === null || String(item.idMauSac) === String(bulkEditModal.targetColorId)) {
             return {
                 ...item,
@@ -512,38 +485,39 @@ const applyBulkEdit = () => {
     });
 };
 
-const variantContextSummary = computed(() => (
+const variantContextSummary = computed(() =>
     [
         getOptionLabel(soles, product.value.idDeGiay),
         getOptionLabel(collars, product.value.idCoGiay),
         getOptionLabel(purposes, product.value.idMucDichChay)
     ].filter((item) => item && item !== '--')
-));
-
-const getAttributeMethodName = (type) => `tao${type.split('_').map(
-    word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-).join('')}`;
-
-const getAttributeFetchMethodName = (type) => `lay${type.split('_').map(
-    word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-).join('')}`;
-
-const getBackendErrorMessage = (error, fallbackMessage) => (
-    error?.response?.data?.message
-    || error?.message
-    || fallbackMessage
 );
 
+const getAttributeMethodName = (type) =>
+    `tao${type
+        .split('_')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join('')}`;
+
+const getAttributeFetchMethodName = (type) =>
+    `lay${type
+        .split('_')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join('')}`;
+
+const getBackendErrorMessage = (error, fallbackMessage) => error?.response?.data?.message || error?.message || fallbackMessage;
+
 const getVariantColorHex = (idMauSac) => {
-    const color = colors.value.find(c => String(c.id) === String(idMauSac));
+    const color = colors.value.find((c) => String(c.id) === String(idMauSac));
     return color ? getColorHexFallback(color) : '#ffffff';
 };
 
-const normalizeSearchText = (value) => String(value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
+const normalizeSearchText = (value) =>
+    String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
 
 const comboboxFilter = (itemTitle, queryText, item) => {
     const normalizedQuery = normalizeSearchText(queryText);
@@ -560,10 +534,8 @@ const comboboxProps = {
     autoSelectFirst: false
 };
 
-
-
 const removeDraftVariantByObject = (variant) => {
-    variantItems.value = variantItems.value.filter(item => item !== variant);
+    variantItems.value = variantItems.value.filter((item) => item !== variant);
 };
 
 const normalizeAttributeText = (value) => {
@@ -572,8 +544,7 @@ const normalizeAttributeText = (value) => {
     }
 
     if (value && typeof value === 'object') {
-        const textCandidate = [value.ten, value.title, value.label, value.text]
-            .find(item => typeof item === 'string' && item.trim());
+        const textCandidate = [value.ten, value.title, value.label, value.text].find((item) => typeof item === 'string' && item.trim());
         if (textCandidate) {
             return textCandidate.trim();
         }
@@ -591,7 +562,7 @@ const findAttributeOption = (config, value) => {
 
     if (value && typeof value === 'object') {
         if (value.id) {
-            const matchedById = options.find(item => item.id === value.id);
+            const matchedById = options.find((item) => item.id === value.id);
             if (matchedById) {
                 return matchedById;
             }
@@ -615,10 +586,12 @@ const findAttributeOption = (config, value) => {
     }
 
     const normalizedLower = normalizeSearchText(normalizedValue);
-    return options.find(item => (
-        (item.id === normalizedValue && !String(item.id).startsWith('__new__'))
-        || normalizeSearchText(item.ten) === normalizedLower
-    )) || null;
+    return (
+        options.find(
+            (item) =>
+                (item.id === normalizedValue && !String(item.id).startsWith('__new__')) || normalizeSearchText(item.ten) === normalizedLower
+        ) || null
+    );
 };
 
 const upsertAttributeOption = (config, option) => {
@@ -627,7 +600,7 @@ const upsertAttributeOption = (config, option) => {
     }
 
     const options = config.options.value || [];
-    if (options.some(item => item.id === option.id)) {
+    if (options.some((item) => item.id === option.id)) {
         return;
     }
 
@@ -641,11 +614,7 @@ const refreshAttributeOptions = async (config) => {
     }
 
     const response = await config.service[fetchMethod]({ size: 1000 });
-    config.options.value = Array.isArray(response?.content)
-        ? response.content
-        : Array.isArray(response)
-            ? response
-            : config.options.value;
+    config.options.value = Array.isArray(response?.content) ? response.content : Array.isArray(response) ? response : config.options.value;
 };
 
 const resolveAttributeField = async (config, { notifyOnCreate = false } = {}) => {
@@ -740,7 +709,7 @@ const onKeyUpEnter = async (event, field) => {
     const val = event.target.value?.trim();
     if (!val) return;
 
-    const config = attributeConfig.find(item => item.field === field);
+    const config = attributeConfig.find((item) => item.field === field);
     if (!config) {
         return;
     }
@@ -759,7 +728,6 @@ const onKeyUpEnter = async (event, field) => {
     }
 };
 
-
 const formatCurrency = (value) => {
     if (value === null || value === undefined || value === '') return '--';
     return new Intl.NumberFormat('vi-VN', {
@@ -776,69 +744,60 @@ const formatNumber = (value) => {
 
 // getStatusLabel is now imported from @/utils/statusUtils
 
-
 const normalizeOptionList = (listLike) => {
     if (Array.isArray(listLike)) return listLike;
     if (Array.isArray(listLike?.value)) return listLike.value;
     return [];
 };
 
-const getOptionLabel = (listLike, id) => normalizeOptionList(listLike).find(item => item.id === id)?.ten || '--';
+const getOptionLabel = (listLike, id) => normalizeOptionList(listLike).find((item) => item.id === id)?.ten || '--';
 const getVariantKey = (variant) => variant.id || variant.clientKey;
 const getVariantSkuLabel = (variant) => {
     const sku = variant.maChiTietSanPham;
     if (!sku) return 'Tự sinh sau khi lưu sản phẩm';
     return sku;
 };
-const getVariantSkuValue = (variant = {}) => (
-    variant.maChiTietSanPham
-    || variant.sku
-    || variant.maSku
-    || variant.maBienThe
-    || variant.ma
-    || ''
-);
-const getVariantColorIdValue = (variant = {}) => (
-    getNestedValue(variant, ['idMauSac', 'mauSacId'])
-    || getNestedValue(variant.mauSac, ['id', 'value', 'ma'])
-    || getNestedValue(variant.color, ['id', 'value', 'ma'])
-    || ''
-);
-const getVariantColorLabelValue = (variant = {}) => (
-    getNestedValue(variant, ['tenMauSac'])
-    || getNestedValue(variant.mauSac, ['ten', 'name', 'label', 'title'])
-    || getNestedValue(variant.color, ['ten', 'name', 'label', 'title'])
-    || ''
-);
-const getVariantSizeIdValue = (variant = {}) => (
-    getNestedValue(variant, ['idKichThuoc', 'kichThuocId', 'sizeId'])
-    || getNestedValue(variant.kichThuoc, ['id', 'value', 'ma'])
-    || getNestedValue(variant.size, ['id', 'value', 'ma'])
-    || ''
-);
-const getVariantSizeLabelValue = (variant = {}) => (
-    getNestedValue(variant, ['tenKichThuoc'])
-    || getNestedValue(variant.kichThuoc, ['ten', 'name', 'label', 'title', 'giaTriKichThuoc'])
-    || getNestedValue(variant.size, ['ten', 'name', 'label', 'title'])
-    || ''
-);
+const getVariantSkuValue = (variant = {}) =>
+    variant.maChiTietSanPham || variant.sku || variant.maSku || variant.maBienThe || variant.ma || '';
+const getVariantColorIdValue = (variant = {}) =>
+    getNestedValue(variant, ['idMauSac', 'mauSacId']) ||
+    getNestedValue(variant.mauSac, ['id', 'value', 'ma']) ||
+    getNestedValue(variant.color, ['id', 'value', 'ma']) ||
+    '';
+const getVariantColorLabelValue = (variant = {}) =>
+    getNestedValue(variant, ['tenMauSac']) ||
+    getNestedValue(variant.mauSac, ['ten', 'name', 'label', 'title']) ||
+    getNestedValue(variant.color, ['ten', 'name', 'label', 'title']) ||
+    '';
+const getVariantSizeIdValue = (variant = {}) =>
+    getNestedValue(variant, ['idKichThuoc', 'kichThuocId', 'sizeId']) ||
+    getNestedValue(variant.kichThuoc, ['id', 'value', 'ma']) ||
+    getNestedValue(variant.size, ['id', 'value', 'ma']) ||
+    '';
+const getVariantSizeLabelValue = (variant = {}) =>
+    getNestedValue(variant, ['tenKichThuoc']) ||
+    getNestedValue(variant.kichThuoc, ['ten', 'name', 'label', 'title', 'giaTriKichThuoc']) ||
+    getNestedValue(variant.size, ['ten', 'name', 'label', 'title']) ||
+    '';
 const getVariantQrValue = (variant) => variant?.maChiTietSanPham || getVariantKey(variant) || '';
 const getVariantThumbnail = (variant) => {
-    return normalizeUploadedFileUrl(
-        variant.urlAnh
-        || variant.images?.find(image => image.hinhAnhDaiDien)?.duongDanAnh
-        || variant.images?.[0]?.duongDanAnh
-        || variant.hinhAnhs?.find(image => image.hinhAnhDaiDien)?.duongDanAnh
-        || variant.hinhAnhs?.[0]?.duongDanAnh
-        || variant.anhChiTietSanPhams?.find(image => image.hinhAnhDaiDien)?.duongDanAnh
-        || variant.anhChiTietSanPhams?.[0]?.duongDanAnh
-        || variant.hinhAnh?.[0]?.duongDanAnh
-        || variant.hinhAnh?.[0]?.url
-        || variant.hinhAnh
-        || variant.duongDanAnh
-        || variant.imageUrl
-        || variant.anh
-    ) || logoPlaceholder;
+    return (
+        normalizeUploadedFileUrl(
+            variant.urlAnh ||
+                variant.images?.find((image) => image.hinhAnhDaiDien)?.duongDanAnh ||
+                variant.images?.[0]?.duongDanAnh ||
+                variant.hinhAnhs?.find((image) => image.hinhAnhDaiDien)?.duongDanAnh ||
+                variant.hinhAnhs?.[0]?.duongDanAnh ||
+                variant.anhChiTietSanPhams?.find((image) => image.hinhAnhDaiDien)?.duongDanAnh ||
+                variant.anhChiTietSanPhams?.[0]?.duongDanAnh ||
+                variant.hinhAnh?.[0]?.duongDanAnh ||
+                variant.hinhAnh?.[0]?.url ||
+                variant.hinhAnh ||
+                variant.duongDanAnh ||
+                variant.imageUrl ||
+                variant.anh
+        ) || logoPlaceholder
+    );
 };
 const getVariantCombinationKey = (colorId, sizeId) => `${colorId}-${sizeId}`;
 const getColorUploadEntry = (colorId) => colorImageState.value[colorId] || { url: '', uploading: false };
@@ -849,7 +808,8 @@ const getBulkColorForm = (colorId) => {
     }
     return bulkByColorForms.value[colorId];
 };
-const hasAnyBulkValue = (form) => ['soLuong', 'giaNhap', 'giaBan'].some((field) => form[field] !== '' && form[field] !== null && form[field] !== undefined);
+const hasAnyBulkValue = (form) =>
+    ['soLuong', 'giaNhap', 'giaBan'].some((field) => form[field] !== '' && form[field] !== null && form[field] !== undefined);
 const getVariantColorLabel = (colorId) => getOptionLabel(colors, colorId);
 const getVariantSizeLabel = (sizeId) => getOptionLabel(sizes, sizeId);
 const getVariantDescriptor = () => variantContextSummary.value.join(' • ');
@@ -860,9 +820,13 @@ const mapVariantToFormState = (variant = {}) => ({
     clientKey: variant.clientKey || createDraftKey(),
     maChiTietSanPham: getVariantSkuValue(variant),
     idMauSac: getVariantColorIdValue(variant),
-    tenMauSac: getVariantColorLabelValue(variant) || (getOptionLabel(colors, getVariantColorIdValue(variant)) !== '--' ? getOptionLabel(colors, getVariantColorIdValue(variant)) : ''),
+    tenMauSac:
+        getVariantColorLabelValue(variant) ||
+        (getOptionLabel(colors, getVariantColorIdValue(variant)) !== '--' ? getOptionLabel(colors, getVariantColorIdValue(variant)) : ''),
     idKichThuoc: getVariantSizeIdValue(variant),
-    tenKichThuoc: getVariantSizeLabelValue(variant) || (getOptionLabel(sizes, getVariantSizeIdValue(variant)) !== '--' ? getOptionLabel(sizes, getVariantSizeIdValue(variant)) : ''),
+    tenKichThuoc:
+        getVariantSizeLabelValue(variant) ||
+        (getOptionLabel(sizes, getVariantSizeIdValue(variant)) !== '--' ? getOptionLabel(sizes, getVariantSizeIdValue(variant)) : ''),
     soLuong: Number(variant.soLuong ?? 0),
     giaNhap: Number(variant.giaNhap ?? 0),
     giaBan: Number(variant.giaBan ?? 0),
@@ -881,7 +845,7 @@ const cleanAttributeName = (src) => {
         .replace(/Đ/g, 'D')
         .toUpperCase()
         .trim();
-    
+
     if (result.startsWith('SIZE ')) {
         result = result.substring(5).trim();
     } else if (result.startsWith('SIZE-')) {
@@ -889,7 +853,7 @@ const cleanAttributeName = (src) => {
     } else if (result.startsWith('SIZE')) {
         result = result.substring(4).trim();
     }
-    
+
     result = result.replace(/[^A-Z0-9]+/g, '-');
     if (result.startsWith('-')) result = result.substring(1);
     if (result.endsWith('-')) result = result.substring(0, result.length - 1);
@@ -897,16 +861,18 @@ const cleanAttributeName = (src) => {
 };
 
 const generateSkuForDraft = (productCode, colorId, sizeId) => {
-    const code = String(productCode || '').trim().toUpperCase();
+    const code = String(productCode || '')
+        .trim()
+        .toUpperCase();
     if (!code) return '';
-    
+
     const colorLabel = getVariantColorLabel(colorId);
     const sizeLabel = getVariantSizeLabel(sizeId);
-    
+
     if (colorLabel && sizeLabel && colorLabel !== '--' && sizeLabel !== '--') {
         const cleanColor = cleanAttributeName(colorLabel);
         const cleanSize = cleanAttributeName(sizeLabel);
-        
+
         let newSku = code;
         if (cleanColor) newSku += '-' + cleanColor;
         if (cleanSize) newSku += '-' + cleanSize;
@@ -946,9 +912,7 @@ const buildVariantPayload = (variant, includeImages = true) => {
     };
 
     if (includeImages) {
-        payload.images = imageUrl
-            ? [{ duongDanAnh: imageUrl, hinhAnhDaiDien: true }]
-            : [];
+        payload.images = imageUrl ? [{ duongDanAnh: imageUrl, hinhAnhDaiDien: true }] : [];
     }
 
     return payload;
@@ -958,7 +922,7 @@ const handleAttributeChange = async (field, value) => {
     // Chỉ tự động tạo nếu người dùng chọn mục "Thêm nhanh" (có prefix __new__)
     // Hoặc nếu họ nhấn Enter (được xử lý ở onKeyUpEnter)
     if (typeof value === 'string' && value.startsWith('__new__')) {
-        const config = attributeConfig.find(item => item.field === field);
+        const config = attributeConfig.find((item) => item.field === field);
         if (!config) return;
 
         try {
@@ -1010,11 +974,12 @@ const handleExportVariantQrZip = async () => {
         exportQrImageZip({
             fileName: `qrcode_bien_the_da_chon_${fileSuffix}.zip`,
             items: targetVariants.map((variant, index) => ({
-                baseName: variant.maChiTietSanPham
-                    || [product.value.tenSanPham, getVariantColorLabel(variant.idMauSac), getVariantSizeLabel(variant.idKichThuoc)]
+                baseName:
+                    variant.maChiTietSanPham ||
+                    [product.value.tenSanPham, getVariantColorLabel(variant.idMauSac), getVariantSizeLabel(variant.idKichThuoc)]
                         .filter(Boolean)
-                        .join('_')
-                    || `variant_${index + 1}`,
+                        .join('_') ||
+                    `variant_${index + 1}`,
                 dataUrl: qrDataUrls[index]
             }))
         });
@@ -1036,11 +1001,7 @@ const handleExportVariantQrZip = async () => {
 };
 
 const updateVariantStatusLocally = (variantKey, nextStatus) => {
-    variantItems.value = variantItems.value.map((item) => (
-        getVariantKey(item) === variantKey
-            ? { ...item, trangThai: nextStatus }
-            : item
-    ));
+    variantItems.value = variantItems.value.map((item) => (getVariantKey(item) === variantKey ? { ...item, trangThai: nextStatus } : item));
 };
 
 const persistVariantStatus = async (variant, nextStatus) => {
@@ -1049,10 +1010,7 @@ const persistVariantStatus = async (variant, nextStatus) => {
         return;
     }
 
-    await dichVuBienThe.capNhatBienThe(
-        variant.id,
-        buildVariantPayload({ ...variant, trangThai: nextStatus }, false)
-    );
+    await dichVuBienThe.capNhatBienThe(variant.id, buildVariantPayload({ ...variant, trangThai: nextStatus }, false));
     updateVariantStatusLocally(getVariantKey(variant), nextStatus);
 };
 
@@ -1075,17 +1033,19 @@ const buildProductPayload = ({ includeVariants = false } = {}) => {
     };
 
     if (includeVariants) {
-        payload.variants = variantItems.value.map(item => buildVariantPayload(item, true));
+        payload.variants = variantItems.value.map((item) => buildVariantPayload(item, true));
     }
 
     return payload;
 };
 
-const hasDuplicateVariant = (payload, currentKey = null) => variantItems.value.some((item) => (
-    String(item.idMauSac) === String(payload.idMauSac)
-    && String(item.idKichThuoc) === String(payload.idKichThuoc)
-    && getVariantKey(item) !== currentKey
-));
+const hasDuplicateVariant = (payload, currentKey = null) =>
+    variantItems.value.some(
+        (item) =>
+            String(item.idMauSac) === String(payload.idMauSac) &&
+            String(item.idKichThuoc) === String(payload.idKichThuoc) &&
+            getVariantKey(item) !== currentKey
+    );
 
 const variantGroups = computed(() => {
     const groupedMap = new Map();
@@ -1106,9 +1066,7 @@ const variantGroups = computed(() => {
         });
     });
 
-    const orderedColorIds = isEditMode.value
-        ? [...groupedMap.keys()]
-        : selectedColors.value.filter((colorId) => groupedMap.has(colorId));
+    const orderedColorIds = isEditMode.value ? [...groupedMap.keys()] : selectedColors.value.filter((colorId) => groupedMap.has(colorId));
 
     const groups = orderedColorIds.map((colorId) => groupedMap.get(colorId)).filter(Boolean);
     groups.forEach((group) => {
@@ -1132,11 +1090,9 @@ const syncColorImageStateFromVariants = () => {
 
 const applyColorImageToVariants = (colorId, imageUrl) => {
     const normalizedImageUrl = normalizeUploadedFileUrl(imageUrl);
-    variantItems.value = variantItems.value.map((variant) => (
-        variant.idMauSac === colorId
-            ? { ...variant, urlAnh: normalizedImageUrl || '' }
-            : variant
-    ));
+    variantItems.value = variantItems.value.map((variant) =>
+        variant.idMauSac === colorId ? { ...variant, urlAnh: normalizedImageUrl || '' } : variant
+    );
 
     const nextState = { ...colorImageState.value };
     if (normalizedImageUrl) {
@@ -1228,11 +1184,7 @@ const applyBulkValues = (predicate, form, successMessage) => {
 };
 
 const applyBulkAllVariants = () => {
-    applyBulkValues(
-        () => true,
-        bulkAllForm.value,
-        'Đã áp dụng nhanh cho toàn bộ biến thể'
-    );
+    applyBulkValues(() => true, bulkAllForm.value, 'Đã áp dụng nhanh cho toàn bộ biến thể');
 };
 
 const applyBulkColorVariants = (colorId) => {
@@ -1266,32 +1218,22 @@ const removeColorGroup = (colorId) => {
 };
 
 const executeGenerateVariants = () => {
-    const existingVariantMap = new Map(
-        variantItems.value.map(item => [
-            getVariantCombinationKey(item.idMauSac, item.idKichThuoc),
-            item
-        ])
-    );
+    const existingVariantMap = new Map(variantItems.value.map((item) => [getVariantCombinationKey(item.idMauSac, item.idKichThuoc), item]));
 
     const nextVariants = [];
     selectedColors.value.forEach((colorId) => {
         selectedSizes.value.forEach((sizeId) => {
             const combinationKey = getVariantCombinationKey(colorId, sizeId);
-            nextVariants.push(createGeneratedVariant(
-                colorId,
-                sizeId,
-                existingVariantMap.get(combinationKey),
-                getColorUploadEntry(colorId).url
-            ));
+            nextVariants.push(
+                createGeneratedVariant(colorId, sizeId, existingVariantMap.get(combinationKey), getColorUploadEntry(colorId).url)
+            );
         });
     });
 
     variantItems.value = nextVariants;
 
     const validColorIds = new Set(selectedColors.value);
-    colorImageState.value = Object.fromEntries(
-        Object.entries(colorImageState.value).filter(([colorId]) => validColorIds.has(colorId))
-    );
+    colorImageState.value = Object.fromEntries(Object.entries(colorImageState.value).filter(([colorId]) => validColorIds.has(colorId)));
 
     addNotification({
         title: 'Thành công',
@@ -1338,13 +1280,13 @@ const fetchFormOptions = async () => {
         ]);
 
         if (productsRes) {
-            const productList = Array.isArray(productsRes.content) ? productsRes.content : (Array.isArray(productsRes) ? productsRes : []);
-            existingProductNames.value = [...new Set(productList.map(p => p.tenSanPham).filter(Boolean))];
+            const productList = Array.isArray(productsRes.content) ? productsRes.content : Array.isArray(productsRes) ? productsRes : [];
+            existingProductNames.value = [...new Set(productList.map((p) => p.tenSanPham).filter(Boolean))];
         }
 
         const filterActive = (list) => {
             if (!Array.isArray(list)) return [];
-            return list.filter(item => !item.trangThai || item.trangThai === 'DANG_HOAT_DONG');
+            return list.filter((item) => !item.trangThai || item.trangThai === 'DANG_HOAT_DONG');
         };
 
         if (opts) {
@@ -1447,24 +1389,31 @@ const product = ref({
 });
 
 // Watch for product name changes to auto-trim leading spaces
-watch(() => product.value.tenSanPham, (newVal) => {
-    if (typeof newVal === 'string' && /^\s+/.test(newVal)) {
-        product.value.tenSanPham = newVal.trimStart();
-        return;
-    }
-    if (!isEditMode.value) {
-        checkProductName(newVal);
-    }
-});
-
-// Watch search queries for comboboxes to trim leading spaces in real-time
-watch(searchQueries, (newQueries) => {
-    for (const key in newQueries) {
-        if (typeof newQueries[key] === 'string' && /^\s+/.test(newQueries[key])) {
-            searchQueries[key] = newQueries[key].trimStart();
+watch(
+    () => product.value.tenSanPham,
+    (newVal) => {
+        if (typeof newVal === 'string' && /^\s+/.test(newVal)) {
+            product.value.tenSanPham = newVal.trimStart();
+            return;
+        }
+        if (!isEditMode.value) {
+            checkProductName(newVal);
         }
     }
-}, { deep: true });
+);
+
+// Watch search queries for comboboxes to trim leading spaces in real-time
+watch(
+    searchQueries,
+    (newQueries) => {
+        for (const key in newQueries) {
+            if (typeof newQueries[key] === 'string' && /^\s+/.test(newQueries[key])) {
+                searchQueries[key] = newQueries[key].trimStart();
+            }
+        }
+    },
+    { deep: true }
+);
 
 watch(customSizeName, (newVal) => {
     if (typeof newVal === 'string' && /^\s+/.test(newVal)) {
@@ -1478,11 +1427,14 @@ watch(colorSearch, (newVal) => {
     }
 });
 
-watch(() => product.value.moTaChiTiet, (newVal) => {
-    if (typeof newVal === 'string' && /^\s+/.test(newVal)) {
-        product.value.moTaChiTiet = newVal.trimStart();
+watch(
+    () => product.value.moTaChiTiet,
+    (newVal) => {
+        if (typeof newVal === 'string' && /^\s+/.test(newVal)) {
+            product.value.moTaChiTiet = newVal.trimStart();
+        }
     }
-});
+);
 
 // Function to handle native input event for text fields to strip leading spaces in real-time
 const handleTextInput = (field, event) => {
@@ -1535,15 +1487,20 @@ const handleComboboxBlur = (field, event) => {
 };
 
 // Watch for product code changes to automatically update SKU for drafts
-watch(() => product.value.maSanPham, (newVal) => {
-    if (isEditMode.value) return;
-    const code = String(newVal || '').trim().toUpperCase();
-    variantItems.value.forEach(item => {
-        if (!item.id) {
-            item.maChiTietSanPham = generateSkuForDraft(code, item.idMauSac, item.idKichThuoc);
-        }
-    });
-});
+watch(
+    () => product.value.maSanPham,
+    (newVal) => {
+        if (isEditMode.value) return;
+        const code = String(newVal || '')
+            .trim()
+            .toUpperCase();
+        variantItems.value.forEach((item) => {
+            if (!item.id) {
+                item.maChiTietSanPham = generateSkuForDraft(code, item.idMauSac, item.idKichThuoc);
+            }
+        });
+    }
+);
 
 const loadProduct = async (id) => {
     const [data, variantsData] = await Promise.all([
@@ -1591,9 +1548,13 @@ const loadInitData = async () => {
                     if (Array.isArray(variantsToMerge) && variantsToMerge.length > 0) {
                         // Append to current variants, avoiding duplicates if possible
                         // Ensure they don't have IDs since they are new to this product
-                        const sanitizedToMerge = variantsToMerge.map(v => ({ ...v, id: null, ma: '' }));
+                        const sanitizedToMerge = variantsToMerge.map((v) => ({ ...v, id: null, ma: '' }));
                         variantItems.value = [...variantItems.value, ...sanitizedToMerge];
-                        addNotification({ title: 'Đã gộp', subtitle: `Đã tự động thêm ${variantsToMerge.length} biến thể từ sản phẩm trùng lặp. Vui lòng bấm Cập nhật để lưu.`, color: 'info' });
+                        addNotification({
+                            title: 'Đã gộp',
+                            subtitle: `Đã tự động thêm ${variantsToMerge.length} biến thể từ sản phẩm trùng lặp. Vui lòng bấm Cập nhật để lưu.`,
+                            color: 'info'
+                        });
                     }
                 } catch (e) {
                     console.error('Lỗi khi parse biến thể gộp', e);
@@ -1616,33 +1577,31 @@ const loadInitData = async () => {
     }
 };
 
-watch(() => route.params.id, () => {
-    if (route.name === 'SanPhamForm') {
-        loadInitData();
+watch(
+    () => route.params.id,
+    () => {
+        if (route.name === 'SanPhamForm') {
+            loadInitData();
+        }
     }
-});
+);
 
 onMounted(() => {
     loadInitData();
 });
 
 const rules = {
-    required: value => {
-        if (value === null || value === undefined || value === '') return 'Trường này là bắt buộc';
-        if (typeof value === 'string' && !value.trim()) return 'Trường này không được chỉ chứa khoảng trắng';
-        return true;
-    },
-    noSpecialChar: value => {
-        if (!value) return true;
-        return /^[\p{L}0-9\s]+$/u.test(value) || 'Không được chứa ký tự đặc biệt';
-    },
-    uniqueProductName: value => {
+    required: required('Trường này'),
+    noOuterWhitespace,
+    lengthBetween3And255,
+    noSpecialChar,
+    uniqueProductName: (value) => {
         if (!value) return true;
         const valStr = String(value).trim().toLowerCase();
         if (isEditMode.value && originalProductName.value && valStr === String(originalProductName.value).trim().toLowerCase()) {
             return true;
         }
-        const exists = existingProductNames.value.some(name => String(name).trim().toLowerCase() === valStr);
+        const exists = existingProductNames.value.some((name) => String(name).trim().toLowerCase() === valStr);
         return !exists || 'Tên sản phẩm đã tồn tại trong hệ thống!';
     }
 };
@@ -1706,9 +1665,10 @@ const validateProduct = () => {
     }
 
     const valStr = String(product.value.tenSanPham).trim().toLowerCase();
-    const isSameAsOriginal = isEditMode.value && originalProductName.value && valStr === String(originalProductName.value).trim().toLowerCase();
+    const isSameAsOriginal =
+        isEditMode.value && originalProductName.value && valStr === String(originalProductName.value).trim().toLowerCase();
     if (!isSameAsOriginal) {
-        const exists = existingProductNames.value.some(name => String(name).trim().toLowerCase() === valStr);
+        const exists = existingProductNames.value.some((name) => String(name).trim().toLowerCase() === valStr);
         if (exists) {
             addNotification({
                 title: 'Lỗi trùng tên',
@@ -1867,9 +1827,7 @@ const handleVariantSubmit = async (payload) => {
             variantItems.value = [...variantItems.value, nextVariant];
             addNotification({ title: 'Thành công', subtitle: 'Đã thêm biến thể nháp', color: 'success' });
         } else {
-            variantItems.value = variantItems.value.map(item => (
-                getVariantKey(item) === currentKey ? nextVariant : item
-            ));
+            variantItems.value = variantItems.value.map((item) => (getVariantKey(item) === currentKey ? nextVariant : item));
             addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật biến thể nháp', color: 'success' });
         }
 
@@ -1883,10 +1841,7 @@ const handleVariantSubmit = async (payload) => {
             await dichVuBienThe.taoBienThe(route.params.id, buildVariantPayload(normalizedPayload, true));
             addNotification({ title: 'Thành công', subtitle: 'Đã thêm biến thể mới', color: 'success' });
         } else {
-            await dichVuBienThe.capNhatBienThe(
-                variantModal.value.variant.id,
-                buildVariantPayload(normalizedPayload, true)
-            );
+            await dichVuBienThe.capNhatBienThe(variantModal.value.variant.id, buildVariantPayload(normalizedPayload, true));
             addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật biến thể', color: 'success' });
         }
 
@@ -1921,7 +1876,7 @@ const handleRemoveVariant = (variant) => {
                     await loadProduct(route.params.id);
                     addNotification({ title: 'Thành công', subtitle: 'Đã xóa biến thể', color: 'success' });
                 } else {
-                    variantItems.value = variantItems.value.filter(item => getVariantKey(item) !== getVariantKey(variant));
+                    variantItems.value = variantItems.value.filter((item) => getVariantKey(item) !== getVariantKey(variant));
                     addNotification({ title: 'Thành công', subtitle: 'Đã xóa biến thể nháp', color: 'success' });
                 }
                 confirmDialog.value.show = false;
@@ -1940,9 +1895,9 @@ const proceedWithSave = (creatingNew, variantCount) => {
         show: true,
         title: creatingNew ? 'Xác nhận thêm mới' : 'Xác nhận cập nhật',
         message: creatingNew
-            ? (variantCount > 0
+            ? variantCount > 0
                 ? `Bạn có chắc chắn muốn thêm sản phẩm mới cùng ${variantCount} biến thể không?`
-                : 'Bạn có chắc chắn muốn thêm sản phẩm mới này không?')
+                : 'Bạn có chắc chắn muốn thêm sản phẩm mới này không?'
             : 'Bạn có chắc chắn muốn cập nhật thông tin sản phẩm này không?',
         color: 'primary',
         action: async () => {
@@ -1953,9 +1908,7 @@ const proceedWithSave = (creatingNew, variantCount) => {
                     await dichVuSanPham.taoSanPham(buildProductPayload({ includeVariants: true }));
                     addNotification({
                         title: 'Thành công',
-                        subtitle: variantCount > 0
-                            ? `Đã thêm sản phẩm mới cùng ${variantCount} biến thể`
-                            : 'Đã thêm sản phẩm mới',
+                        subtitle: variantCount > 0 ? `Đã thêm sản phẩm mới cùng ${variantCount} biến thể` : 'Đã thêm sản phẩm mới',
                         color: 'success'
                     });
                 } else {
@@ -2039,30 +1992,42 @@ const handleSave = async () => {
 </script>
 
 <template>
-    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh;">
-        <AdminBreadcrumbs :items="[
-            { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
-            { title: 'Danh sách sản phẩm', disabled: false, to: PATH.SAN_PHAM },
-            { title: isEditMode ? 'Cập nhật' : 'Thêm mới', disabled: true }
-        ]" />
+    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh">
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
+                { title: 'Danh sách sản phẩm', disabled: false, to: PATH.SAN_PHAM },
+                { title: isEditMode ? 'Cập nhật' : 'Thêm mới', disabled: true }
+            ]"
+        />
 
         <div class="d-flex align-center justify-space-between mb-8 mt-4 header-actions">
             <div class="d-flex align-center ga-4">
-                <v-btn icon variant="flat" color="white" class="mr-3 border elevation-1 rounded-lg" size="36"
+                <v-btn
+                    icon
+                    variant="flat"
+                    color="white"
+                    class="mr-3 border elevation-1 rounded-lg"
+                    size="36"
                     style="height: 36px !important; width: 36px !important; min-height: 36px !important"
-                    @click="router.push(PATH.SAN_PHAM)">
+                    @click="router.push(PATH.SAN_PHAM)"
+                >
                     <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
                     <v-tooltip activator="parent" location="top" text="Quay lại danh sách sản phẩm" />
                 </v-btn>
             </div>
             <div class="d-flex align-center ga-3 header-actions__buttons">
-                <v-btn v-if="isEditMode" variant="outlined" color="primary" class="text-none px-6"
-                    style="border-radius: 12px !important; height: 44px !important; font-size: 13px !important; font-weight: 600 !important;"
-                    @click="router.push({ name: 'BienTheSanPham', query: { productId: route.params.id } })">
+                <v-btn
+                    v-if="isEditMode"
+                    variant="outlined"
+                    color="primary"
+                    class="text-none px-6"
+                    style="border-radius: 12px !important; height: 44px !important; font-size: 13px !important; font-weight: 600 !important"
+                    @click="router.push({ name: 'BienTheSanPham', query: { productId: route.params.id } })"
+                >
                     <BoxIcon size="18" class="mr-2" /> Quản lý biến thể
                 </v-btn>
-                <v-btn variant="flat" class="add-btn-primary text-none font-weight-medium px-8" :loading="saving"
-                    @click="handleSave">
+                <v-btn variant="flat" class="add-btn-primary text-none font-weight-medium px-8" :loading="saving" @click="handleSave">
                     <DeviceFloppyIcon size="18" class="mr-2" />
                     {{ submitButtonText }}
                 </v-btn>
@@ -2091,60 +2056,88 @@ const handleSave = async () => {
 
                             <v-col cols="12" md="3">
                                 <div class="field-label">Mã sản phẩm</div>
-                                <v-text-field v-model="product.maSanPham" readonly
-                                    :placeholder="isEditMode ? '' : 'Mã tự động tạo...'" variant="outlined"
-                                    density="comfortable" class="custom-input mono-font" hide-details>
+                                <v-text-field
+                                    v-model="product.maSanPham"
+                                    readonly
+                                    :placeholder="isEditMode ? '' : 'Mã tự động tạo...'"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    class="custom-input mono-font"
+                                    hide-details
+                                >
                                 </v-text-field>
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Tên sản phẩm <span class="text-error">*</span></div>
-                                <v-text-field v-model="product.tenSanPham"
+                                <v-text-field
+                                    v-model="product.tenSanPham"
                                     placeholder="Ví dụ: Giày Nike Air..."
-                                    :rules="[rules.required, rules.noSpecialChar]"
-                                    variant="outlined" density="comfortable" hide-details="auto" maxlength="250"
+                                    :rules="[rules.required, rules.noOuterWhitespace, rules.lengthBetween3And255, rules.noSpecialChar]"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    hide-details="auto"
+                                    maxlength="250"
                                     @input="(e) => handleTextInput('tenSanPham', e)"
-                                    @blur="(e) => handleTextBlur('tenSanPham', e)"></v-text-field>
+                                    @blur="(e) => handleTextBlur('tenSanPham', e)"
+                                ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Thương hiệu <span class="text-error">*</span></div>
-                                <v-combobox v-model="product.idThuongHieu" v-model:search="searchQueries.idThuongHieu"
-                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayBrands"
-                                    item-title="ten" item-value="id" :rules="[rules.required]"
-                                    placeholder="Thương hiệu..." variant="outlined" density="comfortable"
-                                    :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"
+                                <v-combobox
+                                    v-model="product.idThuongHieu"
+                                    v-model:search="searchQueries.idThuongHieu"
+                                    v-bind="comboboxProps"
+                                    :custom-filter="() => true"
+                                    :items="displayBrands"
+                                    item-title="ten"
+                                    item-value="id"
+                                    :rules="[rules.required]"
+                                    placeholder="Thương hiệu..."
+                                    variant="outlined"
+                                    density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"
                                     @update:search="(val) => handleComboboxSearchUpdate('idThuongHieu', val)"
                                     @blur="(e) => handleComboboxBlur('idThuongHieu', e)"
                                     @update:model-value="(val) => handleAttributeChange('idThuongHieu', val)"
-                                    :menu-props="{ contentClass: 'product-select-menu' }">
+                                    :menu-props="{ contentClass: 'product-select-menu' }"
+                                >
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
-                                                    nhanh</span>
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
                                             </template>
                                         </v-list-item>
                                     </template>
                                 </v-combobox>
                             </v-col>
 
-
                             <!-- HÀNG 2: THUỘC TÍNH PHÂN LOẠI -->
                             <v-col cols="12" md="3">
                                 <div class="field-label">Xuất xứ <span class="text-error">*</span></div>
-                                <v-combobox v-model="product.idXuatXu" v-model:search="searchQueries.idXuatXu"
-                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayOrigins"
-                                    item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Xuất xứ"
-                                    variant="outlined" density="comfortable" :return-object="false"
+                                <v-combobox
+                                    v-model="product.idXuatXu"
+                                    v-model:search="searchQueries.idXuatXu"
+                                    v-bind="comboboxProps"
+                                    :custom-filter="() => true"
+                                    :items="displayOrigins"
+                                    item-title="ten"
+                                    item-value="id"
+                                    :rules="[rules.required]"
+                                    placeholder="Xuất xứ"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"
                                     @update:search="(val) => handleComboboxSearchUpdate('idXuatXu', val)"
                                     @blur="(e) => handleComboboxBlur('idXuatXu', e)"
                                     @update:model-value="(val) => handleAttributeChange('idXuatXu', val)"
-                                    :menu-props="{ contentClass: 'product-select-menu' }">
+                                    :menu-props="{ contentClass: 'product-select-menu' }"
+                                >
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
-                                                    nhanh</span>
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
                                             </template>
                                         </v-list-item>
                                     </template>
@@ -2152,20 +2145,29 @@ const handleSave = async () => {
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Chất liệu <span class="text-error">*</span></div>
-                                <v-combobox v-model="product.idChatLieu" v-model:search="searchQueries.idChatLieu"
-                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayMaterials"
-                                    item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Chất liệu"
-                                    variant="outlined" density="comfortable" :return-object="false"
+                                <v-combobox
+                                    v-model="product.idChatLieu"
+                                    v-model:search="searchQueries.idChatLieu"
+                                    v-bind="comboboxProps"
+                                    :custom-filter="() => true"
+                                    :items="displayMaterials"
+                                    item-title="ten"
+                                    item-value="id"
+                                    :rules="[rules.required]"
+                                    placeholder="Chất liệu"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"
                                     @update:search="(val) => handleComboboxSearchUpdate('idChatLieu', val)"
                                     @blur="(e) => handleComboboxBlur('idChatLieu', e)"
                                     @update:model-value="(val) => handleAttributeChange('idChatLieu', val)"
-                                    :menu-props="{ contentClass: 'product-select-menu' }">
+                                    :menu-props="{ contentClass: 'product-select-menu' }"
+                                >
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
-                                                    nhanh</span>
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
                                             </template>
                                         </v-list-item>
                                     </template>
@@ -2173,28 +2175,46 @@ const handleSave = async () => {
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Đối tượng <span class="text-error">*</span></div>
-                                <v-select v-model="product.gioiTinhKhachHang"
-                                    :items="[{ title: 'Nam', value: 'NAM' }, { title: 'Nữ', value: 'NU' }, { title: 'Unisex', value: 'UNISEX' }]"
-                                    :rules="[rules.required]" clearable variant="outlined" density="comfortable"
+                                <v-select
+                                    v-model="product.gioiTinhKhachHang"
+                                    :items="[
+                                        { title: 'Nam', value: 'NAM' },
+                                        { title: 'Nữ', value: 'NU' },
+                                        { title: 'Unisex', value: 'UNISEX' }
+                                    ]"
+                                    :rules="[rules.required]"
+                                    clearable
+                                    variant="outlined"
+                                    density="comfortable"
                                     placeholder="Đối tượng"
-                                    :menu-props="{ contentClass: 'product-select-menu' }"></v-select>
+                                    :menu-props="{ contentClass: 'product-select-menu' }"
+                                ></v-select>
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Mục đích <span class="text-error">*</span></div>
-                                <v-combobox v-model="product.idMucDichChay" v-model:search="searchQueries.idMucDichChay"
-                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayPurposes"
-                                    item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Mục đích"
-                                    variant="outlined" density="comfortable" :return-object="false"
+                                <v-combobox
+                                    v-model="product.idMucDichChay"
+                                    v-model:search="searchQueries.idMucDichChay"
+                                    v-bind="comboboxProps"
+                                    :custom-filter="() => true"
+                                    :items="displayPurposes"
+                                    item-title="ten"
+                                    item-value="id"
+                                    :rules="[rules.required]"
+                                    placeholder="Mục đích"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"
                                     @update:search="(val) => handleComboboxSearchUpdate('idMucDichChay', val)"
                                     @blur="(e) => handleComboboxBlur('idMucDichChay', e)"
                                     @update:model-value="(val) => handleAttributeChange('idMucDichChay', val)"
-                                    :menu-props="{ contentClass: 'product-select-menu' }">
+                                    :menu-props="{ contentClass: 'product-select-menu' }"
+                                >
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
-                                                    nhanh</span>
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
                                             </template>
                                         </v-list-item>
                                     </template>
@@ -2204,20 +2224,29 @@ const handleSave = async () => {
                             <!-- HÀNG 3: THÔNG SỐ VÀ MÔ TẢ -->
                             <v-col cols="12" md="6">
                                 <div class="field-label">Loại đế <span class="text-error">*</span></div>
-                                <v-combobox v-model="product.idDeGiay" v-model:search="searchQueries.idDeGiay"
-                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displaySoles"
-                                    item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Loại đế"
-                                    variant="outlined" density="comfortable" :return-object="false"
+                                <v-combobox
+                                    v-model="product.idDeGiay"
+                                    v-model:search="searchQueries.idDeGiay"
+                                    v-bind="comboboxProps"
+                                    :custom-filter="() => true"
+                                    :items="displaySoles"
+                                    item-title="ten"
+                                    item-value="id"
+                                    :rules="[rules.required]"
+                                    placeholder="Loại đế"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"
                                     @update:search="(val) => handleComboboxSearchUpdate('idDeGiay', val)"
                                     @blur="(e) => handleComboboxBlur('idDeGiay', e)"
                                     @update:model-value="(val) => handleAttributeChange('idDeGiay', val)"
-                                    :menu-props="{ contentClass: 'product-select-menu' }">
+                                    :menu-props="{ contentClass: 'product-select-menu' }"
+                                >
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
-                                                    nhanh</span>
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
                                             </template>
                                         </v-list-item>
                                     </template>
@@ -2225,20 +2254,29 @@ const handleSave = async () => {
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Loại cổ <span class="text-error">*</span></div>
-                                <v-combobox v-model="product.idCoGiay" v-model:search="searchQueries.idCoGiay"
-                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayCollars"
-                                    item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Loại cổ"
-                                    variant="outlined" density="comfortable" :return-object="false"
+                                <v-combobox
+                                    v-model="product.idCoGiay"
+                                    v-model:search="searchQueries.idCoGiay"
+                                    v-bind="comboboxProps"
+                                    :custom-filter="() => true"
+                                    :items="displayCollars"
+                                    item-title="ten"
+                                    item-value="id"
+                                    :rules="[rules.required]"
+                                    placeholder="Loại cổ"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"
                                     @update:search="(val) => handleComboboxSearchUpdate('idCoGiay', val)"
                                     @blur="(e) => handleComboboxBlur('idCoGiay', e)"
                                     @update:model-value="(val) => handleAttributeChange('idCoGiay', val)"
-                                    :menu-props="{ contentClass: 'product-select-menu' }">
+                                    :menu-props="{ contentClass: 'product-select-menu' }"
+                                >
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
-                                                    nhanh</span>
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
                                             </template>
                                         </v-list-item>
                                     </template>
@@ -2246,11 +2284,17 @@ const handleSave = async () => {
                             </v-col>
                             <v-col cols="12">
                                 <div class="field-label">Mô tả chi tiết</div>
-                                <v-textarea v-model="product.moTaChiTiet" variant="outlined" rows="3" auto-grow
-                                    placeholder="Mô tả chi tiết sản phẩm..." hide-details
+                                <v-textarea
+                                    v-model="product.moTaChiTiet"
+                                    variant="outlined"
+                                    rows="3"
+                                    auto-grow
+                                    placeholder="Mô tả chi tiết sản phẩm..."
+                                    hide-details
                                     @input="(e) => handleTextInput('moTaChiTiet', e)"
                                     @blur="(e) => handleTextBlur('moTaChiTiet', e)"
-                                    class="custom-textarea"></v-textarea>
+                                    class="custom-textarea"
+                                ></v-textarea>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -2272,19 +2316,24 @@ const handleSave = async () => {
                             <!-- MÀU SẮC -->
                             <div class="field-label mb-3">Màu sắc <span class="text-error">*</span></div>
                             <div class="d-flex flex-wrap ga-4 mb-8">
-                                <div v-for="c in colors.filter(x => selectedColors.includes(x.id))" :key="c.id"
-                                    class="text-center cursor-pointer" @click="toggleColor(c.id)">
-                                    <div class="color-circle mx-auto"
+                                <div
+                                    v-for="c in colors.filter((x) => selectedColors.includes(x.id))"
+                                    :key="c.id"
+                                    class="text-center cursor-pointer"
+                                    @click="toggleColor(c.id)"
+                                >
+                                    <div
+                                        class="color-circle mx-auto"
                                         :style="{ backgroundColor: getColorHexFallback(c) }"
-                                        :class="{ 'selected': selectedColors.includes(c.id) }">
-                                        <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18"
-                                            class="check-icon">mdi-check</v-icon>
+                                        :class="{ selected: selectedColors.includes(c.id) }"
+                                    >
+                                        <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18" class="check-icon"
+                                            >mdi-check</v-icon
+                                        >
                                     </div>
-                                    <div class="text-caption mt-1 text-truncate" style="max-width: 48px;">{{ c.ten }}
-                                    </div>
+                                    <div class="text-caption mt-1 text-truncate" style="max-width: 48px">{{ c.ten }}</div>
                                 </div>
-                                <v-menu v-model="showColorMenu" :close-on-content-click="false" location="bottom center"
-                                    max-width="320">
+                                <v-menu v-model="showColorMenu" :close-on-content-click="false" location="bottom center" max-width="320">
                                     <template v-slot:activator="{ props }">
                                         <div class="text-center cursor-pointer" v-bind="props">
                                             <div class="color-circle dashed mx-auto d-flex align-center justify-center">
@@ -2296,59 +2345,96 @@ const handleSave = async () => {
                                     <v-card class="rounded-xl pa-4 elevation-4 border">
                                         <div class="d-flex justify-space-between align-center mb-4">
                                             <span class="text-subtitle-1 font-weight-bold">Chọn màu sắc</span>
-                                            <v-btn icon="mdi-close" variant="text" size="small"
-                                                @click="showColorMenu = false"></v-btn>
+                                            <v-btn icon="mdi-close" variant="text" size="small" @click="showColorMenu = false"></v-btn>
                                         </div>
-                                        <v-text-field v-model="colorSearch" prepend-inner-icon="mdi-magnify"
-                                            placeholder="Tìm kiếm màu sắc..." variant="outlined" density="compact"
-                                            hide-details class="mb-4 bg-slate-50"></v-text-field>
+                                        <v-text-field
+                                            v-model="colorSearch"
+                                            prepend-inner-icon="mdi-magnify"
+                                            placeholder="Tìm kiếm màu sắc..."
+                                            variant="outlined"
+                                            density="compact"
+                                            hide-details
+                                            class="mb-4 bg-slate-50"
+                                        ></v-text-field>
 
                                         <div class="text-caption font-weight-bold text-grey mb-3">MÀU PHỔ BIẾN</div>
-                                        <div class="d-flex flex-wrap ga-3 mb-6"
-                                            style="max-height: 150px; overflow-y: auto;">
-                                            <div v-for="c in filteredColors" :key="c.id"
-                                                class="text-center cursor-pointer" @click="toggleColor(c.id)">
-                                                <div class="color-circle mx-auto mb-1"
+                                        <div class="d-flex flex-wrap ga-3 mb-6" style="max-height: 150px; overflow-y: auto">
+                                            <div
+                                                v-for="c in filteredColors"
+                                                :key="c.id"
+                                                class="text-center cursor-pointer"
+                                                @click="toggleColor(c.id)"
+                                            >
+                                                <div
+                                                    class="color-circle mx-auto mb-1"
                                                     :style="{ backgroundColor: getColorHexFallback(c) }"
-                                                    :class="{ 'selected': selectedColors.includes(c.id) }">
-                                                    <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18"
-                                                        class="check-icon">mdi-check</v-icon>
+                                                    :class="{ selected: selectedColors.includes(c.id) }"
+                                                >
+                                                    <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18" class="check-icon"
+                                                        >mdi-check</v-icon
+                                                    >
                                                 </div>
-                                                <div class="text-caption"
-                                                    style="font-size: 10px !important; max-width: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                                    {{ c.ten }}</div>
+                                                <div
+                                                    class="text-caption"
+                                                    style="
+                                                        font-size: 10px !important;
+                                                        max-width: 40px;
+                                                        overflow: hidden;
+                                                        text-overflow: ellipsis;
+                                                        white-space: nowrap;
+                                                    "
+                                                >
+                                                    {{ c.ten }}
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div class="text-caption font-weight-bold text-grey mb-3">THÊM NHANH MÀU SẮC
-                                        </div>
+                                        <div class="text-caption font-weight-bold text-grey mb-3">THÊM NHANH MÀU SẮC</div>
                                         <div class="d-flex ga-3 mb-4">
-                                            <div class="custom-color-preview rounded-lg position-relative overflow-hidden cursor-pointer"
-                                                :style="{ backgroundColor: customColorHex }">
-                                                <input type="color" v-model="customColorHex"
+                                            <div
+                                                class="custom-color-preview rounded-lg position-relative overflow-hidden cursor-pointer"
+                                                :style="{ backgroundColor: customColorHex }"
+                                            >
+                                                <input
+                                                    type="color"
+                                                    v-model="customColorHex"
                                                     class="position-absolute w-100 h-100"
-                                                    style="opacity: 0; cursor: pointer; top: 0; left: 0; outline: none; border: none;" />
+                                                    style="opacity: 0; cursor: pointer; top: 0; left: 0; outline: none; border: none"
+                                                />
                                             </div>
                                             <div class="flex-grow-1">
                                                 <div class="text-caption mb-1">TÊN MÀU</div>
-                                                <v-text-field v-model="customColorName" placeholder="Ví dụ: Xanh Mint"
-                                                    variant="outlined" density="compact" hide-details maxlength="250"
-                                                    class="mb-3 bg-slate-50"></v-text-field>
+                                                <v-text-field
+                                                    v-model="customColorName"
+                                                    placeholder="Ví dụ: Xanh Mint"
+                                                    variant="outlined"
+                                                    density="compact"
+                                                    hide-details
+                                                    maxlength="250"
+                                                    class="mb-3 bg-slate-50"
+                                                ></v-text-field>
                                                 <div class="text-caption mb-1">MÃ MÀU (HEX)</div>
-                                                <v-text-field v-model="customColorHex" variant="outlined"
-                                                    density="compact" hide-details maxlength="250"
-                                                    class="bg-slate-50 mb-2"></v-text-field>
+                                                <v-text-field
+                                                    v-model="customColorHex"
+                                                    variant="outlined"
+                                                    density="compact"
+                                                    hide-details
+                                                    maxlength="250"
+                                                    class="bg-slate-50 mb-2"
+                                                ></v-text-field>
                                                 <div class="d-flex align-center ga-2 px-3 py-1 bg-slate-50 rounded-lg">
-                                                    <div class="color-dot" :style="{ backgroundColor: customColorHex }">
-                                                    </div>
+                                                    <div class="color-dot" :style="{ backgroundColor: customColorHex }"></div>
                                                     <span class="text-caption font-weight-medium">Màu đang chọn</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <v-btn block color="primary" class="rounded-lg font-weight-bold text-none"
-                                            @click="handleAddCustomColor">
-                                            <v-icon size="18" class="mr-2">mdi-plus-circle-outline</v-icon> Xác nhận
-                                            thêm mới màu
+                                        <v-btn
+                                            block
+                                            color="primary"
+                                            class="rounded-lg font-weight-bold text-none"
+                                            @click="handleAddCustomColor"
+                                        >
+                                            <v-icon size="18" class="mr-2">mdi-plus-circle-outline</v-icon> Xác nhận thêm mới màu
                                         </v-btn>
                                     </v-card>
                                 </v-menu>
@@ -2357,54 +2443,80 @@ const handleSave = async () => {
                             <!-- KÍCH THƯỚC -->
                             <div class="field-label mb-3 mt-2">Kích thước <span class="text-error">*</span></div>
                             <div class="d-flex flex-wrap ga-2 mb-4">
-                                <v-chip v-for="s in sortedSizes.filter(x => selectedSizes.includes(x.id))" :key="s.id"
-                                    variant="flat" color="primary"
-                                    class="rounded-lg font-weight-medium px-4 cursor-pointer" @click="toggleSize(s.id)">
+                                <v-chip
+                                    v-for="s in sortedSizes.filter((x) => selectedSizes.includes(x.id))"
+                                    :key="s.id"
+                                    variant="flat"
+                                    color="primary"
+                                    class="rounded-lg font-weight-medium px-4 cursor-pointer"
+                                    @click="toggleSize(s.id)"
+                                >
                                     {{ formatSizeDisplay(s.ten) }}
                                 </v-chip>
 
-                                <v-menu v-model="showSizeMenu" :close-on-content-click="false" location="bottom center"
-                                    max-width="320">
+                                <v-menu v-model="showSizeMenu" :close-on-content-click="false" location="bottom center" max-width="320">
                                     <template v-slot:activator="{ props }">
-                                        <v-chip v-bind="props" variant="outlined"
-                                            style="border-style: dashed; border-width: 1px;" color="grey-darken-1"
-                                            class="rounded-lg px-4 bg-transparent cursor-pointer hover-bg-slate-50">
+                                        <v-chip
+                                            v-bind="props"
+                                            variant="outlined"
+                                            style="border-style: dashed; border-width: 1px"
+                                            color="grey-darken-1"
+                                            class="rounded-lg px-4 bg-transparent cursor-pointer hover-bg-slate-50"
+                                        >
                                             <v-icon start size="16">mdi-plus</v-icon> Thêm mới
                                         </v-chip>
                                     </template>
                                     <v-card class="rounded-xl pa-4 elevation-4 border">
                                         <div class="d-flex justify-space-between align-center mb-4">
                                             <span class="text-subtitle-1 font-weight-bold">Chọn kích thước</span>
-                                            <v-btn icon="mdi-close" variant="text" size="small"
-                                                @click="showSizeMenu = false"></v-btn>
+                                            <v-btn icon="mdi-close" variant="text" size="small" @click="showSizeMenu = false"></v-btn>
                                         </div>
                                         <div class="d-flex ga-2 mb-4">
-                                            <v-text-field :model-value="customSizeName"
+                                            <v-text-field
+                                                :model-value="customSizeName"
                                                 @update:model-value="updateCustomSizeName"
-                                                @keydown="blockNonNumericSizeInput" @paste="handleSizePaste"
-                                                prepend-inner-icon="mdi-magnify" placeholder="Nhập kích thước"
-                                                variant="outlined" density="compact" hide-details class="bg-slate-50"
-                                                maxlength="2" type="text" inputmode="numeric"
-                                                pattern="[0-9]*"></v-text-field>
-                                            <v-btn color="primary" class="rounded-lg text-none font-weight-medium"
-                                                height="40" @click="handleAddCustomSize">
+                                                @keydown="blockNonNumericSizeInput"
+                                                @paste="handleSizePaste"
+                                                prepend-inner-icon="mdi-magnify"
+                                                placeholder="Nhập kích thước"
+                                                variant="outlined"
+                                                density="compact"
+                                                hide-details
+                                                class="bg-slate-50"
+                                                maxlength="2"
+                                                type="text"
+                                                inputmode="numeric"
+                                                pattern="[0-9]*"
+                                            ></v-text-field>
+                                            <v-btn
+                                                color="primary"
+                                                class="rounded-lg text-none font-weight-medium"
+                                                height="40"
+                                                @click="handleAddCustomSize"
+                                            >
                                                 <v-icon start size="18">mdi-plus</v-icon> Thêm
                                             </v-btn>
                                         </div>
                                         <div class="text-caption text-grey mb-3">Gợi ý kích thước</div>
-                                        <div class="d-flex flex-wrap ga-2 mb-4"
-                                            style="max-height: 150px; overflow-y: auto;">
-                                            <v-chip v-for="s in filteredSizes" :key="s.id"
+                                        <div class="d-flex flex-wrap ga-2 mb-4" style="max-height: 150px; overflow-y: auto">
+                                            <v-chip
+                                                v-for="s in filteredSizes"
+                                                :key="s.id"
                                                 :variant="selectedSizes.includes(s.id) ? 'flat' : 'tonal'"
                                                 :color="selectedSizes.includes(s.id) ? 'primary' : 'grey-darken-1'"
                                                 class="rounded-lg px-4 cursor-pointer font-weight-medium"
                                                 @click="toggleSize(s.id)"
-                                                :class="{ 'bg-slate-50': !selectedSizes.includes(s.id) }">
+                                                :class="{ 'bg-slate-50': !selectedSizes.includes(s.id) }"
+                                            >
                                                 {{ formatSizeDisplay(s.ten) }}
                                             </v-chip>
                                         </div>
-                                        <v-btn block color="primary" class="rounded-lg font-weight-bold text-none mt-2"
-                                            @click="addAllFilteredSizes">
+                                        <v-btn
+                                            block
+                                            color="primary"
+                                            class="rounded-lg font-weight-bold text-none mt-2"
+                                            @click="addAllFilteredSizes"
+                                        >
                                             Thêm tất cả vào danh sách
                                         </v-btn>
                                     </v-card>
@@ -2414,9 +2526,14 @@ const handleSave = async () => {
 
                         <v-spacer></v-spacer>
 
-                        <v-btn height="44" class="mt-6 text-none font-weight-medium rounded-lg mx-auto d-flex"
-                            style="width: fit-content;" color="primary" @click="generateVariants"
-                            :disabled="selectedColors.length === 0 || selectedSizes.length === 0">
+                        <v-btn
+                            height="44"
+                            class="mt-6 text-none font-weight-medium rounded-lg mx-auto d-flex"
+                            style="width: fit-content"
+                            color="primary"
+                            @click="generateVariants"
+                            :disabled="selectedColors.length === 0 || selectedSizes.length === 0"
+                        >
                             <v-icon icon="mdi-auto-fix" size="18" class="mr-2" />
                             Tạo danh sách biến thể
                         </v-btn>
@@ -2430,7 +2547,7 @@ const handleSave = async () => {
                 <v-card class="premium-card">
                     <v-card-text class="pa-8">
                         <template v-if="!isEditMode">
-                            <div class="variant-gradient-header pb-4 mb-6" style="border-bottom: 1px solid #e2e8f0;">
+                            <div class="variant-gradient-header pb-4 mb-6" style="border-bottom: 1px solid #e2e8f0">
                                 <div class="d-flex align-center justify-space-between w-100">
                                     <div class="d-flex align-center">
                                         <div class="icon-blob bg-blue-lighten-5 mr-3">
@@ -2441,15 +2558,25 @@ const handleSave = async () => {
                                         </div>
                                     </div>
                                     <div class="d-flex align-center ga-3">
-                                        <v-btn v-if="variantItems.length > 0" color="primary" variant="flat"
+                                        <v-btn
+                                            v-if="variantItems.length > 0"
+                                            color="primary"
+                                            variant="flat"
                                             class="text-none font-weight-bold rounded-lg px-4"
-                                            style="color: white !important;" @click="openBulkEdit(null)">
+                                            style="color: white !important"
+                                            @click="openBulkEdit(null)"
+                                        >
                                             <v-icon icon="mdi-flash-outline" size="18" class="mr-2" />
                                             Thêm nhanh toàn bộ
                                         </v-btn>
-                                        <v-btn v-if="variantItems.length > 0" variant="flat" color="error"
+                                        <v-btn
+                                            v-if="variantItems.length > 0"
+                                            variant="flat"
+                                            color="error"
                                             class="text-none font-weight-bold rounded-lg px-4"
-                                            style="color: white !important;" @click="clearAllDraftVariants">
+                                            style="color: white !important"
+                                            @click="clearAllDraftVariants"
+                                        >
                                             <TrashIcon size="18" class="mr-2" />
                                             Xóa tất cả
                                         </v-btn>
@@ -2458,49 +2585,83 @@ const handleSave = async () => {
                             </div>
 
                             <div v-if="variantItems.length > 0" class="variants-tab-container mb-6">
-                                <v-row no-gutters class="rounded-lg overflow-hidden"
-                                    style="height: 600px; border: 1px solid #cbd5e1 !important;">
+                                <v-row
+                                    no-gutters
+                                    class="rounded-lg overflow-hidden"
+                                    style="height: 600px; border: 1px solid #cbd5e1 !important"
+                                >
                                     <!-- Sidebar Màu sắc -->
-                                    <v-col cols="12" md="3" class="bg-slate-50 d-flex flex-column h-100"
-                                        style="border-right: 1px solid #cbd5e1;">
+                                    <v-col
+                                        cols="12"
+                                        md="3"
+                                        class="bg-slate-50 d-flex flex-column h-100"
+                                        style="border-right: 1px solid #cbd5e1"
+                                    >
                                         <div class="pa-2 flex-shrink-0">
                                             <v-list class="bg-transparent pa-0" lines="one">
                                                 <v-list-item
-                                                    :class="['rounded-lg transition-all', activeColorTab === 'ALL' ? 'bg-white elevation-2 text-primary font-weight-bold' : 'text-slate-700 hover-bg-slate-100']"
-                                                    @click="activeColorTab = 'ALL'">
+                                                    :class="[
+                                                        'rounded-lg transition-all',
+                                                        activeColorTab === 'ALL'
+                                                            ? 'bg-white elevation-2 text-primary font-weight-bold'
+                                                            : 'text-slate-700 hover-bg-slate-100'
+                                                    ]"
+                                                    @click="activeColorTab = 'ALL'"
+                                                >
                                                     <template v-slot:prepend>
-                                                        <v-icon icon="mdi-format-list-bulleted"
+                                                        <v-icon
+                                                            icon="mdi-format-list-bulleted"
                                                             :color="activeColorTab === 'ALL' ? 'primary' : 'slate-500'"
-                                                            class="mr-3" />
+                                                            class="mr-3"
+                                                        />
                                                     </template>
                                                     <v-list-item-title
-                                                        :class="activeColorTab === 'ALL' ? 'font-weight-bold' : 'font-weight-medium'">Tất
-                                                        cả
-                                                        màu</v-list-item-title>
+                                                        :class="activeColorTab === 'ALL' ? 'font-weight-bold' : 'font-weight-medium'"
+                                                        >Tất cả màu</v-list-item-title
+                                                    >
                                                 </v-list-item>
                                             </v-list>
                                             <v-divider class="mt-4 mb-2 opacity-50" color="slate-300"></v-divider>
                                         </div>
 
-                                        <div class="flex-grow-1 px-2 pb-2" style="overflow-y: auto; min-height: 0;">
+                                        <div class="flex-grow-1 px-2 pb-2" style="overflow-y: auto; min-height: 0">
                                             <v-list class="bg-transparent pa-0" lines="one">
-
-                                                <v-list-item v-for="(items, colorId) in variantsByColor" :key="colorId"
-                                                    :class="['rounded-lg mb-2 transition-all', activeColorTab === String(colorId) ? 'bg-white elevation-2 text-primary' : 'text-slate-700 hover-bg-slate-100']"
-                                                    @click="activeColorTab = String(colorId)">
+                                                <v-list-item
+                                                    v-for="(items, colorId) in variantsByColor"
+                                                    :key="colorId"
+                                                    :class="[
+                                                        'rounded-lg mb-2 transition-all',
+                                                        activeColorTab === String(colorId)
+                                                            ? 'bg-white elevation-2 text-primary'
+                                                            : 'text-slate-700 hover-bg-slate-100'
+                                                    ]"
+                                                    @click="activeColorTab = String(colorId)"
+                                                >
                                                     <template v-slot:prepend>
-                                                        <div class="mr-3"
-                                                            :style="{ backgroundColor: getVariantColorHex(colorId), width: '16px', height: '16px', borderRadius: '50%', border: '1px solid #94a3b8' }">
-                                                        </div>
+                                                        <div
+                                                            class="mr-3"
+                                                            :style="{
+                                                                backgroundColor: getVariantColorHex(colorId),
+                                                                width: '16px',
+                                                                height: '16px',
+                                                                borderRadius: '50%',
+                                                                border: '1px solid #94a3b8'
+                                                            }"
+                                                        ></div>
                                                     </template>
                                                     <v-list-item-title
-                                                        :class="activeColorTab === String(colorId) ? 'font-weight-bold' : 'font-weight-medium'">{{
-                                                            getVariantColorLabel(colorId) }}</v-list-item-title>
+                                                        :class="
+                                                            activeColorTab === String(colorId) ? 'font-weight-bold' : 'font-weight-medium'
+                                                        "
+                                                        >{{ getVariantColorLabel(colorId) }}</v-list-item-title
+                                                    >
                                                     <template v-slot:append>
-                                                        <v-badge :content="String(items.length)"
+                                                        <v-badge
+                                                            :content="String(items.length)"
                                                             :color="activeColorTab === String(colorId) ? 'primary' : 'slate-200'"
                                                             :text-color="activeColorTab === String(colorId) ? 'white' : 'slate-700'"
-                                                            inline />
+                                                            inline
+                                                        />
                                                     </template>
                                                 </v-list-item>
                                             </v-list>
@@ -2509,116 +2670,203 @@ const handleSave = async () => {
 
                                     <!-- Nội dung bảng biến thể -->
                                     <v-col cols="12" md="9" class="bg-white d-flex flex-column h-100">
-                                        <div
-                                            class="pa-4 border-b d-flex align-center justify-space-between flex-shrink-0">
+                                        <div class="pa-4 border-b d-flex align-center justify-space-between flex-shrink-0">
                                             <div class="text-subtitle-1 font-weight-bold text-slate-800">
-                                                {{ activeColorTab === 'ALL' ? 'Đang xem tất cả biến thể' :
-                                                    'Đang xem màu: ' + getVariantColorLabel(activeColorTab) }}
+                                                {{
+                                                    activeColorTab === 'ALL'
+                                                        ? 'Đang xem tất cả biến thể'
+                                                        : 'Đang xem màu: ' + getVariantColorLabel(activeColorTab)
+                                                }}
                                             </div>
                                             <div class="d-flex align-center ga-2" v-if="activeColorTab !== 'ALL'">
-                                                <span
-                                                    class="text-caption font-weight-bold text-slate-500 mr-2 d-none d-sm-block">
-                                                    áp dụng nhanh:</span>
-                                                <FormattedNumberField v-model="quickApplyValues.giaBan"
-                                                    placeholder="Giá bán" variant="outlined" density="compact"
-                                                    hide-details class="custom-input-dense" style="width: 120px" />
-                                                <FormattedNumberField v-model="quickApplyValues.giaNhap"
-                                                    placeholder="Giá nhập" variant="outlined" density="compact"
-                                                    hide-details class="custom-input-dense" style="width: 120px" />
-                                                <FormattedNumberField v-model="quickApplyValues.soLuong"
-                                                    placeholder="Số lượng" variant="outlined" density="compact"
-                                                    hide-details class="custom-input-dense" style="width: 120px" />
-                                                <v-btn color="primary" variant="flat" size="small"
+                                                <span class="text-caption font-weight-bold text-slate-500 mr-2 d-none d-sm-block">
+                                                    áp dụng nhanh:</span
+                                                >
+                                                <FormattedNumberField
+                                                    v-model="quickApplyValues.giaBan"
+                                                    placeholder="Giá bán"
+                                                    variant="outlined"
+                                                    density="compact"
+                                                    hide-details
+                                                    class="custom-input-dense"
+                                                    style="width: 120px"
+                                                />
+                                                <FormattedNumberField
+                                                    v-model="quickApplyValues.giaNhap"
+                                                    placeholder="Giá nhập"
+                                                    variant="outlined"
+                                                    density="compact"
+                                                    hide-details
+                                                    class="custom-input-dense"
+                                                    style="width: 120px"
+                                                />
+                                                <FormattedNumberField
+                                                    v-model="quickApplyValues.soLuong"
+                                                    placeholder="Số lượng"
+                                                    variant="outlined"
+                                                    density="compact"
+                                                    hide-details
+                                                    class="custom-input-dense"
+                                                    style="width: 120px"
+                                                />
+                                                <v-btn
+                                                    color="primary"
+                                                    variant="flat"
+                                                    size="small"
                                                     class="text-none rounded font-weight-bold"
-                                                    style="color: white !important" height="40"
-                                                    @click="handleQuickApply">
+                                                    style="color: white !important"
+                                                    height="40"
+                                                    @click="handleQuickApply"
+                                                >
                                                     <v-icon icon="mdi-flash" size="16" class="mr-1" /> Cập nhật
                                                 </v-btn>
                                             </div>
                                         </div>
 
-                                        <div v-if="activeColorTab !== 'ALL'"
+                                        <div
+                                            v-if="activeColorTab !== 'ALL'"
                                             class="py-3 bg-slate-50 d-flex align-center justify-center flex-shrink-0"
-                                            style="border-bottom: 2px solid #cbd5e1; box-shadow: inset 0 -4px 6px -4px rgba(0,0,0,0.05); z-index: 10;">
+                                            style="
+                                                border-bottom: 2px solid #cbd5e1;
+                                                box-shadow: inset 0 -4px 6px -4px rgba(0, 0, 0, 0.05);
+                                                z-index: 10;
+                                            "
+                                        >
                                             <div class="d-flex flex-column align-center">
-                                                <div class="text-caption font-weight-bold text-slate-600 mb-2">HÌNH ẢNH
-                                                    ĐẠI DIỆN CHO MÀU NÀY</div>
-                                                <div class="color-image-uploader elevation-1"
+                                                <div class="text-caption font-weight-bold text-slate-600 mb-2">
+                                                    HÌNH ẢNH ĐẠI DIỆN CHO MÀU NÀY
+                                                </div>
+                                                <div
+                                                    class="color-image-uploader elevation-1"
                                                     @click="openColorImagePicker(activeColorTab)"
-                                                    style="width: 70px; height: 70px; border-radius: 8px; border: 2px dashed #cbd5e1; cursor: pointer; overflow: hidden; background: white">
-                                                    <v-img v-if="getColorUploadEntry(activeColorTab).url"
-                                                        :src="getColorUploadEntry(activeColorTab).url" cover
-                                                        class="w-100 h-100" />
+                                                    style="
+                                                        width: 70px;
+                                                        height: 70px;
+                                                        border-radius: 8px;
+                                                        border: 2px dashed #cbd5e1;
+                                                        cursor: pointer;
+                                                        overflow: hidden;
+                                                        background: white;
+                                                    "
+                                                >
+                                                    <v-img
+                                                        v-if="getColorUploadEntry(activeColorTab).url"
+                                                        :src="getColorUploadEntry(activeColorTab).url"
+                                                        cover
+                                                        class="w-100 h-100"
+                                                    />
                                                     <div v-else class="w-100 h-100 d-flex align-center justify-center">
                                                         <v-icon icon="mdi-camera-plus" color="slate-400" size="24" />
                                                     </div>
-                                                    <input :ref="(el) => setColorFileInputRef(activeColorTab, el)"
-                                                        type="file" accept="image/*" class="d-none"
-                                                        @change="handleColorImageUpload(activeColorTab, $event)" />
+                                                    <input
+                                                        :ref="(el) => setColorFileInputRef(activeColorTab, el)"
+                                                        type="file"
+                                                        accept="image/*"
+                                                        class="d-none"
+                                                        @change="handleColorImageUpload(activeColorTab, $event)"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div class="flex-grow-1" style="min-height: 0;">
+                                        <div class="flex-grow-1" style="min-height: 0">
                                             <v-table class="variant-inner-table h-100" fixed-header>
                                                 <thead class="bg-white">
                                                     <tr>
-                                                        <th class="text-left font-weight-bold text-slate-800 text-caption"
-                                                            style="border-bottom: 1px solid #cbd5e1 !important;">Thuộc
-                                                            tính
-                                                            (Màu/Size)</th>
-                                                        <th class="text-left font-weight-bold text-slate-800 text-caption"
-                                                            style="width: 140px; border-bottom: 1px solid #cbd5e1 !important;">
-                                                            Giá bán (đ)</th>
-                                                        <th class="text-left font-weight-bold text-slate-800 text-caption"
-                                                            style="width: 140px; border-bottom: 1px solid #cbd5e1 !important;">
-                                                            Giá nhập (đ)</th>
-                                                        <th class="text-left font-weight-bold text-slate-800 text-caption"
-                                                            style="width: 110px; border-bottom: 1px solid #cbd5e1 !important;">
+                                                        <th
+                                                            class="text-left font-weight-bold text-slate-800 text-caption"
+                                                            style="border-bottom: 1px solid #cbd5e1 !important"
+                                                        >
+                                                            Thuộc tính (Màu/Size)
+                                                        </th>
+                                                        <th
+                                                            class="text-left font-weight-bold text-slate-800 text-caption"
+                                                            style="width: 140px; border-bottom: 1px solid #cbd5e1 !important"
+                                                        >
+                                                            Giá bán (đ)
+                                                        </th>
+                                                        <th
+                                                            class="text-left font-weight-bold text-slate-800 text-caption"
+                                                            style="width: 140px; border-bottom: 1px solid #cbd5e1 !important"
+                                                        >
+                                                            Giá nhập (đ)
+                                                        </th>
+                                                        <th
+                                                            class="text-left font-weight-bold text-slate-800 text-caption"
+                                                            style="width: 110px; border-bottom: 1px solid #cbd5e1 !important"
+                                                        >
                                                             Số lượng sản phẩm
                                                         </th>
-                                                        <th class="text-center font-weight-bold text-slate-800 text-caption"
-                                                            style="width: 60px; border-bottom: 1px solid #cbd5e1 !important;">
-                                                            Hành động</th>
+                                                        <th
+                                                            class="text-center font-weight-bold text-slate-800 text-caption"
+                                                            style="width: 60px; border-bottom: 1px solid #cbd5e1 !important"
+                                                        >
+                                                            Hành động
+                                                        </th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr v-for="variant in paginatedVisibleVariantItems"
-                                                        :key="variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc">
+                                                    <tr
+                                                        v-for="variant in paginatedVisibleVariantItems"
+                                                        :key="variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc"
+                                                    >
                                                         <td class="font-weight-medium text-slate-700">
                                                             <div class="d-flex align-center">
-                                                                <div class="mr-2"
-                                                                    :style="{ backgroundColor: getVariantColorHex(variant.idMauSac), width: '14px', height: '14px', borderRadius: '50%', border: '1px solid #94a3b8' }">
-                                                                </div>
+                                                                <div
+                                                                    class="mr-2"
+                                                                    :style="{
+                                                                        backgroundColor: getVariantColorHex(variant.idMauSac),
+                                                                        width: '14px',
+                                                                        height: '14px',
+                                                                        borderRadius: '50%',
+                                                                        border: '1px solid #94a3b8'
+                                                                    }"
+                                                                ></div>
                                                                 <div>
-                                                                    <div class="text-body-2 font-weight-bold">{{
-                                                                        getVariantSizeLabel(variant.idKichThuoc) }}
+                                                                    <div class="text-body-2 font-weight-bold">
+                                                                        {{ getVariantSizeLabel(variant.idKichThuoc) }}
                                                                     </div>
-                                                                    <div class="text-caption text-slate-500">{{
-                                                                        getVariantColorLabel(variant.idMauSac)
-                                                                        }}</div>
+                                                                    <div class="text-caption text-slate-500">
+                                                                        {{ getVariantColorLabel(variant.idMauSac) }}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </td>
                                                         <td>
-                                                            <FormattedNumberField v-model="variant.giaBan" hide-details
-                                                                variant="outlined" density="compact"
-                                                                class="custom-input-dense" />
+                                                            <FormattedNumberField
+                                                                v-model="variant.giaBan"
+                                                                hide-details
+                                                                variant="outlined"
+                                                                density="compact"
+                                                                class="custom-input-dense"
+                                                            />
                                                         </td>
                                                         <td>
-                                                            <FormattedNumberField v-model="variant.giaNhap" hide-details
-                                                                variant="outlined" density="compact"
-                                                                class="custom-input-dense" />
+                                                            <FormattedNumberField
+                                                                v-model="variant.giaNhap"
+                                                                hide-details
+                                                                variant="outlined"
+                                                                density="compact"
+                                                                class="custom-input-dense"
+                                                            />
                                                         </td>
                                                         <td>
-                                                            <FormattedNumberField v-model="variant.soLuong" hide-details
-                                                                variant="outlined" density="compact"
-                                                                class="custom-input-dense" />
+                                                            <FormattedNumberField
+                                                                v-model="variant.soLuong"
+                                                                hide-details
+                                                                variant="outlined"
+                                                                density="compact"
+                                                                class="custom-input-dense"
+                                                            />
                                                         </td>
                                                         <td class="text-center">
-                                                            <v-btn variant="text" color="error" size="small"
+                                                            <v-btn
+                                                                variant="text"
+                                                                color="error"
+                                                                size="small"
                                                                 class="action-icon-btn"
-                                                                @click="removeDraftVariantByObject(variant)">
+                                                                @click="removeDraftVariantByObject(variant)"
+                                                            >
                                                                 <TrashIcon size="18" />
                                                             </v-btn>
                                                         </td>
@@ -2626,14 +2874,15 @@ const handleSave = async () => {
                                                 </tbody>
                                             </v-table>
                                         </div>
-                                        <div class="flex-shrink-0 bg-white py-3 px-4"
-                                            style="border-top: 2px solid #cbd5e1 !important;">
-                                            <AdminPagination v-model="createVariantPage"
+                                        <div class="flex-shrink-0 bg-white py-3 px-4" style="border-top: 2px solid #cbd5e1 !important">
+                                            <AdminPagination
+                                                v-model="createVariantPage"
                                                 :page-size="createVariantPageSize"
                                                 @update:pageSize="createVariantPageSize = $event"
                                                 :total-pages="createVariantTotalPages"
                                                 :total-elements="visibleVariantItems.length"
-                                                :current-size="paginatedVisibleVariantItems.length" />
+                                                :current-size="paginatedVisibleVariantItems.length"
+                                            />
                                         </div>
                                     </v-col>
                                 </v-row>
@@ -2643,13 +2892,10 @@ const handleSave = async () => {
                                 <div class="variant-empty-state__icon">
                                     <v-icon icon="mdi-layers-outline" size="32" />
                                 </div>
-                                <div class="text-subtitle-2 font-weight-bold text-slate-700 mt-3">
-                                    Chưa có biến thể nào được tạo
-                                </div>
+                                <div class="text-subtitle-2 font-weight-bold text-slate-700 mt-3">Chưa có biến thể nào được tạo</div>
                                 <div class="text-caption text-slate-500 mt-1">
-                                    Chọn màu sắc và kích thước ở card bên phải, sau đó bấm <span
-                                        class="font-weight-bold">Tạo danh sách biến
-                                        thể</span>.
+                                    Chọn màu sắc và kích thước ở card bên phải, sau đó bấm
+                                    <span class="font-weight-bold">Tạo danh sách biến thể</span>.
                                 </div>
                             </div>
                         </template>
@@ -2658,39 +2904,73 @@ const handleSave = async () => {
                             <AdminFilter title="Bộ lọc nâng cao" @refresh="resetVariantTableFilters" :loading="loading">
                                 <v-col cols="12" sm="3">
                                     <div class="variant-filter-label">Tìm kiếm nhanh</div>
-                                    <v-text-field v-model="variantTableFilters.keyword"
-                                        placeholder="Mã SKU, màu, size..." prepend-inner-icon="mdi-magnify"
-                                        variant="outlined" density="compact" hide-details clearable
-                                        class="variant-filter-input" />
+                                    <v-text-field
+                                        v-model="variantTableFilters.keyword"
+                                        placeholder="Mã SKU, màu, size..."
+                                        prepend-inner-icon="mdi-magnify"
+                                        variant="outlined"
+                                        density="compact"
+                                        hide-details
+                                        clearable
+                                        class="variant-filter-input"
+                                    />
                                 </v-col>
                                 <v-col cols="12" sm="2">
                                     <div class="variant-filter-label">Sản phẩm</div>
-                                    <v-text-field :model-value="variantFilterProductLabel" variant="outlined"
-                                        density="compact" hide-details readonly
-                                        class="variant-filter-input bg-slate-50" />
+                                    <v-text-field
+                                        :model-value="variantFilterProductLabel"
+                                        variant="outlined"
+                                        density="compact"
+                                        hide-details
+                                        readonly
+                                        class="variant-filter-input bg-slate-50"
+                                    />
                                 </v-col>
                                 <v-col cols="12" sm="2">
                                     <div class="variant-filter-label">Màu sắc</div>
-                                    <v-select v-model="variantTableFilters.mauSacId"
-                                        :items="[{ title: 'Tất cả màu', value: '' }, ...colors.map((item) => ({ title: item.ten, value: item.id }))]"
-                                        variant="outlined" density="compact" hide-details class="variant-filter-input"
-                                        :menu-props="{ contentClass: 'product-select-menu' }" />
+                                    <v-select
+                                        v-model="variantTableFilters.mauSacId"
+                                        :items="[
+                                            { title: 'Tất cả màu', value: '' },
+                                            ...colors.map((item) => ({ title: item.ten, value: item.id }))
+                                        ]"
+                                        variant="outlined"
+                                        density="compact"
+                                        hide-details
+                                        class="variant-filter-input"
+                                        :menu-props="{ contentClass: 'product-select-menu' }"
+                                    />
                                 </v-col>
                                 <v-col cols="12" sm="2">
                                     <div class="variant-filter-label">Kích thước</div>
-                                    <v-select v-model="variantTableFilters.kichThuocId"
-                                        :items="[{ title: 'Tất cả size', value: '' }, ...sizes.map((item) => ({ title: item.ten, value: item.id }))]"
-                                        variant="outlined" density="compact" hide-details class="variant-filter-input"
-                                        :menu-props="{ contentClass: 'product-select-menu' }" />
+                                    <v-select
+                                        v-model="variantTableFilters.kichThuocId"
+                                        :items="[
+                                            { title: 'Tất cả size', value: '' },
+                                            ...sizes.map((item) => ({ title: item.ten, value: item.id }))
+                                        ]"
+                                        variant="outlined"
+                                        density="compact"
+                                        hide-details
+                                        class="variant-filter-input"
+                                        :menu-props="{ contentClass: 'product-select-menu' }"
+                                    />
                                 </v-col>
                                 <v-col cols="12" sm="2">
                                     <div class="variant-filter-label">Trạng thái</div>
-                                    <v-select v-model="variantTableFilters.trangThai" :items="[
-                                        { title: 'Tất cả trạng thái', value: '' },
-                                        { title: 'Đang hoạt động', value: defaultVariantStatus },
-                                        { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
-                                    ]" variant="outlined" density="compact" hide-details class="variant-filter-input"
-                                        :menu-props="{ contentClass: 'product-select-menu' }" />
+                                    <v-select
+                                        v-model="variantTableFilters.trangThai"
+                                        :items="[
+                                            { title: 'Tất cả trạng thái', value: '' },
+                                            { title: 'Đang hoạt động', value: defaultVariantStatus },
+                                            { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
+                                        ]"
+                                        variant="outlined"
+                                        density="compact"
+                                        hide-details
+                                        class="variant-filter-input"
+                                        :menu-props="{ contentClass: 'product-select-menu' }"
+                                    />
                                 </v-col>
 
                                 <template #after>
@@ -2698,48 +2978,66 @@ const handleSave = async () => {
                                         <div class="d-flex align-center justify-space-between mb-2">
                                             <div class="d-flex align-center ga-2">
                                                 <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
-                                                <span class="text-caption font-weight-bold text-slate-600">Khoảng
-                                                    giá</span>
+                                                <span class="text-caption font-weight-bold text-slate-600">Khoảng giá</span>
                                             </div>
-                                            <span class="text-primary font-weight-bold">{{
-                                                formatCurrency(variantTableFilters.khoangGia[0]) }} – {{
-                                                    formatCurrency(variantTableFilters.khoangGia[1]) }}</span>
+                                            <span class="text-primary font-weight-bold"
+                                                >{{ formatCurrency(variantTableFilters.khoangGia[0]) }} –
+                                                {{ formatCurrency(variantTableFilters.khoangGia[1]) }}</span
+                                            >
                                         </div>
-                                        <v-range-slider :key="`${variantPriceBounds.min}-${variantPriceBounds.max}`"
-                                            v-model="variantTableFilters.khoangGia" :min="variantPriceBounds.min"
-                                            :max="variantPriceBounds.max" :step="variantPriceStep" hide-details
-                                            color="primary" track-color="#e2e8f0" track-size="2" thumb-size="14"
+                                        <v-range-slider
+                                            :key="`${variantPriceBounds.min}-${variantPriceBounds.max}`"
+                                            v-model="variantTableFilters.khoangGia"
+                                            :min="variantPriceBounds.min"
+                                            :max="variantPriceBounds.max"
+                                            :step="variantPriceStep"
+                                            hide-details
+                                            color="primary"
+                                            track-color="#e2e8f0"
+                                            track-size="2"
+                                            thumb-size="14"
                                             class="blue-range-slider"
-                                            @update:model-value="handleVariantSliderPriceChange" />
+                                            @update:model-value="handleVariantSliderPriceChange"
+                                        />
                                     </v-col>
                                 </template>
                             </AdminFilter>
                         </div>
-                        <AdminTable v-if="variantItems.length > 0 && isEditMode" title="Danh mục biến thể"
-                            :headers="variantTableHeaders" :items="paginatedVariantItems" :loading="loading"
-                            :show-add-button="false" class="mt-6 variant-admin-table">
+                        <AdminTable
+                            v-if="variantItems.length > 0 && isEditMode"
+                            title="Danh mục biến thể"
+                            :headers="variantTableHeaders"
+                            :items="paginatedVariantItems"
+                            :loading="loading"
+                            :show-add-button="false"
+                            class="mt-6 variant-admin-table"
+                        >
                             <template #headers>
                                 <tr>
-                                    <th class="header-cell" style="width: 70px;">
-                                        <v-checkbox-btn :model-value="allVisibleVariantsSelected"
-                                            :indeterminate="someVisibleVariantsSelected" color="primary" hide-details
-                                            density="compact" @update:model-value="toggleSelectVisibleVariants" />
+                                    <th class="header-cell" style="width: 70px">
+                                        <v-checkbox-btn
+                                            :model-value="allVisibleVariantsSelected"
+                                            :indeterminate="someVisibleVariantsSelected"
+                                            color="primary"
+                                            hide-details
+                                            density="compact"
+                                            @update:model-value="toggleSelectVisibleVariants"
+                                        />
                                     </th>
-                                    <th class="header-cell" style="width: 60px;">STT</th>
-                                    <th class="header-cell" style="width: 80px;">Ảnh</th>
-                                    <th class="header-cell" style="width: 140px;">Màu sắc</th>
-                                    <th class="header-cell" style="width: 140px;">Kích thước</th>
-                                    <th class="header-cell" style="width: 240px;">Mã SKU</th>
-                                    <th class="header-cell" style="width: 110px;">Tồn kho</th>
-                                    <th class="header-cell" style="width: 130px;">Giá bán</th>
-                                    <th class="header-cell" style="width: 160px;">Trạng thái</th>
-                                    <th class="header-cell" style="width: 120px;">Thao tác</th>
+                                    <th class="header-cell" style="width: 60px">STT</th>
+                                    <th class="header-cell" style="width: 80px">Ảnh</th>
+                                    <th class="header-cell" style="width: 140px">Màu sắc</th>
+                                    <th class="header-cell" style="width: 140px">Kích thước</th>
+                                    <th class="header-cell" style="width: 240px">Mã SKU</th>
+                                    <th class="header-cell" style="width: 110px">Tồn kho</th>
+                                    <th class="header-cell" style="width: 130px">Giá bán</th>
+                                    <th class="header-cell" style="width: 160px">Trạng thái</th>
+                                    <th class="header-cell" style="width: 120px">Thao tác</th>
                                 </tr>
                             </template>
 
                             <template #top>
-                                <div
-                                    class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap ga-3">
+                                <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap ga-3">
                                     <div class="d-flex align-center flex-wrap ga-2">
                                         <span class="text-caption font-weight-medium text-slate-500">
                                             Đã chọn {{ selectedVariantKeys.length }} biến thể
@@ -2747,12 +3045,16 @@ const handleSave = async () => {
                                     </div>
 
                                     <div class="d-flex align-center flex-wrap ga-2">
-                                        <v-btn v-if="selectedVariants.length > 0" size="small" variant="tonal"
-                                            color="primary" class="text-none font-weight-bold"
-                                            @click="handleExportVariantQrZip">
+                                        <v-btn
+                                            v-if="selectedVariants.length > 0"
+                                            size="small"
+                                            variant="tonal"
+                                            color="primary"
+                                            class="text-none font-weight-bold"
+                                            @click="handleExportVariantQrZip"
+                                        >
                                             Xuất ZIP QR
-                                            <v-tooltip activator="parent" location="top"
-                                                text="Xuất ảnh QR của các biến thể đã chọn" />
+                                            <v-tooltip activator="parent" location="top" text="Xuất ảnh QR của các biến thể đã chọn" />
                                         </v-btn>
                                     </div>
                                 </div>
@@ -2763,18 +3065,23 @@ const handleSave = async () => {
                                     <td class="data-cell">
                                         <v-checkbox-btn
                                             :model-value="selectedVariantKeys.includes(getVariantKey(variant))"
-                                            color="primary" hide-details density="compact"
-                                            @update:model-value="toggleVariantSelection(getVariantKey(variant), $event)" />
+                                            color="primary"
+                                            hide-details
+                                            density="compact"
+                                            @update:model-value="toggleVariantSelection(getVariantKey(variant), $event)"
+                                        />
                                     </td>
                                     <td class="data-cell text-center text-slate-500 font-weight-medium">
                                         {{ (variantPage - 1) * variantPageSize + index + 1 }}
                                     </td>
                                     <td class="data-cell text-center">
                                         <div class="product-image-container d-inline-block position-relative">
-                                            <v-avatar rounded="lg" size="44"
-                                                class="border bg-slate-50 elevation-1 avatar-hover">
-                                                <SafeProductImage :src="getVariantThumbnail(variant)"
-                                                    :fallback-src="logoPlaceholder" :alt="getVariantSkuLabel(variant)" />
+                                            <v-avatar rounded="lg" size="44" class="border bg-slate-50 elevation-1 avatar-hover">
+                                                <SafeProductImage
+                                                    :src="getVariantThumbnail(variant)"
+                                                    :fallback-src="logoPlaceholder"
+                                                    :alt="getVariantSkuLabel(variant)"
+                                                />
                                             </v-avatar>
                                             <div v-if="variant.phanTramGiam > 0" class="discount-badge">
                                                 -{{ Math.round(variant.phanTramGiam) }}%
@@ -2800,8 +3107,10 @@ const handleSave = async () => {
                                         <span class="text-primary">{{ formatNumber(variant.soLuong) }}</span>
                                     </td>
                                     <td class="data-cell">
-                                        <div v-if="variant.giaGoc && variant.giaGoc > variant.giaBan"
-                                            class="text-caption text-decoration-line-through text-slate-400">
+                                        <div
+                                            v-if="variant.giaGoc && variant.giaGoc > variant.giaBan"
+                                            class="text-caption text-decoration-line-through text-slate-400"
+                                        >
                                             {{ formatCurrency(variant.giaGoc) }}
                                         </div>
                                         <div class="text-primary text-truncate font-weight-bold" :title="formatCurrency(variant.giaBan)">
@@ -2809,26 +3118,37 @@ const handleSave = async () => {
                                         </div>
                                     </td>
                                     <td class="data-cell text-center">
-                                        <v-chip variant="flat"
-                                            :class="['status-chip', isActiveStatus(variant.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
+                                        <v-chip
+                                            variant="flat"
+                                            :class="[
+                                                'status-chip',
+                                                isActiveStatus(variant.trangThai) ? 'status-chip-active' : 'status-chip-inactive'
+                                            ]"
+                                        >
                                             {{ getStatusLabel(variant.trangThai) }}
                                         </v-chip>
                                     </td>
                                     <td class="data-cell text-center">
                                         <div class="d-flex justify-center align-center variant-actions">
-                                            <v-btn variant="text" class="action-icon-btn" color="primary"
-                                                @click="openEditVariantModal(variant)">
+                                            <v-btn
+                                                variant="text"
+                                                class="action-icon-btn"
+                                                color="primary"
+                                                @click="openEditVariantModal(variant)"
+                                            >
                                                 <PencilIcon size="18" />
-                                                <v-tooltip activator="parent" location="top"
-                                                    text="Chỉnh sửa biến thể" />
+                                                <v-tooltip activator="parent" location="top" text="Chỉnh sửa biến thể" />
                                             </v-btn>
                                             <div class="switch-wrapper">
-                                                <v-switch :model-value="isActiveStatus(variant.trangThai)"
-                                                    color="primary" hide-details density="compact"
+                                                <v-switch
+                                                    :model-value="isActiveStatus(variant.trangThai)"
+                                                    color="primary"
+                                                    hide-details
+                                                    density="compact"
                                                     class="tight-switch action-switch"
-                                                    @click.prevent.stop="handleToggleVariantStatus(variant)" />
-                                                <v-tooltip activator="parent" location="top"
-                                                    text="Chuyển đổi trạng thái" />
+                                                    @click.prevent.stop="handleToggleVariantStatus(variant)"
+                                                />
+                                                <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái" />
                                             </div>
                                         </div>
                                     </td>
@@ -2836,27 +3156,44 @@ const handleSave = async () => {
                             </template>
 
                             <template #pagination>
-                                <AdminPagination v-model="variantPage" :page-size="variantPageSize"
-                                    @update:pageSize="variantPageSize = $event" :total-pages="totalVariantPages"
+                                <AdminPagination
+                                    v-model="variantPage"
+                                    :page-size="variantPageSize"
+                                    @update:pageSize="variantPageSize = $event"
+                                    :total-pages="totalVariantPages"
                                     :total-elements="totalVariantElements"
-                                    :current-size="paginatedVariantItems.length" />
+                                    :current-size="paginatedVariantItems.length"
+                                />
                             </template>
                         </AdminTable>
-
                     </v-card-text>
                 </v-card>
             </v-col>
         </v-row>
 
-        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="confirmDialog.action"
+        />
 
         <VariantFormModal
             :key="`${variantModal.mode}-${variantModal.variant?.id || variantModal.variant?.clientKey || 'new'}`"
-            :open="variantModal.open" :mode="variantModal.mode" :variant="variantModal.variant"
-            :options="variantOptions" :submitting="variantModal.submitting" :productCode="product.maSanPham"
-            :lock-attributes-on-edit="isEditMode" :allow-image-upload="true" @close="closeVariantModal"
-            @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
+            :open="variantModal.open"
+            :mode="variantModal.mode"
+            :variant="variantModal.variant"
+            :options="variantOptions"
+            :submitting="variantModal.submitting"
+            :productCode="product.maSanPham"
+            :lock-attributes-on-edit="isEditMode"
+            :allow-image-upload="true"
+            @close="closeVariantModal"
+            @submit="handleVariantSubmit"
+            @options-refreshed="fetchFormOptions"
+        />
 
         <!-- Modal Thiết lập nhanh hàng loạt -->
         <v-dialog v-model="bulkEditModal.show" max-width="500">
@@ -2864,36 +3201,59 @@ const handleSave = async () => {
                 <v-card-title class="pa-6 border-b d-flex align-center">
                     <v-icon icon="mdi-flash-circle" color="primary" class="mr-3" />
                     <span class="font-weight-bold text-slate-800">
-                        {{ bulkEditModal.targetColorId ? `Thiết lập cho màu
-                        ${getVariantColorLabel(bulkEditModal.targetColorId)}` : 'Thiết lập cho tất cả biến thể' }}
+                        {{
+                            bulkEditModal.targetColorId
+                                ? `Thiết lập cho màu
+                        ${getVariantColorLabel(bulkEditModal.targetColorId)}`
+                                : 'Thiết lập cho tất cả biến thể'
+                        }}
                     </span>
                 </v-card-title>
                 <v-card-text class="pa-8">
-
                     <v-row>
                         <v-col cols="12">
                             <div class="field-label">Số lượng <span class="text-error">*</span></div>
-                            <FormattedNumberField v-model="bulkEditModal.form.soLuong" placeholder="Nhập số lượng..."
-                                variant="outlined" density="comfortable" hide-details class="custom-input" />
+                            <FormattedNumberField
+                                v-model="bulkEditModal.form.soLuong"
+                                placeholder="Nhập số lượng..."
+                                variant="outlined"
+                                density="comfortable"
+                                hide-details
+                                class="custom-input"
+                            />
                         </v-col>
                         <v-col cols="12">
                             <div class="field-label">Giá nhập <span class="text-error">*</span></div>
-                            <FormattedNumberField v-model="bulkEditModal.form.giaNhap" placeholder="Nhập giá nhập..."
-                                variant="outlined" density="comfortable" hide-details class="custom-input" />
+                            <FormattedNumberField
+                                v-model="bulkEditModal.form.giaNhap"
+                                placeholder="Nhập giá nhập..."
+                                variant="outlined"
+                                density="comfortable"
+                                hide-details
+                                class="custom-input"
+                            />
                         </v-col>
                         <v-col cols="12">
                             <div class="field-label">Giá bán (VNĐ) <span class="text-error">*</span></div>
-                            <FormattedNumberField v-model="bulkEditModal.form.giaBan" placeholder="Nhập giá bán..."
-                                variant="outlined" density="comfortable" hide-details class="custom-input" />
+                            <FormattedNumberField
+                                v-model="bulkEditModal.form.giaBan"
+                                placeholder="Nhập giá bán..."
+                                variant="outlined"
+                                density="comfortable"
+                                hide-details
+                                class="custom-input"
+                            />
                         </v-col>
                     </v-row>
                 </v-card-text>
                 <v-card-actions class="pa-6 border-t bg-slate-50">
                     <v-spacer />
-                    <v-btn variant="text" color="slate-500" class="text-none font-weight-bold"
-                        @click="bulkEditModal.show = false">Hủy</v-btn>
-                    <v-btn color="primary" variant="flat" class="text-none font-weight-bold px-6 rounded-lg"
-                        @click="applyBulkEdit">Áp dụng</v-btn>
+                    <v-btn variant="text" color="slate-500" class="text-none font-weight-bold" @click="bulkEditModal.show = false"
+                        >Hủy</v-btn
+                    >
+                    <v-btn color="primary" variant="flat" class="text-none font-weight-bold px-6 rounded-lg" @click="applyBulkEdit"
+                        >Áp dụng</v-btn
+                    >
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -2911,20 +3271,20 @@ const handleSave = async () => {
                     <span class="text-h6 font-weight-bold">Trùng lặp thuộc tính</span>
                 </v-card-title>
                 <v-card-text class="pa-5 pt-6 text-body-1 text-slate-700 leading-relaxed">
-                    Đã tồn tại một sản phẩm khác có chính xác <span class="font-weight-bold text-red">cùng các thuộc
-                        tính</span>
-                    (Thương hiệu, Danh mục, Xuất xứ, Mục đích chạy, Cổ giày, Chất liệu, Đế giày).<br><br>
-                    Tên sản phẩm trùng: <span class="font-weight-bold">[{{
-                        duplicateAttributeDialog.duplicateProduct?.ten
-                    }}]</span><br><br>
-                    Để phân biệt, vui lòng <span class="font-weight-bold text-primary">đặt tên sản phẩm hiện tại (tên
-                        đệm) khác
-                        đi</span> so với sản phẩm đã tồn tại, hoặc chỉnh sửa các thuộc tính để tránh trùng lặp hoàn
-                    toàn.
+                    Đã tồn tại một sản phẩm khác có chính xác <span class="font-weight-bold text-red">cùng các thuộc tính</span> (Thương
+                    hiệu, Danh mục, Xuất xứ, Mục đích chạy, Cổ giày, Chất liệu, Đế giày).<br /><br />
+                    Tên sản phẩm trùng: <span class="font-weight-bold">[{{ duplicateAttributeDialog.duplicateProduct?.ten }}]</span
+                    ><br /><br />
+                    Để phân biệt, vui lòng <span class="font-weight-bold text-primary">đặt tên sản phẩm hiện tại (tên đệm) khác đi</span> so
+                    với sản phẩm đã tồn tại, hoặc chỉnh sửa các thuộc tính để tránh trùng lặp hoàn toàn.
                 </v-card-text>
                 <v-card-actions class="pa-4 bg-slate-50 border-t justify-end">
-                    <v-btn color="primary" variant="flat" class="text-none px-6 font-weight-bold"
-                        @click="duplicateAttributeDialog.show = false">
+                    <v-btn
+                        color="primary"
+                        variant="flat"
+                        class="text-none px-6 font-weight-bold"
+                        @click="duplicateAttributeDialog.show = false"
+                    >
                         Đã hiểu
                     </v-btn>
                 </v-card-actions>

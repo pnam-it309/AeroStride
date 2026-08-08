@@ -65,7 +65,6 @@ const confirmToggleStatus = (item) => {
         action: async () => {
             try {
                 const newS = item.trangThai === SYSTEM_STATUS.ACTIVE ? SYSTEM_STATUS.INACTIVE : SYSTEM_STATUS.ACTIVE;
-                console.log(`[Discount] Changing status of ${item.id} to ${newS}`);
 
                 await dichVuDotGiamGia.thayDoiTrangThaiDotGiamGia(item.id, newS);
 
@@ -189,10 +188,12 @@ onMounted(() => loadCampaigns());
 <template>
     <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <!-- Breadcrumbs -->
-        <AdminBreadcrumbs :items="[
-            { title: 'Quản lý đợt giảm giá', disabled: false, href: '#' },
-            { title: 'Đợt giảm giá', disabled: true }
-        ]" />
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý đợt giảm giá', disabled: false, href: '#' },
+                { title: 'Đợt giảm giá', disabled: true }
+            ]"
+        />
 
         <div class="mb-2"></div>
 
@@ -201,21 +202,36 @@ onMounted(() => loadCampaigns());
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
-                    <v-text-field v-model="filters.keyword" placeholder="Mã hoặc tên đợt..." variant="outlined"
-                        density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input" clearable
-                        @input="handleSearch"></v-text-field>
+                    <v-text-field
+                        v-model="filters.keyword"
+                        placeholder="Mã hoặc tên đợt..."
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        prepend-inner-icon="mdi-magnify"
+                        class="compact-input"
+                        clearable
+                        @input="handleSearch"
+                    ></v-text-field>
                 </v-col>
 
                 <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Trạng thái</div>
-                    <v-select v-model="filters.trangThai" :items="[
-                        { title: 'Tất cả trạng thái', value: null },
-                        { title: 'Đang hoạt động', value: SYSTEM_STATUS.ACTIVE },
-                        { title: 'Sắp diễn ra', value: 'SAP_DIEN_RA' },
-                        { title: 'Đã kết thúc', value: 'DA_KET_THUC' }
-                    ]" variant="outlined" density="compact" hide-details class="compact-input"
+                    <v-select
+                        v-model="filters.trangThai"
+                        :items="[
+                            { title: 'Tất cả trạng thái', value: null },
+                            { title: 'Đang hoạt động', value: SYSTEM_STATUS.ACTIVE },
+                            { title: 'Sắp diễn ra', value: 'SAP_DIEN_RA' },
+                            { title: 'Đã kết thúc', value: 'DA_KET_THUC' }
+                        ]"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
                         :menu-props="{ contentClass: 'campaign-select-menu' }"
-                        @update:model-value="handleSearch"></v-select>
+                        @update:model-value="handleSearch"
+                    ></v-select>
                 </v-col>
 
                 <v-col cols="12" md="2" class="filter-cell">
@@ -240,17 +256,26 @@ onMounted(() => loadCampaigns());
         </div>
 
         <!-- 2. TABLE -->
-        <AdminTable title="Danh sách đợt giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
-            { text: 'STT', align: 'center', width: '60px' },
-            { text: 'Mã đợt giảm giá', width: '110px' },
-            { text: 'Tên đợt giảm giá', width: '180px' },
-            { text: 'Giá trị giảm', width: '140px' },
-            { text: 'Ngày bắt đầu', width: '160px' },
-            { text: 'Ngày kết thúc', width: '160px' },
-            { text: 'Trạng thái', width: '130px' },
-            { text: 'Hành động', width: '120px' }
-        ]" :items="campaigns" :total-count="pagination.totalElements" :loading="loading"
-            @add="router.push(PATH.DOT_GIAM_GIA_FORM)" @export="handleExport">
+        <AdminTable
+            title="Danh sách đợt giảm giá"
+            addButtonText="Tạo mới"
+            show-export-button
+            :headers="[
+                { text: 'STT', align: 'center', width: '60px' },
+                { text: 'Mã đợt giảm giá', width: '110px' },
+                { text: 'Tên đợt giảm giá', width: '180px' },
+                { text: 'Giá trị giảm', width: '140px' },
+                { text: 'Ngày bắt đầu', width: '160px' },
+                { text: 'Ngày kết thúc', width: '160px' },
+                { text: 'Trạng thái', width: '130px' },
+                { text: 'Hành động', width: '120px' }
+            ]"
+            :items="campaigns"
+            :total-count="pagination.totalElements"
+            :loading="loading"
+            @add="router.push(PATH.DOT_GIAM_GIA_FORM)"
+            @export="handleExport"
+        >
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell text-slate-400">
@@ -283,24 +308,26 @@ onMounted(() => loadCampaigns());
                     <td class="data-cell action-cell" style="text-align: center">
                         <div class="d-flex align-center justify-center action-controls">
                             <span class="d-inline-block" v-if="getCampaignTimelineStatus(item).isEnded">
-                                <v-btn variant="text" class="action-icon-btn opacity-50" style="pointer-events: none"
-                                    :ripple="false">
+                                <v-btn variant="text" class="action-icon-btn opacity-50" style="pointer-events: none" :ripple="false">
                                     <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 </v-btn>
-                                <v-tooltip activator="parent" location="top">Không thể cập nhật đợt giảm giá đã kết
-                                    thúc</v-tooltip>
+                                <v-tooltip activator="parent" location="top">Không thể cập nhật đợt giảm giá đã kết thúc</v-tooltip>
                             </span>
-                            <v-btn v-else variant="text" class="action-icon-btn"
-                                @click.stop="goToEdit(item.id)">
+                            <v-btn v-else variant="text" class="action-icon-btn" @click.stop="goToEdit(item.id)">
                                 <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
-                                <v-switch :model-value="getCampaignTimelineStatus(item).switchOn"
-                                    :disabled="getCampaignTimelineStatus(item).switchDisabled" color="primary"
-                                    hide-details density="compact" class="tight-switch action-switch"
+                                <v-switch
+                                    :model-value="getCampaignTimelineStatus(item).switchOn"
+                                    :disabled="getCampaignTimelineStatus(item).switchDisabled"
+                                    color="primary"
+                                    hide-details
+                                    density="compact"
+                                    class="tight-switch action-switch"
                                     :class="{ 'opacity-50': getCampaignTimelineStatus(item).switchDisabled }"
-                                    @click.prevent.stop="handleToggleStatus(item)" />
+                                    @click.prevent.stop="handleToggleStatus(item)"
+                                />
                                 <v-tooltip activator="parent" location="top">
                                     {{ getCampaignTimelineStatus(item).switchTooltip }}
                                 </v-tooltip>
@@ -310,16 +337,27 @@ onMounted(() => loadCampaigns());
                 </tr>
             </template>
             <template #pagination>
-                <AdminPagination v-model="pagination.page" v-model:pageSize="pagination.size"
-                    :total-pages="pagination.totalPages" :total-elements="pagination.totalElements"
-                    :current-size="campaigns.length" @change="loadCampaigns" />
+                <AdminPagination
+                    v-model="pagination.page"
+                    v-model:pageSize="pagination.size"
+                    :total-pages="pagination.totalPages"
+                    :total-elements="pagination.totalElements"
+                    :current-size="campaigns.length"
+                    @change="loadCampaigns"
+                />
             </template>
         </AdminTable>
 
         <!-- SHARED CONFIRM -->
-        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="handleConfirm(true)"
-            @cancel="handleConfirm(false)" />
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)"
+        />
     </v-container>
 </template>
 

@@ -24,7 +24,7 @@ export const dichVuDonHang = {
     async searchSanPham(params = {}) {
         // Cho phép truyền trực tiếp chuỗi mã quét QR/barcode hoặc object bộ lọc.
         // Nếu không chuẩn hóa ở đây, Object.keys("SP001") sẽ biến thành key 0,1,2... và API không nhận được keyword.
-        const normalizedParams = typeof params === 'string' ? { keyword: params } : (params || {});
+        const normalizedParams = typeof params === 'string' ? { keyword: params } : params || {};
 
         // params: { keyword, thuongHieu, chatLieu, xuatXu, mucDich }
         // Clean params (remove 'ALL' or empty strings)

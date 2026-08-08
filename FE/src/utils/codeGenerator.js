@@ -17,5 +17,3 @@ export const generateRandomCode = async (type) => {
         return '';
     }
 };
-
-

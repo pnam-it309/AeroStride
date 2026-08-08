@@ -8,10 +8,7 @@ export function useHoaDonPrinter() {
     const { addNotification } = useNotifications();
 
     const printHoaDonById = async (orderId, options = {}) => {
-        const {
-            notifyPreparing = true,
-            printWindow: providedPrintWindow = null
-        } = options;
+        const { notifyPreparing = true, printWindow: providedPrintWindow = null } = options;
 
         if (!orderId) {
             addNotification({
@@ -44,7 +41,9 @@ export function useHoaDonPrinter() {
             }
 
             printWindow.document.open();
-            printWindow.document.write('<!doctype html><html><head><title>Đang tạo hóa đơn...</title></head><body style="font-family:Arial,sans-serif;padding:24px">Đang tạo bản in hóa đơn...</body></html>');
+            printWindow.document.write(
+                '<!doctype html><html><head><title>Đang tạo hóa đơn...</title></head><body style="font-family:Arial,sans-serif;padding:24px">Đang tạo bản in hóa đơn...</body></html>'
+            );
             printWindow.document.close();
 
             const html = await dichVuHoaDon.inHoaDon(orderId);

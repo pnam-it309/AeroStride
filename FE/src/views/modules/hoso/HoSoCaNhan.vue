@@ -99,64 +99,83 @@ onMounted(() => {
 
         <div v-else-if="profile">
             <!-- Profile card -->
-            <v-card elevation="0" class="mb-6" style="border: 1px solid #e2e8f0; border-radius: 16px;">
-                <div class="pa-6 d-flex align-center flex-wrap ga-6"
-                    style="background: linear-gradient(135deg, #1e257c 0%, #2d379e 100%); border-radius: 16px 16px 0 0;">
-                    <v-avatar size="96" style="border: 4px solid rgba(255,255,255,0.35);">
+            <v-card elevation="0" class="mb-6" style="border: 1px solid #e2e8f0; border-radius: 16px">
+                <div
+                    class="pa-6 d-flex align-center flex-wrap ga-6"
+                    style="background: linear-gradient(135deg, #1e257c 0%, #2d379e 100%); border-radius: 16px 16px 0 0"
+                >
+                    <v-avatar size="96" style="border: 4px solid rgba(255, 255, 255, 0.35)">
                         <v-img v-if="avatarUrl" :src="avatarUrl" cover />
                         <v-icon v-else size="56" color="white">mdi-account</v-icon>
                     </v-avatar>
                     <div>
                         <h2 class="text-h5 font-weight-bold text-white mb-1">{{ profile.ten || profile.tenTaiKhoan }}</h2>
-                        <v-chip color="white" variant="flat" size="small" class="font-weight-bold" style="color:#1e257c;">
+                        <v-chip color="white" variant="flat" size="small" class="font-weight-bold" style="color: #1e257c">
                             <v-icon size="16" start>mdi-shield-account</v-icon>{{ chucVu }}
                         </v-chip>
                     </div>
                 </div>
 
                 <div class="pa-6">
-                    <h3 class="text-subtitle-1 font-weight-bold mb-4" style="color:#1e257c;">Thông tin cá nhân</h3>
+                    <h3 class="text-subtitle-1 font-weight-bold mb-4" style="color: #1e257c">Thông tin cá nhân</h3>
                     <v-row dense>
                         <v-col cols="12" md="6">
                             <div class="info-item">
                                 <div class="lbl">Mã nhân viên</div>
-                                <div class="val"><v-icon size="16" class="mr-2" color="#1e257c">mdi-card-account-details-outline</v-icon>{{ profile.ma || '—' }}</div>
+                                <div class="val">
+                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-card-account-details-outline</v-icon
+                                    >{{ profile.ma || '—' }}
+                                </div>
                             </div>
                         </v-col>
                         <v-col cols="12" md="6">
                             <div class="info-item">
                                 <div class="lbl">Tên tài khoản</div>
-                                <div class="val"><v-icon size="16" class="mr-2" color="#1e257c">mdi-account-circle-outline</v-icon>{{ profile.tenTaiKhoan || '—' }}</div>
+                                <div class="val">
+                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-account-circle-outline</v-icon
+                                    >{{ profile.tenTaiKhoan || '—' }}
+                                </div>
                             </div>
                         </v-col>
                         <v-col cols="12" md="6">
                             <div class="info-item">
                                 <div class="lbl">Email</div>
-                                <div class="val"><v-icon size="16" class="mr-2" color="#1e257c">mdi-email-outline</v-icon>{{ profile.email || '—' }}</div>
+                                <div class="val">
+                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-email-outline</v-icon>{{ profile.email || '—' }}
+                                </div>
                             </div>
                         </v-col>
                         <v-col cols="12" md="6">
                             <div class="info-item">
                                 <div class="lbl">Số điện thoại</div>
-                                <div class="val"><v-icon size="16" class="mr-2" color="#1e257c">mdi-phone-outline</v-icon>{{ profile.sdt || '—' }}</div>
+                                <div class="val">
+                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-phone-outline</v-icon>{{ profile.sdt || '—' }}
+                                </div>
                             </div>
                         </v-col>
                         <v-col cols="12" md="6">
                             <div class="info-item">
                                 <div class="lbl">Giới tính</div>
-                                <div class="val"><v-icon size="16" class="mr-2" color="#1e257c">mdi-gender-male-female</v-icon>{{ gioiTinhLabel }}</div>
+                                <div class="val">
+                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-gender-male-female</v-icon>{{ gioiTinhLabel }}
+                                </div>
                             </div>
                         </v-col>
                         <v-col cols="12" md="6">
                             <div class="info-item">
                                 <div class="lbl">Ngày sinh</div>
-                                <div class="val"><v-icon size="16" class="mr-2" color="#1e257c">mdi-calendar-outline</v-icon>{{ profile.ngaySinh || '—' }}</div>
+                                <div class="val">
+                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-calendar-outline</v-icon
+                                    >{{ profile.ngaySinh || '—' }}
+                                </div>
                             </div>
                         </v-col>
                         <v-col cols="12">
                             <div class="info-item">
                                 <div class="lbl">Địa chỉ</div>
-                                <div class="val"><v-icon size="16" class="mr-2" color="#1e257c">mdi-map-marker-outline</v-icon>{{ diaChiDayDu || '—' }}</div>
+                                <div class="val">
+                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-map-marker-outline</v-icon>{{ diaChiDayDu || '—' }}
+                                </div>
                             </div>
                         </v-col>
                     </v-row>
@@ -164,35 +183,67 @@ onMounted(() => {
             </v-card>
 
             <!-- Account / change password -->
-            <v-card id="account-section" elevation="0" style="border: 1px solid #e2e8f0; border-radius: 16px;">
+            <v-card id="account-section" elevation="0" style="border: 1px solid #e2e8f0; border-radius: 16px">
                 <div class="pa-6">
-                    <h3 class="text-subtitle-1 font-weight-bold mb-1" style="color:#1e257c;">
+                    <h3 class="text-subtitle-1 font-weight-bold mb-1" style="color: #1e257c">
                         <v-icon size="20" class="mr-2" color="#1e257c">mdi-lock-outline</v-icon>Tài khoản của tôi
                     </h3>
                     <p class="text-caption text-grey mb-5">Đổi mật khẩu đăng nhập của bạn.</p>
 
-                    <v-alert v-if="pwMessage.text" :type="pwMessage.type === 'success' ? 'success' : 'error'"
-                        variant="tonal" density="compact" class="mb-4">{{ pwMessage.text }}</v-alert>
+                    <v-alert
+                        v-if="pwMessage.text"
+                        :type="pwMessage.type === 'success' ? 'success' : 'error'"
+                        variant="tonal"
+                        density="compact"
+                        class="mb-4"
+                        >{{ pwMessage.text }}</v-alert
+                    >
 
-                    <v-row dense style="max-width: 520px;">
+                    <v-row dense style="max-width: 520px">
                         <v-col cols="12">
-                            <v-text-field v-model="pwForm.matKhauCu" label="Mật khẩu hiện tại" type="password"
-                                variant="outlined" density="comfortable" hide-details="auto"
-                                prepend-inner-icon="mdi-lock-outline" class="mb-3" />
+                            <v-text-field
+                                v-model="pwForm.matKhauCu"
+                                label="Mật khẩu hiện tại"
+                                type="password"
+                                variant="outlined"
+                                density="comfortable"
+                                hide-details="auto"
+                                prepend-inner-icon="mdi-lock-outline"
+                                class="mb-3"
+                            />
                         </v-col>
                         <v-col cols="12">
-                            <v-text-field v-model="pwForm.matKhauMoi" label="Mật khẩu mới" type="password"
-                                variant="outlined" density="comfortable" hide-details="auto"
-                                prepend-inner-icon="mdi-lock-plus-outline" class="mb-3" />
+                            <v-text-field
+                                v-model="pwForm.matKhauMoi"
+                                label="Mật khẩu mới"
+                                type="password"
+                                variant="outlined"
+                                density="comfortable"
+                                hide-details="auto"
+                                prepend-inner-icon="mdi-lock-plus-outline"
+                                class="mb-3"
+                            />
                         </v-col>
                         <v-col cols="12">
-                            <v-text-field v-model="pwForm.xacNhanMatKhau" label="Xác nhận mật khẩu mới" type="password"
-                                variant="outlined" density="comfortable" hide-details="auto"
-                                prepend-inner-icon="mdi-lock-check-outline" class="mb-4" />
+                            <v-text-field
+                                v-model="pwForm.xacNhanMatKhau"
+                                label="Xác nhận mật khẩu mới"
+                                type="password"
+                                variant="outlined"
+                                density="comfortable"
+                                hide-details="auto"
+                                prepend-inner-icon="mdi-lock-check-outline"
+                                class="mb-4"
+                            />
                         </v-col>
                     </v-row>
-                    <v-btn :loading="pwLoading" style="background:#1e257c;color:#fff;" class="font-weight-bold text-none"
-                        rounded="pill" @click="handleChangePassword">
+                    <v-btn
+                        :loading="pwLoading"
+                        style="background: #1e257c; color: #fff"
+                        class="font-weight-bold text-none"
+                        rounded="pill"
+                        @click="handleChangePassword"
+                    >
                         <v-icon start size="18">mdi-content-save</v-icon>Cập nhật mật khẩu
                     </v-btn>
                 </div>

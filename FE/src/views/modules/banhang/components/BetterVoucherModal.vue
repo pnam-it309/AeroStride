@@ -90,12 +90,12 @@ const newCode = computed(() => {
                 <!-- Current Voucher -->
                 <div class="voucher-box flex-1 pa-3 border bg-slate-50">
                     <div class="text-caption text-slate-500 mb-1">Voucher hiện tại</div>
-                    <div class="voucher-badge current-badge d-inline-block px-3 py-1 text-caption font-weight-bold text-slate-700 bg-slate-200 mb-1">
+                    <div
+                        class="voucher-badge current-badge d-inline-block px-3 py-1 text-caption font-weight-bold text-slate-700 bg-slate-200 mb-1"
+                    >
                         {{ currentCode }}
                     </div>
-                    <div class="text-caption font-weight-medium text-slate-600">
-                        Giảm: {{ fmt(currentDiscount) }}
-                    </div>
+                    <div class="text-caption font-weight-medium text-slate-600">Giảm: {{ fmt(currentDiscount) }}</div>
                 </div>
 
                 <!-- Better Voucher -->
@@ -104,9 +104,7 @@ const newCode = computed(() => {
                     <div class="voucher-badge new-badge d-inline-block px-3 py-1 text-caption font-weight-bold mb-1">
                         {{ newCode }}
                     </div>
-                    <div class="text-caption font-weight-bold dark-blue-text">
-                        Giảm: {{ fmt(betterDiscount) }}
-                    </div>
+                    <div class="text-caption font-weight-bold dark-blue-text">Giảm: {{ fmt(betterDiscount) }}</div>
                 </div>
             </div>
 
@@ -134,19 +132,9 @@ const newCode = computed(() => {
 
             <!-- Action Buttons -->
             <div class="d-flex ga-3">
-                <button
-                    type="button"
-                    class="btn-keep-old flex-1 font-weight-medium"
-                    @click="emit('keep-old')"
-                >
-                    Giữ voucher cũ
-                </button>
+                <button type="button" class="btn-keep-old flex-1 font-weight-medium" @click="emit('keep-old')">Giữ voucher cũ</button>
 
-                <button
-                    type="button"
-                    class="btn-apply-new flex-1 font-weight-bold"
-                    @click="emit('apply-new')"
-                >
+                <button type="button" class="btn-apply-new flex-1 font-weight-bold" @click="emit('apply-new')">
                     Dùng voucher mới (tiết kiệm hơn)
                 </button>
             </div>

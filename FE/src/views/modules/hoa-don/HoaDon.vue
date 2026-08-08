@@ -44,35 +44,38 @@ const {
     loadData: loadOrders,
     handleFilter: handleSearch,
     handleReset
-} = useAdminTable(async (p) => {
-    const nTrangThai = normalizeTrangThai(p.trangThai);
-    const params = {
-        page: p.page,
-        size: p.size,
-        search: p.search || undefined,
-        tuNgay: p.fromDate || undefined,
-        denNgay: p.toDate || undefined,
-        orderType: p.loaiDon || undefined,
-        sortBy: 'ngayTao',
-        sortDirection: p.sortDirection,
-        ...(nTrangThai !== null ? { trangThai: nTrangThai } : {})
-    };
-    const res = await dichVuHoaDon.layHoaDonPhanTrang(params);
-    await loadCounts();
+} = useAdminTable(
+    async (p) => {
+        const nTrangThai = normalizeTrangThai(p.trangThai);
+        const params = {
+            page: p.page,
+            size: p.size,
+            search: p.search || undefined,
+            tuNgay: p.fromDate || undefined,
+            denNgay: p.toDate || undefined,
+            orderType: p.loaiDon || undefined,
+            sortBy: 'ngayTao',
+            sortDirection: p.sortDirection,
+            ...(nTrangThai !== null ? { trangThai: nTrangThai } : {})
+        };
+        const res = await dichVuHoaDon.layHoaDonPhanTrang(params);
+        await loadCounts();
 
-    // Trả về đúng cấu trúc kèm tổng số bản ghi để hiển thị các nút phân trang
-    return {
-        content: Array.isArray(res) ? res : (res?.data || res?.content || []),
-        totalElements: counts.value.all || 0
-    };
-}, {
-    search: '',
-    trangThai: TAB_ALL,
-    loaiDon: null,
-    fromDate: getTodayDate(),
-    toDate: getTodayDate(),
-    sortDirection: 'ASC'
-});
+        // Trả về đúng cấu trúc kèm tổng số bản ghi để hiển thị các nút phân trang
+        return {
+            content: Array.isArray(res) ? res : res?.data || res?.content || [],
+            totalElements: counts.value.all || 0
+        };
+    },
+    {
+        search: '',
+        trangThai: TAB_ALL,
+        loaiDon: null,
+        fromDate: getTodayDate(),
+        toDate: getTodayDate(),
+        sortDirection: 'ASC'
+    }
+);
 
 const sortOptions = [
     { title: 'Cũ nhất', value: 'ASC' },
@@ -200,14 +203,17 @@ const onToDateChange = (val) => {
 
 // Đồng bộ 2 ô picker khi filters đổi từ bên ngoài (vd nút "Làm mới" reset về hôm nay).
 // Có guard so sánh chuỗi để không tạo vòng lặp với 2 handler ở trên.
-watch(() => [filters.value.fromDate, filters.value.toDate], ([from, to]) => {
-    if (from !== formatDateString(fromDateModel.value)) {
-        fromDateModel.value = from ? new Date(`${from}T00:00:00`) : null;
+watch(
+    () => [filters.value.fromDate, filters.value.toDate],
+    ([from, to]) => {
+        if (from !== formatDateString(fromDateModel.value)) {
+            fromDateModel.value = from ? new Date(`${from}T00:00:00`) : null;
+        }
+        if (to !== formatDateString(toDateModel.value)) {
+            toDateModel.value = to ? new Date(`${to}T00:00:00`) : null;
+        }
     }
-    if (to !== formatDateString(toDateModel.value)) {
-        toDateModel.value = to ? new Date(`${to}T00:00:00`) : null;
-    }
-});
+);
 
 const hasCount = (value) => Number(value) > 0;
 
@@ -266,10 +272,12 @@ onMounted(() => loadOrders());
 <template>
     <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <!-- Breadcrumbs -->
-        <AdminBreadcrumbs :items="[
-            { title: 'Quản lý bán hàng', disabled: false, href: '#' },
-            { title: 'Hóa đơn', disabled: true }
-        ]" />
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý bán hàng', disabled: false, href: '#' },
+                { title: 'Hóa đơn', disabled: true }
+            ]"
+        />
 
         <div class="mb-2"></div>
 
@@ -277,21 +285,34 @@ onMounted(() => loadOrders());
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" md="4">
                     <div class="filter-field-label">Tìm kiếm</div>
-                    <v-text-field v-model="filters.search" placeholder="Tìm theo mã hóa đơn / khách hàng"
-                        persistent-placeholder variant="outlined" density="compact" hide-details
-                        prepend-inner-icon="mdi-magnify" class="compact-input search-field"
-                        @input="handleSearch"></v-text-field>
+                    <v-text-field
+                        v-model="filters.search"
+                        placeholder="Tìm theo mã hóa đơn / khách hàng"
+                        persistent-placeholder
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        prepend-inner-icon="mdi-magnify"
+                        class="compact-input search-field"
+                        @input="handleSearch"
+                    ></v-text-field>
                 </v-col>
 
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Loại đơn</div>
-                    <v-select v-model="filters.loaiDon" :items="ORDER_TYPE_OPTIONS" item-title="title"
-                        item-value="value" variant="outlined" density="compact" hide-details
-                        class="compact-input loai-don-field" :menu-props="{ contentClass: 'invoice-select-menu' }"
-                        @update:model-value="handleSearch"></v-select>
+                    <v-select
+                        v-model="filters.loaiDon"
+                        :items="ORDER_TYPE_OPTIONS"
+                        item-title="title"
+                        item-value="value"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input loai-don-field"
+                        :menu-props="{ contentClass: 'invoice-select-menu' }"
+                        @update:model-value="handleSearch"
+                    ></v-select>
                 </v-col>
-
-
 
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Từ ngày</div>
@@ -315,22 +336,47 @@ onMounted(() => loadOrders());
             </AdminFilter>
         </div>
 
-        <AdminTable class="balanced-table" title="Danh sách hóa đơn" :showAddButton="false" show-export-button
-            :headers="tableHeaders" :items="orders" :total-count="pagination.totalElements" :loading="loading"
-            @export="handleExport">
+        <AdminTable
+            class="balanced-table"
+            title="Danh sách hóa đơn"
+            :showAddButton="false"
+            show-export-button
+            :headers="tableHeaders"
+            :items="orders"
+            :total-count="pagination.totalElements"
+            :loading="loading"
+            @export="handleExport"
+        >
             <template #extra-actions>
-                <v-btn icon variant="tonal" color="primary" class="rounded-md mr-3" size="36"
-                    @click="filters.sortDirection = filters.sortDirection === 'DESC' ? 'ASC' : 'DESC'; handleSearch()">
-                    <v-icon size="20">{{ filters.sortDirection === 'DESC' ? 'mdi-sort-clock-descending-outline' :
-                        'mdi-sort-clock-ascending-outline' }}</v-icon>
+                <v-btn
+                    icon
+                    variant="tonal"
+                    color="primary"
+                    class="rounded-md mr-3"
+                    size="36"
+                    @click="
+                        filters.sortDirection = filters.sortDirection === 'DESC' ? 'ASC' : 'DESC';
+                        handleSearch();
+                    "
+                >
+                    <v-icon size="20">{{
+                        filters.sortDirection === 'DESC' ? 'mdi-sort-clock-descending-outline' : 'mdi-sort-clock-ascending-outline'
+                    }}</v-icon>
                     <v-tooltip activator="parent" location="top">
                         {{ filters.sortDirection === 'DESC' ? 'Đang sắp xếp: Mới nhất' : 'Đang sắp xếp: Cũ nhất' }}
                     </v-tooltip>
                 </v-btn>
             </template>
             <template #top>
-                <v-tabs v-model="filters.trangThai" bg-color="transparent" color="primary" grow
-                    class="equal-tabs admin-tabs" @update:model-value="handleTabChange" height="54">
+                <v-tabs
+                    v-model="filters.trangThai"
+                    bg-color="transparent"
+                    color="primary"
+                    grow
+                    class="equal-tabs admin-tabs"
+                    @update:model-value="handleTabChange"
+                    height="54"
+                >
                     <v-tab :value="TAB_ALL" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-view-grid-outline</v-icon>
                         Tất cả
@@ -381,15 +427,26 @@ onMounted(() => loadOrders());
                     </td>
 
                     <td class="data-cell text-center">
-                        <div class="text-truncate"
-                            :title="item.maNhanVien || item.maNV || item.tenNhanVien || (authStore.user?.username ? authStore.user.username.toUpperCase() : 'ADMIN')">
-                            {{ item.maNhanVien || item.maNV || item.tenNhanVien || (authStore.user?.username ? authStore.user.username.toUpperCase() : 'ADMIN') }}
+                        <div
+                            class="text-truncate"
+                            :title="
+                                item.maNhanVien ||
+                                item.maNV ||
+                                item.tenNhanVien ||
+                                (authStore.user?.username ? authStore.user.username.toUpperCase() : 'ADMIN')
+                            "
+                        >
+                            {{
+                                item.maNhanVien ||
+                                item.maNV ||
+                                item.tenNhanVien ||
+                                (authStore.user?.username ? authStore.user.username.toUpperCase() : 'ADMIN')
+                            }}
                         </div>
                     </td>
 
                     <td class="data-cell text-center">
-                        <div class="text-truncate" :title="item.soDienThoai || '0988888888'">{{ item.soDienThoai || '0988888888' }}
-                        </div>
+                        <div class="text-truncate" :title="item.soDienThoai || '0988888888'">{{ item.soDienThoai || '0988888888' }}</div>
                     </td>
 
                     <td class="data-cell">
@@ -418,8 +475,14 @@ onMounted(() => loadOrders());
 
                     <td class="data-cell action-cell">
                         <div class="d-flex align-center justify-center action-group action-controls">
-                            <v-btn icon variant="text" size="28" color="slate-600" class="rounded-lg action-icon-btn"
-                                @click.stop="viewOrderDetail(item)">
+                            <v-btn
+                                icon
+                                variant="text"
+                                size="28"
+                                color="slate-600"
+                                class="rounded-lg action-icon-btn"
+                                @click.stop="viewOrderDetail(item)"
+                            >
                                 <component :is="ADMIN_ICONS.ACTION.VIEW" size="15" />
                                 <v-tooltip activator="parent" location="top">Xem chi tiết</v-tooltip>
                             </v-btn>
@@ -429,10 +492,16 @@ onMounted(() => loadOrders());
             </template>
 
             <template #pagination>
-                <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-                    @update:pageSize="pagination.size = $event" @update:page-size="pagination.size = $event"
-                    :total-pages="pagination.totalPages" :total-elements="pagination.totalElements"
-                    :current-size="orders.length" @change="loadOrders" />
+                <AdminPagination
+                    v-model="pagination.page"
+                    :page-size="pagination.size"
+                    @update:pageSize="pagination.size = $event"
+                    @update:page-size="pagination.size = $event"
+                    :total-pages="pagination.totalPages"
+                    :total-elements="pagination.totalElements"
+                    :current-size="orders.length"
+                    @change="loadOrders"
+                />
             </template>
         </AdminTable>
 
@@ -444,8 +513,11 @@ onMounted(() => loadOrders());
                         <ReceiptIcon size="24" class="mr-3 text-primary" />
                         <span class="font-weight-medium">Chi tiết hóa đơn #{{ selectedOrder.maHoaDon }}</span>
                     </div>
-                    <v-chip v-if="getStatusMeta(selectedOrder.trangThai)"
-                        :class="['px-6 status-chip', getStatusMeta(selectedOrder.trangThai).chipClass]" variant="flat">
+                    <v-chip
+                        v-if="getStatusMeta(selectedOrder.trangThai)"
+                        :class="['px-6 status-chip', getStatusMeta(selectedOrder.trangThai).chipClass]"
+                        variant="flat"
+                    >
                         <v-icon start size="18">{{ getStatusMeta(selectedOrder.trangThai).icon }}</v-icon>
                         {{ getStatusMeta(selectedOrder.trangThai).text }}
                     </v-chip>
@@ -455,25 +527,20 @@ onMounted(() => loadOrders());
                 <v-card-text class="pa-6">
                     <v-row class="mb-6">
                         <v-col cols="12" md="6">
-                            <div class="text-overline text-medium-emphasis font-weight-medium mb-2">Thông tin khách hàng
-                            </div>
+                            <div class="text-overline text-medium-emphasis font-weight-medium mb-2">Thông tin khách hàng</div>
                             <p class="mb-1 text-subtitle-1">
-                                Họ tên: <span class="font-weight-medium">{{ selectedOrder.tenKhachHang || 'Khách lẻ'
-                                }}</span>
+                                Họ tên: <span class="font-weight-medium">{{ selectedOrder.tenKhachHang || 'Khách lẻ' }}</span>
                             </p>
                             <p class="text-subtitle-1">
                                 Số điện thoại: <span class="font-weight-medium">{{ selectedOrder.soDienThoai }}</span>
                             </p>
                         </v-col>
                         <v-col cols="12" md="6">
-                            <div class="text-overline text-medium-emphasis font-weight-medium mb-2">Thông tin thanh toán
-                            </div>
+                            <div class="text-overline text-medium-emphasis font-weight-medium mb-2">Thông tin thanh toán</div>
                             <p class="mb-1 text-subtitle-1">
-                                Ngày mua: <span class="font-weight-medium">{{ formatDate(selectedOrder.ngayTao)
-                                }}</span>
+                                Ngày mua: <span class="font-weight-medium">{{ formatDate(selectedOrder.ngayTao) }}</span>
                             </p>
-                            <p class="text-h5 font-weight-medium text-error">Tổng tiền: {{
-                                formatCurrency(selectedOrder.tongTien) }}</p>
+                            <p class="text-h5 font-weight-medium text-error">Tổng tiền: {{ formatCurrency(selectedOrder.tongTien) }}</p>
                         </v-col>
                     </v-row>
 
@@ -494,22 +561,21 @@ onMounted(() => loadOrders());
                                 <td class="pa-3 border-b">{{ item.name }}</td>
                                 <td class="pa-3 text-center border-b font-weight-bold">{{ item.quantity }}</td>
                                 <td class="pa-3 text-end border-b">{{ formatCurrency(item.price) }}</td>
-                                <td class="pa-3 text-end border-b font-weight-medium">{{ formatCurrency(item.price *
-                                    item.quantity) }}</td>
+                                <td class="pa-3 text-end border-b font-weight-medium">{{ formatCurrency(item.price * item.quantity) }}</td>
                             </tr>
-                            <TableEmptyState v-if="!selectedOrder.items || selectedOrder.items.length === 0"
-                                :colspan="4" text="Không có sản phẩm nào trong hóa đơn." />
+                            <TableEmptyState
+                                v-if="!selectedOrder.items || selectedOrder.items.length === 0"
+                                :colspan="4"
+                                text="Không có sản phẩm nào trong hóa đơn."
+                            />
                         </tbody>
                     </table>
                 </v-card-text>
 
                 <v-card-actions class="pa-4 bg-grey-lighten-4">
                     <v-spacer></v-spacer>
-                    <v-btn variant="text" class="text-none font-weight-bold"
-                        @click="showOrderDetailDialog = false">Thoát</v-btn>
-                    <v-btn color="primary" variant="flat" rounded="md" class="px-8 text-none font-weight-bold"> In hóa
-                        đơn (PDF)
-                    </v-btn>
+                    <v-btn variant="text" class="text-none font-weight-bold" @click="showOrderDetailDialog = false">Thoát</v-btn>
+                    <v-btn color="primary" variant="flat" rounded="md" class="px-8 text-none font-weight-bold"> In hóa đơn (PDF) </v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -531,4 +597,3 @@ onMounted(() => loadOrders());
     font-size: 13px !important;
 }
 </style>
-

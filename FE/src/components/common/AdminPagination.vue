@@ -90,7 +90,16 @@ const handleJump = (e) => {
                 <button type="button" class="pager-btn" :disabled="!hasPrev" @click="goPrev">&lt;</button>
                 <template v-if="visiblePages[0] > 1">
                     <button type="button" class="pager-btn" @click="goToPage(1)">1</button>
-                    <input v-if="visiblePages[0] > 2" type="text" inputmode="numeric" class="pager-ellipsis pager-jump-input" placeholder="..." @keyup.enter="handleJump" @blur="handleJump" title="Nhập trang và ấn Enter" />
+                    <input
+                        v-if="visiblePages[0] > 2"
+                        type="text"
+                        inputmode="numeric"
+                        class="pager-ellipsis pager-jump-input"
+                        placeholder="..."
+                        @keyup.enter="handleJump"
+                        @blur="handleJump"
+                        title="Nhập trang và ấn Enter"
+                    />
                 </template>
                 <button
                     v-for="p in visiblePages"
@@ -102,7 +111,16 @@ const handleJump = (e) => {
                     {{ p }}
                 </button>
                 <template v-if="visiblePages[visiblePages.length - 1] < totalPages">
-                    <input v-if="visiblePages[visiblePages.length - 1] < totalPages - 1" type="text" inputmode="numeric" class="pager-ellipsis pager-jump-input" placeholder="..." @keyup.enter="handleJump" @blur="handleJump" title="Nhập trang và ấn Enter" />
+                    <input
+                        v-if="visiblePages[visiblePages.length - 1] < totalPages - 1"
+                        type="text"
+                        inputmode="numeric"
+                        class="pager-ellipsis pager-jump-input"
+                        placeholder="..."
+                        @keyup.enter="handleJump"
+                        @blur="handleJump"
+                        title="Nhập trang và ấn Enter"
+                    />
                     <button type="button" class="pager-btn" @click="goToPage(totalPages)">{{ totalPages }}</button>
                 </template>
                 <button type="button" class="pager-btn" :disabled="!hasNext" @click="goNext">&gt;</button>
@@ -190,7 +208,8 @@ const handleJump = (e) => {
     outline: none;
     transition: all 0.2s ease;
 }
-.pager-jump-input:focus, .pager-jump-input:hover {
+.pager-jump-input:focus,
+.pager-jump-input:hover {
     border: 1px solid #dbe4ef;
     background: #ffffff;
     color: #000;

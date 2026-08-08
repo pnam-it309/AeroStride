@@ -98,7 +98,14 @@ onMounted(() => {
                     <div class="filter-field-label">Lọc theo ngày</div>
                     <AppDatePicker
                         :model-value="filters.ngay"
-                        @update:model-value="val => { filters.ngay = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : null; handleFilter(); }"
+                        @update:model-value="
+                            (val) => {
+                                filters.ngay = val
+                                    ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10)
+                                    : null;
+                                handleFilter();
+                            }
+                        "
                         placeholder="Chọn ngày"
                         clearable
                     />

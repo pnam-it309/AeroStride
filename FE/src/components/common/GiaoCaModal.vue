@@ -39,7 +39,7 @@ const loadEmployees = async () => {
     try {
         const res = await dichVuNhanVien.layTatCaNhanVien();
         const data = res?.data?.content || res?.data || res || [];
-        listNhanVien.value = data.filter(e => e.tenTaiKhoan !== authStore.user?.username);
+        listNhanVien.value = data.filter((e) => e.tenTaiKhoan !== authStore.user?.username);
     } catch (e) {
         console.error(e);
     }
@@ -61,9 +61,9 @@ const submit = async () => {
         if (props.mode === 'open') {
             const currentEmpRes = await dichVuNhanVien.layTatCaNhanVien();
             const employees = currentEmpRes?.data?.content || currentEmpRes?.data || currentEmpRes || [];
-            const me = employees.find(e => e.tenTaiKhoan === authStore.user?.username);
-            
-            if (!me) throw new Error("Không tìm thấy thông tin nhân viên đăng nhập");
+            const me = employees.find((e) => e.tenTaiKhoan === authStore.user?.username);
+
+            if (!me) throw new Error('Không tìm thấy thông tin nhân viên đăng nhập');
 
             await dichVuGiaoCa.moCa({
                 nhanVienId: me.id,
@@ -88,7 +88,6 @@ const submit = async () => {
         loading.value = false;
     }
 };
-
 </script>
 
 <template>
@@ -112,17 +111,25 @@ const submit = async () => {
                         </v-col>
                         <v-col cols="6">
                             <div class="text-caption text-slate-500">Doanh thu tiền mặt</div>
-                            <div class="text-body-1 font-weight-bold text-success">+{{ currentShift?.tongDoanhThu?.toLocaleString() }} đ</div>
+                            <div class="text-body-1 font-weight-bold text-success">
+                                +{{ currentShift?.tongDoanhThu?.toLocaleString() }} đ
+                            </div>
                         </v-col>
                     </v-row>
                     <v-divider class="mb-4" />
-                    
+
                     <div class="filter-field-label">Tiền mặt thực tế đếm được (VNĐ) <span class="text-error">*</span></div>
                     <v-text-field v-model.number="tienThucTe" type="number" variant="outlined" density="compact" />
-                    
-                    <div class="d-flex justify-space-between align-center mb-4 pa-3 rounded" :class="tienChenhLech < 0 ? 'bg-red-50' : (tienChenhLech > 0 ? 'bg-blue-50' : 'bg-green-50')">
+
+                    <div
+                        class="d-flex justify-space-between align-center mb-4 pa-3 rounded"
+                        :class="tienChenhLech < 0 ? 'bg-red-50' : tienChenhLech > 0 ? 'bg-blue-50' : 'bg-green-50'"
+                    >
                         <span class="font-weight-medium">Tiền chênh lệch:</span>
-                        <span class="font-weight-bold" :class="tienChenhLech < 0 ? 'text-error' : (tienChenhLech > 0 ? 'text-info' : 'text-success')">
+                        <span
+                            class="font-weight-bold"
+                            :class="tienChenhLech < 0 ? 'text-error' : tienChenhLech > 0 ? 'text-info' : 'text-success'"
+                        >
                             {{ tienChenhLech > 0 ? '+' : '' }}{{ tienChenhLech.toLocaleString() }} đ
                         </span>
                     </div>
@@ -134,7 +141,9 @@ const submit = async () => {
                         item-title="ten"
                         item-value="id"
                         placeholder="Chọn nhân viên bàn giao"
-                        variant="outlined" density="compact" clearable
+                        variant="outlined"
+                        density="compact"
+                        clearable
                     />
 
                     <div class="filter-field-label mt-3">Ghi chú giao ca</div>

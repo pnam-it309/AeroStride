@@ -3,14 +3,16 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, Pressable, Alert } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Pressable, Alert, Modal, TextInput } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { orderService, type Order } from '@/services/orderService';
+import { orderService, type Order, type OrderItem } from '@/services/orderService';
+import { reviewService } from '@/services/reviewService';
+import { profileService } from '@/services/profileService';
 import { fileService } from '@/services/fileService';
 import { formatCurrency, formatDate, getOrderStatusColor } from '@/utils/format';
 import { StatusBadge } from '@/components/ui/Badge';
@@ -26,6 +28,13 @@ export default function OrderDetailScreen() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+
+  const [eligibilityMap, setEligibilityMap] = useState<Record<string, boolean>>({});
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [selectedReviewItem, setSelectedReviewItem] = useState<OrderItem | null>(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -170,6 +179,24 @@ export default function OrderDetailScreen() {
                     x{item.soLuong}
                   </Text>
                 </View>
+                {order.trangThai === 'HOAN_THANH' && (
+                  <View style={{ marginTop: Spacing.two, alignItems: 'flex-start' }}>
+                    {eligibilityMap[item.idSanPham] ? (
+                      <Pressable
+                        style={[styles.reviewBtn, { backgroundColor: Brand.primary }]}
+                        onPress={() => handleOpenReviewModal(item)}
+                      >
+                        <Text style={styles.reviewBtnText}>Viết đánh giá</Text>
+                      </Pressable>
+                    ) : (
+                      eligibilityMap[item.idSanPham] === false && (
+                        <Text style={[styles.reviewedText, { color: theme.textTertiary }]}>
+                          Đã đánh giá
+                        </Text>
+                      )
+                    )}
+                  </View>
+                )}
               </View>
             </View>
           ))}
@@ -244,6 +271,107 @@ export default function OrderDetailScreen() {
           </Pressable>
         </View>
       )}
+
+      {/* Review Modal */}
+      <Modal
+        visible={reviewModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setReviewModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setReviewModalVisible(false)}>
+          <Pressable
+            style={[
+              styles.modalSheet,
+              {
+                backgroundColor: theme.surfaceElevated,
+                paddingBottom: insets.bottom + Spacing.four,
+              },
+            ]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Đánh giá sản phẩm</Text>
+              <Pressable onPress={() => setReviewModalVisible(false)} hitSlop={12}>
+                <Ionicons name="close" size={22} color={theme.textSecondary} />
+              </Pressable>
+            </View>
+
+            {selectedReviewItem && (
+              <View style={[styles.selectedProductCard, { borderColor: theme.border }]}>
+                <Image
+                  source={fileService.getImageSource(selectedReviewItem.hinhAnh)}
+                  style={styles.selectedProductImage}
+                  contentFit="cover"
+                />
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={[styles.selectedProductName, { color: theme.text }]} numberOfLines={2}>
+                    {selectedReviewItem.tenSanPham}
+                  </Text>
+                  <Text style={{ fontSize: FontSizes.xs, color: theme.textSecondary }}>
+                    {[selectedReviewItem.tenMauSac, selectedReviewItem.tenKichThuoc]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            <View style={styles.ratingSection}>
+              <Text style={[styles.ratingLabel, { color: theme.text }]}>Chất lượng sản phẩm</Text>
+              <View style={styles.ratingStars}>
+                {Array.from({ length: 5 }).map((_, i) => {
+                  const starVal = i + 1;
+                  const isSelected = starVal <= rating;
+                  return (
+                    <Pressable key={i} onPress={() => setRating(starVal)}>
+                      <Ionicons
+                        name={isSelected ? 'star' : 'star-outline'}
+                        size={32}
+                        color="#FFB300"
+                        style={{ marginHorizontal: 4 }}
+                      />
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <TextInput
+              style={[
+                styles.reviewInput,
+                {
+                  borderColor: theme.border,
+                  color: theme.text,
+                  backgroundColor: theme.background,
+                },
+              ]}
+              placeholder="Hãy chia sẻ cảm nhận của bạn về sản phẩm này nhé (chất liệu, form dáng, màu sắc...)"
+              placeholderTextColor={theme.textTertiary}
+              multiline
+              numberOfLines={4}
+              value={comment}
+              onChangeText={setComment}
+            />
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.submitBtn,
+                {
+                  opacity: submittingReview || pressed ? 0.7 : 1,
+                  backgroundColor: Brand.primary,
+                },
+              ]}
+              onPress={handleSubmitReview}
+              disabled={submittingReview}
+            >
+              <Text style={styles.submitText}>
+                {submittingReview ? 'Đang gửi...' : 'Gửi đánh giá'}
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -389,6 +517,89 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelText: {
+    color: '#FFFFFF',
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.bold,
+  },
+  reviewBtn: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one + 2,
+    borderRadius: BorderRadius.md,
+  },
+  reviewBtnText: {
+    color: '#FFFFFF',
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.bold,
+  },
+  reviewedText: {
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.medium,
+    fontStyle: 'italic',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.three,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.three,
+  },
+  modalTitle: {
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.bold,
+  },
+  selectedProductCard: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.two,
+    marginBottom: Spacing.three,
+  },
+  selectedProductImage: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.sm,
+  },
+  selectedProductName: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.bold,
+  },
+  ratingSection: {
+    alignItems: 'center',
+    marginBottom: Spacing.three,
+  },
+  ratingLabel: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.semibold,
+    marginBottom: Spacing.two,
+  },
+  ratingStars: {
+    flexDirection: 'row',
+  },
+  reviewInput: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.two + 2,
+    fontSize: FontSizes.sm,
+    height: 100,
+    textAlignVertical: 'top',
+    marginBottom: Spacing.three,
+  },
+  submitBtn: {
+    paddingVertical: Spacing.three,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+  },
+  submitText: {
     color: '#FFFFFF',
     fontSize: FontSizes.base,
     fontWeight: FontWeights.bold,

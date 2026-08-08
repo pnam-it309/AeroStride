@@ -59,8 +59,11 @@ const formatDate = (timestamp) => {
     if (!timestamp) return '';
     const d = new Date(timestamp);
     return new Intl.DateTimeFormat('vi-VN', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
     }).format(d);
 };
 
@@ -156,12 +159,20 @@ const goToDetail = (id) => {
                                 <v-icon size="28" color="white">mdi-package-variant-closed</v-icon>
                             </div>
                             <div>
-                                <h1 class="text-h4 font-weight-bold mb-1" style="color: #ffffff !important;">Đơn hàng của tôi</h1>
-                                <p class="text-body-2 mb-0" style="color: rgba(255,255,255,0.9) !important;">Theo dõi và quản lý tất cả đơn hàng của bạn</p>
+                                <h1 class="text-h4 font-weight-bold mb-1" style="color: #ffffff !important">Đơn hàng của tôi</h1>
+                                <p class="text-body-2 mb-0" style="color: rgba(255, 255, 255, 0.9) !important">
+                                    Theo dõi và quản lý tất cả đơn hàng của bạn
+                                </p>
                             </div>
                         </div>
-                        <v-btn variant="outlined" color="white" rounded="pill" class="font-weight-bold text-none" style="color: white !important;"
-                            @click="router.push('/shoes')">
+                        <v-btn
+                            variant="outlined"
+                            color="white"
+                            rounded="pill"
+                            class="font-weight-bold text-none"
+                            style="color: white !important"
+                            @click="router.push('/shoes')"
+                        >
                             <v-icon class="mr-2" size="18">mdi-shopping-outline</v-icon>
                             Mua sắm ngay
                         </v-btn>
@@ -175,25 +186,25 @@ const goToDetail = (id) => {
             <v-row class="stats-row">
                 <v-col cols="3" class="pa-2">
                     <div class="stats-block text-center pa-4 rounded-xl elevation-2">
-                        <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c;">{{ stats.total }}</p>
+                        <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c">{{ stats.total }}</p>
                         <p class="text-caption text-grey mb-0">Tổng đơn</p>
                     </div>
                 </v-col>
                 <v-col cols="3" class="pa-2">
                     <div class="stats-block text-center pa-4 rounded-xl elevation-2">
-                        <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c;">{{ stats.completed }}</p>
+                        <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c">{{ stats.completed }}</p>
                         <p class="text-caption text-grey mb-0">Hoàn thành</p>
                     </div>
                 </v-col>
                 <v-col cols="3" class="pa-2">
                     <div class="stats-block text-center pa-4 rounded-xl elevation-2">
-                        <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c;">{{ stats.delivering }}</p>
+                        <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c">{{ stats.delivering }}</p>
                         <p class="text-caption text-grey mb-0">Đang giao</p>
                     </div>
                 </v-col>
                 <v-col cols="3" class="pa-2">
                     <div class="stats-block text-center pa-4 rounded-xl elevation-2">
-                        <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c;">{{ stats.cancelled }}</p>
+                        <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c">{{ stats.cancelled }}</p>
                         <p class="text-caption text-grey mb-0">Đã hủy</p>
                     </div>
                 </v-col>
@@ -202,44 +213,53 @@ const goToDetail = (id) => {
 
         <!-- Tracking Form (Guest Only) -->
         <v-container v-if="!isLoggedIn" style="max-width: 800px" class="mt-n8 position-relative z-index-1">
-            <v-card class="elevation-4 rounded-xl pa-8 text-center" style="border-top: 4px solid #1e257c;">
+            <v-card class="elevation-4 rounded-xl pa-8 text-center" style="border-top: 4px solid #1e257c">
                 <v-icon size="48" color="#1e257c" class="mb-4">mdi-magnify-scan</v-icon>
                 <h2 class="text-h5 font-weight-bold mb-2">Tra cứu đơn hàng</h2>
                 <p class="text-body-2 text-grey-darken-1 mb-8">
                     Nhập mã đơn hàng hoặc số điện thoại (không nhất thiết phải cả hai) để tra cứu trạng thái đơn hàng của bạn.
                 </p>
-                <v-form @submit.prevent="handleTrackOrder" class="mx-auto" style="max-width: 500px;">
-                    <v-text-field 
-                        v-model="trackingForm.maHoaDon" 
+                <v-form @submit.prevent="handleTrackOrder" class="mx-auto" style="max-width: 500px">
+                    <v-text-field
+                        v-model="trackingForm.maHoaDon"
                         label="Mã đơn hàng (VD: HD...)"
-                        variant="outlined" 
-                        density="comfortable" 
-                        class="mb-4" 
+                        variant="outlined"
+                        density="comfortable"
+                        class="mb-4"
                         hide-details="auto"
-                        prepend-inner-icon="mdi-barcode" 
+                        prepend-inner-icon="mdi-barcode"
                     />
-                    <v-text-field 
-                        v-model="trackingForm.soDienThoai" 
+                    <v-text-field
+                        v-model="trackingForm.soDienThoai"
                         label="Số điện thoại người nhận"
-                        variant="outlined" 
-                        density="comfortable" 
-                        class="mb-6" 
+                        variant="outlined"
+                        density="comfortable"
+                        class="mb-6"
                         hide-details="auto"
-                        prepend-inner-icon="mdi-phone-outline" 
+                        prepend-inner-icon="mdi-phone-outline"
                     />
-                    <v-btn type="submit" size="large" rounded="pill" block class="text-none font-weight-bold"
-                        style="background: #1e257c; color: white !important;" :loading="trackingLoading">
+                    <v-btn
+                        type="submit"
+                        size="large"
+                        rounded="pill"
+                        block
+                        class="text-none font-weight-bold"
+                        style="background: #1e257c; color: white !important"
+                        :loading="trackingLoading"
+                    >
                         <v-icon size="20" class="mr-2">mdi-magnify</v-icon>Tra cứu ngay
                     </v-btn>
                 </v-form>
-                <p class="text-caption text-grey mt-6">Hoặc <a href="/login" class="font-weight-bold" style="color: #1e257c;">Đăng nhập</a> để quản lý toàn bộ đơn hàng</p>
+                <p class="text-caption text-grey mt-6">
+                    Hoặc <a href="/login" class="font-weight-bold" style="color: #1e257c">Đăng nhập</a> để quản lý toàn bộ đơn hàng
+                </p>
             </v-card>
         </v-container>
 
         <!-- Main Content (Logged In) -->
         <v-container v-if="isLoggedIn" class="py-6" style="max-width: 1000px">
             <!-- Status Tabs and Search -->
-            <div class="mb-6 pb-4" style="border-bottom: 1px solid #e0e0e0;">
+            <div class="mb-6 pb-4" style="border-bottom: 1px solid #e0e0e0">
                 <div class="d-flex align-center justify-space-between flex-wrap ga-4">
                     <div class="order-tabs">
                         <v-chip-group v-model="activeTab" mandatory selected-class="active-tab" show-arrows>
@@ -257,7 +277,7 @@ const goToDetail = (id) => {
                             </v-chip>
                         </v-chip-group>
                     </div>
-                    <div style="width: 320px; min-width: 250px;">
+                    <div style="width: 320px; min-width: 250px">
                         <v-text-field
                             v-model="searchKeyword"
                             label="Mã đơn hàng, mã/tên sản phẩm"
@@ -281,10 +301,7 @@ const goToDetail = (id) => {
 
             <!-- Orders List -->
             <div v-else-if="orders.length > 0" class="orders-list custom-scrollbar">
-                <div v-for="order in orders"
-                    :key="order.id"
-                    class="order-row pa-5 mb-5 rounded-xl"
-                    @click="goToDetail(order.id)">
+                <div v-for="order in orders" :key="order.id" class="order-row pa-5 mb-5 rounded-xl" @click="goToDetail(order.id)">
                     <!-- Header -->
                     <div class="d-flex align-center justify-space-between mb-4">
                         <div class="d-flex align-center">
@@ -292,12 +309,7 @@ const goToDetail = (id) => {
                             <div>
                                 <div class="d-flex align-center ga-2 mb-1">
                                     <span class="text-body-2 font-weight-bold">{{ order.maHoaDon || 'Đang tạo...' }}</span>
-                                    <v-chip
-                                        :color="statusColor(order.trangThai)"
-                                        variant="tonal"
-                                        size="x-small"
-                                        class="font-weight-bold"
-                                    >
+                                    <v-chip :color="statusColor(order.trangThai)" variant="tonal" size="x-small" class="font-weight-bold">
                                         <v-icon size="12" class="mr-1">{{ statusIcon(order.trangThai) }}</v-icon>
                                         {{ statusLabel(order.trangThai) }}
                                     </v-chip>
@@ -324,12 +336,16 @@ const goToDetail = (id) => {
                             <span class="preview-overlay" v-if="i === 2 && order.items.length > 3">+{{ order.items.length - 3 }}</span>
                         </div>
                         <div v-if="order.items?.length === 1" class="preview-info d-flex flex-column justify-center">
-                            <p class="text-body-2 font-weight-bold mb-0 text-truncate" style="max-width: 200px">{{ order.items[0].tenSanPham }}</p>
-                            <p class="text-caption text-grey mb-0">{{ order.items[0].tenMauSac }} / {{ order.items[0].tenKichThuoc }} · x{{ order.items[0].soLuong }}</p>
+                            <p class="text-body-2 font-weight-bold mb-0 text-truncate" style="max-width: 200px">
+                                {{ order.items[0].tenSanPham }}
+                            </p>
+                            <p class="text-caption text-grey mb-0">
+                                {{ order.items[0].tenMauSac }} / {{ order.items[0].tenKichThuoc }} · x{{ order.items[0].soLuong }}
+                            </p>
                         </div>
                     </div>
 
-                    <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 12px 0;" />
+                    <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 12px 0" />
 
                     <!-- Footer -->
                     <div class="d-flex align-center justify-space-between mt-3">
@@ -337,28 +353,28 @@ const goToDetail = (id) => {
                             <v-icon size="14" color="grey" class="mr-1">mdi-currency-usd</v-icon>
                             <span class="text-body-2 text-grey-darken-1">Tổng:</span>
                         </div>
-                        <span class="text-body-1 font-weight-bold" style="color: #1e257c;">{{ formatPrice(order.tongTienSauGiam) }}</span>
+                        <span class="text-body-1 font-weight-bold" style="color: #1e257c">{{ formatPrice(order.tongTienSauGiam) }}</span>
                     </div>
 
                     <!-- Actions -->
-                    <div class="d-flex justify-end mt-4 ga-2 border-t pt-3" style="border-top: 1px solid #f0f0f0;">
-                        <v-btn 
-                            v-if="order.trangThai === 'HOAN_THANH'" 
-                            color="#1e257c" 
-                            variant="outlined" 
-                            size="small" 
-                            rounded="pill" 
-                            class="text-none font-weight-bold px-4" 
+                    <div class="d-flex justify-end mt-4 ga-2 border-t pt-3" style="border-top: 1px solid #f0f0f0">
+                        <v-btn
+                            v-if="order.trangThai === 'HOAN_THANH'"
+                            color="#1e257c"
+                            variant="outlined"
+                            size="small"
+                            rounded="pill"
+                            class="text-none font-weight-bold px-4"
                             @click.stop="openReviewModal(order)"
                         >
                             <v-icon size="16" class="mr-1">mdi-star-outline</v-icon>Đánh giá
                         </v-btn>
-                        <v-btn 
-                            color="#1e257c" 
-                            variant="flat" 
-                            size="small" 
-                            rounded="pill" 
-                            class="text-none font-weight-bold px-4" 
+                        <v-btn
+                            color="#1e257c"
+                            variant="flat"
+                            size="small"
+                            rounded="pill"
+                            class="text-none font-weight-bold px-4"
                             @click.stop="goToDetail(order.id)"
                         >
                             Xem chi tiết
@@ -379,8 +395,13 @@ const goToDetail = (id) => {
                     <p class="text-body-2 text-grey mb-6">
                         {{ activeTab ? 'Không tìm thấy đơn hàng nào ở trạng thái này.' : 'Hãy bắt đầu mua sắm để tạo đơn hàng đầu tiên!' }}
                     </p>
-                    <v-btn style="background: #1e257c; color: white;" rounded="pill" size="large" class="font-weight-bold text-none px-8"
-                        @click="router.push('/shoes')">
+                    <v-btn
+                        style="background: #1e257c; color: white"
+                        rounded="pill"
+                        size="large"
+                        class="font-weight-bold text-none px-8"
+                        @click="router.push('/shoes')"
+                    >
                         <v-icon class="mr-2">mdi-cart-outline</v-icon>
                         Khám phá sản phẩm
                     </v-btn>
@@ -388,14 +409,9 @@ const goToDetail = (id) => {
             </div>
         </v-container>
 
-        
         <CustomerChat />
 
-        <ReviewModal
-            v-model:show="showReviewModal"
-            :order="orderToReview"
-            @review-success="handleReviewSuccess"
-        />
+        <ReviewModal v-model:show="showReviewModal" :order="orderToReview" @review-success="handleReviewSuccess" />
     </div>
 </template>
 
@@ -423,10 +439,12 @@ const goToDetail = (id) => {
 }
 
 .stats-row .stats-block {
-    border: 1px solid rgba(0,0,0,0.03);
+    border: 1px solid rgba(0, 0, 0, 0.03);
     background: #fff;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.03) !important;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03) !important;
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .stats-row .stats-block:hover {
@@ -454,11 +472,11 @@ const goToDetail = (id) => {
 }
 
 .order-row {
-    border: 1px solid rgba(0,0,0,0.04);
+    border: 1px solid rgba(0, 0, 0, 0.04);
     cursor: pointer;
     transition: all 0.3s ease;
     background: #fff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 .order-row:hover {
     border-color: #1e257c;
@@ -479,7 +497,7 @@ const goToDetail = (id) => {
 .product-preview .preview-thumb-wrapper .preview-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     color: white;
     font-size: 0.75rem;
     font-weight: 700;

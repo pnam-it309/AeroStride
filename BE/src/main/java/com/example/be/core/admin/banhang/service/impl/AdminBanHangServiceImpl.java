@@ -92,10 +92,13 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         NhanVien nv = currentNhanVien.orElse(null);
         if (nv != null) {
             hoaDon.setNhanVien(nv);
-            // Link to active GiaoCa
-            com.example.be.entity.GiaoCa activeGiaoCa = giaoCaRepository.findGiaoCaHienTai(nv.getId())
-                    .orElseThrow(() -> new BusinessException("Bạn phải Mở Ca làm việc trước khi tạo hóa đơn!"));
-            hoaDon.setGiaoCa(activeGiaoCa);
+            boolean isAdmin = nv.getPhanQuyen() != null && "ADMIN".equals(nv.getPhanQuyen().getMa());
+            if (!isAdmin) {
+                // Link to active GiaoCa
+                com.example.be.entity.GiaoCa activeGiaoCa = giaoCaRepository.findGiaoCaHienTai(nv.getId())
+                        .orElseThrow(() -> new BusinessException("Bạn phải Mở Ca làm việc trước khi tạo hóa đơn!"));
+                hoaDon.setGiaoCa(activeGiaoCa);
+            }
         }
 
         hoaDonRepository.save(hoaDon);
@@ -515,22 +518,6 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             if (existedByPhone != null) {
                 return existedByPhone;
             }
-        }
-
-        // Tự động tạo khách hàng mới ở cuối nếu có ĐẦY ĐỦ thông tin (Tên + Số điện thoại)
-        if (ten != null && sdt != null) {
-            KhachHang newKh = new KhachHang();
-            newKh.setMa(CodeUtils.generateRandom(KhachHang.class, khachHangRepository::existsByMa));
-            newKh.setTen(ten);
-            newKh.setSdt(sdt);
-            newKh.setEmail(email != null ? email : String.format("khach_%s@aerostride.vn", sdt.replaceAll("\\D", "")));
-            newKh.setGioiTinh(request.getGioiTinhKhachHang() != null ? request.getGioiTinhKhachHang() : true);
-            newKh.setNgaySinh(request.getNgaySinhKhachHang());
-            newKh.setGhiChu("Khách tạo tự động từ bán hàng tại quầy");
-            newKh.setTrangThai(TrangThai.DANG_HOAT_DONG);
-            newKh.setXoaMem(false);
-            newKh.setNgayTao(System.currentTimeMillis());
-            return khachHangRepository.save(newKh);
         }
 
         return null;

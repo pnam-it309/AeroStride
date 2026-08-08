@@ -68,17 +68,14 @@ const {
     totalPages,
     load: fetchSelectedProduct,
     reload: reloadVariants
-} = useServerPagination(
-    (pageable) => dichVuBienThe.layBienThePhanTrang({ ...pageable, ...buildVariantFilterParams() }),
-    {
-        pageSize: 5,
-        onLoaded: () => updateSelectedProductMeta(),
-        onError: () => {
-            clearVariantSelection();
-            addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách biến thể', color: 'error' });
-        }
+} = useServerPagination((pageable) => dichVuBienThe.layBienThePhanTrang({ ...pageable, ...buildVariantFilterParams() }), {
+    pageSize: 5,
+    onLoaded: () => updateSelectedProductMeta(),
+    onError: () => {
+        clearVariantSelection();
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách biến thể', color: 'error' });
     }
-);
+});
 
 const variantModal = reactive({ open: false, mode: 'create', submitting: false, variant: null });
 const variantDrawer = reactive({ open: false, variant: null, initialTab: 0 });
@@ -150,31 +147,31 @@ const resetFilters = () => {
 // Tải các option bộ lọc (màu sắc, kích thước, trạng thái) từ API
 const fetchFormOptions = async () => {
     try {
-        const response = await dichVuSanPham.layOptionsForm().catch(() => null)
+        const response = await dichVuSanPham.layOptionsForm().catch(() => null);
         if (response) {
             formOptions.value = {
                 mauSacs: response.mauSacs || [],
                 kichThuocs: response.kichThuocs || [],
-                trangThais: response.trangThais || [],
-            }
-            return
+                trangThais: response.trangThais || []
+            };
+            return;
         }
 
         const [mauSacResponse, kichThuocResponse] = await Promise.all([
             dichVuMauSac.layMauSac({ size: 1000 }),
             dichVuKichThuoc.layKichThuoc({ size: 1000 })
-        ])
+        ]);
 
         // layMauSac/layKichThuoc luôn trả PageResponse ({ content: [...] })
         formOptions.value = {
             mauSacs: mauSacResponse.content || [],
             kichThuocs: kichThuocResponse.content || [],
             trangThais: ['DANG_HOAT_DONG', 'NGUNG_HOAT_DONG']
-        }
+        };
     } catch (error) {
-        console.error('Lỗi khi tải options:', error)
+        console.error('Lỗi khi tải options:', error);
     }
-}
+};
 
 // Tải danh sách tên sản phẩm để hiển thị trong select box bộ lọc
 const fetchProductOptions = async () => {
@@ -289,8 +286,8 @@ const buildLocalVariantViewModel = (payload, existingVariant = {}) => ({
         Array.isArray(payload.images) && payload.images.length
             ? payload.images
             : getVariantPrimaryImageUrl(payload)
-                ? [{ duongDanAnh: getVariantPrimaryImageUrl(payload), hinhAnhDaiDien: true }]
-                : existingVariant.images || [],
+              ? [{ duongDanAnh: getVariantPrimaryImageUrl(payload), hinhAnhDaiDien: true }]
+              : existingVariant.images || [],
     urlAnh: getVariantPrimaryImageUrl(payload) || getVariantPrimaryImageUrl(existingVariant) || ''
 });
 
@@ -380,30 +377,30 @@ const openImageModal = (item) => {
 
 // Tính toán mã SKU tự động kế tiếp cho biến thể (SP01-1, SP01-2)
 const getNextSku = () => {
-    const maSp = selectedProductSummary.value?.maSanPham
-    if (!maSp) return ''
-    let maxSuffix = 0
-    const prefix = maSp + '-'
-    const variants = selectedProduct.value?.variants || []
-    variants.forEach(item => {
-        const sku = item.maChiTietSanPham || item.sku || item.maSku || item.maBienThe || item.ma || ''
+    const maSp = selectedProductSummary.value?.maSanPham;
+    if (!maSp) return '';
+    let maxSuffix = 0;
+    const prefix = maSp + '-';
+    const variants = selectedProduct.value?.variants || [];
+    variants.forEach((item) => {
+        const sku = item.maChiTietSanPham || item.sku || item.maSku || item.maBienThe || item.ma || '';
         if (sku.startsWith(prefix)) {
-            const parts = sku.split('-')
-            const num = parseInt(parts[parts.length - 1], 10)
+            const parts = sku.split('-');
+            const num = parseInt(parts[parts.length - 1], 10);
             if (!isNaN(num) && num > maxSuffix) {
-                maxSuffix = num
+                maxSuffix = num;
             }
         }
-    })
-    return `${maSp}-${maxSuffix + 1}`
-}
+    });
+    return `${maSp}-${maxSuffix + 1}`;
+};
 
 // Mở Modal để thêm mới 1 biến thể
 const openCreateVariantModal = () => {
-    variantModal.variant = { maChiTietSanPham: getNextSku() }
-    variantModal.mode = 'create'
-    variantModal.open = true
-}
+    variantModal.variant = { maChiTietSanPham: getNextSku() };
+    variantModal.mode = 'create';
+    variantModal.open = true;
+};
 
 // Mở Modal để chỉnh sửa 1 biến thể đã chọn
 const openEditVariantModal = (item) => {
@@ -696,13 +693,13 @@ watch(
 const handleRealtimeStockUpdate = (event) => {
     const { id, maChiTietSanPham, soLuongTon } = event.detail || {};
     if (variants.value && Array.isArray(variants.value)) {
-        const item = variants.value.find(v => v.id === id || v.maChiTietSanPham === maChiTietSanPham);
+        const item = variants.value.find((v) => v.id === id || v.maChiTietSanPham === maChiTietSanPham);
         if (item) {
             item.soLuong = Number(soLuongTon ?? 0);
         }
     }
     if (selectedProduct.value && Array.isArray(selectedProduct.value.variants)) {
-        const item = selectedProduct.value.variants.find(v => v.id === id || v.maChiTietSanPham === maChiTietSanPham);
+        const item = selectedProduct.value.variants.find((v) => v.id === id || v.maChiTietSanPham === maChiTietSanPham);
         if (item) {
             item.soLuong = Number(soLuongTon ?? 0);
         }
@@ -711,34 +708,45 @@ const handleRealtimeStockUpdate = (event) => {
 
 onMounted(async () => {
     window.addEventListener('product-stock-update', handleRealtimeStockUpdate);
-    await Promise.all([loadMaxPrice(), fetchFormOptions(), fetchProductOptions()])
-    const routeProductId = route.query.productId?.toString()
-    selectedProductId.value = routeProductId || 'ALL'
+    await Promise.all([loadMaxPrice(), fetchFormOptions(), fetchProductOptions()]);
+    const routeProductId = route.query.productId?.toString();
+    selectedProductId.value = routeProductId || 'ALL';
 
     if (route.query.keyword) {
-        filters.keyword = route.query.keyword.toString()
+        filters.keyword = route.query.keyword.toString();
     }
-})
+});
 
 onBeforeUnmount(() => {
     window.removeEventListener('product-stock-update', handleRealtimeStockUpdate);
-})
+});
 </script>
 
 <template>
-    <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page"
-        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important">
-        <AdminBreadcrumbs :items="[
-            { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
-            { title: 'Biến thể', disabled: false, to: '/san-pham' },
-            { title: selectedProductSummary.title, disabled: true }
-        ]" />
+    <v-container
+        fluid
+        class="pa-4 animate-fade-in font-body admin-module-page"
+        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important"
+    >
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
+                { title: 'Biến thể', disabled: false, to: '/san-pham' },
+                { title: selectedProductSummary.title, disabled: true }
+            ]"
+        />
 
         <div class="d-flex align-center justify-space-between mb-4 mt-2">
             <div class="d-flex align-center ga-4">
-                <v-btn icon variant="flat" color="white" class="mr-3 border elevation-1 rounded-lg" size="36"
+                <v-btn
+                    icon
+                    variant="flat"
+                    color="white"
+                    class="mr-3 border elevation-1 rounded-lg"
+                    size="36"
                     style="height: 36px !important; width: 36px !important; min-height: 36px !important"
-                    @click="router.push(PATH.SAN_PHAM)">
+                    @click="router.push(PATH.SAN_PHAM)"
+                >
                     <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
                     <v-tooltip activator="parent" location="top" text="Quay lại danh sách sản phẩm" />
                 </v-btn>
@@ -750,43 +758,77 @@ onBeforeUnmount(() => {
             <AdminFilter title="Bộ lọc nâng cao" @refresh="resetFilters" :loading="loading">
                 <v-col cols="12" md="3">
                     <div class="filter-field-label">Tìm kiếm nhanh</div>
-                    <v-text-field v-model="filters.keyword" placeholder="Mã SKU, màu, size..."
+                    <v-text-field
+                        v-model="filters.keyword"
+                        placeholder="Mã SKU, màu, size..."
                         prepend-inner-icon="mdi-magnify"
                         append-inner-icon="mdi-qrcode"
                         @click:append-inner="showQrScanner = true"
-                        variant="outlined" density="compact" hide-details clearable
-                        class="compact-input" />
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        clearable
+                        class="compact-input"
+                    />
                 </v-col>
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Sản phẩm</div>
-                    <v-autocomplete v-model="selectedProductId"
+                    <v-autocomplete
+                        v-model="selectedProductId"
                         :items="[{ tenSanPham: 'Tất cả sản phẩm', id: 'ALL' }, ...productOptions]"
-                        item-title="tenSanPham" item-value="id" variant="outlined" density="compact" hide-details
-                        class="compact-input" :menu-props="{ contentClass: 'product-select-menu' }" />
+                        item-title="tenSanPham"
+                        item-value="id"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        :menu-props="{ contentClass: 'product-select-menu' }"
+                    />
                 </v-col>
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Màu sắc</div>
-                    <v-select v-model="filters.mauSacId" :items="[
-                        { title: 'Tất cả màu', value: '' },
-                        ...formOptions.mauSacs.map((mauSac) => ({ title: mauSac.ten, value: mauSac.id }))
-                    ]" variant="outlined" density="compact" hide-details class="compact-input"
-                        :menu-props="{ contentClass: 'product-select-menu' }" />
+                    <v-select
+                        v-model="filters.mauSacId"
+                        :items="[
+                            { title: 'Tất cả màu', value: '' },
+                            ...formOptions.mauSacs.map((mauSac) => ({ title: mauSac.ten, value: mauSac.id }))
+                        ]"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        :menu-props="{ contentClass: 'product-select-menu' }"
+                    />
                 </v-col>
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Kích thước</div>
-                    <v-select v-model="filters.kichThuocId" :items="[
-                        { title: 'Tất cả size', value: '' },
-                        ...formOptions.kichThuocs.map((kichThuoc) => ({ title: kichThuoc.ten, value: kichThuoc.id }))
-                    ]" variant="outlined" density="compact" hide-details class="compact-input"
-                        :menu-props="{ contentClass: 'product-select-menu' }" />
+                    <v-select
+                        v-model="filters.kichThuocId"
+                        :items="[
+                            { title: 'Tất cả size', value: '' },
+                            ...formOptions.kichThuocs.map((kichThuoc) => ({ title: kichThuoc.ten, value: kichThuoc.id }))
+                        ]"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        :menu-props="{ contentClass: 'product-select-menu' }"
+                    />
                 </v-col>
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Trạng thái</div>
-                    <v-select v-model="filters.trangThai" :items="[
-                        { title: 'Tất cả trạng thái', value: '' },
-                        ...formOptions.trangThais.map((trangThai) => ({ title: getStatusLabel(trangThai), value: trangThai }))
-                    ]" variant="outlined" density="compact" hide-details class="compact-input"
-                        :menu-props="{ contentClass: 'product-select-menu' }" />
+                    <v-select
+                        v-model="filters.trangThai"
+                        :items="[
+                            { title: 'Tất cả trạng thái', value: '' },
+                            ...formOptions.trangThais.map((trangThai) => ({ title: getStatusLabel(trangThai), value: trangThai }))
+                        ]"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        :menu-props="{ contentClass: 'product-select-menu' }"
+                    />
                 </v-col>
 
                 <template #after>
@@ -800,39 +842,52 @@ onBeforeUnmount(() => {
                                 {{ formatCurrency(filters.khoangGia[0]) }} – {{ formatCurrency(filters.khoangGia[1]) }}
                             </span>
                         </div>
-                        <v-range-slider :key="`${MIN_VARIANT_PRICE}-${dynamicMaxPrice}`" v-model="filters.khoangGia"
-                            :max="dynamicMaxPrice" :min="MIN_VARIANT_PRICE" :step="VARIANT_PRICE_STEP" hide-details
-                            color="primary" track-color="#e2e8f0" track-size="3" thumb-size="14"
-                            class="blue-range-slider" />
+                        <v-range-slider
+                            :key="`${MIN_VARIANT_PRICE}-${dynamicMaxPrice}`"
+                            v-model="filters.khoangGia"
+                            :max="dynamicMaxPrice"
+                            :min="MIN_VARIANT_PRICE"
+                            :step="VARIANT_PRICE_STEP"
+                            hide-details
+                            color="primary"
+                            track-color="#e2e8f0"
+                            track-size="3"
+                            thumb-size="14"
+                            class="blue-range-slider"
+                        />
                     </v-col>
                 </template>
             </AdminFilter>
         </div>
 
-        <AdminTable title="Danh mục biến thể" :headers="[
-            { text: 'Chọn', width: '40px' },
-            { text: 'STT', width: '70px' },
-            { text: 'Mã sản phẩm', width: '100px' },
-            { text: 'Hình ảnh', width: '70px' },
-            { text: 'Mã SKU', width: '100px' },
-            { text: 'Màu sắc', width: '100px' },
-            { text: 'Kích thước', width: '100px' },
-            { text: 'Số lượng', width: '80px' },
-            { text: 'Giá bán', width: '120px' },
-            { text: 'Trạng thái', width: '120px' },
-            { text: 'Hành động', width: '160px' }
-        ]" :items="variants" :loading="loading"
-            :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'" addButtonText="Tạo mới"
-            @add="openCreateVariantModal" class="all-center-table">
-
+        <AdminTable
+            title="Danh mục biến thể"
+            :headers="[
+                { text: 'Chọn', width: '40px' },
+                { text: 'STT', width: '70px' },
+                { text: 'Mã sản phẩm', width: '100px' },
+                { text: 'Hình ảnh', width: '70px' },
+                { text: 'Mã SKU', width: '100px' },
+                { text: 'Màu sắc', width: '100px' },
+                { text: 'Kích thước', width: '100px' },
+                { text: 'Số lượng', width: '80px' },
+                { text: 'Giá bán', width: '120px' },
+                { text: 'Trạng thái', width: '120px' },
+                { text: 'Hành động', width: '160px' }
+            ]"
+            :items="variants"
+            :loading="loading"
+            :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'"
+            addButtonText="Tạo mới"
+            @add="openCreateVariantModal"
+            class="all-center-table"
+        >
             <template #extra-actions>
-                <v-btn prepend-icon="mdi-qrcode" variant="flat" class="admin-btn-secondary mr-2"
-                    @click="handleExportVariantQrZip">
+                <v-btn prepend-icon="mdi-qrcode" variant="flat" class="admin-btn-secondary mr-2" @click="handleExportVariantQrZip">
                     Tải mã QR
                     <v-tooltip activator="parent" location="top" text="Tải mã QR" />
                 </v-btn>
-                <v-btn prepend-icon="mdi-qrcode" variant="flat" class="admin-btn-secondary"
-                    @click="showQrScanner = true">
+                <v-btn prepend-icon="mdi-qrcode" variant="flat" class="admin-btn-secondary" @click="showQrScanner = true">
                     Quét mã QR
                     <v-tooltip activator="parent" location="top" text="Quét mã QR bằng Camera" />
                 </v-btn>
@@ -840,28 +895,32 @@ onBeforeUnmount(() => {
 
             <template #headers>
                 <tr>
-                    <th class="header-cell px-0" style="width: 50px; text-align: center;">
-                        <v-checkbox-btn :model-value="allVariantsSelected" :indeterminate="someVariantsSelected"
-                            color="primary" hide-details density="compact"
-                            style="margin: auto; display: inline-flex; width: auto;"
-                            @update:model-value="toggleSelectAllVariants" />
+                    <th class="header-cell px-0" style="width: 50px; text-align: center">
+                        <v-checkbox-btn
+                            :model-value="allVariantsSelected"
+                            :indeterminate="someVariantsSelected"
+                            color="primary"
+                            hide-details
+                            density="compact"
+                            style="margin: auto; display: inline-flex; width: auto"
+                            @update:model-value="toggleSelectAllVariants"
+                        />
                     </th>
-                    <th class="header-cell" style="width: 70px;">STT</th>
-                    <th class="header-cell" style="width: 100px;">Mã sản phẩm</th>
-                    <th class="header-cell" style="width: 100px;">Hình ảnh</th>
-                    <th class="header-cell" style="width: 100px;">Mã SKU</th>
-                    <th class="header-cell" style="width: 100px;">Màu sắc</th>
-                    <th class="header-cell" style="width: 100px;">Kích thước</th>
-                    <th class="header-cell" style="width: 80px;">Số lượng</th>
-                    <th class="header-cell" style="width: 120px;">Giá bán</th>
-                    <th class="header-cell" style="width: 120px;">Trạng thái</th>
-                    <th class="header-cell" style="width: 120px;">Hành động</th>
+                    <th class="header-cell" style="width: 70px">STT</th>
+                    <th class="header-cell" style="width: 100px">Mã sản phẩm</th>
+                    <th class="header-cell" style="width: 100px">Hình ảnh</th>
+                    <th class="header-cell" style="width: 100px">Mã SKU</th>
+                    <th class="header-cell" style="width: 100px">Màu sắc</th>
+                    <th class="header-cell" style="width: 100px">Kích thước</th>
+                    <th class="header-cell" style="width: 80px">Số lượng</th>
+                    <th class="header-cell" style="width: 120px">Giá bán</th>
+                    <th class="header-cell" style="width: 120px">Trạng thái</th>
+                    <th class="header-cell" style="width: 120px">Hành động</th>
                 </tr>
             </template>
 
             <template #top>
-                <div
-                    class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap ga-3">
+                <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap ga-3">
                     <div class="d-flex align-center flex-wrap ga-2">
                         <span class="text-caption font-weight-medium text-slate-500">
                             Đã chọn {{ selectedVariantIds.length }} biến thể
@@ -872,28 +931,32 @@ onBeforeUnmount(() => {
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell px-0" style="width: 50px; text-align: center;">
-                        <v-checkbox-btn :model-value="selectedVariantIds.includes(item.id)" color="primary"
-                            hide-details density="compact"
-                            style="margin: auto; display: inline-flex; width: auto;"
-                            @update:model-value="toggleVariantSelection(item.id, $event)" />
+                    <td class="data-cell px-0" style="width: 50px; text-align: center">
+                        <v-checkbox-btn
+                            :model-value="selectedVariantIds.includes(item.id)"
+                            color="primary"
+                            hide-details
+                            density="compact"
+                            style="margin: auto; display: inline-flex; width: auto"
+                            @update:model-value="toggleVariantSelection(item.id, $event)"
+                        />
                     </td>
                     <td class="data-cell text-center">
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-truncate" :title="getVariantProductCode(item)">{{
-                            getVariantProductCode(item) }}</div>
+                        <div class="text-truncate" :title="getVariantProductCode(item)">{{ getVariantProductCode(item) }}</div>
                     </td>
                     <td class="data-cell text-center">
                         <div class="product-image-container d-inline-block position-relative">
                             <v-avatar rounded="lg" size="44" class="border bg-slate-50 elevation-1 avatar-hover">
-                                <SafeProductImage :src="getVariantThumbnail(item)" :fallback-src="logoPlaceholder"
-                                    :alt="item.maChiTietSanPham || 'variant-image'" />
+                                <SafeProductImage
+                                    :src="getVariantThumbnail(item)"
+                                    :fallback-src="logoPlaceholder"
+                                    :alt="item.maChiTietSanPham || 'variant-image'"
+                                />
                             </v-avatar>
-                            <div v-if="item.phanTramGiam > 0" class="discount-badge">
-                                -{{ Math.round(item.phanTramGiam) }}%
-                            </div>
+                            <div v-if="item.phanTramGiam > 0" class="discount-badge">-{{ Math.round(item.phanTramGiam) }}%</div>
                         </div>
                     </td>
                     <td class="data-cell text-center">
@@ -917,19 +980,19 @@ onBeforeUnmount(() => {
                         </div>
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-primary text-truncate" :title="formatCurrency(item.giaBan)">{{
-                            formatCurrency(item.giaBan) }}</div>
+                        <div class="text-primary text-truncate" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>
                     </td>
                     <td class="data-cell">
-                        <v-chip variant="flat"
-                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
+                        <v-chip
+                            variant="flat"
+                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
+                        >
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
                     <td class="data-cell">
                         <div class="d-flex align-center justify-center action-controls">
-                            <v-btn variant="text" class="action-icon-btn action-icon-btn--edit"
-                                @click="openEditVariantModal(item)">
+                            <v-btn variant="text" class="action-icon-btn action-icon-btn--edit" @click="openEditVariantModal(item)">
                                 <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
@@ -938,9 +1001,14 @@ onBeforeUnmount(() => {
                                 <v-tooltip activator="parent" location="top">Quản lý biến thể sản phẩm</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
-                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
-                                    density="compact" class="tight-switch action-switch"
-                                    @click.prevent.stop="handleToggleVariantStatus(item)" />
+                                <v-switch
+                                    :model-value="isActiveStatus(item.trangThai)"
+                                    color="primary"
+                                    hide-details
+                                    density="compact"
+                                    class="tight-switch action-switch"
+                                    @click.prevent.stop="handleToggleVariantStatus(item)"
+                                />
                                 <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái" />
                             </div>
                         </div>
@@ -949,68 +1017,92 @@ onBeforeUnmount(() => {
             </template>
 
             <template #pagination>
-                <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-                    @update:pageSize="pagination.size = $event" @change="fetchSelectedProduct"
-                    :total-pages="totalPages" :total-elements="totalElements" :current-size="variants.length" />
+                <AdminPagination
+                    v-model="pagination.page"
+                    :page-size="pagination.size"
+                    @update:pageSize="pagination.size = $event"
+                    @change="fetchSelectedProduct"
+                    :total-pages="totalPages"
+                    :total-elements="totalElements"
+                    :current-size="variants.length"
+                />
             </template>
         </AdminTable>
 
-        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="confirmDialog.action"
+        />
 
-        <VariantFormModal :key="`${variantModal.mode}-${variantModal.variant?.id || 'new'}`" :open="variantModal.open"
-            :mode="variantModal.mode" :variant="variantModal.variant" :options="formOptions"
-            :submitting="variantModal.submitting" :productCode="selectedProductSummary.maSanPham"
-            @close="closeVariantModal" @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
-        <VariantManagementDrawer v-model:show="variantDrawer.open" :variant="variantDrawer.variant"
-            :initialTab="variantDrawer.initialTab" @saved="fetchSelectedProduct" />
+        <VariantFormModal
+            :key="`${variantModal.mode}-${variantModal.variant?.id || 'new'}`"
+            :open="variantModal.open"
+            :mode="variantModal.mode"
+            :variant="variantModal.variant"
+            :options="formOptions"
+            :submitting="variantModal.submitting"
+            :productCode="selectedProductSummary.maSanPham"
+            @close="closeVariantModal"
+            @submit="handleVariantSubmit"
+            @options-refreshed="fetchFormOptions"
+        />
+        <VariantManagementDrawer
+            v-model:show="variantDrawer.open"
+            :variant="variantDrawer.variant"
+            :initialTab="variantDrawer.initialTab"
+            @saved="fetchSelectedProduct"
+        />
         <QrScanner v-model:show="showQrScanner" @scan="handleQrScan" />
 
         <v-dialog v-model="qrDialog.open" max-width="420" transition="variant-modal-transition">
             <v-card class="rounded-xl elevation-4 border-0 overflow-hidden">
                 <div class="px-6 pt-6 pb-4 d-flex justify-space-between align-start">
                     <div>
-                        <div class="text-caption font-weight-bold text-slate-500 mb-1"
-                            style="text-transform: none; letter-spacing: 0.5px">
+                        <div class="text-caption font-weight-bold text-slate-500 mb-1" style="text-transform: none; letter-spacing: 0.5px">
                             Mã QR biến thể
                         </div>
-                        <h3 class="text-h6 font-weight-bold text-slate-900 mb-1">{{
-                            qrDialog.variant?.maChiTietSanPham
-                            || '--' }}</h3>
+                        <h3 class="text-h6 font-weight-bold text-slate-900 mb-1">{{ qrDialog.variant?.maChiTietSanPham || '--' }}</h3>
                         <p class="text-body-2 text-slate-600 mb-0 text-truncate" style="max-width: 280px">
-                            {{ qrDialog.variant?.tenSanPham || selectedProduct.value?.tenSanPham || 'Sản phẩm'
-                            }}
+                            {{ qrDialog.variant?.tenSanPham || selectedProduct.value?.tenSanPham || 'Sản phẩm' }}
                         </p>
                     </div>
-                    <v-btn icon variant="tonal" size="small" color="slate-400" class="rounded-lg"
-                        @click="qrDialog.open = false">
+                    <v-btn icon variant="tonal" size="small" color="slate-400" class="rounded-lg" @click="qrDialog.open = false">
                         <v-icon size="18">mdi-close</v-icon>
                     </v-btn>
                 </div>
 
                 <div class="px-6 pb-6 bg-slate-50">
                     <div class="pt-6">
-                        <div ref="qrCodeWrapper"
-                            class="d-flex flex-column align-center pa-6 rounded-xl bg-white border elevation-1">
-                            <QrcodeVue :value="qrDialog.value" :size="240" level="H" render-as="canvas"
-                                class="qr-canvas-display" />
+                        <div ref="qrCodeWrapper" class="d-flex flex-column align-center pa-6 rounded-xl bg-white border elevation-1">
+                            <QrcodeVue :value="qrDialog.value" :size="240" level="H" render-as="canvas" class="qr-canvas-display" />
 
                             <div
-                                class="mt-5 px-4 py-2 rounded-lg bg-slate-100 border text-slate-800 font-weight-bold text-body-2 tracking-wide monospace">
+                                class="mt-5 px-4 py-2 rounded-lg bg-slate-100 border text-slate-800 font-weight-bold text-body-2 tracking-wide monospace"
+                            >
                                 {{ qrDialog.value }}
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex ga-3 mt-6">
-                        <v-btn variant="flat" color="white"
+                        <v-btn
+                            variant="flat"
+                            color="white"
                             class="text-none rounded-lg px-4 font-weight-bold border flex-grow-1"
-                            @click="qrDialog.open = false">
+                            @click="qrDialog.open = false"
+                        >
                             Đóng
                         </v-btn>
-                        <v-btn color="primary" variant="flat"
+                        <v-btn
+                            color="primary"
+                            variant="flat"
                             class="text-none rounded-lg px-4 font-weight-bold shadow flex-grow-1"
-                            @click="downloadCurrentQrCode">
+                            @click="downloadCurrentQrCode"
+                        >
                             <v-icon size="18" class="mr-2">mdi-download</v-icon>
                             Tải mã QR
                         </v-btn>

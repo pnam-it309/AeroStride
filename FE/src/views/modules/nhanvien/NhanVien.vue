@@ -90,8 +90,6 @@ const confirmChangeStatus = (item) => {
     });
 };
 
-
-
 const getAddressSummary = (item) => {
     if (!item) return '-';
 
@@ -100,7 +98,7 @@ const getAddressSummary = (item) => {
     const huyen = item.thanhPho || item.thanh_pho || '';
     const tinh = item.tinh || '';
 
-    const parts = [ct, xa, huyen, tinh].map(p => String(p).trim()).filter(p => p !== '' && p !== 'null');
+    const parts = [ct, xa, huyen, tinh].map((p) => String(p).trim()).filter((p) => p !== '' && p !== 'null');
 
     return parts.length > 0 ? parts.join(', ') : 'Chưa cập nhật';
 };
@@ -141,10 +139,12 @@ onMounted(() => {
 <template>
     <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <!-- Breadcrumbs -->
-        <AdminBreadcrumbs :items="[
-            { title: 'Quản lý tài khoản', disabled: false, href: '#' },
-            { title: 'Nhân viên', disabled: true }
-        ]" />
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý tài khoản', disabled: false, href: '#' },
+                { title: 'Nhân viên', disabled: true }
+            ]"
+        />
 
         <div class="mb-2"></div>
         <!-- 1. FILTER -->
@@ -152,29 +152,58 @@ onMounted(() => {
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm nhân viên</div>
-                    <v-text-field v-model="filters.search" placeholder="Tên, SĐT, Email..." variant="outlined"
-                        bg-color="white" density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
-                        @keyup.enter="handleSearch"></v-text-field>
+                    <v-text-field
+                        v-model="filters.search"
+                        placeholder="Tên, SĐT, Email..."
+                        variant="outlined"
+                        bg-color="white"
+                        density="compact"
+                        hide-details
+                        prepend-inner-icon="mdi-magnify"
+                        class="compact-input"
+                        @keyup.enter="handleSearch"
+                    ></v-text-field>
                 </v-col>
                 <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Giới tính</div>
-                    <v-select v-model="filters.gioiTinh" :items="GIOI_TINH_FILTER_OPTIONS" variant="outlined"
-                        bg-color="white" density="compact" hide-details class="compact-input"
-                        @update:model-value="handleSearch"></v-select>
+                    <v-select
+                        v-model="filters.gioiTinh"
+                        :items="GIOI_TINH_FILTER_OPTIONS"
+                        variant="outlined"
+                        bg-color="white"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        @update:model-value="handleSearch"
+                    ></v-select>
                 </v-col>
                 <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Trạng thái</div>
-                    <v-select v-model="filters.trangThai" :items="TRANG_THAI_FILTER_OPTIONS" variant="outlined"
-                        bg-color="white" density="compact" hide-details class="compact-input"
-                        @update:model-value="handleSearch"></v-select>
+                    <v-select
+                        v-model="filters.trangThai"
+                        :items="TRANG_THAI_FILTER_OPTIONS"
+                        variant="outlined"
+                        bg-color="white"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        @update:model-value="handleSearch"
+                    ></v-select>
                 </v-col>
             </AdminFilter>
         </div>
 
-        <AdminTable title="Danh sách nhân viên" addButtonText="Tạo mới" show-export-button :headers="tableHeaders"
-            :items="employees" :total-count="pagination.totalElements" :loading="loading"
-            @add="goToAdd" @export="handleExport">
-
+        <AdminTable
+            title="Danh sách nhân viên"
+            addButtonText="Tạo mới"
+            show-export-button
+            :headers="tableHeaders"
+            :items="employees"
+            :total-count="pagination.totalElements"
+            :loading="loading"
+            @add="goToAdd"
+            @export="handleExport"
+        >
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell text-center">{{ getIndex(index) }}</td>
@@ -185,10 +214,8 @@ onMounted(() => {
                         <div class="text-slate-800 text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
                     </td>
                     <td class="data-cell text-left px-4">
-                        <div class="text-slate-800 text-truncate" :title="item.tenTaiKhoan">{{ item.tenTaiKhoan || '-'
-                        }}</div>
-                        <div class="text-caption text-slate-500 text-truncate" :title="item.email">{{ item.email || '-'
-                        }}</div>
+                        <div class="text-slate-800 text-truncate" :title="item.tenTaiKhoan">{{ item.tenTaiKhoan || '-' }}</div>
+                        <div class="text-caption text-slate-500 text-truncate" :title="item.email">{{ item.email || '-' }}</div>
                     </td>
                     <td class="data-cell">
                         <v-chip variant="flat" class="justify-center" :class="getGenderChipClass(item.gioiTinh)">
@@ -201,8 +228,8 @@ onMounted(() => {
                             <span>{{ item.sdt || '-' }}</span>
                         </div>
                     </td>
-                    <td class="data-cell text-left px-4" style="min-width: 200px;">
-                        <div class="text-slate-700" style="font-size: 13px; line-height: 1.4;">
+                    <td class="data-cell text-left px-4" style="min-width: 200px">
+                        <div class="text-slate-700" style="font-size: 13px; line-height: 1.4">
                             <span :class="{ 'text-slate-400': getAddressSummary(item) === 'Chưa cập nhật' }">
                                 {{ getAddressSummary(item) }}
                             </span>
@@ -222,16 +249,19 @@ onMounted(() => {
 
                     <td class="data-cell action-cell">
                         <div class="d-flex align-center justify-center action-controls">
-
-                            <v-btn variant="text" class="action-icon-btn"
-                                @click.stop="goToEdit(item.id)">
+                            <v-btn variant="text" class="action-icon-btn" @click.stop="goToEdit(item.id)">
                                 <EditIcon size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
-                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
-                                    density="compact" class="tight-switch action-switch"
-                                    @click.prevent.stop="confirmChangeStatus(item)" />
+                                <v-switch
+                                    :model-value="isActiveStatus(item.trangThai)"
+                                    color="primary"
+                                    hide-details
+                                    density="compact"
+                                    class="tight-switch action-switch"
+                                    @click.prevent.stop="confirmChangeStatus(item)"
+                                />
                                 <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
                             </div>
                         </div>
@@ -239,17 +269,28 @@ onMounted(() => {
                 </tr>
             </template>
             <template #pagination>
-                <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-                    @update:page-size="updatePaginationSize" :total-pages="pagination.totalPages"
-                    :total-elements="pagination.totalElements" :current-size="employees.length"
-                    @change="loadEmployees" />
+                <AdminPagination
+                    v-model="pagination.page"
+                    :page-size="pagination.size"
+                    @update:page-size="updatePaginationSize"
+                    :total-pages="pagination.totalPages"
+                    :total-elements="pagination.totalElements"
+                    :current-size="employees.length"
+                    @change="loadEmployees"
+                />
             </template>
         </AdminTable>
 
         <!-- SHARED CONFIRM -->
-        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="handleConfirm(true)"
-            @cancel="handleConfirm(false)" />
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)"
+        />
     </v-container>
 </template>
 

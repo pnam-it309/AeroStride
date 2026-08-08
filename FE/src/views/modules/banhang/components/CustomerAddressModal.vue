@@ -45,8 +45,12 @@ const isCurrentAddress = (addr) => {
 
     // 2. Nếu chưa có selectedAddressId, so sánh theo thông tin nhận hàng trên form (quy đổi mã GHN -> Tên địa phương)
     if (props.currentShipping && props.currentShipping.detail) {
-        const currentDetail = String(props.currentShipping.detail || '').trim().toLowerCase();
-        const currentName = String(props.currentShipping.name || '').trim().toLowerCase();
+        const currentDetail = String(props.currentShipping.detail || '')
+            .trim()
+            .toLowerCase();
+        const currentName = String(props.currentShipping.name || '')
+            .trim()
+            .toLowerCase();
         const currentPhone = String(props.currentShipping.phone || '').replace(/\D/g, '');
 
         const rawProvince = String(props.currentShipping.province || '').trim();
@@ -54,38 +58,59 @@ const isCurrentAddress = (addr) => {
         const rawWard = String(props.currentShipping.ward || '').trim();
 
         // Tìm tên Tỉnh/Huyện/Xã từ mã GHN nếu có
-        const provObj = provinces.value.find(p => String(p.code) === rawProvince);
+        const provObj = provinces.value.find((p) => String(p.code) === rawProvince);
         const currentProvName = (provObj ? provObj.name : rawProvince).toLowerCase();
 
-        const distObj = districts.value.find(d => String(d.code) === rawDistrict);
+        const distObj = districts.value.find((d) => String(d.code) === rawDistrict);
         const currentDistName = (distObj ? distObj.name : rawDistrict).toLowerCase();
 
-        const wardObj = wards.value.find(w => String(w.code) === rawWard);
+        const wardObj = wards.value.find((w) => String(w.code) === rawWard);
         const currentWardName = (wardObj ? wardObj.name : rawWard).toLowerCase();
 
-        const addrDetail = String(addr.diaChiChiTiet || '').trim().toLowerCase();
-        const addrName = String(addr.tenNguoiNhan || props.customer?.ten || '').trim().toLowerCase();
+        const addrDetail = String(addr.diaChiChiTiet || '')
+            .trim()
+            .toLowerCase();
+        const addrName = String(addr.tenNguoiNhan || props.customer?.ten || '')
+            .trim()
+            .toLowerCase();
         const addrPhone = String(addr.sdtNguoiNhan || props.customer?.sdt || '').replace(/\D/g, '');
-        const addrProvince = String(addr.tinh || '').trim().toLowerCase();
-        const addrDistrict = String(addr.thanhPho || '').trim().toLowerCase();
-        const addrWard = String(addr.phuongXa || '').trim().toLowerCase();
+        const addrProvince = String(addr.tinh || '')
+            .trim()
+            .toLowerCase();
+        const addrDistrict = String(addr.thanhPho || '')
+            .trim()
+            .toLowerCase();
+        const addrWard = String(addr.phuongXa || '')
+            .trim()
+            .toLowerCase();
 
         const matchDetail = currentDetail !== '' && currentDetail === addrDetail;
         const matchName = currentName === '' || currentName === addrName;
         const matchPhone = currentPhone === '' || currentPhone === addrPhone;
 
         // Đối soát tên các cấp địa phương (Xóa tiền tố Huyện/Xã/Tỉnh nếu cần)
-        const cleanStr = (s) => String(s || '').toLowerCase().replace(/^(tỉnh|thành phố|quận|huyện|phường|xã|thị xã|thị trấn|tp\.?|t\.?|q\.?|h\.?|x\.?)\s+/gi, '').replace(/\s+/g, '').trim();
+        const cleanStr = (s) =>
+            String(s || '')
+                .toLowerCase()
+                .replace(/^(tỉnh|thành phố|quận|huyện|phường|xã|thị xã|thị trấn|tp\.?|t\.?|q\.?|h\.?|x\.?)\s+/gi, '')
+                .replace(/\s+/g, '')
+                .trim();
 
         let matchLocation = true;
         if (currentProvName && addrProvince) {
-            matchLocation = matchLocation && (cleanStr(currentProvName) === cleanStr(addrProvince) || cleanStr(addrProvince).includes(cleanStr(currentProvName)));
+            matchLocation =
+                matchLocation &&
+                (cleanStr(currentProvName) === cleanStr(addrProvince) || cleanStr(addrProvince).includes(cleanStr(currentProvName)));
         }
         if (currentDistName && addrDistrict) {
-            matchLocation = matchLocation && (cleanStr(currentDistName) === cleanStr(addrDistrict) || cleanStr(addrDistrict).includes(cleanStr(currentDistName)));
+            matchLocation =
+                matchLocation &&
+                (cleanStr(currentDistName) === cleanStr(addrDistrict) || cleanStr(addrDistrict).includes(cleanStr(currentDistName)));
         }
         if (currentWardName && addrWard) {
-            matchLocation = matchLocation && (cleanStr(currentWardName) === cleanStr(addrWard) || cleanStr(addrWard).includes(cleanStr(currentWardName)));
+            matchLocation =
+                matchLocation &&
+                (cleanStr(currentWardName) === cleanStr(addrWard) || cleanStr(addrWard).includes(cleanStr(currentWardName)));
         }
 
         if (matchDetail && matchName && matchPhone && matchLocation) {
@@ -123,12 +148,22 @@ const fetchCustomerAddresses = async () => {
         const seenKeys = new Map();
         for (const item of rawList) {
             const key = [
-                String(item.tenNguoiNhan || '').trim().toLowerCase(),
+                String(item.tenNguoiNhan || '')
+                    .trim()
+                    .toLowerCase(),
                 String(item.sdtNguoiNhan || '').replace(/\D/g, ''),
-                String(item.diaChiChiTiet || '').trim().toLowerCase(),
-                String(item.phuongXa || '').trim().toLowerCase(),
-                String(item.thanhPho || '').trim().toLowerCase(),
-                String(item.tinh || '').trim().toLowerCase()
+                String(item.diaChiChiTiet || '')
+                    .trim()
+                    .toLowerCase(),
+                String(item.phuongXa || '')
+                    .trim()
+                    .toLowerCase(),
+                String(item.thanhPho || '')
+                    .trim()
+                    .toLowerCase(),
+                String(item.tinh || '')
+                    .trim()
+                    .toLowerCase()
             ].join('|');
 
             if (!seenKeys.has(key)) {
@@ -152,15 +187,18 @@ const fetchCustomerAddresses = async () => {
     }
 };
 
-watch(() => props.modelValue, async (val) => {
-    if (val) {
-        showAddForm.value = false;
-        await fetchCustomerAddresses();
-        if (provinces.value.length === 0) {
-            await fetchProvinces();
+watch(
+    () => props.modelValue,
+    async (val) => {
+        if (val) {
+            showAddForm.value = false;
+            await fetchCustomerAddresses();
+            if (provinces.value.length === 0) {
+                await fetchProvinces();
+            }
         }
     }
-});
+);
 
 const handleSelectAddress = (addr) => {
     emit('select-address', addr);
@@ -185,8 +223,17 @@ const handleSaveAddress = async () => {
         addNotification({ title: 'Thiếu thông tin', subtitle: 'Vui lòng nhập Tên và SĐT người nhận.', color: 'warning' });
         return;
     }
-    if (!newAddressForm.value.tinh || !newAddressForm.value.thanhPho || !newAddressForm.value.phuongXa || !newAddressForm.value.diaChiChiTiet) {
-        addNotification({ title: 'Thiếu địa chỉ', subtitle: 'Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện, Phường/Xã và Địa chỉ chi tiết.', color: 'warning' });
+    if (
+        !newAddressForm.value.tinh ||
+        !newAddressForm.value.thanhPho ||
+        !newAddressForm.value.phuongXa ||
+        !newAddressForm.value.diaChiChiTiet
+    ) {
+        addNotification({
+            title: 'Thiếu địa chỉ',
+            subtitle: 'Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện, Phường/Xã và Địa chỉ chi tiết.',
+            color: 'warning'
+        });
         return;
     }
 
@@ -222,7 +269,13 @@ const close = () => {
 </script>
 
 <template>
-    <v-dialog :model-value="modelValue" @update:model-value="(val) => emit('update:modelValue', val)" max-width="850" transition="dialog-bottom-transition" persistent>
+    <v-dialog
+        :model-value="modelValue"
+        @update:model-value="(val) => emit('update:modelValue', val)"
+        max-width="850"
+        transition="dialog-bottom-transition"
+        persistent
+    >
         <v-card class="rounded-xl overflow-hidden shadow-2xl">
             <!-- Header -->
             <v-card-title class="pa-5 bg-slate-50 border-b d-flex justify-space-between align-center">
@@ -234,9 +287,7 @@ const close = () => {
                         <div class="text-subtitle-1 font-weight-bold text-slate-800">
                             Quản lý địa chỉ — <span class="text-primary">{{ customerName }}</span>
                         </div>
-                        <div class="text-caption text-slate-500">
-                            Chọn địa chỉ nhận hàng có sẵn hoặc thêm địa chỉ mới cho khách hàng
-                        </div>
+                        <div class="text-caption text-slate-500">Chọn địa chỉ nhận hàng có sẵn hoặc thêm địa chỉ mới cho khách hàng</div>
                     </div>
                 </div>
                 <v-btn icon variant="text" size="small" color="slate-400" @click="close">
@@ -245,7 +296,7 @@ const close = () => {
             </v-card-title>
 
             <!-- Body -->
-            <v-card-text class="pa-6" style="max-height: 520px; overflow-y: auto;">
+            <v-card-text class="pa-6" style="max-height: 520px; overflow-y: auto">
                 <div v-if="loading" class="d-flex justify-center align-center py-12">
                     <v-progress-circular indeterminate color="primary" size="36" />
                 </div>
@@ -258,7 +309,14 @@ const close = () => {
                                 <span class="text-subtitle-2 font-weight-bold text-slate-700">
                                     Địa chỉ hiện tại ({{ addresses.length }})
                                 </span>
-                                <v-btn v-if="!showAddForm" variant="tonal" color="primary" size="small" class="text-none font-weight-semibold rounded-lg" @click="openAddForm">
+                                <v-btn
+                                    v-if="!showAddForm"
+                                    variant="tonal"
+                                    color="primary"
+                                    size="small"
+                                    class="text-none font-weight-semibold rounded-lg"
+                                    @click="openAddForm"
+                                >
                                     <PlusIcon size="16" class="mr-1" /> Thêm địa chỉ mới
                                 </v-btn>
                             </div>
@@ -266,31 +324,48 @@ const close = () => {
                             <div v-if="addresses.length === 0" class="text-center py-8 border-dashed rounded-xl bg-slate-50">
                                 <v-icon size="40" color="slate-300">mdi-map-marker-off-outline</v-icon>
                                 <div class="text-body-2 text-slate-500 mt-2">Khách hàng chưa có địa chỉ nào được lưu.</div>
-                                <v-btn variant="flat" color="primary" size="small" class="mt-3 text-none font-weight-bold rounded-lg" @click="openAddForm">
+                                <v-btn
+                                    variant="flat"
+                                    color="primary"
+                                    size="small"
+                                    class="mt-3 text-none font-weight-bold rounded-lg"
+                                    @click="openAddForm"
+                                >
                                     + Thêm địa chỉ đầu tiên
                                 </v-btn>
                             </div>
 
                             <div v-else class="d-flex flex-column ga-3">
-                                <div v-for="addr in addresses" :key="addr.id"
+                                <div
+                                    v-for="addr in addresses"
+                                    :key="addr.id"
                                     @click="handleSelectAddress(addr)"
                                     class="address-card position-relative pa-4 rounded-xl border transition-all cursor-pointer mb-1"
                                     :class="{
                                         'active-card border-primary bg-blue-50/50 shadow-sm': isCurrentAddress(addr),
                                         'hover-card border-slate-200 bg-white': !isCurrentAddress(addr)
-                                    }">
-                                    
+                                    }"
+                                >
                                     <div class="d-flex justify-space-between align-start mb-2">
                                         <div class="d-flex align-center flex-wrap ga-2">
-                                            <span class="font-weight-bold text-slate-800 text-body-2">{{ addr.tenNguoiNhan || customerName }}</span>
-                                            
+                                            <span class="font-weight-bold text-slate-800 text-body-2">{{
+                                                addr.tenNguoiNhan || customerName
+                                            }}</span>
+
                                             <!-- Badge Đang áp dụng -->
-                                            <span v-if="isCurrentAddress(addr)" class="px-2 py-0-5 rounded-md text-caption font-weight-bold bg-primary text-white d-inline-flex align-center ga-1" style="font-size: 11px !important;">
+                                            <span
+                                                v-if="isCurrentAddress(addr)"
+                                                class="px-2 py-0-5 rounded-md text-caption font-weight-bold bg-primary text-white d-inline-flex align-center ga-1"
+                                                style="font-size: 11px !important"
+                                            >
                                                 <v-icon size="12" color="white">mdi-check-circle</v-icon> Đang áp dụng
                                             </span>
 
                                             <!-- Badge Mặc định -->
-                                            <span v-if="addr.laMacDinh" class="default-badge px-2 py-0-5 rounded-md text-caption font-weight-bold bg-amber-100 text-amber-800">
+                                            <span
+                                                v-if="addr.laMacDinh"
+                                                class="default-badge px-2 py-0-5 rounded-md text-caption font-weight-bold bg-amber-100 text-amber-800"
+                                            >
                                                 Mặc định
                                             </span>
                                         </div>
@@ -328,27 +403,113 @@ const close = () => {
                             </div>
 
                             <div class="d-flex flex-column ga-3">
-                                <v-text-field v-model="newAddressForm.tenNguoiNhan" label="Tên người nhận *" variant="outlined" density="compact" hide-details class="text-body-2" />
-                                <v-text-field v-model="newAddressForm.sdtNguoiNhan" label="SĐT người nhận *" variant="outlined" density="compact" hide-details class="text-body-2" />
-                                
-                                <v-autocomplete v-model="newAddressForm.tinh" :items="provinces" item-title="name" item-value="code"
-                                    label="Tỉnh / Thành phố *" variant="outlined" density="compact" hide-details :loading="loadingLocations.provinces"
-                                    @update:model-value="(val) => { newAddressForm.thanhPho = null; newAddressForm.phuongXa = null; if (val) fetchDistricts(val); }" class="text-body-2" />
+                                <v-text-field
+                                    v-model="newAddressForm.tenNguoiNhan"
+                                    label="Tên người nhận *"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    class="text-body-2"
+                                />
+                                <v-text-field
+                                    v-model="newAddressForm.sdtNguoiNhan"
+                                    label="SĐT người nhận *"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    class="text-body-2"
+                                />
 
-                                <v-autocomplete v-model="newAddressForm.thanhPho" :items="districts" item-title="name" item-value="code"
-                                    label="Quận / Huyện *" variant="outlined" density="compact" hide-details :loading="loadingLocations.districts" :disabled="!newAddressForm.tinh"
-                                    @update:model-value="(val) => { newAddressForm.phuongXa = null; if (val) fetchWards(val); }" class="text-body-2" />
+                                <v-autocomplete
+                                    v-model="newAddressForm.tinh"
+                                    :items="provinces"
+                                    item-title="name"
+                                    item-value="code"
+                                    label="Tỉnh / Thành phố *"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    :loading="loadingLocations.provinces"
+                                    @update:model-value="
+                                        (val) => {
+                                            newAddressForm.thanhPho = null;
+                                            newAddressForm.phuongXa = null;
+                                            if (val) fetchDistricts(val);
+                                        }
+                                    "
+                                    class="text-body-2"
+                                />
 
-                                <v-autocomplete v-model="newAddressForm.phuongXa" :items="wards" item-title="name" item-value="code"
-                                    label="Phường / Xã *" variant="outlined" density="compact" hide-details :loading="loadingLocations.wards" :disabled="!newAddressForm.thanhPho" class="text-body-2" />
+                                <v-autocomplete
+                                    v-model="newAddressForm.thanhPho"
+                                    :items="districts"
+                                    item-title="name"
+                                    item-value="code"
+                                    label="Quận / Huyện *"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    :loading="loadingLocations.districts"
+                                    :disabled="!newAddressForm.tinh"
+                                    @update:model-value="
+                                        (val) => {
+                                            newAddressForm.phuongXa = null;
+                                            if (val) fetchWards(val);
+                                        }
+                                    "
+                                    class="text-body-2"
+                                />
 
-                                <v-text-field v-model="newAddressForm.diaChiChiTiet" label="Địa chỉ chi tiết *" placeholder="Số nhà, tên đường..." variant="outlined" density="compact" hide-details class="text-body-2" />
+                                <v-autocomplete
+                                    v-model="newAddressForm.phuongXa"
+                                    :items="wards"
+                                    item-title="name"
+                                    item-value="code"
+                                    label="Phường / Xã *"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    :loading="loadingLocations.wards"
+                                    :disabled="!newAddressForm.thanhPho"
+                                    class="text-body-2"
+                                />
 
-                                <v-checkbox v-model="newAddressForm.laMacDinh" label="Đặt làm địa chỉ mặc định" color="primary" density="compact" hide-details class="mt-1" />
+                                <v-text-field
+                                    v-model="newAddressForm.diaChiChiTiet"
+                                    label="Địa chỉ chi tiết *"
+                                    placeholder="Số nhà, tên đường..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    class="text-body-2"
+                                />
+
+                                <v-checkbox
+                                    v-model="newAddressForm.laMacDinh"
+                                    label="Đặt làm địa chỉ mặc định"
+                                    color="primary"
+                                    density="compact"
+                                    hide-details
+                                    class="mt-1"
+                                />
 
                                 <div class="d-flex justify-end ga-2 mt-2">
-                                    <v-btn variant="tonal" color="slate-500" size="small" class="rounded-lg text-none" @click="showAddForm = false">Hủy</v-btn>
-                                    <v-btn :loading="submitting" color="primary" size="small" class="rounded-lg font-weight-bold text-none px-4" @click="handleSaveAddress">Lưu địa chỉ</v-btn>
+                                    <v-btn
+                                        variant="tonal"
+                                        color="slate-500"
+                                        size="small"
+                                        class="rounded-lg text-none"
+                                        @click="showAddForm = false"
+                                        >Hủy</v-btn
+                                    >
+                                    <v-btn
+                                        :loading="submitting"
+                                        color="primary"
+                                        size="small"
+                                        class="rounded-lg font-weight-bold text-none px-4"
+                                        @click="handleSaveAddress"
+                                        >Lưu địa chỉ</v-btn
+                                    >
                                 </div>
                             </div>
                         </v-col>

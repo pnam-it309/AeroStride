@@ -15,7 +15,7 @@ onMounted(() => {
             clearInterval(interval);
             // Kích hoạt hiệu ứng lan sang phải
             isFinished.value = true;
-            
+
             // Đợi hiệu ứng CSS chạy xong (khoảng 800ms) rồi mới báo kết thúc
             setTimeout(() => {
                 emit('finish');

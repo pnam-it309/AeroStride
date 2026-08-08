@@ -52,10 +52,30 @@ const formatDateVN = (dateStr) => {
 };
 
 const HOURLY_WEIGHTS = [
-    0.005, 0.002, 0.001, 0.000, 0.000, 0.002, // 0 - 5
-    0.010, 0.025, 0.035, 0.050, 0.065, 0.075, // 6 - 11
-    0.080, 0.070, 0.060, 0.050, 0.055, 0.065, // 12 - 17
-    0.075, 0.090, 0.080, 0.055, 0.035, 0.015  // 18 - 23
+    0.005,
+    0.002,
+    0.001,
+    0.0,
+    0.0,
+    0.002, // 0 - 5
+    0.01,
+    0.025,
+    0.035,
+    0.05,
+    0.065,
+    0.075, // 6 - 11
+    0.08,
+    0.07,
+    0.06,
+    0.05,
+    0.055,
+    0.065, // 12 - 17
+    0.075,
+    0.09,
+    0.08,
+    0.055,
+    0.035,
+    0.015 // 18 - 23
 ];
 
 const generateHourlyData = (dailyTotal, dateStr) => {
@@ -71,7 +91,7 @@ const generateHourlyData = (dailyTotal, dateStr) => {
         return Math.max(0, weight * (1 + rand));
     });
     const sumRaw = rawValues.reduce((s, v) => s + v, 0);
-    return rawValues.map(v => Math.round((v / sumRaw) * dailyTotal));
+    return rawValues.map((v) => Math.round((v / sumRaw) * dailyTotal));
 };
 
 const generateHourlyDataFromInvoices = async (dailyTotal, dateStr) => {
@@ -82,12 +102,12 @@ const generateHourlyDataFromInvoices = async (dailyTotal, dateStr) => {
             trangThai: 4, // HOAN_THANH
             size: 1000
         });
-        const invoices = Array.isArray(response) ? response : (response?.data?.content || response?.data || response?.content || []);
+        const invoices = Array.isArray(response) ? response : response?.data?.content || response?.data || response?.content || [];
         if (invoices.length > 0) {
             const hourlyRevenue = Array(24).fill(0);
             const hourlyCustomers = Array(24).fill(0);
             let hasValidTimestamp = false;
-            invoices.forEach(inv => {
+            invoices.forEach((inv) => {
                 if (inv.ngayTao) {
                     const dateObj = new Date(inv.ngayTao);
                     const hour = dateObj.getHours();
@@ -109,16 +129,13 @@ const generateHourlyDataFromInvoices = async (dailyTotal, dateStr) => {
 
     if (dailyTotal > 0) {
         const rev = generateHourlyData(dailyTotal, dateStr);
-        const cust = rev.map(r => r > 0 ? Math.max(1, Math.round(r / 1500000)) : 0);
+        const cust = rev.map((r) => (r > 0 ? Math.max(1, Math.round(r / 1500000)) : 0));
         return { revenue: rev, customers: cust };
     }
     return { revenue: Array(24).fill(0), customers: Array(24).fill(0) };
 };
 
-const hourlyCategories = [
-    '0h - 3h', '3h - 6h', '6h - 9h', '9h - 12h',
-    '12h - 15h', '15h - 18h', '18h - 21h', '21h - 0h'
-];
+const hourlyCategories = ['0h - 3h', '3h - 6h', '6h - 9h', '9h - 12h', '12h - 15h', '15h - 18h', '18h - 21h', '21h - 0h'];
 
 const aggregateTo3HourSlots = (hourlyDataObj) => {
     const revenueSlots = Array(8).fill(0);
@@ -293,7 +310,7 @@ const getHourlyChartOptions = (color, maxVal, maxCust) => {
             {
                 opposite: true,
                 min: 0,
-                max: (!maxCust || maxCust <= 100) ? 100 : undefined,
+                max: !maxCust || maxCust <= 100 ? 100 : undefined,
                 tickAmount: 5,
                 title: {
                     text: 'Khách hàng',
@@ -393,7 +410,7 @@ const customerStatsTotals = computed(() => {
     let tongSanPham = 0;
     let donThanhCong = 0;
     let donHoan = 0;
-    customerPurchaseStats.value.forEach(item => {
+    customerPurchaseStats.value.forEach((item) => {
         tongChi += item.tongChi;
         tongSanPham += item.tongSanPham;
         donThanhCong += item.donThanhCong;
@@ -408,7 +425,7 @@ const employeeStatsTotals = computed(() => {
     let tongChi = 0;
     let tongSanPham = 0;
     let tongDonHang = 0;
-    employeePurchaseStats.value.forEach(item => {
+    employeePurchaseStats.value.forEach((item) => {
         tongChi += item.tongChi;
         tongSanPham += item.tongSanPham;
         tongDonHang += item.tongDonHang;
@@ -502,7 +519,20 @@ const areaChartOptions = ref({
         strokeDashArray: 4
     },
     xaxis: {
-        categories: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
+        categories: [
+            'Tháng 1',
+            'Tháng 2',
+            'Tháng 3',
+            'Tháng 4',
+            'Tháng 5',
+            'Tháng 6',
+            'Tháng 7',
+            'Tháng 8',
+            'Tháng 9',
+            'Tháng 10',
+            'Tháng 11',
+            'Tháng 12'
+        ],
         axisBorder: {
             show: false
         },
@@ -578,8 +608,6 @@ const areaChartOptions = ref({
         theme: 'light'
     }
 });
-
-
 
 const statusBarOptions = ref({
     chart: {
@@ -705,9 +733,12 @@ const loadStatistics = async () => {
                 : 0;
             const completedOrderCount = Number(overview.donHangHoanThanh || 0);
             const totalRevenue = Number(overview.tongDoanhThu || 0);
-            const averageOrderValue = overview.giaTriTrungBinh != null
-                ? Number(overview.giaTriTrungBinh)
-                : (completedOrderCount > 0 ? totalRevenue / completedOrderCount : 0);
+            const averageOrderValue =
+                overview.giaTriTrungBinh != null
+                    ? Number(overview.giaTriTrungBinh)
+                    : completedOrderCount > 0
+                      ? totalRevenue / completedOrderCount
+                      : 0;
 
             revenueStats.value = {
                 totalRevenue,
@@ -747,11 +778,11 @@ const loadStatistics = async () => {
 
             const brandShares = Array.isArray(overview.tyTrongTheoThuongHieu)
                 ? overview.tyTrongTheoThuongHieu
-                    .map((item) => ({
-                        name: item.name || 'Khác',
-                        revenue: Number(item.revenue || 0)
-                    }))
-                    .filter((item) => Number.isFinite(item.revenue) && item.revenue > 0)
+                      .map((item) => ({
+                          name: item.name || 'Khác',
+                          revenue: Number(item.revenue || 0)
+                      }))
+                      .filter((item) => Number.isFinite(item.revenue) && item.revenue > 0)
                 : [];
             donutChartSeries.value = brandShares.map((item) => item.revenue);
             donutChartOptions.value = {
@@ -802,9 +833,12 @@ const loadStatistics = async () => {
                 : 0;
             const yearlyCompletedOrderCount = Number(yearlyOverview.donHangHoanThanh || 0);
             const yearlyTotalRevenue = Number(yearlyOverview.tongDoanhThu || 0);
-            const yearlyAverageOrderValue = yearlyOverview.giaTriTrungBinh != null
-                ? Number(yearlyOverview.giaTriTrungBinh)
-                : (yearlyCompletedOrderCount > 0 ? yearlyTotalRevenue / yearlyCompletedOrderCount : 0);
+            const yearlyAverageOrderValue =
+                yearlyOverview.giaTriTrungBinh != null
+                    ? Number(yearlyOverview.giaTriTrungBinh)
+                    : yearlyCompletedOrderCount > 0
+                      ? yearlyTotalRevenue / yearlyCompletedOrderCount
+                      : 0;
 
             yearlyRevenueStats.value = {
                 totalRevenue: yearlyTotalRevenue,
@@ -851,7 +885,7 @@ const loadStatistics = async () => {
         monthlyRevenue.value = months;
 
         // Cập nhật biểu đồ Area
-        const maxMonthlyCustomers = Math.max(...months.map(m => m.customers));
+        const maxMonthlyCustomers = Math.max(...months.map((m) => m.customers));
         if (areaChartOptions.value.yaxis && areaChartOptions.value.yaxis[1]) {
             areaChartOptions.value.yaxis[1].max = maxMonthlyCustomers > 100 ? undefined : 100;
         }
@@ -873,11 +907,11 @@ const loadStatistics = async () => {
         let startRevenue = 0;
         let endRevenue = 0;
         if (dailyData && Array.isArray(dailyData)) {
-            const startItem = dailyData.find(item => item.ngay === startDate.value);
+            const startItem = dailyData.find((item) => item.ngay === startDate.value);
             if (startItem) {
                 startRevenue = Number(startItem.doanhThu || 0);
             }
-            const endItem = dailyData.find(item => item.ngay === endDate.value);
+            const endItem = dailyData.find((item) => item.ngay === endDate.value);
             if (endItem) {
                 endRevenue = Number(endItem.doanhThu || 0);
             }
@@ -928,7 +962,6 @@ const loadStatistics = async () => {
 
         // Tải danh sách sản phẩm
         fetchProductStats();
-
     } catch (error) {
         console.error('Error loading statistics:', error);
     } finally {
@@ -963,7 +996,12 @@ const statusItems = [
 ];
 
 const statusChartItems = computed(() => [
-    { label: 'Chờ xác nhận', amount: yearlyRevenueStats.value.doanhThuChoXacNhan, count: yearlyRevenueStats.value.donHangChoXacNhan, active: true },
+    {
+        label: 'Chờ xác nhận',
+        amount: yearlyRevenueStats.value.doanhThuChoXacNhan,
+        count: yearlyRevenueStats.value.donHangChoXacNhan,
+        active: true
+    },
     { label: 'Đang giao hàng', amount: yearlyRevenueStats.value.doanhThuDangGiao, count: yearlyRevenueStats.value.donHangDangGiao },
     { label: 'Đã hoàn thành', amount: yearlyRevenueStats.value.totalRevenue, count: yearlyRevenueStats.value.donHangHoanThanh },
     { label: 'Đã hủy bỏ', amount: yearlyRevenueStats.value.doanhThuDaHuy, count: yearlyRevenueStats.value.donHangDaHuy }
@@ -1099,14 +1137,6 @@ const kpiCards = [
         formatter: formatNumber
     },
     {
-        title: 'Đơn hàng hoàn',
-        valueKey: 'donHangHoan',
-        icon: 'mdi-backup-restore',
-        color: 'warning',
-        tone: 'orange',
-        formatter: formatNumber
-    },
-    {
         title: 'Tổng sản phẩm bán ra',
         valueKey: 'sanPhamDaBan',
         icon: 'mdi-package-variant-closed',
@@ -1147,26 +1177,42 @@ onMounted(() => {
 </script>
 <template>
     <div class="pa-6 font-body thong-ke-container">
-        <AdminBreadcrumbs :items="[
-            { title: 'Quản lý bán hàng', disabled: false, href: '#' },
-            { title: 'Thống kê', disabled: true }
-        ]" />
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý bán hàng', disabled: false, href: '#' },
+                { title: 'Thống kê', disabled: true }
+            ]"
+        />
 
         <section class="stats-shell mt-4">
             <div class="stats-toolbar">
                 <div class="stats-filters">
                     <div class="stats-filter-field stats-filter-field-date">
                         <div class="filter-field-label">Từ ngày</div>
-                        <AppDatePicker :model-value="startDate" @update:model-value="onStartDateChange"
-                            :max-date="endDate" placeholder="dd/mm/yyyy" />
+                        <AppDatePicker
+                            :model-value="startDate"
+                            @update:model-value="onStartDateChange"
+                            :max-date="endDate"
+                            placeholder="dd/mm/yyyy"
+                        />
                     </div>
                     <div class="stats-filter-field stats-filter-field-date">
                         <div class="filter-field-label">Đến ngày</div>
-                        <AppDatePicker :model-value="endDate" @update:model-value="onEndDateChange"
-                            :min-date="startDate" placeholder="dd/mm/yyyy" />
+                        <AppDatePicker
+                            :model-value="endDate"
+                            @update:model-value="onEndDateChange"
+                            :min-date="startDate"
+                            placeholder="dd/mm/yyyy"
+                        />
                     </div>
-                    <v-btn color="primary" variant="flat" class="stats-refresh-btn px-6" height="40" :loading="loading"
-                        @click="loadStatistics">
+                    <v-btn
+                        color="primary"
+                        variant="flat"
+                        class="stats-refresh-btn px-6"
+                        height="40"
+                        :loading="loading"
+                        @click="loadStatistics"
+                    >
                         <v-icon start size="18">mdi-refresh</v-icon>
                         Cập nhật dữ liệu
                     </v-btn>
@@ -1187,12 +1233,10 @@ onMounted(() => {
             <div class="split-grid mb-4">
                 <!-- Start Date Chart -->
                 <section class="stats-panel trend-panel">
-                    <div class="chart-card-heading d-flex align-center justify-space-between py-2"
-                        style="min-height: 64px;">
+                    <div class="chart-card-heading d-flex align-center justify-space-between py-2" style="min-height: 64px">
                         <div>
                             <h2>Doanh thu ngày {{ formatDateVN(startDate) }}</h2>
-                            <div class="mt-1 font-weight-bold"
-                                style="color: #d97706; font-size: 14px; line-height: 1.2;">
+                            <div class="mt-1 font-weight-bold" style="color: #d97706; font-size: 14px; line-height: 1.2">
                                 {{ formatCurrency(startDailyTotalRevenue) }}
                             </div>
                         </div>
@@ -1202,25 +1246,25 @@ onMounted(() => {
                         <div v-if="loading" class="panel-loader panel-loader-tall">
                             <v-progress-circular indeterminate color="primary" />
                         </div>
-                        <apexchart v-else type="line" height="280" :options="startHourlyChartOptions"
-                            :series="startHourlyChartSeries" />
+                        <apexchart v-else type="line" height="280" :options="startHourlyChartOptions" :series="startHourlyChartSeries" />
                     </div>
                 </section>
 
                 <!-- End Date Chart -->
                 <section class="stats-panel trend-panel">
-                    <div class="chart-card-heading d-flex align-center justify-space-between py-2"
-                        style="min-height: 64px;">
+                    <div class="chart-card-heading d-flex align-center justify-space-between py-2" style="min-height: 64px">
                         <div>
                             <h2>Doanh thu ngày {{ formatDateVN(endDate) }}</h2>
-                            <div class="mt-1 d-flex align-center" style="line-height: 1.2;">
-                                <span class="font-weight-bold" style="color: #d97706; font-size: 14px;">
+                            <div class="mt-1 d-flex align-center" style="line-height: 1.2">
+                                <span class="font-weight-bold" style="color: #d97706; font-size: 14px">
                                     {{ formatCurrency(endDailyTotalRevenue) }}
                                 </span>
-                                <span class="text-caption font-weight-bold ml-2 d-inline-flex align-center"
-                                    :style="{ color: hourlyPercentageInfo.color, fontSize: '12px' }">
-                                    (<span v-if="hourlyPercentageInfo.icon" class="mr-1">{{ hourlyPercentageInfo.icon
-                                        }}</span>{{ hourlyPercentageInfo.text }})
+                                <span
+                                    class="text-caption font-weight-bold ml-2 d-inline-flex align-center"
+                                    :style="{ color: hourlyPercentageInfo.color, fontSize: '12px' }"
+                                >
+                                    (<span v-if="hourlyPercentageInfo.icon" class="mr-1">{{ hourlyPercentageInfo.icon }}</span
+                                    >{{ hourlyPercentageInfo.text }})
                                 </span>
                             </div>
                         </div>
@@ -1230,8 +1274,7 @@ onMounted(() => {
                         <div v-if="loading" class="panel-loader panel-loader-tall">
                             <v-progress-circular indeterminate color="primary" />
                         </div>
-                        <apexchart v-else type="line" height="280" :options="endHourlyChartOptions"
-                            :series="endHourlyChartSeries" />
+                        <apexchart v-else type="line" height="280" :options="endHourlyChartOptions" :series="endHourlyChartSeries" />
                     </div>
                 </section>
             </div>
@@ -1257,8 +1300,7 @@ onMounted(() => {
                         <div v-if="loading" class="panel-loader panel-loader-tall">
                             <v-progress-circular indeterminate color="primary" />
                         </div>
-                        <apexchart v-else type="line" height="310" :options="areaChartOptions"
-                            :series="areaChartSeries" />
+                        <apexchart v-else type="line" height="310" :options="areaChartOptions" :series="areaChartSeries" />
                     </div>
                 </section>
 
@@ -1272,15 +1314,24 @@ onMounted(() => {
                         </div>
                         <div v-else class="status-chart-wrap">
                             <div class="status-summary-row">
-                                <article v-for="item in statusChartItems" :key="item.label" class="status-summary-item"
-                                    :class="{ active: item.active }">
+                                <article
+                                    v-for="item in statusChartItems"
+                                    :key="item.label"
+                                    class="status-summary-item"
+                                    :class="{ active: item.active }"
+                                >
                                     <span>{{ item.label }}</span>
                                     <strong>{{ formatCurrency(item.amount) }}</strong>
                                     <small>{{ formatNumber(item.count) }} đơn</small>
                                 </article>
                             </div>
-                            <apexchart class="status-bar-chart" type="bar" height="320" :options="statusBarOptions"
-                                :series="statusBarSeries" />
+                            <apexchart
+                                class="status-bar-chart"
+                                type="bar"
+                                height="320"
+                                :options="statusBarOptions"
+                                :series="statusBarSeries"
+                            />
                         </div>
                     </div>
                 </section>
@@ -1300,8 +1351,13 @@ onMounted(() => {
                     <div v-else-if="!hasValidDonutData" class="empty-state">Không có dữ liệu trong thời gian này</div>
                     <div v-else class="category-chart-body">
                         <div class="category-donut-wrap">
-                            <apexchart :key="donutChartKey" type="donut" height="330" :options="donutChartOptions"
-                                :series="donutChartSeries" />
+                            <apexchart
+                                :key="donutChartKey"
+                                type="donut"
+                                height="330"
+                                :options="donutChartOptions"
+                                :series="donutChartSeries"
+                            />
                             <div class="category-donut-center">
                                 <span>Tổng doanh thu</span>
                                 <strong>{{ formatCurrency(donutTotalRevenue) }}</strong>
@@ -1326,7 +1382,7 @@ onMounted(() => {
                         <table v-else class="cust-stats-table">
                             <thead>
                                 <tr>
-                                    <th class="text-left" style="min-width: 120px;">Chu kỳ</th>
+                                    <th class="text-left" style="min-width: 120px">Chu kỳ</th>
                                     <th class="text-right">Doanh thu</th>
                                     <th class="text-right">Số đơn</th>
                                     <th class="text-right">Trung bình đơn</th>
@@ -1334,16 +1390,14 @@ onMounted(() => {
                             </thead>
                             <tbody>
                                 <tr v-for="(item, index) in revenueCycles" :key="index">
-                                    <td class="text-left font-weight-medium" style="color: #1e293b;">
+                                    <td class="text-left font-weight-medium" style="color: #1e293b">
                                         {{ item.tenChuKy }}
                                     </td>
-                                    <td class="text-right font-weight-semibold" style="color: #1e293b;">
+                                    <td class="text-right font-weight-semibold" style="color: #1e293b">
                                         {{ formatCurrency(item.doanhThu) }}
                                     </td>
-                                    <td class="text-right" style="color: #1e293b;">
-                                        {{ formatNumber(item.soDon) }} đơn
-                                    </td>
-                                    <td class="text-right font-weight-semibold" style="color: #d97706;">
+                                    <td class="text-right" style="color: #1e293b">{{ formatNumber(item.soDon) }} đơn</td>
+                                    <td class="text-right font-weight-semibold" style="color: #d97706">
                                         {{ formatCurrency(item.trungBinhDon) }}
                                     </td>
                                 </tr>
@@ -1371,7 +1425,7 @@ onMounted(() => {
                         <table v-else class="cust-stats-table">
                             <thead>
                                 <tr>
-                                    <th class="text-left" style="min-width: 140px;">Tên khách hàng</th>
+                                    <th class="text-left" style="min-width: 140px">Tên khách hàng</th>
                                     <th class="text-right">Tổng chi</th>
                                     <th class="text-right">Tổng sản phẩm</th>
                                     <th class="text-right">Đơn thành công</th>
@@ -1379,26 +1433,27 @@ onMounted(() => {
                             </thead>
                             <tbody>
                                 <tr v-for="(item, index) in customerPurchaseStats" :key="index">
-                                    <td class="text-left font-weight-medium" style="color: #1e293b;">
+                                    <td class="text-left font-weight-medium" style="color: #1e293b">
                                         {{ item.tenKhachHang }}
                                     </td>
                                     <td class="text-right">
-                                        <div class="val-top font-weight-semibold" style="color: #1e293b;">{{
-                                            formatCurrency(item.tongChi) }}</div>
+                                        <div class="val-top font-weight-semibold" style="color: #1e293b">
+                                            {{ formatCurrency(item.tongChi) }}
+                                        </div>
                                         <div class="val-sub text-emerald-600">
                                             {{ getPercent(item.tongChi, customerStatsTotals.tongChi) }}
                                         </div>
                                     </td>
                                     <td class="text-right">
-                                        <div class="val-top" style="color: #1e293b;">{{ formatNumber(item.tongSanPham)
-                                             }}</div>
+                                        <div class="val-top" style="color: #1e293b">{{ formatNumber(item.tongSanPham) }}</div>
                                         <div class="val-sub text-emerald-600">
                                             {{ getPercent(item.tongSanPham, customerStatsTotals.tongSanPham) }}
                                         </div>
                                     </td>
                                     <td class="text-right">
-                                        <div class="val-top font-weight-semibold" style="color: #1e293b;">{{
-                                            formatNumber(item.donThanhCong) }}</div>
+                                        <div class="val-top font-weight-semibold" style="color: #1e293b">
+                                            {{ formatNumber(item.donThanhCong) }}
+                                        </div>
                                         <div class="val-sub text-emerald-600">
                                             {{ getPercent(item.donThanhCong, customerStatsTotals.donThanhCong) }}
                                         </div>
@@ -1425,8 +1480,8 @@ onMounted(() => {
                         <table v-else class="cust-stats-table">
                             <thead>
                                 <tr>
-                                    <th class="text-left" style="min-width: 90px;">Mã NV</th>
-                                    <th class="text-left" style="min-width: 140px;">Tên nhân viên</th>
+                                    <th class="text-left" style="min-width: 90px">Mã NV</th>
+                                    <th class="text-left" style="min-width: 140px">Tên nhân viên</th>
                                     <th class="text-right">Tổng doanh thu</th>
                                     <th class="text-right">Tổng sản phẩm</th>
                                     <th class="text-right">Tổng đơn hàng</th>
@@ -1434,14 +1489,14 @@ onMounted(() => {
                             </thead>
                             <tbody>
                                 <tr v-for="(item, index) in employeePurchaseStats" :key="index">
-                                    <td class="text-left font-weight-medium" style="color: #64748b;">
+                                    <td class="text-left font-weight-medium" style="color: #64748b">
                                         {{ item.maNhanVien }}
                                     </td>
-                                    <td class="text-left font-weight-medium" style="color: #1e293b;">
+                                    <td class="text-left font-weight-medium" style="color: #1e293b">
                                         {{ item.tenNhanVien }}
                                     </td>
                                     <td class="text-right">
-                                        <div class="val-top font-weight-semibold" style="color: #1e293b;">
+                                        <div class="val-top font-weight-semibold" style="color: #1e293b">
                                             {{ formatCurrency(item.tongChi) }}
                                         </div>
                                         <div class="val-sub text-emerald-600">
@@ -1449,7 +1504,7 @@ onMounted(() => {
                                         </div>
                                     </td>
                                     <td class="text-right">
-                                        <div class="val-top" style="color: #1e293b;">
+                                        <div class="val-top" style="color: #1e293b">
                                             {{ formatNumber(item.tongSanPham) }}
                                         </div>
                                         <div class="val-sub text-emerald-600">
@@ -1457,7 +1512,7 @@ onMounted(() => {
                                         </div>
                                     </td>
                                     <td class="text-right">
-                                        <div class="val-top font-weight-semibold" style="color: #1e293b;">
+                                        <div class="val-top font-weight-semibold" style="color: #1e293b">
                                             {{ formatNumber(item.tongDonHang) }}
                                         </div>
                                         <div class="val-sub text-emerald-600">
@@ -1482,63 +1537,94 @@ onMounted(() => {
                 <div v-if="loading" class="panel-loader">
                     <v-progress-circular indeterminate color="primary" />
                 </div>
-                <div v-else-if="productTotalElements === 0 && !productSearchKeyword"
-                    class="empty-state product-empty-state">
+                <div v-else-if="productTotalElements === 0 && !productSearchKeyword" class="empty-state product-empty-state">
                     Không có dữ liệu trong thời gian này
                 </div>
                 <div v-else class="product-table-section">
                     <AdminFilter title="" @refresh="resetProductFilters">
                         <v-col cols="12" sm="6" md="4" class="pb-1">
                             <div class="filter-field-label">Tìm kiếm</div>
-                            <v-text-field v-model="productSearchKeyword" placeholder="Mã hoặc tên sản phẩm..."
-                                density="comfortable" variant="outlined" hide-details clearable
-                                prepend-inner-icon="mdi-magnify" bg-color="white"
-                                @input="refreshProductFilters"></v-text-field>
+                            <v-text-field
+                                v-model="productSearchKeyword"
+                                placeholder="Mã hoặc tên sản phẩm..."
+                                density="comfortable"
+                                variant="outlined"
+                                hide-details
+                                clearable
+                                prepend-inner-icon="mdi-magnify"
+                                bg-color="white"
+                                @input="refreshProductFilters"
+                            ></v-text-field>
                         </v-col>
                         <v-col cols="12" sm="6" md="4" class="pb-1">
                             <div class="filter-field-label">Sắp xếp</div>
-                            <v-select v-model="productSortBy" :items="productSortOptions" item-title="title"
-                                item-value="value" density="comfortable" variant="outlined" hide-details
-                                bg-color="white" @update:model-value="refreshProductFilters"></v-select>
+                            <v-select
+                                v-model="productSortBy"
+                                :items="productSortOptions"
+                                item-title="title"
+                                item-value="value"
+                                density="comfortable"
+                                variant="outlined"
+                                hide-details
+                                bg-color="white"
+                                @update:model-value="refreshProductFilters"
+                            ></v-select>
                         </v-col>
                     </AdminFilter>
-                    <AdminTable hide-toolbar :headers="[
-                        { text: 'STT', align: 'center', width: '80px' },
-                        { text: 'Mã sản phẩm', align: 'center' },
-                        { text: 'Tên sản phẩm', align: 'start' },
-                        { text: 'Thương hiệu', align: 'center' },
-                        { text: 'Đã bán', align: 'center' },
-                        { text: 'Doanh thu', align: 'center' }
-                    ]" :items="productStats">
+                    <AdminTable
+                        hide-toolbar
+                        :headers="[
+                            { text: 'STT', align: 'center', width: '80px' },
+                            { text: 'Mã sản phẩm', align: 'center' },
+                            { text: 'Tên sản phẩm', align: 'start' },
+                            { text: 'Thương hiệu', align: 'center' },
+                            { text: 'Đã bán', align: 'center' },
+                            { text: 'Doanh thu', align: 'center' }
+                        ]"
+                        :items="productStats"
+                    >
                         <template #row="{ item, index }">
                             <tr class="data-row" :key="`${item.maSanPham}-${item.name}`">
                                 <td class="data-cell">{{ (productPage - 1) * productPageSize + index + 1 }}</td>
                                 <td class="data-cell">{{ item.maSanPham || '--' }}</td>
                                 <td class="data-cell text-left">
-                                    <div class="product-name-cell"
-                                        style="justify-content: flex-start; text-align: left;">
+                                    <div class="product-name-cell" style="justify-content: flex-start; text-align: left">
                                         <span class="font-weight-medium" style="color: #1e293b">{{ item.name }}</span>
                                         <small style="color: #64748b; font-size: 11px">Thời gian chọn</small>
                                     </div>
                                 </td>
                                 <td class="data-cell">
-                                    <span class="brand-pill"
-                                        style="display: inline-flex; padding: 4px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; font-weight: 600; color: #475569;">
+                                    <span
+                                        class="brand-pill"
+                                        style="
+                                            display: inline-flex;
+                                            padding: 4px 10px;
+                                            background: #f8fafc;
+                                            border: 1px solid #e2e8f0;
+                                            border-radius: 6px;
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                            color: #475569;
+                                        "
+                                    >
                                         {{ item.thuongHieu || '--' }}
                                     </span>
                                 </td>
-                                <td class="data-cell font-weight-medium" style="color: #1e293b">{{
-                                    formatNumber(item.quantity) }}</td>
-                                <td class="data-cell font-weight-bold" style="color: #e11d48">{{
-                                    formatCurrency(item.revenue) }}</td>
+                                <td class="data-cell font-weight-medium" style="color: #1e293b">{{ formatNumber(item.quantity) }}</td>
+                                <td class="data-cell font-weight-bold" style="color: #e11d48">{{ formatCurrency(item.revenue) }}</td>
                             </tr>
                         </template>
 
                         <template #pagination>
-                            <AdminPagination v-model="productPage" v-model:page-size="productPageSize"
-                                :total-elements="productTotalElements" :total-pages="productTotalPages"
-                                :current-size="productStats.length" @change="goToProductPage"
-                                @update:page-size="changeProductPageSize" />
+                            <AdminPagination
+                                v-model="productPage"
+                                v-model:page-size="productPageSize"
+                                :total-elements="productTotalElements"
+                                :total-pages="productTotalPages"
+                                :current-size="productStats.length"
+                                @change="goToProductPage"
+                                @update:page-size="changeProductPageSize"
+                            />
                         </template>
                     </AdminTable>
                 </div>

@@ -63,7 +63,6 @@ export function requireGuest(to, from, next) {
             next('/'); // Đã đăng nhập với tư cách khách hàng thì đưa về trang chủ
         } else if (user.role === APP_ROLES.ADMIN || user.role === APP_ROLES.STAFF) {
             next(user.role === APP_ROLES.STAFF ? PATH.BAN_HANG : PATH.DASHBOARD); // Đã đăng nhập với tư cách admin/staff thì đưa về trang phù hợp
-
         } else {
             next('/');
         }

@@ -4,12 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { generateRandomCode } from '@/utils/codeGenerator';
-import {
-    dichVuThuongHieu,
-    dichVuMauSac,
-    dichVuKichThuoc,
-    dichVuChatLieu
-} from '@/services/product/dichVuThuocTinh';
+import { dichVuThuongHieu, dichVuMauSac, dichVuKichThuoc, dichVuChatLieu } from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
 import { MESSAGES } from '@/constants/messages';
 import { STATUS } from '@/utils/statusUtils';
@@ -20,6 +15,7 @@ import AdminPagination from '@/components/common/AdminPagination.vue';
 import TableEmptyState from '@/components/common/TableEmptyState.vue';
 import { CalendarIcon, GiftIcon, InfoCircleIcon, TagIcon, BoxIcon, SearchIcon, TrashIcon } from 'vue-tabler-icons';
 import { PATH } from '@/router/routePaths';
+import { getNameRules } from '@/utils/validators';
 
 const route = useRoute();
 const router = useRouter();
@@ -96,6 +92,8 @@ const isEditMode = computed(() => !!route.params.id && !route.path.includes('/de
 const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật đợt giảm giá' : 'Thêm đợt giảm giá'));
 const isDetailView = computed(() => route.path.includes('/detail'));
 const primaryColor = '#2E4E8E';
+
+const tenDotGiamGiaRules = getNameRules('Tên đợt giảm giá');
 
 const form = ref({
     ma: '',
@@ -368,12 +366,20 @@ const init = async () => {
             maSanPham: p.maSanPham || p.sanPhamMa || p.maSp || p.maChiTietSanPham || p.ma,
             tenSanPham: p.tenSanPham || p.tenSanPhamDayDu || p.ten,
             tenSanPhamDayDu: p.tenSanPhamDayDu || p.tenSanPham || p.ten,
-            anhMauc: p.hinhAnh || p.urlAnh || p.anhMauc || (p.images?.length > 0 ? p.images[0].duongDanAnh : null) || p.anh || p.duongDanAnh || p.imageUrl || 'https://via.placeholder.com/40',
+            anhMauc:
+                p.hinhAnh ||
+                p.urlAnh ||
+                p.anhMauc ||
+                (p.images?.length > 0 ? p.images[0].duongDanAnh : null) ||
+                p.anh ||
+                p.duongDanAnh ||
+                p.imageUrl ||
+                'https://via.placeholder.com/40',
             color: p.tenMauSac || p.color || '--',
             kichCo: p.tenKichThuoc || p.kichCo || '--',
             thuongHieu: p.sanPham?.thuongHieu?.ten || p.tenThuongHieu || p.thuongHieu || '--',
             chatLieu: p.sanPham?.chatLieu?.ten || p.tenChatLieu || p.chatLieu || '--',
-            giaGoc: (p.giaGoc !== null && p.giaGoc !== undefined) ? p.giaGoc : (p.giaBan || 0)
+            giaGoc: p.giaGoc !== null && p.giaGoc !== undefined ? p.giaGoc : p.giaBan || 0
         }));
 
         // Cập nhật giá lớn nhất thực tế từ danh sách sản phẩm đã load
@@ -407,7 +413,9 @@ const init = async () => {
             expandedProductIds.value = [];
         } catch (e) {
             addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.LOAD_DATA, color: 'error' });
-        } finally { loading.value = false; }
+        } finally {
+            loading.value = false;
+        }
     } else {
         try {
             form.value.ma = await generateRandomCode('DotGiamGia');
@@ -533,24 +541,38 @@ onMounted(init);
 <template>
     <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh">
         <!-- Breadcrumbs -->
-        <AdminBreadcrumbs :items="[
-            { title: 'Quản lý đợt giảm giá', disabled: false, href: '#' },
-            { title: 'Đợt giảm giá', disabled: false, to: PATH.DOT_GIAM_GIA },
-            { title: isEditMode ? 'Cập nhật' : isDetailView ? 'Chi tiết' : 'Thêm mới', disabled: true }
-        ]" />
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý đợt giảm giá', disabled: false, href: '#' },
+                { title: 'Đợt giảm giá', disabled: false, to: PATH.DOT_GIAM_GIA },
+                { title: isEditMode ? 'Cập nhật' : isDetailView ? 'Chi tiết' : 'Thêm mới', disabled: true }
+            ]"
+        />
 
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
             <div class="d-flex align-center ga-4">
-                <v-btn icon variant="flat" color="white" class="mr-3 border elevation-1 rounded-lg" size="36"
+                <v-btn
+                    icon
+                    variant="flat"
+                    color="white"
+                    class="mr-3 border elevation-1 rounded-lg"
+                    size="36"
                     style="height: 36px !important; width: 36px !important; min-height: 36px !important"
-                    @click="goBack">
+                    @click="goBack"
+                >
                     <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
                 </v-btn>
             </div>
             <div class="d-flex ga-3">
-                <v-btn v-if="!isDetailView" color="primary" variant="flat"
-                    class="text-none px-8 campaign-submit-btn elevation-4" @click="handleSave" :loading="saving">
+                <v-btn
+                    v-if="!isDetailView"
+                    color="primary"
+                    variant="flat"
+                    class="text-none px-8 campaign-submit-btn elevation-4"
+                    @click="handleSave"
+                    :loading="saving"
+                >
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
                     {{ submitButtonText }}
                 </v-btn>
@@ -566,8 +588,7 @@ onMounted(init);
 
         <v-row v-else class="match-height-row pb-16">
             <v-col cols="12" md="5" class="d-flex flex-column">
-                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1"
-                    style="min-height: 580px">
+                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1" style="min-height: 580px">
                     <v-card-text class="pa-8 d-flex flex-column h-100">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
@@ -579,42 +600,68 @@ onMounted(init);
                         <div class="form-fields-container flex-grow-1 d-flex flex-column justify-center">
                             <div class="mb-5">
                                 <div class="field-label">Mã đợt giảm giá</div>
-                                <v-text-field v-model="form.ma" readonly placeholder="Mã tự sinh..." variant="outlined"
-                                    density="compact" class="bg-slate-50 mono-font" hide-details></v-text-field>
+                                <v-text-field
+                                    v-model="form.ma"
+                                    readonly
+                                    placeholder="Mã tự sinh..."
+                                    variant="outlined"
+                                    density="compact"
+                                    class="bg-slate-50 mono-font"
+                                    hide-details
+                                ></v-text-field>
                             </div>
 
                             <div class="mb-5">
                                 <div class="field-label">Tên đợt giảm giá <span class="text-error">*</span></div>
-                                <v-text-field v-model="form.ten" :readonly="isDetailView"
-                                    :rules="[
-                                        (v) => !!v || 'Vui lòng nhập tên đợt giảm giá',
-                                        (v) => (v && v.trim() === v) || 'Không được chứa khoảng trắng ở 2 đầu',
-                                        (v) => (v && /^[\p{L}0-9\s]+$/u.test(v)) || 'Không được chứa ký tự đặc biệt',
-                                        (v) => (v && v.length <= 255) || 'Không vượt quá 255 ký tự'
-                                    ]"
-                                    placeholder="Nhập tên đợt giảm giá" variant="outlined" density="compact"
-                                    hide-details="auto"></v-text-field>
+                                <v-text-field
+                                    v-model="form.ten"
+                                    :readonly="isDetailView"
+                                    :rules="tenDotGiamGiaRules"
+                                    placeholder="Nhập tên đợt giảm giá"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details="auto"
+                                ></v-text-field>
                             </div>
 
                             <div class="mb-5">
                                 <div class="field-label">Mức giảm giá (%) <span class="text-error">*</span></div>
-                                <v-text-field :model-value="form.soTienGiam" 
-                                    @update:model-value="val => { let v = Number(val); form.soTienGiam = isNaN(v) ? null : (v < 0 ? 0 : (v > 100 ? 100 : v)) }" 
-                                    :readonly="isDetailView" type="number"
-                                    suffix="%" placeholder="0" variant="outlined" density="compact"
-                                    hide-details></v-text-field>
+                                <v-text-field
+                                    :model-value="form.soTienGiam"
+                                    @update:model-value="
+                                        (val) => {
+                                            let v = Number(val);
+                                            form.soTienGiam = isNaN(v) ? null : v < 0 ? 0 : v > 100 ? 100 : v;
+                                        }
+                                    "
+                                    :readonly="isDetailView"
+                                    type="number"
+                                    suffix="%"
+                                    placeholder="0"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                ></v-text-field>
                             </div>
 
                             <div class="mb-5">
                                 <div class="field-label">Ngày bắt đầu <span class="text-error">*</span></div>
-                                <AppDatePicker v-model="form.ngayBatDau" :disabled="isDetailView" enable-time-picker
-                                    placeholder="Chọn ngày bắt đầu" />
+                                <AppDatePicker
+                                    v-model="form.ngayBatDau"
+                                    :disabled="isDetailView"
+                                    enable-time-picker
+                                    placeholder="Chọn ngày bắt đầu"
+                                />
                             </div>
 
                             <div class="mb-6">
                                 <div class="field-label">Ngày kết thúc <span class="text-error">*</span></div>
-                                <AppDatePicker v-model="form.ngayKetThuc" :disabled="isDetailView" enable-time-picker
-                                    placeholder="Chọn ngày kết thúc" />
+                                <AppDatePicker
+                                    v-model="form.ngayKetThuc"
+                                    :disabled="isDetailView"
+                                    enable-time-picker
+                                    placeholder="Chọn ngày kết thúc"
+                                />
                             </div>
                         </div>
                     </v-card-text>
@@ -622,8 +669,7 @@ onMounted(init);
             </v-col>
 
             <v-col cols="12" md="7" class="d-flex flex-column">
-                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1"
-                    style="min-height: 580px">
+                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1" style="min-height: 580px">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-amber-lighten-5 mr-3">
@@ -633,10 +679,16 @@ onMounted(init);
                         </div>
 
                         <div class="d-flex align-center ga-3 mb-4 mt-2">
-                            <span class="text-slate-800 text-no-wrap" style="font-size: 14px;">Tìm kiếm sản phẩm</span>
-                            <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
-                                placeholder="Tìm theo tên hoặc mã SKU..." variant="outlined" density="compact"
-                                hide-details class="compact-input flex-grow-1"></v-text-field>
+                            <span class="text-slate-800 text-no-wrap" style="font-size: 14px">Tìm kiếm sản phẩm</span>
+                            <v-text-field
+                                v-model="searchQuery"
+                                prepend-inner-icon="mdi-magnify"
+                                placeholder="Tìm theo tên hoặc mã SKU..."
+                                variant="outlined"
+                                density="compact"
+                                hide-details
+                                class="compact-input flex-grow-1"
+                            ></v-text-field>
                             <v-btn variant="outlined" color="primary" class="reset-btn" @click="handleRefreshSearch">
                                 <v-icon size="18">mdi-refresh</v-icon>
                                 <v-tooltip activator="parent" location="top">Làm mới bộ lọc</v-tooltip>
@@ -650,9 +702,13 @@ onMounted(init);
                                         <th class="header-cell text-center text-no-wrap" style="width: 40px"></th>
                                         <th class="header-cell text-center text-no-wrap" style="width: 60px">
                                             <div class="d-flex justify-center align-center">
-                                                <v-checkbox-btn density="compact" color="primary" hide-details
+                                                <v-checkbox-btn
+                                                    density="compact"
+                                                    color="primary"
+                                                    hide-details
                                                     :model-value="isAllProductsSelected"
-                                                    @change="toggleAllProductsSelection"></v-checkbox-btn>
+                                                    @change="toggleAllProductsSelection"
+                                                ></v-checkbox-btn>
                                             </div>
                                         </th>
                                         <th class="header-cell text-center text-no-wrap">Mã sản phẩm</th>
@@ -660,27 +716,36 @@ onMounted(init);
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <template v-for="(item, index) in paginatedProductsToSelect" :key="item.ma">
+                                    <template v-for="item in paginatedProductsToSelect" :key="item.ma">
                                         <tr class="data-row">
                                             <td class="data-cell text-center">
                                                 <div class="d-flex align-center justify-center" style="height: 32px">
-                                                    <v-btn icon variant="text" size="small" density="compact"
-                                                        @click="toggleExpand(item.id)">
+                                                    <v-btn
+                                                        icon
+                                                        variant="text"
+                                                        size="small"
+                                                        density="compact"
+                                                        @click="toggleExpand(item.id)"
+                                                    >
                                                         <v-icon>{{ getExpandIcon(item.id) }}</v-icon>
                                                     </v-btn>
                                                 </div>
                                             </td>
                                             <td class="data-cell text-center">
                                                 <div class="d-flex align-center justify-center" style="height: 32px">
-                                                    <v-checkbox-btn :model-value="isProductSelected(item.id)"
+                                                    <v-checkbox-btn
+                                                        :model-value="isProductSelected(item.id)"
                                                         :indeterminate="isProductIndeterminate(item.id)"
                                                         @update:model-value="toggleProductSelection(item.id)"
-                                                        :readonly="isDetailView" color="primary" hide-details
-                                                        density="compact" class="d-inline-flex ma-0 pa-0"></v-checkbox-btn>
+                                                        :readonly="isDetailView"
+                                                        color="primary"
+                                                        hide-details
+                                                        density="compact"
+                                                        class="d-inline-flex ma-0 pa-0"
+                                                    ></v-checkbox-btn>
                                                 </div>
                                             </td>
-                                            <td
-                                                class="data-cell text-center text-primary font-weight-bold text-slate-600">
+                                            <td class="data-cell text-center text-primary font-weight-bold text-slate-600">
                                                 {{ item.ma }}
                                             </td>
                                             <td class="data-cell text-center font-weight-medium">
@@ -688,38 +753,56 @@ onMounted(init);
                                             </td>
                                         </tr>
                                         <!-- Variant rows -->
-                                        <tr v-if="expandedProductIds.includes(item.id)" v-for="variant in item.variants"
-                                            :key="variant.id" class="variant-row bg-slate-50-50">
-                                            <td class="data-cell text-right pr-3"></td>
-                                            <td class="data-cell text-center">
-                                                <div class="d-flex align-center justify-center" style="height: 32px">
-                                                    <v-checkbox-btn :model-value="selectedVariantsIds.includes(variant.id)"
-                                                        @update:model-value="toggleVariantSelection(variant.id)"
-                                                        :readonly="isDetailView" color="primary" hide-details
-                                                        density="compact" class="d-inline-flex ma-0 pa-0"></v-checkbox-btn>
-                                                </div>
-                                            </td>
-                                            <td class="data-cell text-center text-slate-500 font-weight-medium">
-                                                {{ variant.ma }}
-                                            </td>
-                                            <td class="data-cell text-center text-slate-500">
-                                                {{ variant.color }} - {{ variant.kichCo }} - {{ variant.chatLieu }}
-                                            </td>
-                                        </tr>
+                                        <template v-if="expandedProductIds.includes(item.id)">
+                                            <tr v-for="variant in item.variants" :key="variant.id" class="variant-row bg-slate-50-50">
+                                                <td class="data-cell text-right pr-3"></td>
+                                                <td class="data-cell text-center">
+                                                    <div class="d-flex align-center justify-center" style="height: 32px">
+                                                        <v-checkbox-btn
+                                                            :model-value="selectedVariantsIds.includes(variant.id)"
+                                                            @update:model-value="toggleVariantSelection(variant.id)"
+                                                            :readonly="isDetailView"
+                                                            color="primary"
+                                                            hide-details
+                                                            density="compact"
+                                                            class="d-inline-flex ma-0 pa-0"
+                                                        ></v-checkbox-btn>
+                                                    </div>
+                                                </td>
+                                                <td class="data-cell text-center text-slate-500 font-weight-medium">
+                                                    {{ variant.ma }}
+                                                </td>
+                                                <td class="data-cell text-center text-slate-500">
+                                                    {{ variant.color }} - {{ variant.kichCo }} - {{ variant.chatLieu }}
+                                                </td>
+                                            </tr>
+                                        </template>
                                     </template>
                                 </tbody>
                             </table>
 
-                            <div v-if="filteredProductsToSelect.length === 0" class="d-flex flex-column align-center justify-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2 border-t">
-                                <v-icon icon="mdi-package-variant" size="48" style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
-                                <span class="text-slate-500 text-center" style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block;">Không tìm thấy sản phẩm nào.</span>
+                            <div
+                                v-if="filteredProductsToSelect.length === 0"
+                                class="d-flex flex-column align-center justify-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2 border-t"
+                            >
+                                <v-icon icon="mdi-package-variant" size="48" style="color: #94a3b8 !important; opacity: 0.6" class="mb-3" />
+                                <span
+                                    class="text-slate-500 text-center"
+                                    style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block"
+                                    >Không tìm thấy sản phẩm nào.</span
+                                >
                             </div>
                         </div>
 
-                        <AdminPagination v-model="selectionPage" :page-size="selectionPageSize"
-                            @update:pageSize="updateSelectionPageSize" :total-pages="totalSelectionPages"
+                        <AdminPagination
+                            v-model="selectionPage"
+                            :page-size="selectionPageSize"
+                            @update:pageSize="updateSelectionPageSize"
+                            :total-pages="totalSelectionPages"
                             :total-elements="filteredProductsToSelect.length"
-                            :current-size="paginatedProductsToSelect.length" class="mt-4" />
+                            :current-size="paginatedProductsToSelect.length"
+                            class="mt-4"
+                        />
                     </v-card-text>
                 </v-card>
             </v-col>
@@ -731,19 +814,30 @@ onMounted(init);
                             <div class="icon-blob bg-emerald-lighten-5 mr-3">
                                 <v-icon color="emerald-darken-2" size="18">mdi-format-list-checks</v-icon>
                             </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách chi tiết sản phẩm
-                                được chọn
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800"
+                                >Danh sách chi tiết sản phẩm được chọn
                                 <span class="text-primary ml-1">({{ selectedVariantsIds.length }})</span>
                             </span>
                             <v-spacer></v-spacer>
-                            <v-btn v-if="bottomTableSelection.length > 0" variant="flat" color="primary" class="mr-2"
-                                prepend-icon="mdi-trash-can-outline" size="small" @click="removeBulkSelected"
-                                style="height: 36px; text-transform: none">
+                            <v-btn
+                                v-if="bottomTableSelection.length > 0"
+                                variant="flat"
+                                color="primary"
+                                class="mr-2"
+                                prepend-icon="mdi-trash-can-outline"
+                                size="small"
+                                @click="removeBulkSelected"
+                                style="height: 36px; text-transform: none"
+                            >
                                 Xóa đã chọn ({{ bottomTableSelection.length }})
                             </v-btn>
-                            <v-btn variant="outlined" color="primary" prepend-icon="mdi-trash-can-outline"
+                            <v-btn
+                                variant="outlined"
+                                color="primary"
+                                prepend-icon="mdi-trash-can-outline"
                                 @click="removeAllSelected"
-                                style="height: 36px; text-transform: none; border-width: 1px">
+                                style="height: 36px; text-transform: none; border-width: 1px"
+                            >
                                 Xóa tất cả
                             </v-btn>
                         </div>
@@ -752,37 +846,71 @@ onMounted(init);
                         <AdminFilter title="Bộ lọc chi tiết" class="mx-n4 bg-transparent" @refresh="handleRefreshDetailSearch">
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
-                                <v-text-field v-model="detailFilters.timKiem" prepend-inner-icon="mdi-magnify"
-                                    placeholder="Tìm theo mã, tên" variant="outlined" density="compact" hide-details
-                                    class="compact-input"></v-text-field>
+                                <v-text-field
+                                    v-model="detailFilters.timKiem"
+                                    prepend-inner-icon="mdi-magnify"
+                                    placeholder="Tìm theo mã, tên"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    class="compact-input"
+                                ></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Thương hiệu</div>
-                                <v-select v-model="detailFilters.thuongHieu" :items="brands" density="compact"
-                                    variant="outlined" hide-details clearable placeholder="Thương hiệu"
+                                <v-select
+                                    v-model="detailFilters.thuongHieu"
+                                    :items="brands"
+                                    density="compact"
+                                    variant="outlined"
+                                    hide-details
+                                    clearable
+                                    placeholder="Thương hiệu"
                                     :menu-props="{ contentClass: 'campaign-select-menu' }"
-                                    class="compact-input"></v-select>
+                                    class="compact-input"
+                                ></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Chất liệu</div>
-                                <v-select v-model="detailFilters.chatLieu" :items="materials" density="compact"
-                                    variant="outlined" hide-details clearable placeholder="Chất liệu"
+                                <v-select
+                                    v-model="detailFilters.chatLieu"
+                                    :items="materials"
+                                    density="compact"
+                                    variant="outlined"
+                                    hide-details
+                                    clearable
+                                    placeholder="Chất liệu"
                                     :menu-props="{ contentClass: 'campaign-select-menu' }"
-                                    class="compact-input"></v-select>
+                                    class="compact-input"
+                                ></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Kích cỡ</div>
-                                <v-select v-model="detailFilters.kichCo" :items="sizes" density="compact"
-                                    variant="outlined" hide-details clearable placeholder="Kích cỡ"
+                                <v-select
+                                    v-model="detailFilters.kichCo"
+                                    :items="sizes"
+                                    density="compact"
+                                    variant="outlined"
+                                    hide-details
+                                    clearable
+                                    placeholder="Kích cỡ"
                                     :menu-props="{ contentClass: 'campaign-select-menu' }"
-                                    class="compact-input"></v-select>
+                                    class="compact-input"
+                                ></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Màu sắc</div>
-                                <v-select v-model="detailFilters.mauSac" :items="colors" density="compact"
-                                    variant="outlined" hide-details clearable placeholder="Màu sắc"
+                                <v-select
+                                    v-model="detailFilters.mauSac"
+                                    :items="colors"
+                                    density="compact"
+                                    variant="outlined"
+                                    hide-details
+                                    clearable
+                                    placeholder="Màu sắc"
                                     :menu-props="{ contentClass: 'campaign-select-menu' }"
-                                    class="compact-input"></v-select>
+                                    class="compact-input"
+                                ></v-select>
                             </v-col>
 
                             <template #after>
@@ -790,17 +918,26 @@ onMounted(init);
                                     <div class="d-flex align-center justify-space-between mb-2">
                                         <div class="d-flex align-center ga-2">
                                             <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
-                                            <span class="text-caption font-weight-bold text-slate-600">Lọc theo giá sau
-                                                giảm</span>
+                                            <span class="text-caption font-weight-bold text-slate-600">Lọc theo giá sau giảm</span>
                                         </div>
-                                        <span class="price-range-value text-primary font-weight-bold">{{
-                                            formatCurrency(detailFilters.khoangGia[0]) }} –
-                                            {{ formatCurrency(detailFilters.khoangGia[1]) }}</span>
+                                        <span class="price-range-value text-primary font-weight-bold"
+                                            >{{ formatCurrency(detailFilters.khoangGia[0]) }} –
+                                            {{ formatCurrency(detailFilters.khoangGia[1]) }}</span
+                                        >
                                     </div>
-                                    <v-range-slider :key="`0-${dynamicMaxPrice}`" v-model="detailFilters.khoangGia"
-                                        :max="dynamicMaxPrice" :min="0" :step="10000" hide-details color="primary"
-                                        track-color="#e2e8f0" track-size="2" thumb-size="14"
-                                        class="blue-range-slider"></v-range-slider>
+                                    <v-range-slider
+                                        :key="`0-${dynamicMaxPrice}`"
+                                        v-model="detailFilters.khoangGia"
+                                        :max="dynamicMaxPrice"
+                                        :min="0"
+                                        :step="10000"
+                                        hide-details
+                                        color="primary"
+                                        track-color="#e2e8f0"
+                                        track-size="2"
+                                        thumb-size="14"
+                                        class="blue-range-slider"
+                                    ></v-range-slider>
                                 </v-col>
                             </template>
                         </AdminFilter>
@@ -811,9 +948,16 @@ onMounted(init);
                                     <tr>
                                         <th class="header-cell text-center text-no-wrap" style="width: 50px">
                                             <div class="d-flex justify-center align-center">
-                                                <v-checkbox-btn density="compact" color="primary" hide-details :model-value="filteredSelectedDetails.length > 0 &&
-                                                    filteredSelectedDetails.every((p) => bottomTableSelection.includes(p.id))
-                                                    " @change="toggleAllBottomSelection"></v-checkbox-btn>
+                                                <v-checkbox-btn
+                                                    density="compact"
+                                                    color="primary"
+                                                    hide-details
+                                                    :model-value="
+                                                        filteredSelectedDetails.length > 0 &&
+                                                        filteredSelectedDetails.every((p) => bottomTableSelection.includes(p.id))
+                                                    "
+                                                    @change="toggleAllBottomSelection"
+                                                ></v-checkbox-btn>
                                             </div>
                                         </th>
                                         <th class="header-cell text-center text-no-wrap" style="width: 50px">STT</th>
@@ -828,13 +972,20 @@ onMounted(init);
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="(item, index) in paginatedSelectedDetails"
-                                        :key="item.id + '-' + item.ma + '-' + index" class="data-row">
+                                    <tr
+                                        v-for="(item, index) in paginatedSelectedDetails"
+                                        :key="item.id + '-' + item.ma + '-' + index"
+                                        class="data-row"
+                                    >
                                         <td class="data-cell text-center">
                                             <div class="d-flex align-center justify-center" style="height: 32px">
-                                                <v-checkbox-btn color="primary" hide-details density="compact"
+                                                <v-checkbox-btn
+                                                    color="primary"
+                                                    hide-details
+                                                    density="compact"
                                                     :model-value="isVariantSelected(item.id)"
-                                                    @update:model-value="toggleVariantSelection(item.id)"></v-checkbox-btn>
+                                                    @update:model-value="toggleVariantSelection(item.id)"
+                                                ></v-checkbox-btn>
                                             </div>
                                         </td>
                                         <td class="data-cell text-center text-slate-500 font-weight-medium">
@@ -845,8 +996,7 @@ onMounted(init);
                                                 <v-avatar rounded="lg" size="44" class="border">
                                                     <v-img :src="item.anhMauc" cover></v-img>
                                                 </v-avatar>
-                                                <div v-if="form.soTienGiam > 0" class="discount-badge">-{{
-                                                    form.soTienGiam }}%</div>
+                                                <div v-if="form.soTienGiam > 0" class="discount-badge">-{{ form.soTienGiam }}%</div>
                                             </div>
                                         </td>
                                         <td class="data-cell text-center text-primary font-weight-medium">
@@ -874,16 +1024,19 @@ onMounted(init);
                                         </td>
                                         <td class="data-cell text-center">
                                             <div class="d-flex align-center justify-center ga-2">
-                                                <div class="color-dot" :style="{
-                                                    backgroundColor:
-                                                        item.color === 'Xanh dương'
-                                                            ? '#3b82f6'
-                                                            : item.color === 'Xanh lá'
-                                                                ? '#22c55e'
-                                                                : item.color === 'Đen'
+                                                <div
+                                                    class="color-dot"
+                                                    :style="{
+                                                        backgroundColor:
+                                                            item.color === 'Xanh dương'
+                                                                ? '#3b82f6'
+                                                                : item.color === 'Xanh lá'
+                                                                  ? '#22c55e'
+                                                                  : item.color === 'Đen'
                                                                     ? '#000'
                                                                     : '#ccc'
-                                                }"></div>
+                                                    }"
+                                                ></div>
                                                 <span>{{ item.color }}</span>
                                             </div>
                                         </td>
@@ -891,16 +1044,28 @@ onMounted(init);
                                 </tbody>
                             </table>
 
-                            <div v-if="filteredSelectedDetails.length === 0" class="d-flex flex-column align-center justify-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2 border-t">
-                                <v-icon icon="mdi-package-variant" size="48" style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
-                                <span class="text-slate-500 text-center" style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block;">Không tìm thấy sản phẩm nào phù hợp.</span>
+                            <div
+                                v-if="filteredSelectedDetails.length === 0"
+                                class="d-flex flex-column align-center justify-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2 border-t"
+                            >
+                                <v-icon icon="mdi-package-variant" size="48" style="color: #94a3b8 !important; opacity: 0.6" class="mb-3" />
+                                <span
+                                    class="text-slate-500 text-center"
+                                    style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block"
+                                    >Không tìm thấy sản phẩm nào phù hợp.</span
+                                >
                             </div>
                         </div>
 
-                        <AdminPagination v-model="bottomPage" :page-size="bottomPageSize"
-                            @update:pageSize="bottomPageSize = $event" :total-pages="totalBottomPages"
+                        <AdminPagination
+                            v-model="bottomPage"
+                            :page-size="bottomPageSize"
+                            @update:pageSize="bottomPageSize = $event"
+                            :total-pages="totalBottomPages"
                             :total-elements="filteredSelectedDetails.length"
-                            :current-size="paginatedSelectedDetails.length" class="mt-4" />
+                            :current-size="paginatedSelectedDetails.length"
+                            class="mt-4"
+                        />
                     </v-card-text>
                 </v-card>
             </v-col>
@@ -957,4 +1122,3 @@ onMounted(init);
     left: auto !important;
 }
 </style>
-

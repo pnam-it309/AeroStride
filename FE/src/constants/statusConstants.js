@@ -7,11 +7,11 @@ export const SYSTEM_STATUS = {
     // Trạng thái hoạt động chung
     ACTIVE: 'DANG_HOAT_DONG',
     INACTIVE: 'NGUNG_HOAT_DONG',
-    
+
     // Alias hỗ trợ các module cũ hoặc logic khác
     HOAT_DONG: 'DANG_HOAT_DONG',
     NGUNG_HOAT_DONG: 'NGUNG_HOAT_DONG',
-    
+
     // Trạng thái hiển thị (Label)
     LABELS: {
         DANG_HOAT_DONG: 'Đang hoạt động',
@@ -19,7 +19,7 @@ export const SYSTEM_STATUS = {
         ACTIVE: 'Đang hoạt động',
         INACTIVE: 'Ngừng hoạt động'
     },
-    
+
     // Màu sắc Vuetify tương ứng
     COLORS: {
         DANG_HOAT_DONG: 'success',

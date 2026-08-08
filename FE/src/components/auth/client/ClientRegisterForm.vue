@@ -27,10 +27,7 @@ const form = ref({
 });
 
 const passwordMismatch = computed(() => {
-    return (
-        form.value.xacNhanMatKhau.length > 0 &&
-        form.value.matKhau !== form.value.xacNhanMatKhau
-    );
+    return form.value.xacNhanMatKhau.length > 0 && form.value.matKhau !== form.value.xacNhanMatKhau;
 });
 
 const handleRegister = async () => {
@@ -83,10 +80,7 @@ const handleRegister = async () => {
         uiStore.hideLoading();
         router.push('/');
     } catch (error) {
-        errorMessage.value =
-            error?.response?.data?.message ||
-            error.message ||
-            'Đăng ký thất bại. Vui lòng thử lại.';
+        errorMessage.value = error?.response?.data?.message || error.message || 'Đăng ký thất bại. Vui lòng thử lại.';
     } finally {
         loading.value = false;
         uiStore.hideLoading();
@@ -113,9 +107,7 @@ const handleRegister = async () => {
                 <!-- Họ và tên -->
                 <v-col cols="12" class="pb-2">
                     <div class="input-wrapper">
-                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3">
-                            Họ và tên
-                        </v-label>
+                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Họ và tên </v-label>
                         <v-text-field
                             v-model="form.ten"
                             variant="outlined"
@@ -132,9 +124,7 @@ const handleRegister = async () => {
                 <!-- Tên tài khoản -->
                 <v-col cols="12" class="py-2">
                     <div class="input-wrapper">
-                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3">
-                            Tên tài khoản
-                        </v-label>
+                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Tên tài khoản </v-label>
                         <v-text-field
                             v-model="form.tenTaiKhoan"
                             variant="outlined"
@@ -151,9 +141,7 @@ const handleRegister = async () => {
                 <!-- Email -->
                 <v-col cols="12" md="6" class="py-2 pr-md-2">
                     <div class="input-wrapper">
-                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3">
-                            Email
-                        </v-label>
+                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Email </v-label>
                         <v-text-field
                             v-model="form.email"
                             variant="outlined"
@@ -171,9 +159,7 @@ const handleRegister = async () => {
                 <!-- Số điện thoại -->
                 <v-col cols="12" md="6" class="py-2 pl-md-2">
                     <div class="input-wrapper">
-                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3">
-                            Số điện thoại
-                        </v-label>
+                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Số điện thoại </v-label>
                         <v-text-field
                             v-model="form.sdt"
                             variant="outlined"
@@ -190,9 +176,7 @@ const handleRegister = async () => {
                 <!-- Mật khẩu -->
                 <v-col cols="12" class="py-2">
                     <div class="input-wrapper">
-                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3">
-                            Mật khẩu
-                        </v-label>
+                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Mật khẩu </v-label>
                         <v-text-field
                             v-model="form.matKhau"
                             variant="outlined"
@@ -212,9 +196,7 @@ const handleRegister = async () => {
                 <!-- Xác nhận mật khẩu -->
                 <v-col cols="12" class="py-2">
                     <div class="input-wrapper">
-                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3">
-                            Xác nhận mật khẩu
-                        </v-label>
+                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Xác nhận mật khẩu </v-label>
                         <v-text-field
                             v-model="form.xacNhanMatKhau"
                             variant="outlined"
@@ -251,12 +233,7 @@ const handleRegister = async () => {
                     </v-btn>
 
                     <div class="text-center mt-3">
-                        <v-btn
-                            variant="text"
-                            color="blue-darken-3"
-                            class="text-caption font-weight-bold premium-link"
-                            to="/"
-                        >
+                        <v-btn variant="text" color="blue-darken-3" class="text-caption font-weight-bold premium-link" to="/">
                             Tiếp tục với tư cách khách
                         </v-btn>
                     </div>

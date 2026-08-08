@@ -37,31 +37,38 @@ const form = ref({
     diaChiChiTiet: ''
 });
 
-watch(() => props.modelValue, async (newVal) => {
-    if (newVal) {
-        form.value = {
-            ten: props.initialData?.ten || '',
-            sdt: props.initialData?.sdt || '',
-            email: props.initialData?.email || '',
-            gioiTinh: true,
-            tinh: null,
-            thanhPho: null,
-            phuongXa: null,
-            diaChiChiTiet: ''
-        };
-        if (provinces.value.length === 0) {
-            await fetchProvinces();
+watch(
+    () => props.modelValue,
+    async (newVal) => {
+        if (newVal) {
+            form.value = {
+                ten: props.initialData?.ten || '',
+                sdt: props.initialData?.sdt || '',
+                email: props.initialData?.email || '',
+                gioiTinh: true,
+                tinh: null,
+                thanhPho: null,
+                phuongXa: null,
+                diaChiChiTiet: ''
+            };
+            if (provinces.value.length === 0) {
+                await fetchProvinces();
+            }
         }
     }
-});
+);
 
 const findExactCustomer = (list, phone, email) => {
     const normalizedPhone = String(phone ?? '').replace(/\D/g, '');
-    const normalizedEmail = String(email ?? '').trim().toLowerCase();
+    const normalizedEmail = String(email ?? '')
+        .trim()
+        .toLowerCase();
 
     return list.find((customer) => {
         const customerPhone = String(customer?.sdt ?? '').replace(/\D/g, '');
-        const customerEmail = String(customer?.email ?? '').trim().toLowerCase();
+        const customerEmail = String(customer?.email ?? '')
+            .trim()
+            .toLowerCase();
 
         if (normalizedPhone && customerPhone === normalizedPhone) return true;
         if (normalizedEmail && customerEmail === normalizedEmail) return true;
@@ -95,7 +102,11 @@ const submitQuickAdd = async () => {
 
     const phoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;
     if (!phoneRegex.test(phone)) {
-        addNotification({ title: 'SĐT không hợp lệ', subtitle: 'Số điện thoại phải có 10 số và bắt đầu bằng 03, 05, 07, 08, hoặc 09.', color: 'warning' });
+        addNotification({
+            title: 'SĐT không hợp lệ',
+            subtitle: 'Số điện thoại phải có 10 số và bắt đầu bằng 03, 05, 07, 08, hoặc 09.',
+            color: 'warning'
+        });
         return;
     }
 
@@ -124,7 +135,7 @@ const submitQuickAdd = async () => {
         const newCustomerPayload = {
             ten: String(name || '').trim(),
             sdt: String(phone || '').trim(),
-            email: (email && String(email).trim()) ? String(email).trim() : fallbackEmail,
+            email: email && String(email).trim() ? String(email).trim() : fallbackEmail,
             gioiTinh: form.value.gioiTinh ?? true,
             tenTaiKhoan: '',
             matKhau: '',
@@ -159,7 +170,13 @@ const close = () => {
 </script>
 
 <template>
-    <v-dialog :model-value="modelValue" @update:model-value="(val) => emit('update:modelValue', val)" max-width="650" transition="dialog-bottom-transition" persistent>
+    <v-dialog
+        :model-value="modelValue"
+        @update:model-value="(val) => emit('update:modelValue', val)"
+        max-width="650"
+        transition="dialog-bottom-transition"
+        persistent
+    >
         <v-card class="rounded-lg overflow-hidden">
             <v-card-title class="text-subtitle-1 font-weight-bold pa-4 border-b bg-slate-50 d-flex justify-space-between align-center">
                 Thêm nhanh thông tin khách hàng
@@ -174,61 +191,135 @@ const close = () => {
 
                 <v-row dense>
                     <v-col cols="12" md="6">
-                        <v-text-field v-model="form.ten" label="Tên khách hàng"
-                            variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2"
-                            maxlength="100" />
+                        <v-text-field
+                            v-model="form.ten"
+                            label="Tên khách hàng"
+                            variant="outlined"
+                            density="comfortable"
+                            hide-details="auto"
+                            class="mb-3 text-body-2"
+                            maxlength="100"
+                        />
                     </v-col>
                     <v-col cols="12" md="6">
-                        <v-text-field v-model="form.sdt" label="Số điện thoại"
-                            variant="outlined" density="comfortable"
-                            hide-details="auto" class="mb-3 text-body-2"
-                            @input="form.sdt = String($event.target.value || '').replace(/[^0-9]/g, '')" />
+                        <v-text-field
+                            v-model="form.sdt"
+                            label="Số điện thoại"
+                            variant="outlined"
+                            density="comfortable"
+                            hide-details="auto"
+                            class="mb-3 text-body-2"
+                            @input="form.sdt = String($event.target.value || '').replace(/[^0-9]/g, '')"
+                        />
                     </v-col>
                     <v-col cols="12" md="6">
-                        <v-select v-model="form.gioiTinh" :items="GIOI_TINH_OPTIONS" label="Giới tính"
-                            variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2" />
+                        <v-select
+                            v-model="form.gioiTinh"
+                            :items="GIOI_TINH_OPTIONS"
+                            label="Giới tính"
+                            variant="outlined"
+                            density="comfortable"
+                            hide-details="auto"
+                            class="mb-3 text-body-2"
+                        />
                     </v-col>
                     <v-col cols="12" md="6">
-                        <v-text-field v-model="form.email" label="Email (Không bắt buộc)"
-                            variant="outlined" density="comfortable"
-                            hide-details="auto" class="mb-3 text-body-2" />
+                        <v-text-field
+                            v-model="form.email"
+                            label="Email (Không bắt buộc)"
+                            variant="outlined"
+                            density="comfortable"
+                            hide-details="auto"
+                            class="mb-3 text-body-2"
+                        />
                     </v-col>
 
                     <v-col cols="12">
                         <div class="text-subtitle-2 font-weight-bold mt-2 mb-2 text-slate-700">Địa chỉ (Tùy chọn)</div>
                     </v-col>
                     <v-col cols="12" md="4">
-                        <v-autocomplete v-model="form.tinh" :items="provinces" item-title="name"
-                            item-value="code" label="Tỉnh / Thành phố" variant="outlined" bg-color="white"
-                            density="compact" hide-details :loading="loadingLocations.provinces"
-                            @update:model-value="(val) => { form.thanhPho = null; form.phuongXa = null; if (val) fetchDistricts(val); }"
-                            class="mb-3 text-body-2" />
+                        <v-autocomplete
+                            v-model="form.tinh"
+                            :items="provinces"
+                            item-title="name"
+                            item-value="code"
+                            label="Tỉnh / Thành phố"
+                            variant="outlined"
+                            bg-color="white"
+                            density="compact"
+                            hide-details
+                            :loading="loadingLocations.provinces"
+                            @update:model-value="
+                                (val) => {
+                                    form.thanhPho = null;
+                                    form.phuongXa = null;
+                                    if (val) fetchDistricts(val);
+                                }
+                            "
+                            class="mb-3 text-body-2"
+                        />
                     </v-col>
                     <v-col cols="12" md="4">
-                        <v-autocomplete v-model="form.thanhPho" :items="districts" item-title="name"
-                            item-value="code" label="Quận / Huyện" variant="outlined" bg-color="white"
-                            density="compact" hide-details :loading="loadingLocations.districts"
+                        <v-autocomplete
+                            v-model="form.thanhPho"
+                            :items="districts"
+                            item-title="name"
+                            item-value="code"
+                            label="Quận / Huyện"
+                            variant="outlined"
+                            bg-color="white"
+                            density="compact"
+                            hide-details
+                            :loading="loadingLocations.districts"
                             :disabled="!form.tinh"
-                            @update:model-value="(val) => { form.phuongXa = null; if (val) fetchWards(val); }"
-                            class="mb-3 text-body-2" />
+                            @update:model-value="
+                                (val) => {
+                                    form.phuongXa = null;
+                                    if (val) fetchWards(val);
+                                }
+                            "
+                            class="mb-3 text-body-2"
+                        />
                     </v-col>
                     <v-col cols="12" md="4">
-                        <v-autocomplete v-model="form.phuongXa" :items="wards" item-title="name"
-                            item-value="code" label="Phường / Xã" variant="outlined" bg-color="white"
-                            density="compact" hide-details :loading="loadingLocations.wards"
-                            :disabled="!form.thanhPho" class="mb-3 text-body-2" />
+                        <v-autocomplete
+                            v-model="form.phuongXa"
+                            :items="wards"
+                            item-title="name"
+                            item-value="code"
+                            label="Phường / Xã"
+                            variant="outlined"
+                            bg-color="white"
+                            density="compact"
+                            hide-details
+                            :loading="loadingLocations.wards"
+                            :disabled="!form.thanhPho"
+                            class="mb-3 text-body-2"
+                        />
                     </v-col>
                     <v-col cols="12">
-                        <v-text-field v-model="form.diaChiChiTiet" label="Địa chỉ cụ thể (Số nhà, đường...)"
-                            variant="outlined" density="compact"
-                            hide-details class="text-body-2" />
+                        <v-text-field
+                            v-model="form.diaChiChiTiet"
+                            label="Địa chỉ cụ thể (Số nhà, đường...)"
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                            class="text-body-2"
+                        />
                     </v-col>
                 </v-row>
             </v-card-text>
             <v-card-actions class="px-6 pb-5 border-t bg-slate-50">
                 <v-spacer />
                 <v-btn variant="tonal" color="slate-500" class="rounded-lg text-none" @click="close">Hủy</v-btn>
-                <v-btn :loading="loading" color="primary" variant="flat" class="px-6 rounded-lg font-weight-bold text-none" @click="submitQuickAdd">Thêm nhanh</v-btn>
+                <v-btn
+                    :loading="loading"
+                    color="primary"
+                    variant="flat"
+                    class="px-6 rounded-lg font-weight-bold text-none"
+                    @click="submitQuickAdd"
+                    >Thêm nhanh</v-btn
+                >
             </v-card-actions>
         </v-card>
     </v-dialog>

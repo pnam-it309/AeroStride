@@ -44,11 +44,15 @@ export function useLandingCatalog(activeSectionRef) {
     });
 
     if (activeSectionRef) {
-        watch(activeSectionRef, (sectionIndex) => {
-            if (sectionIndex >= 1) {
-                loadSecondaryCatalog();
-            }
-        }, { immediate: true });
+        watch(
+            activeSectionRef,
+            (sectionIndex) => {
+                if (sectionIndex >= 1) {
+                    loadSecondaryCatalog();
+                }
+            },
+            { immediate: true }
+        );
     }
 
     const heroProduct = computed(() => landingProducts.value[0] || null);

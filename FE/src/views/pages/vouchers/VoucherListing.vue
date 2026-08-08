@@ -50,7 +50,8 @@ onMounted(() => {
     fetchVouchers();
     setSeoMeta({
         title: 'Kho Voucher Ưu Đãi - Mã Giảm Giá Giày',
-        description: 'Săn mã giảm giá cực hời tại AeroStride. Voucher giảm giá giày thể thao chính hãng, cập nhật mới mỗi ngày. Chốt ngay đôi giày ưng ý với giá tốt nhất.',
+        description:
+            'Săn mã giảm giá cực hời tại AeroStride. Voucher giảm giá giày thể thao chính hãng, cập nhật mới mỗi ngày. Chốt ngay đôi giày ưng ý với giá tốt nhất.',
         url: window.location.origin + '/vouchers'
     });
 });

@@ -62,7 +62,6 @@ const authStore = useAuthStore();
 const MAX_WAITING_ORDERS = 5;
 const VNPAY_PENDING_KEY = 'aerostride_pos_vnpay_pending';
 const POS_ACTIVE_ORDER_KEY = 'aerostride_pos_active_order_id';
-const BYPASS_PAYMENT_RECORD_INSERT = false;
 
 // Giao Ca State
 const showGiaoCaModal = ref(false);
@@ -109,9 +108,6 @@ const orders = ref([]);
 const activeOrderIndex = ref(0);
 const vouchers = ref([]);
 const isProcessing = ref(false);
-
-// Redesigned Page Custom State
-const orderWarehouse = ref('KHO ANSHA BIGSIZE');
 
 // Dynamic Filter States for POS Products
 const maxProductPrice = ref(7000000);
@@ -244,7 +240,13 @@ const onAddSuggestedProduct = async () => {
         const variants = await dichVuDonHang.searchSanPham({ keyword });
         if (variants && variants.length > 0) {
             const normalizedKeyword = keyword.toLowerCase();
-            const exactMatch = variants.find((v) => String(v.maChiTietSanPham || '').trim().toLowerCase() === normalizedKeyword) || variants[0];
+            const exactMatch =
+                variants.find(
+                    (v) =>
+                        String(v.maChiTietSanPham || '')
+                            .trim()
+                            .toLowerCase() === normalizedKeyword
+                ) || variants[0];
             if (exactMatch) {
                 await onAddProduct({ ...exactMatch, _soLuongMuonThem: 1 });
                 showProductSuggestions.value = false;
@@ -273,7 +275,7 @@ const orderChannel = computed({
     },
     set(newVal) {
         if (selectedOrder.value) {
-            selectedOrder.value.isGiaoHangLocal = (newVal === 'Giao hàng' || newVal === 'Trực tuyến');
+            selectedOrder.value.isGiaoHangLocal = newVal === 'Giao hàng' || newVal === 'Trực tuyến';
             selectedOrder.value.orderType = ORDER_TYPES.IN_STORE;
             selectedOrder.value.deliveryMethod = selectedOrder.value.isGiaoHangLocal
                 ? DELIVERY_METHODS.SHIPPING
@@ -360,17 +362,16 @@ const changeAmount = computed(() => {
 
 // deliveryMethod la nguon chinh; loaiDon chi dung de doc hoa don cu.
 // Chuan hoa tai mot cho de refresh/cap nhat order khong lam cong tac bi tat sai.
-const isShippingOrder = (order) => order?.deliveryMethod
-    ? order.deliveryMethod === DELIVERY_METHODS.SHIPPING
-    : ['ONLINE', 'GIAO_HANG'].includes(String(order?.loaiDon || '').toUpperCase());
+const isShippingOrder = (order) =>
+    order?.deliveryMethod
+        ? order.deliveryMethod === DELIVERY_METHODS.SHIPPING
+        : ['ONLINE', 'GIAO_HANG'].includes(String(order?.loaiDon || '').toUpperCase());
 const normalizeSalesOrder = (order) => {
     if (!order) return order;
     return {
         ...order,
         orderType: ORDER_TYPES.IN_STORE,
-        deliveryMethod: order.deliveryMethod || (isShippingOrder(order)
-            ? DELIVERY_METHODS.SHIPPING
-            : DELIVERY_METHODS.TAKEAWAY),
+        deliveryMethod: order.deliveryMethod || (isShippingOrder(order) ? DELIVERY_METHODS.SHIPPING : DELIVERY_METHODS.TAKEAWAY),
         isGiaoHangLocal: order.isGiaoHangLocal ?? isShippingOrder(order)
     };
 };
@@ -416,47 +417,58 @@ const syncShippingAndChannel = () => {
 const lastActiveOrderId = ref(selectedOrder.value?.id || null);
 
 // Watcher when active order changes, update note, shipping fee and reset search
-watch(() => selectedOrder.value?.id, (id) => {
-    checkoutData.value.note = selectedOrder.value?.ghiChu || '';
+watch(
+    () => selectedOrder.value?.id,
+    (id) => {
+        checkoutData.value.note = selectedOrder.value?.ghiChu || '';
 
-    if (id) {
-        if (selectedOrder.value.phiVanChuyen !== undefined && selectedOrder.value.phiVanChuyen !== null && Number(selectedOrder.value.phiVanChuyen) > 0) {
-            shippingFee.value = Number(selectedOrder.value.phiVanChuyen);
-        } else {
-            shippingFee.value = 0;
+        if (id) {
+            if (
+                selectedOrder.value.phiVanChuyen !== undefined &&
+                selectedOrder.value.phiVanChuyen !== null &&
+                Number(selectedOrder.value.phiVanChuyen) > 0
+            ) {
+                shippingFee.value = Number(selectedOrder.value.phiVanChuyen);
+            } else {
+                shippingFee.value = 0;
+            }
+            isFreeShip.value = false;
+
+            onlyChargeIfReturned.value = !isShippingOrder(selectedOrder.value);
         }
-        isFreeShip.value = false;
-
-        onlyChargeIfReturned.value = !isShippingOrder(selectedOrder.value);
     }
-});
+);
 
 // Sync shipping fee when channel or free ship changes
-watch([orderChannel, isFreeShip], ([channel, freeShip], oldVal) => {
-    const currentId = selectedOrder.value?.id || null;
-    if (currentId !== lastActiveOrderId.value) {
-        // Just switched tabs/orders; do not reset shippingFee. Update tracking ID.
-        lastActiveOrderId.value = currentId;
-        return;
-    }
+watch(
+    [orderChannel, isFreeShip],
+    ([channel, freeShip], oldVal) => {
+        const currentId = selectedOrder.value?.id || null;
+        if (currentId !== lastActiveOrderId.value) {
+            // Just switched tabs/orders; do not reset shippingFee. Update tracking ID.
+            lastActiveOrderId.value = currentId;
+            return;
+        }
 
-    const oldFreeShip = oldVal ? oldVal[1] : undefined;
-    const oldChannel = oldVal ? oldVal[0] : undefined;
+        const oldFreeShip = oldVal ? oldVal[1] : undefined;
+        const oldChannel = oldVal ? oldVal[0] : undefined;
 
-    if (freeShip) {
-        shippingFee.value = 0;
-        shippingFeeError.value = '';
-        shippingFeeSource.value = '';
-    } else {
-        if (channel === 'Giao hàng' && (oldFreeShip === true || channel !== oldChannel)) {
-            void calculateShippingFee();
-        } else if (channel !== oldChannel && oldChannel !== undefined) {
+        if (freeShip) {
             shippingFee.value = 0;
             shippingFeeError.value = '';
             shippingFeeSource.value = '';
+        } else {
+            if (channel === 'Giao hàng' && (oldFreeShip === true || channel !== oldChannel)) {
+                void calculateShippingFee();
+            } else if (channel !== oldChannel && oldChannel !== undefined) {
+                shippingFee.value = 0;
+                shippingFeeError.value = '';
+                shippingFeeSource.value = '';
+            }
         }
-    }
-}, { immediate: true });
+    },
+    { immediate: true }
+);
 
 // Automatically uncheck Free Ship if a non-zero shipping fee is typed/selected
 watch(shippingFee, (newVal) => {
@@ -556,7 +568,6 @@ const openDatePicker = (event) => {
 };
 
 // onRemoveCustomer is imported from useCustomerSelect
-
 
 // Chuẩn hóa định dạng danh sách đơn hàng trả về từ nhiều dạng API response khác nhau
 const normalizeOrderList = (payload) => {
@@ -678,7 +689,13 @@ const onScanSuccess = async (decodedText) => {
         const variants = await dichVuDonHang.searchSanPham({ keyword });
         if (variants && variants.length > 0) {
             const normalizedKeyword = keyword.toLowerCase();
-            const exactMatch = variants.find((v) => String(v.maChiTietSanPham || '').trim().toLowerCase() === normalizedKeyword) || variants[0];
+            const exactMatch =
+                variants.find(
+                    (v) =>
+                        String(v.maChiTietSanPham || '')
+                            .trim()
+                            .toLowerCase() === normalizedKeyword
+                ) || variants[0];
 
             if (exactMatch) {
                 if (exactMatch.trangThai !== undefined && !isActiveStatus(exactMatch.trangThai)) {
@@ -791,13 +808,8 @@ onUnmounted(() => {
 
 // Customer shipping address restore helpers.
 // Principle: customer data can come as split fields or one full address string, so normalize first, then match to the current location list.
-const getAddressDetailValue = (address) => (
-    address?.diaChiChiTiet ||
-    address?.diaChiCuThe ||
-    address?.diaChiNguoiNhan ||
-    address?.diaChi ||
-    ''
-);
+const getAddressDetailValue = (address) =>
+    address?.diaChiChiTiet || address?.diaChiCuThe || address?.diaChiNguoiNhan || address?.diaChi || '';
 
 const getAddressFullText = (address) => {
     if (!address) return '';
@@ -843,18 +855,22 @@ const pickDefaultCustomerAddress = (customer, addrRes) => {
     ].filter(Boolean);
 
     if (!addresses.length) return null;
-    return addresses.find((address) => address.laMacDinh === true || address.macDinh === true)
-        || addresses.find((address) => address.trangThai === true || address.trangThai === 1 || address.trangThai === 'DANG_HOAT_DONG')
-        || addresses[0];
+    return (
+        addresses.find((address) => address.laMacDinh === true || address.macDinh === true) ||
+        addresses.find((address) => address.trangThai === true || address.trangThai === 1 || address.trangThai === 'DANG_HOAT_DONG') ||
+        addresses[0]
+    );
 };
 
 const matchShippingLocation = (list, name) => {
     if (!name) return null;
     const cleanTarget = cleanName(name);
-    return list.find((item) => {
-        const cleanItem = cleanName(item.name);
-        return cleanItem === cleanTarget || cleanItem.includes(cleanTarget) || cleanTarget.includes(cleanItem);
-    }) || null;
+    return (
+        list.find((item) => {
+            const cleanItem = cleanName(item.name);
+            return cleanItem === cleanTarget || cleanItem.includes(cleanTarget) || cleanTarget.includes(cleanItem);
+        }) || null
+    );
 };
 
 const resetRecipientAddress = () => {
@@ -964,19 +980,26 @@ const voucherRealtimeKey = computed(() => {
     return `${order.id}|${order.idKhachHang || ''}`;
 });
 
-watch(voucherRealtimeKey, async (key) => {
-    if (key) await refreshBestVoucher();
-}, { flush: 'post' });
+watch(
+    voucherRealtimeKey,
+    async (key) => {
+        if (key) await refreshBestVoucher();
+    },
+    { flush: 'post' }
+);
 
 // Watch for order changes to fetch product suggestions
-watch(() => [selectedOrder.value?.id, selectedOrder.value?.tongTien], ([id, total]) => {
-    if (id && total > 0) {
-        fetchProductSuggestions();
-    } else {
-        productSuggestions.value = [];
-        showProductSuggestions.value = false;
+watch(
+    () => [selectedOrder.value?.id, selectedOrder.value?.tongTien],
+    ([id, total]) => {
+        if (id && total > 0) {
+            fetchProductSuggestions();
+        } else {
+            productSuggestions.value = [];
+            showProductSuggestions.value = false;
+        }
     }
-});
+);
 
 // Watch selected customer id and fetch full details to populate the right column form
 watch(
@@ -1154,7 +1177,11 @@ const createNewOrder = async ({ silent = false, force = false } = {}) => {
     if (isProcessing.value && !force) return;
     if (orders.value.length >= MAX_WAITING_ORDERS) {
         if (!silent) {
-            addNotification({ title: 'Giới hạn hóa đơn chờ', subtitle: `Backend hiện chỉ cho mở tối đa ${MAX_WAITING_ORDERS} hóa đơn chờ cùng lúc.`, color: 'warning' });
+            addNotification({
+                title: 'Giới hạn hóa đơn chờ',
+                subtitle: `Backend hiện chỉ cho mở tối đa ${MAX_WAITING_ORDERS} hóa đơn chờ cùng lúc.`,
+                color: 'warning'
+            });
         }
         return;
     }
@@ -1216,7 +1243,6 @@ const onAddProduct = async (product) => {
         } else {
             addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm vào giỏ hàng', color: 'success' });
         }
-
     } catch (e) {
         addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK, color: 'error' });
     } finally {
@@ -1298,9 +1324,10 @@ const decorateVoucher = (v, order = selectedOrder.value) => {
     const code = v.ma || v.maPhieu;
     if (code) text = `${code} - ${text}`;
     const type = String(v.loaiPhieu || '').toUpperCase();
-    const discount = (type === 'PHAN_TRAM' || type === 'PERCENT')
-        ? `(Giảm ${v.phanTramGiamGia || 0}%)`
-        : `(Giảm ${new Intl.NumberFormat('vi-VN').format(v.soTienGiam || 0)}đ)`;
+    const discount =
+        type === 'PHAN_TRAM' || type === 'PERCENT'
+            ? `(Giảm ${v.phanTramGiamGia || 0}%)`
+            : `(Giảm ${new Intl.NumberFormat('vi-VN').format(v.soTienGiam || 0)}đ)`;
 
     // Disable voucher if order total doesn't meet the minimum required amount
     const baseAmount = Number(order?.tongTien || 0);
@@ -1320,7 +1347,7 @@ const refreshBestVoucher = async (order = selectedOrder.value, autoApply = true)
             dichVuDonHang.getVouchers(order.tongTien || 0),
             dichVuDonHang.getBestVoucher(order.id)
         ]);
-        const decorated = (list || []).map(v => decorateVoucher(v, order));
+        const decorated = (list || []).map((v) => decorateVoucher(v, order));
         if (refreshSerial !== voucherRefreshSerial) return;
         vouchers.value = decorated;
 
@@ -1406,7 +1433,8 @@ const handleVnPayCanceled = (subtitle = 'Cửa sổ VNPay đã đóng trước k
 };
 
 const isVnPayCallbackSuccess = (params = {}) =>
-    params.vnp_ResponseCode === '00' && (!params.vnp_TransactionStatus || params.vnp_TransactionStatus === '00' || params.vnp_TransactionStatus === '0');
+    params.vnp_ResponseCode === '00' &&
+    (!params.vnp_TransactionStatus || params.vnp_TransactionStatus === '00' || params.vnp_TransactionStatus === '0');
 
 const isVnPayVerifySuccess = (verifyResult, params = {}) =>
     Boolean(verifyResult?.success) && Number(verifyResult?.status || 200) === 200 && isVnPayCallbackSuccess(params);
@@ -1414,36 +1442,35 @@ const isVnPayVerifySuccess = (verifyResult, params = {}) =>
 const buildCheckoutPayload = (order, overrides = {}) => {
     let compiledNote = checkoutData.value.note || '';
 
-    const p = provincesShip.value.find(x => x.code === recipientProvince.value);
-    const d = districtsShip.value.find(x => x.code === recipientDistrict.value);
-    const w = wardsShip.value.find(x => x.code === recipientWard.value);
+    const p = provincesShip.value.find((x) => x.code === recipientProvince.value);
+    const d = districtsShip.value.find((x) => x.code === recipientDistrict.value);
+    const w = wardsShip.value.find((x) => x.code === recipientWard.value);
 
-    const shippingDetails = isGiaoHang.value ? [
-        `Người nhận: ${recipientName.value || ''}`,
-        `SĐT: ${recipientPhone.value || ''}`,
-        `Địa chỉ: ${recipientAddressDetail.value || ''}`,
-        w ? w.name : '',
-        d ? d.name : '',
-        p ? p.name : ''
-    ].filter(Boolean).join(', ') : '';
+    const shippingDetails = isGiaoHang.value
+        ? [
+              `Người nhận: ${recipientName.value || ''}`,
+              `SĐT: ${recipientPhone.value || ''}`,
+              `Địa chỉ: ${recipientAddressDetail.value || ''}`,
+              w ? w.name : '',
+              d ? d.name : '',
+              p ? p.name : ''
+          ]
+              .filter(Boolean)
+              .join(', ')
+        : '';
 
     if (shippingDetails) {
-        compiledNote = compiledNote
-            ? `${compiledNote} | Ship: ${shippingDetails}`
-            : `Ship: ${shippingDetails}`;
+        compiledNote = compiledNote ? `${compiledNote} | Ship: ${shippingDetails}` : `Ship: ${shippingDetails}`;
     }
 
-    const fullShippingAddressStr = isGiaoHang.value ? [
-        recipientAddressDetail.value || '',
-        w ? w.name : '',
-        d ? d.name : '',
-        p ? p.name : ''
-    ].filter(Boolean).join(', ') : null;
+    const fullShippingAddressStr = isGiaoHang.value
+        ? [recipientAddressDetail.value || '', w ? w.name : '', d ? d.name : '', p ? p.name : ''].filter(Boolean).join(', ')
+        : null;
 
     return {
         idKhachHang: order?.idKhachHang || null,
-        tenKhachHang: order?.tenKhachHang || (isGiaoHang.value ? (recipientName.value || null) : null),
-        sdtKhachHang: order?.sdtKhachHang || (isGiaoHang.value ? (recipientPhone.value || null) : null),
+        tenKhachHang: order?.tenKhachHang || (isGiaoHang.value ? recipientName.value || null : null),
+        sdtKhachHang: order?.sdtKhachHang || (isGiaoHang.value ? recipientPhone.value || null : null),
         emailKhachHang: order?.emailKhachHang || null,
         idPhieuGiamGia: order?.idPhieuGiamGia || null,
         tongTien: order?.tongTien || 0,
@@ -1453,10 +1480,10 @@ const buildCheckoutPayload = (order, overrides = {}) => {
         deliveryMethod: isGiaoHang.value ? DELIVERY_METHODS.SHIPPING : DELIVERY_METHODS.TAKEAWAY,
         loaiDon: isGiaoHang.value ? 'GIAO_HANG' : 'TAI_QUAY',
         ghiChu: compiledNote,
-        tenNguoiNhan: isGiaoHang.value ? (recipientName.value || order?.tenKhachHang || null) : null,
-        sdtNguoiNhan: isGiaoHang.value ? (recipientPhone.value || order?.sdtKhachHang || null) : null,
+        tenNguoiNhan: isGiaoHang.value ? recipientName.value || order?.tenKhachHang || null : null,
+        sdtNguoiNhan: isGiaoHang.value ? recipientPhone.value || order?.sdtKhachHang || null : null,
         diaChiNguoiNhan: fullShippingAddressStr,
-        diaChiChiTiet: isGiaoHang.value ? (recipientAddressDetail.value || null) : null,
+        diaChiChiTiet: isGiaoHang.value ? recipientAddressDetail.value || null : null,
         tinh: isGiaoHang.value ? (p ? p.name : null) : null,
         thanhPho: isGiaoHang.value ? (d ? d.name : null) : null,
         phuongXa: isGiaoHang.value ? (w ? w.name : null) : null,
@@ -1469,22 +1496,6 @@ const buildCheckoutPayload = (order, overrides = {}) => {
 };
 
 const hasPaymentAmount = (payload) => Number(payload?.tienMat || 0) > 0 || Number(payload?.tienChuyenKhoan || 0) > 0;
-
-const buildCheckoutPayloadWithoutPaymentRecord = (payload) => {
-    const paymentNote = [
-        payload?.ghiChu,
-        Number(payload?.tienMat || 0) > 0 ? `Tiền mặt: ${payload.tienMat}` : '',
-        Number(payload?.tienChuyenKhoan || 0) > 0 ? `Chuyển khoản/VNPay: ${payload.tienChuyenKhoan}` : '',
-        payload?.maGiaoDich ? `Mã GD: ${payload.maGiaoDich}` : ''
-    ].filter(Boolean).join(' | ');
-
-    return {
-        ...payload,
-        ghiChu: paymentNote,
-        tienMat: null,
-        tienChuyenKhoan: null
-    };
-};
 
 const completePaidOrder = async (orderId) => {
     const index = orders.value.findIndex((order) => order.id === orderId);
@@ -1538,7 +1549,12 @@ const onPrintInvoice = () => {
     );
 };
 
-const submitCheckout = async ({ order = selectedOrder.value, payload, successMessage = MESSAGES.SUCCESS.PAYMENT, showReceiptAfter = true }) => {
+const submitCheckout = async ({
+    order = selectedOrder.value,
+    payload,
+    successMessage = MESSAGES.SUCCESS.PAYMENT,
+    showReceiptAfter = true
+}) => {
     if (!order?.id) {
         throw new Error('Không tìm thấy hóa đơn đang thanh toán.');
     }
@@ -1546,9 +1562,7 @@ const submitCheckout = async ({ order = selectedOrder.value, payload, successMes
         throw new Error('Hóa đơn chưa có sản phẩm.');
     }
 
-    const requestPayload = BYPASS_PAYMENT_RECORD_INSERT && hasPaymentAmount(payload)
-        ? buildCheckoutPayloadWithoutPaymentRecord(payload)
-        : payload;
+    const requestPayload = payload;
 
     const orderSnapshot = JSON.parse(JSON.stringify(order));
     orderSnapshot.tongTienSauGiam = finalCollectAmount.value;
@@ -1643,18 +1657,24 @@ const startVnPayFlow = async () => {
             throw new Error('Không lấy được URL thanh toán từ server');
         }
 
-        sessionStorage.setItem(VNPAY_PENDING_KEY, JSON.stringify({
-            orderId: selectedOrder.value.id,
-            maHoaDon: selectedOrder.value.maHoaDon,
-            amount: selectedOrder.value.tongTienSauGiam,
-            transactionId: orderId
-        }));
+        sessionStorage.setItem(
+            VNPAY_PENDING_KEY,
+            JSON.stringify({
+                orderId: selectedOrder.value.id,
+                maHoaDon: selectedOrder.value.maHoaDon,
+                amount: selectedOrder.value.tongTienSauGiam,
+                transactionId: orderId
+            })
+        );
 
         vnpayDialog.value = {
             show: true,
             loading: false,
             verified: false,
-            statusText: checkoutData.value.vnpayMethod === 'GATEWAY' ? 'Đang chờ khách hàng thanh toán qua cổng VNPay...' : 'Đang chờ khách hàng quét mã và thanh toán...',
+            statusText:
+                checkoutData.value.vnpayMethod === 'GATEWAY'
+                    ? 'Đang chờ khách hàng thanh toán qua cổng VNPay...'
+                    : 'Đang chờ khách hàng quét mã và thanh toán...',
             orderId: orderId,
             amount: finalCollectAmount.value,
             paymentUrl: data.paymentUrl,
@@ -1698,7 +1718,6 @@ const startVnPayFlow = async () => {
                 console.warn('Lỗi khi kiểm tra trạng thái VNPay:', e);
             }
         }, 3000);
-
     } catch (error) {
         console.error('VNPay flow error:', error);
         const errorMsg = getErrorMessage(error, 'Không thể khởi tạo giao dịch VNPay');
@@ -1762,7 +1781,7 @@ const checkBetterVoucherBeforeCheckout = async () => {
         let currentVoucherObj = null;
 
         if (currentVoucherId) {
-            currentVoucherObj = availableVouchers.find(v => String(v.id) === String(currentVoucherId)) || order.phieuGiamGia || null;
+            currentVoucherObj = availableVouchers.find((v) => String(v.id) === String(currentVoucherId)) || order.phieuGiamGia || null;
             if (currentVoucherObj) {
                 currentDiscount = getVoucherDiscountValue(currentVoucherObj, total);
             } else {
@@ -1854,7 +1873,11 @@ const proceedActualCheckout = async () => {
                 confirmDialog.value.show = false;
             } catch (e) {
                 if (e.message !== 'RELOAD_REQUIRED') {
-                    addNotification({ title: 'Thanh toán thất bại', subtitle: getErrorMessage(e, MESSAGES.ERROR.PAYMENT_FAILED), color: 'error' });
+                    addNotification({
+                        title: 'Thanh toán thất bại',
+                        subtitle: getErrorMessage(e, MESSAGES.ERROR.PAYMENT_FAILED),
+                        color: 'error'
+                    });
                 }
             } finally {
                 isProcessing.value = false;
@@ -1872,7 +1895,7 @@ const updateOrderInList = (updated) => {
     clampActiveOrderIndex();
 
     if (normalized.listsHoaDonChiTiet && Array.isArray(normalized.listsHoaDonChiTiet)) {
-        normalized.listsHoaDonChiTiet.forEach(item => {
+        normalized.listsHoaDonChiTiet.forEach((item) => {
             if (item.idChiTietSanPham && item.soLuongTon !== undefined && item.soLuongTon !== null) {
                 banHangStore.updateProductStock(item.idChiTietSanPham, item.soLuongTon);
             }
@@ -1938,8 +1961,6 @@ const handleVnPayCallbackFromUrl = async () => {
     }
 };
 
-
-
 const formatNumberWithDots = (val) => {
     if (val === undefined || val === null || val === '') return '';
     const clean = String(val).replace(/\D/g, '');
@@ -1967,37 +1988,47 @@ const formatDateTime = (dateStr) => {
             <!-- Header section containing title and tabs -->
             <header class="pos-header-row d-flex align-center justify-space-between">
                 <div class="d-flex align-center ga-4">
-                    <OrderTabs :orders="orders" :active-index="activeOrderIndex"
-                        @select="(idx) => (activeOrderIndex = idx)" @create="createNewOrder" @close="closeOrder" />
+                    <OrderTabs
+                        :orders="orders"
+                        :active-index="activeOrderIndex"
+                        @select="(idx) => (activeOrderIndex = idx)"
+                        @create="createNewOrder"
+                        @close="closeOrder"
+                    />
                 </div>
             </header>
 
             <!-- Main Workspace Grid -->
             <v-row v-if="selectedOrder" class="pos-grid">
                 <!-- Left Column (8 cols out of 12 on large, 7 cols on medium) -->
-                <v-col cols="12" md="7" lg="8" class="h-100 d-flex flex-column ga-4 pr-md-2" style="min-height: 0;">
+                <v-col cols="12" md="7" lg="8" class="h-100 d-flex flex-column ga-4 pr-md-2" style="min-height: 0">
                     <!-- Sản phẩm Card -->
-                    <v-card class="pos-card pa-4 d-flex flex-column flex-grow-1"
-                        style="overflow: visible !important; z-index: 15 !important; min-height: 0;">
-
+                    <v-card
+                        class="pos-card pa-4 d-flex flex-column flex-grow-1"
+                        style="overflow: visible !important; z-index: 15 !important; min-height: 0"
+                    >
                         <!-- Product Picker Block (Nhúng Component Mới) -->
                         <ProductPicker :active-order="selectedOrder" @add-product="onAddProduct" />
 
                         <!-- Cart list rendering -->
-                        <div class="cart-container-box rounded-lg overflow-y-auto flex-grow-1 d-flex flex-column"
-                            style="min-height: 200px; background-color: #ffffff !important;">
-                            <CartTable v-if="selectedOrder?.listsHoaDonChiTiet?.length"
-                                :items="selectedOrder.listsHoaDonChiTiet" @update-qty="onUpdateQty"
-                                @remove="onRemoveItem" />
+                        <div
+                            class="cart-container-box rounded-lg overflow-y-auto flex-grow-1 d-flex flex-column"
+                            style="min-height: 200px; background-color: #ffffff !important"
+                        >
+                            <CartTable
+                                v-if="selectedOrder?.listsHoaDonChiTiet?.length"
+                                :items="selectedOrder.listsHoaDonChiTiet"
+                                @update-qty="onUpdateQty"
+                                @remove="onRemoveItem"
+                            />
 
                             <!-- Empty Cart State -->
-                            <div v-else class="d-flex flex-column align-center justify-center h-100"
-                                style="background-color: #ffffff;">
+                            <div v-else class="d-flex flex-column align-center justify-center h-100" style="background-color: #ffffff">
                                 <div class="mb-2">
-                                    <v-icon size="40" style="color: #cbd5e1 !important;">mdi-inbox-outline</v-icon>
+                                    <v-icon size="40" style="color: #cbd5e1 !important">mdi-inbox-outline</v-icon>
                                 </div>
-                                <div class="font-weight-medium"
-                                    style="font-size: 13px !important; color: #94a3b8 !important;">Giỏ hàng trống
+                                <div class="font-weight-medium" style="font-size: 13px !important; color: #94a3b8 !important">
+                                    Giỏ hàng trống
                                 </div>
                             </div>
                         </div>
@@ -2005,43 +2036,71 @@ const formatDateTime = (dateStr) => {
                 </v-col>
 
                 <!-- Right Column (4 cols out of 12 on large, 5 cols on medium) -->
-                <v-col cols="12" md="5" lg="4" class="h-100 d-flex flex-column ga-4 pl-md-2 mt-4 mt-md-0 overflow-y-auto"
-                    style="min-height: 0;">
+                <v-col
+                    cols="12"
+                    md="5"
+                    lg="4"
+                    class="h-100 d-flex flex-column ga-4 pl-md-2 mt-4 mt-md-0 overflow-y-auto"
+                    style="min-height: 0"
+                >
                     <!-- Khách hàng và Nhận hàng Card -->
-                    <CustomerAndShippingPanel :order="selectedOrder" :is-giao-hang="isGiaoHang" class="flex-shrink-0"
-                        :initial-customer-form="customerForm" :initial-shipping="{
+                    <CustomerAndShippingPanel
+                        :order="selectedOrder"
+                        :is-giao-hang="isGiaoHang"
+                        class="flex-shrink-0"
+                        :initial-customer-form="customerForm"
+                        :initial-shipping="{
                             name: recipientName,
                             phone: recipientPhone,
                             detail: recipientAddressDetail,
                             province: recipientProvince,
                             district: recipientDistrict,
                             ward: recipientWard
-                        }" @remove-customer="onRemoveCustomer" @set-customer="onSelectSuggestedCustomer"
+                        }"
+                        @remove-customer="onRemoveCustomer"
+                        @set-customer="onSelectSuggestedCustomer"
                         @open-quick-add="handleOpenQuickAdd"
-                        @update:customer-form="onCustomerFormUpdate" @update:shipping="onShippingPanelUpdate" />
+                        @update:customer-form="onCustomerFormUpdate"
+                        @update:shipping="onShippingPanelUpdate"
+                    />
 
                     <!-- Pricing/Voucher Details (Moved from left column) -->
-                    <OrderSummaryPanel v-model:isGiaoHang="isGiaoHang" :vouchers="vouchers" class="flex-shrink-0"
+                    <OrderSummaryPanel
+                        v-model:isGiaoHang="isGiaoHang"
+                        :vouchers="vouchers"
+                        class="flex-shrink-0"
                         :selected-voucher-id="selectedOrder?.idPhieuGiamGia"
                         :applied-voucher="selectedOrder?.phieuGiamGia"
                         :voucher-suggestion-text="voucherSuggestionText"
                         :better-voucher-suggestion-text="selectedOrder?.betterVoucherSuggestionText || ''"
-                        :total-raw-amount="totalRawAmount" :voucher-base-amount="cartSubtotalAmount"
+                        :total-raw-amount="totalRawAmount"
+                        :voucher-base-amount="cartSubtotalAmount"
                         :product-discount-amount="productDiscountAmount"
                         :voucher-discount-amount="discountAmount"
                         :total-discount-amount="totalDiscountAmount"
-                        :final-collect-amount="finalCollectAmount" v-model:shippingFee="shippingFee"
-                        :shipping-fee-loading="shippingFeeLoading" :shipping-fee-source="shippingFeeSource"
-                        :shipping-fee-error="shippingFeeError" :is-free-ship="isFreeShip"
-                        @apply-voucher="onApplyVoucher" />
+                        :final-collect-amount="finalCollectAmount"
+                        v-model:shippingFee="shippingFee"
+                        :shipping-fee-loading="shippingFeeLoading"
+                        :shipping-fee-source="shippingFeeSource"
+                        :shipping-fee-error="shippingFeeError"
+                        :is-free-ship="isFreeShip"
+                        @apply-voucher="onApplyVoucher"
+                    />
 
                     <!-- Payment Card -->
-                    <PaymentPanel v-model:paymentMethod="checkoutData.paymentMethod" class="flex-shrink-0"
-                        v-model:receivedAmount="checkoutData.receivedAmount" :remaining-balance="remainingBalance"
-                        :change-amount="changeAmount" :is-processing="isProcessing"
+                    <PaymentPanel
+                        v-model:paymentMethod="checkoutData.paymentMethod"
+                        class="flex-shrink-0"
+                        v-model:receivedAmount="checkoutData.receivedAmount"
+                        :remaining-balance="remainingBalance"
+                        :change-amount="changeAmount"
+                        :is-processing="isProcessing"
                         :has-items="!!selectedOrder?.listsHoaDonChiTiet?.length"
-                        :vnpay-method="checkoutData.vnpayMethod" :vnpay-dialog="vnpayDialog"
-                        @print-invoice="onPrintInvoice" @checkout="onCheckout" />
+                        :vnpay-method="checkoutData.vnpayMethod"
+                        :vnpay-dialog="vnpayDialog"
+                        @print-invoice="onPrintInvoice"
+                        @checkout="onCheckout"
+                    />
                 </v-col>
             </v-row>
 
@@ -2055,38 +2114,48 @@ const formatDateTime = (dateStr) => {
                 <v-icon size="56" color="grey-lighten-1">mdi-receipt-text-outline</v-icon>
                 <div class="text-subtitle-1 font-weight-bold mt-3">Chưa có hóa đơn chờ</div>
                 <div class="text-body-2 text-grey-darken-1 mt-1">Tạo hóa đơn mới để bắt đầu bán hàng tại quầy.</div>
-                <v-btn color="primary" class="mt-4 rounded-lg" :loading="isProcessing" @click="createNewOrder">
-                    Tạo hóa đơn
-                </v-btn>
+                <v-btn color="primary" class="mt-4 rounded-lg" :loading="isProcessing" @click="createNewOrder"> Tạo hóa đơn </v-btn>
             </div>
         </div>
 
         <!-- VNPay Dialogs -->
-        <VnPayDialogs v-model:vnpayDialog="vnpayDialog" v-model:vnpayChoiceDialog="vnpayChoiceDialog"
-            :vnpay-method="checkoutData.vnpayMethod" @proceed-choice="proceedVnPayChoice"
-            @confirm-manual="onConfirmVnPayManual" @retry-qr="startVnPayFlow" @cancel="cancelVnPayFlow"
-            @open-gateway="() => { vnpayPopup = window.open(vnpayDialog.paymentUrl, 'vnpay', 'width=800,height=600'); }" />
+        <VnPayDialogs
+            v-model:vnpayDialog="vnpayDialog"
+            v-model:vnpayChoiceDialog="vnpayChoiceDialog"
+            :vnpay-method="checkoutData.vnpayMethod"
+            @proceed-choice="proceedVnPayChoice"
+            @confirm-manual="onConfirmVnPayManual"
+            @retry-qr="startVnPayFlow"
+            @cancel="cancelVnPayFlow"
+            @open-gateway="
+                () => {
+                    vnpayPopup = window.open(vnpayDialog.paymentUrl, 'vnpay', 'width=800,height=600');
+                }
+            "
+        />
 
         <!-- Scanner dialog -->
         <ScannerDialog v-model="showScanner" :scanner-element-id="scannerElementId" @stop="stopScanner" />
 
         <!-- Confirmation Dialog -->
-        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-            :color="confirmDialog.color" :confirm-color="confirmDialog.confirmColor" :loading="confirmDialog.loading"
-            @confirm="confirmDialog.action" />
-
-        <!-- Hóa đơn sau thanh toán -->
-        <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt"
-            @print="onPrintReceiptInvoice" />
-
-        <!-- Modal Thêm Nhanh Khách Hàng -->
-        <QuickAddCustomerDialog
-            v-model="showQuickAddDialog"
-            :initial-data="quickAddInitialData"
-            @success="onQuickAddSuccess"
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :confirm-color="confirmDialog.confirmColor"
+            :loading="confirmDialog.loading"
+            @confirm="confirmDialog.action"
         />
 
-        <!-- Giao Ca Modal --> <!-- Tạm thời ẩn chức năng giao ca
+        <!-- Hóa đơn sau thanh toán -->
+        <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" @print="onPrintReceiptInvoice" />
+
+        <!-- Modal Thêm Nhanh Khách Hàng -->
+        <QuickAddCustomerDialog v-model="showQuickAddDialog" :initial-data="quickAddInitialData" @success="onQuickAddSuccess" />
+
+        <!-- Giao Ca Modal -->
+        <!-- Tạm thời ẩn chức năng giao ca
         <GiaoCaModal v-model="showGiaoCaModal" mode="open" @success="handleGiaoCaSuccess" /> 
         -->
     </v-container>

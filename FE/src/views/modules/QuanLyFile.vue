@@ -179,7 +179,9 @@ onMounted(() => {
         <!-- Files Grid -->
         <v-card class="premium-card">
             <div class="card-title-bar">
-                <span class="font-weight-bold text-dark text-uppercase" style="font-size: 13px; letter-spacing: 0.05em">Danh sách tệp tin</span>
+                <span class="font-weight-bold text-dark text-uppercase" style="font-size: 13px; letter-spacing: 0.05em"
+                    >Danh sách tệp tin</span
+                >
                 <v-icon color="slate-400">mdi-file-multiple</v-icon>
             </div>
             <v-card-text class="pa-6">

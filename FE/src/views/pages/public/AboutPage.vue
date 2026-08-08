@@ -10,7 +10,8 @@ onMounted(() => {
     window.scrollTo(0, 0);
     setSeoMeta({
         title: 'Giới Thiệu | AeroStride',
-        description: 'Khám phá câu chuyện thương hiệu AeroStride, sứ mệnh và hành trình mang đến những đôi giày thể thao đẳng cấp nhất cho người Việt.'
+        description:
+            'Khám phá câu chuyện thương hiệu AeroStride, sứ mệnh và hành trình mang đến những đôi giày thể thao đẳng cấp nhất cho người Việt.'
     });
 });
 </script>
@@ -33,11 +34,16 @@ onMounted(() => {
                     <h1 class="hero-title font-weight-black mb-4 animate-up delay-1">
                         BƯỚC CHÂN CỦA SỰ <span class="text-gradient">ĐAM MÊ</span>
                     </h1>
-                    <p class="hero-subtitle animate-up delay-2">
-                        Hành trình kiến tạo chuẩn mực giày thể thao mới tại Việt Nam.
-                    </p>
-                    <v-btn color="white" variant="outlined" size="x-large" rounded="pill"
-                        class="mt-8 animate-up delay-3 explore-btn" append-icon="mdi-arrow-down" @click="scrollToAbout">
+                    <p class="hero-subtitle animate-up delay-2">Hành trình kiến tạo chuẩn mực giày thể thao mới tại Việt Nam.</p>
+                    <v-btn
+                        color="white"
+                        variant="outlined"
+                        size="x-large"
+                        rounded="pill"
+                        class="mt-8 animate-up delay-3 explore-btn"
+                        append-icon="mdi-arrow-down"
+                        @click="scrollToAbout"
+                    >
                         KHÁM PHÁ CÂU CHUYỆN
                     </v-btn>
                 </div>
@@ -52,22 +58,22 @@ onMounted(() => {
                             <div class="subtitle-badge mb-4">VỀ CHÚNG TÔI</div>
                             <h2 class="text-h3 font-weight-black mb-6 text-black">AeroStride là ai?</h2>
                             <p class="text-body-1 text-grey-darken-2 mb-6 leading-relaxed">
-                                Được thành lập vào năm 2024, <strong class="text-black">AeroStride</strong> không chỉ là
-                                một thương hiệu bán lẻ giày thể thao, mà còn là nơi hội tụ của những tâm hồn đam mê dịch
-                                chuyển. Chúng tôi tin rằng mỗi bước đi đều mang một ý nghĩa riêng, và một đôi giày tốt
-                                sẽ là người bạn đồng hành hoàn hảo nhất.
+                                Được thành lập vào năm 2024, <strong class="text-black">AeroStride</strong> không chỉ là một thương hiệu bán
+                                lẻ giày thể thao, mà còn là nơi hội tụ của những tâm hồn đam mê dịch chuyển. Chúng tôi tin rằng mỗi bước đi
+                                đều mang một ý nghĩa riêng, và một đôi giày tốt sẽ là người bạn đồng hành hoàn hảo nhất.
                             </p>
                             <p class="text-body-1 text-grey-darken-2 leading-relaxed mb-6">
-                                Với cam kết <strong class="text-black">100% sản phẩm chính hãng</strong>, dịch vụ khách
-                                hàng vượt trội và không gian mua sắm hiện đại, AeroStride đang từng bước khẳng định vị
-                                thế dẫn đầu trong ngành bán lẻ đồ thể thao cao cấp.
+                                Với cam kết <strong class="text-black">100% sản phẩm chính hãng</strong>, dịch vụ khách hàng vượt trội và
+                                không gian mua sắm hiện đại, AeroStride đang từng bước khẳng định vị thế dẫn đầu trong ngành bán lẻ đồ thể
+                                thao cao cấp.
                             </p>
 
                             <div class="d-flex align-center ga-4 mt-8">
                                 <div class="founder-avatar">
                                     <v-img
                                         src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=200"
-                                        cover></v-img>
+                                        cover
+                                    ></v-img>
                                 </div>
                                 <div>
                                     <div class="font-weight-black text-black">Tấn Dũng</div>
@@ -80,17 +86,23 @@ onMounted(() => {
                                 <div class="img-wrapper img-1 hover-scale">
                                     <v-img
                                         src="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&q=80&w=800"
-                                        cover height="100%"></v-img>
+                                        cover
+                                        height="100%"
+                                    ></v-img>
                                 </div>
                                 <div class="img-wrapper img-2 hover-scale">
                                     <v-img
                                         src="https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&q=80&w=800"
-                                        cover height="100%"></v-img>
+                                        cover
+                                        height="100%"
+                                    ></v-img>
                                 </div>
                                 <div class="img-wrapper img-3 hover-scale">
                                     <v-img
                                         src="https://images.unsplash.com/photo-1514989940723-e8e51635b782?auto=format&fit=crop&q=80&w=800"
-                                        cover height="100%"></v-img>
+                                        cover
+                                        height="100%"
+                                    ></v-img>
                                 </div>
                             </div>
                         </v-col>
@@ -159,18 +171,30 @@ export default {
     data() {
         return {
             coreValues: [
-                { icon: 'mdi-shield-check-outline', title: 'Chất Lượng', desc: 'Chỉ cung cấp những sản phẩm chính hãng với chất lượng kiểm định khắt khe nhất.' },
-                { icon: 'mdi-lightning-bolt-outline', title: 'Tốc Độ', desc: 'Giao hàng nhanh chóng, hỗ trợ tức thì. Chúng tôi không để niềm đam mê của bạn phải chờ đợi.' },
-                { icon: 'mdi-heart-outline', title: 'Tận Tâm', desc: 'Dịch vụ chăm sóc khách hàng 24/7, luôn đặt sự hài lòng của bạn lên hàng đầu.' }
+                {
+                    icon: 'mdi-shield-check-outline',
+                    title: 'Chất Lượng',
+                    desc: 'Chỉ cung cấp những sản phẩm chính hãng với chất lượng kiểm định khắt khe nhất.'
+                },
+                {
+                    icon: 'mdi-lightning-bolt-outline',
+                    title: 'Tốc Độ',
+                    desc: 'Giao hàng nhanh chóng, hỗ trợ tức thì. Chúng tôi không để niềm đam mê của bạn phải chờ đợi.'
+                },
+                {
+                    icon: 'mdi-heart-outline',
+                    title: 'Tận Tâm',
+                    desc: 'Dịch vụ chăm sóc khách hàng 24/7, luôn đặt sự hài lòng của bạn lên hàng đầu.'
+                }
             ]
-        }
+        };
     },
     methods: {
         scrollToAbout() {
             document.getElementById('about-content').scrollIntoView({ behavior: 'smooth' });
         }
     }
-}
+};
 </script>
 
 <style scoped>
@@ -432,7 +456,9 @@ export default {
     border-radius: 24px;
     padding: 40px 32px;
     height: 100%;
-    box-shadow: 0 10px 25px -5px rgba(30, 37, 124, 0.04), 0 8px 10px -6px rgba(30, 37, 124, 0.04);
+    box-shadow:
+        0 10px 25px -5px rgba(30, 37, 124, 0.04),
+        0 8px 10px -6px rgba(30, 37, 124, 0.04);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;

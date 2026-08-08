@@ -3,7 +3,7 @@ import api from '../apiService';
 export const dichVuCart = {
     async syncCart(items) {
         const payload = {
-            items: items.map(i => ({
+            items: items.map((i) => ({
                 idChiTietSanPham: i.idChiTietSanPham,
                 soLuong: i.soLuong
             }))

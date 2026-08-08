@@ -21,7 +21,12 @@ const close = () => {
 
 <template>
     <!-- Scanner dialog -->
-    <v-dialog :model-value="modelValue" @update:model-value="(val) => emit('update:modelValue', val)" max-width="500" transition="dialog-bottom-transition">
+    <v-dialog
+        :model-value="modelValue"
+        @update:model-value="(val) => emit('update:modelValue', val)"
+        max-width="500"
+        transition="dialog-bottom-transition"
+    >
         <v-card class="rounded-lg pa-4">
             <div class="d-flex justify-space-between align-center mb-4">
                 <span class="text-h6 font-weight-bold">Quét mã sản phẩm</span>

@@ -11,7 +11,4 @@
  * @returns {string}
  */
 export const getBackendErrorMessage = (error, fallbackMessage = 'Thao tác thất bại') =>
-    error?.response?.data?.message ||
-    error?.response?.data?.errors?.[0]?.defaultMessage ||
-    error?.message ||
-    fallbackMessage;
+    error?.response?.data?.message || error?.response?.data?.errors?.[0]?.defaultMessage || error?.message || fallbackMessage;

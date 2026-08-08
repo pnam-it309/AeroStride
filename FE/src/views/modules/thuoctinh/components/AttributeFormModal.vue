@@ -14,6 +14,14 @@ const props = defineProps({
 const emit = defineEmits(['update:show', 'update:form', 'save']);
 
 import { getColorHexByName, getColorNameByHex } from '@/utils/colorDictionary';
+import { getNameRules } from '@/utils/validators';
+
+const nameRules = computed(() => {
+    if (props.selectedTab === 'sizes') {
+        return [(v) => !!v || 'Vui lòng nhập kích thước', (v) => /^[0-9]+$/.test(v) || 'Kích thước phải là số nguyên'];
+    }
+    return getNameRules(props.title);
+});
 
 const closeModal = () => emit('update:show', false);
 const handleSave = () => emit('save');
@@ -67,35 +75,65 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                     <v-row dense>
                         <v-col cols="12">
                             <div class="form-group mb-4">
-                                <label class="popover-label">Mã {{ title }} <span
-                                        class="text-lowercase text-slate-400">(Tự động)</span></label>
-                                <v-text-field :model-value="form.ma" readonly placeholder="Hệ thống tự tạo..."
-                                    variant="outlined" density="compact" hide-details maxlength="250"
-                                    class="modern-input bg-slate-50"></v-text-field>
+                                <label class="popover-label"
+                                    >Mã {{ title }} <span class="text-lowercase text-slate-400">(Tự động)</span></label
+                                >
+                                <v-text-field
+                                    :model-value="form.ma"
+                                    readonly
+                                    placeholder="Hệ thống tự tạo..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    maxlength="250"
+                                    class="modern-input bg-slate-50"
+                                ></v-text-field>
                             </div>
 
                             <div class="form-group mb-4">
                                 <label class="popover-label">Tên {{ title }}</label>
-                                <v-text-field :model-value="form.ten"
-                                    @update:model-value="updateFormField('ten', selectedTab === 'sizes' ? String($event || '').replace(/[^0-9]/g, '') : $event)"
+                                <v-text-field
+                                    :model-value="form.ten"
+                                    @update:model-value="
+                                        updateFormField(
+                                            'ten',
+                                            selectedTab === 'sizes' ? String($event || '').replace(/[^0-9]/g, '') : $event
+                                        )
+                                    "
                                     placeholder="Nhập tên..."
-                                    variant="outlined" density="compact" hide-details autofocus maxlength="250"
-                                    class="modern-input" type="text" min="0"></v-text-field>
+                                    :rules="nameRules"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details="auto"
+                                    autofocus
+                                    maxlength="250"
+                                    class="modern-input"
+                                    type="text"
+                                    min="0"
+                                ></v-text-field>
                             </div>
 
                             <!-- Color Specific -->
                             <div v-if="selectedTab === 'colors'" class="form-group mb-4">
                                 <label class="popover-label">Mã màu (Hex)</label>
                                 <div class="d-flex align-center ga-2">
-                                    <v-text-field :model-value="form.maMauHex"
-                                        @update:model-value="updateFormField('maMauHex', $event)" variant="outlined"
-                                        density="compact" hide-details class="modern-input flex-grow-1" maxlength="250"></v-text-field>
+                                    <v-text-field
+                                        :model-value="form.maMauHex"
+                                        @update:model-value="updateFormField('maMauHex', $event)"
+                                        variant="outlined"
+                                        density="compact"
+                                        hide-details
+                                        class="modern-input flex-grow-1"
+                                        maxlength="250"
+                                    ></v-text-field>
                                     <div class="color-preview-wrapper elevation-1">
-                                        <input type="color" :value="form.maMauHex"
+                                        <input
+                                            type="color"
+                                            :value="form.maMauHex"
                                             @input="updateFormField('maMauHex', $event.target.value)"
-                                            class="color-picker-input-hidden" />
-                                        <div class="color-preview-circle" :style="{ backgroundColor: form.maMauHex }">
-                                        </div>
+                                            class="color-picker-input-hidden"
+                                        />
+                                        <div class="color-preview-circle" :style="{ backgroundColor: form.maMauHex }"></div>
                                     </div>
                                 </div>
                             </div>
@@ -103,18 +141,32 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                             <!-- Size Specific -->
                             <div v-if="selectedTab === 'sizes'" class="form-group mb-4">
                                 <label class="popover-label">Giá trị (Số)</label>
-                                <v-text-field :model-value="form.giaTriKichThuoc"
-                                    @update:model-value="updateFormField('giaTriKichThuoc', String($event || '').replace(/[^0-9]/g, ''))" type="number"
-                                    placeholder="Ví dụ: 42" variant="outlined" density="compact" hide-details min="0" maxlength="250"
-                                    class="modern-input"></v-text-field>
+                                <v-text-field
+                                    :model-value="form.giaTriKichThuoc"
+                                    @update:model-value="updateFormField('giaTriKichThuoc', String($event || '').replace(/[^0-9]/g, ''))"
+                                    type="number"
+                                    placeholder="Ví dụ: 42"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    min="0"
+                                    maxlength="250"
+                                    class="modern-input"
+                                ></v-text-field>
                             </div>
 
                             <div class="form-group">
                                 <label class="popover-label">Mô tả</label>
-                                <v-textarea :model-value="form.moTa"
+                                <v-textarea
+                                    :model-value="form.moTa"
                                     @update:model-value="updateFormField('moTa', $event)"
-                                    placeholder="Nhập mô tả thêm..." variant="outlined" rows="2" density="compact"
-                                    class="modern-input" hide-details></v-textarea>
+                                    placeholder="Nhập mô tả thêm..."
+                                    variant="outlined"
+                                    rows="2"
+                                    density="compact"
+                                    class="modern-input"
+                                    hide-details
+                                ></v-textarea>
                             </div>
                         </v-col>
                     </v-row>
@@ -123,8 +175,7 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
 
             <div class="px-6 py-4 bg-slate-50 border-t d-flex justify-end ga-2">
                 <v-btn variant="text" color="slate-600" class="text-none px-4" @click="closeModal"> Hủy </v-btn>
-                <v-btn color="primary" variant="flat" class="text-none px-6 elevation-1" @click="handleSave"
-                    :disabled="!form?.ten">
+                <v-btn color="primary" variant="flat" class="text-none px-6 elevation-1" @click="handleSave" :disabled="!form?.ten">
                     <template #prepend>
                         <DeviceFloppyIcon size="16" />
                     </template>

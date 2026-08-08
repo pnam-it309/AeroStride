@@ -41,7 +41,7 @@ const selectedFilter = ref('all');
 
 const filteredReviews = computed(() => {
     if (selectedFilter.value === 'all') return reviews.value;
-    return reviews.value.filter(r => Math.floor(r.diemDanhGia || r.rating || 5) === Number(selectedFilter.value));
+    return reviews.value.filter((r) => Math.floor(r.diemDanhGia || r.rating || 5) === Number(selectedFilter.value));
 });
 
 // State cho modal đánh giá trực tiếp
@@ -129,7 +129,7 @@ const fetchReviews = async () => {
             let sum = 0;
 
             if (list.length > 0) {
-                list.forEach(r => {
+                list.forEach((r) => {
                     const score = Number(r.diemDanhGia || r.rating || 5);
                     if (score >= 1 && score <= 5) {
                         counts[Math.floor(score)] = (counts[Math.floor(score)] || 0) + 1;
@@ -148,7 +148,6 @@ const fetchReviews = async () => {
         reviewsLoading.value = false;
     }
 };
-
 
 const { setProductSeo } = useSeoMeta();
 
@@ -187,21 +186,17 @@ const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
-const isAbsoluteUrl = (v) => 
-    typeof v !== 'string' || 
-    /^(https?:)?\/\//i.test(v) || 
-    v.startsWith('data:') || 
-    v.startsWith('blob:') || 
+const isAbsoluteUrl = (v) =>
+    typeof v !== 'string' ||
+    /^(https?:)?\/\//i.test(v) ||
+    v.startsWith('data:') ||
+    v.startsWith('blob:') ||
     (v.startsWith('/') && !v.startsWith('/uploads/'));
 
 const isInvalidImage = (v) => {
     if (!v || typeof v !== 'string') return true;
     const lower = v.toLowerCase();
-    return (
-        lower.includes('via.placeholder.com') || 
-        lower.includes('placeholder.com') || 
-        lower.includes('dummyimage.com')
-    );
+    return lower.includes('via.placeholder.com') || lower.includes('placeholder.com') || lower.includes('dummyimage.com');
 };
 
 const resolveImg = (v) => {
@@ -213,7 +208,7 @@ const resolveImg = (v) => {
 
 const getValidImgUrl = (raw) => {
     const resolved = resolveImg(raw);
-    return (resolved && !isInvalidImage(resolved)) ? resolved : null;
+    return resolved && !isInvalidImage(resolved) ? resolved : null;
 };
 
 const handleImgError = (e) => {
@@ -237,22 +232,22 @@ watch(selectedColor, () => {
 const colorHexMap = computed(() => {
     const map = {};
     if (product.value?.variants) {
-        product.value.variants.forEach(v => {
+        product.value.variants.forEach((v) => {
             if (v.tenMauSac && v.maMauHex) {
                 map[v.tenMauSac] = v.maMauHex;
             }
         });
     }
     const defaultHex = {
-        'Đen': '#0B1329',
-        'Trắng': '#FFFFFF',
-        'Đỏ': '#E53935',
+        Đen: '#0B1329',
+        Trắng: '#FFFFFF',
+        Đỏ: '#E53935',
         'Xanh dương': '#1976D2',
         'Xanh lá': '#4CAF50',
-        'Vàng': '#FFEB3B',
-        'Xám': '#9E9E9E',
-        'Hồng': '#E91E63',
-        'Cam': '#FF9800'
+        Vàng: '#FFEB3B',
+        Xám: '#9E9E9E',
+        Hồng: '#E91E63',
+        Cam: '#FF9800'
     };
     return { ...defaultHex, ...map };
 });
@@ -292,7 +287,7 @@ const oldPrice = computed(() => {
 });
 
 const formattedCurrentPrice = computed(() => formatPrice(currentPrice.value));
-const formattedOldPrice = computed(() => oldPrice.value ? formatPrice(oldPrice.value) : null);
+const formattedOldPrice = computed(() => (oldPrice.value ? formatPrice(oldPrice.value) : null));
 
 const deliveryDateText = computed(() => {
     const today = new Date();
@@ -300,13 +295,13 @@ const deliveryDateText = computed(() => {
     fromDate.setDate(today.getDate() + 2);
     const toDate = new Date(today);
     toDate.setDate(today.getDate() + 4);
-    
+
     const formatDayMonth = (date) => {
         const d = String(date.getDate()).padStart(2, '0');
         const m = String(date.getMonth() + 1).padStart(2, '0');
         return `${d}/${m}`;
     };
-    
+
     return `Còn hàng — Giao dự kiến ${formatDayMonth(fromDate)}–${formatDayMonth(toDate)}`;
 });
 
@@ -325,7 +320,10 @@ const buyNow = async () => {
 
     const variant = selectedVariant.value;
     if (!variant || variant.soLuong <= 0) {
-        showStockAlert('Sản phẩm đã hết hàng', 'Phiên bản màu sắc và kích thước này hiện đã hết hàng trong kho. Vui lòng chọn phiên bản khác.');
+        showStockAlert(
+            'Sản phẩm đã hết hàng',
+            'Phiên bản màu sắc và kích thước này hiện đã hết hàng trong kho. Vui lòng chọn phiên bản khác.'
+        );
         return;
     }
 
@@ -390,9 +388,9 @@ const allImages = computed(() => {
 const colorVariantPreviews = computed(() => {
     if (!product.value?.variants) return [];
     const map = new Map();
-    product.value.variants.forEach(v => {
+    product.value.variants.forEach((v) => {
         if (v.tenMauSac && !map.has(v.tenMauSac)) {
-            const rawImg = v.hinhAnh || (v.images && v.images.length > 0 ? (v.images[0].duongDanAnh || v.images[0].hinhAnh) : null);
+            const rawImg = v.hinhAnh || (v.images && v.images.length > 0 ? v.images[0].duongDanAnh || v.images[0].hinhAnh : null);
             const img = getValidImgUrl(rawImg) || DEFAULT_SHOE_IMAGE;
             map.set(v.tenMauSac, { color: v.tenMauSac, img: img });
         }
@@ -403,18 +401,22 @@ const colorVariantPreviews = computed(() => {
 const onSelectColorPreview = (cv) => {
     selectedColor.value = cv.color;
     if (cv.img) {
-        const idx = allImages.value.findIndex(img => img.duongDanAnh === cv.img);
+        const idx = allImages.value.findIndex((img) => img.duongDanAnh === cv.img);
         if (idx !== -1) {
             activeSlide.value = idx;
         }
     }
 };
 
-watch(allImages, (newImages) => {
-    if (newImages && newImages.length > 0) {
-        activeSlide.value = 0;
-    }
-}, { immediate: true });
+watch(
+    allImages,
+    (newImages) => {
+        if (newImages && newImages.length > 0) {
+            activeSlide.value = 0;
+        }
+    },
+    { immediate: true }
+);
 
 // Tìm variant phù hợp với color và size đã chọn
 const selectedVariant = computed(() => {
@@ -511,10 +513,7 @@ const onQuantityBlur = (e) => {
 
 const handleIncrement = () => {
     if (maxQuantity.value > 0 && selectedQuantity.value >= maxQuantity.value) {
-        showStockAlert(
-            'Vượt quá số lượng tồn kho',
-            `Sản phẩm này hiện chỉ còn tối đa ${maxQuantity.value} sản phẩm trong kho.`
-        );
+        showStockAlert('Vượt quá số lượng tồn kho', `Sản phẩm này hiện chỉ còn tối đa ${maxQuantity.value} sản phẩm trong kho.`);
         return;
     }
     selectedQuantity.value++;
@@ -536,7 +535,10 @@ const addToCart = async () => {
 
     const variant = selectedVariant.value;
     if (!variant || variant.soLuong <= 0) {
-        showStockAlert('Sản phẩm đã hết hàng', 'Phiên bản màu sắc và kích thước này hiện đã hết hàng trong kho. Vui lòng chọn phiên bản khác.');
+        showStockAlert(
+            'Sản phẩm đã hết hàng',
+            'Phiên bản màu sắc và kích thước này hiện đã hết hàng trong kho. Vui lòng chọn phiên bản khác.'
+        );
         return;
     }
 
@@ -586,7 +588,7 @@ const toggleFavorite = () => {
         }
         toastStore.showToast('Đã thêm vào danh sách yêu thích', 'success');
     } else {
-        favorites = favorites.filter(id => id !== product.value.id);
+        favorites = favorites.filter((id) => id !== product.value.id);
         toastStore.showToast('Đã huỷ yêu thích', 'info');
     }
     localStorage.setItem('aerostride_favorites', JSON.stringify(favorites));
@@ -607,8 +609,10 @@ const toggleFavorite = () => {
                 <v-col cols="12" md="6" lg="5" class="image-gallery">
                     <div class="product-gallery-wrapper">
                         <!-- Main Image Box -->
-                        <div class="rounded-xl bg-grey-lighten-4 mb-4 elevation-1 position-relative overflow-hidden"
-                            style="aspect-ratio: 1; max-height: 480px; border: 1px solid #e2e8f0;">
+                        <div
+                            class="rounded-xl bg-grey-lighten-4 mb-4 elevation-1 position-relative overflow-hidden"
+                            style="aspect-ratio: 1; max-height: 480px; border: 1px solid #e2e8f0"
+                        >
                             <!-- Floating Favorite Button -->
                             <v-btn
                                 icon
@@ -636,10 +640,10 @@ const toggleFavorite = () => {
 
                             <template v-else>
                                 <div class="d-flex flex-column align-center justify-center fill-height text-center pa-6">
-                                    <div class="mb-3 pa-4 rounded-circle" style="background: #f0f4ff;">
-                                        <v-icon size="48" style="color: #1e257c;">mdi-shoe-sneaker</v-icon>
+                                    <div class="mb-3 pa-4 rounded-circle" style="background: #f0f4ff">
+                                        <v-icon size="48" style="color: #1e257c">mdi-shoe-sneaker</v-icon>
                                     </div>
-                                    <h4 class="text-subtitle-1 font-weight-bold mb-1" style="color: #1e257c;">{{ product.tenSanPham }}</h4>
+                                    <h4 class="text-subtitle-1 font-weight-bold mb-1" style="color: #1e257c">{{ product.tenSanPham }}</h4>
                                     <p class="text-caption text-grey">Chưa có hình ảnh trực quan</p>
                                 </div>
                             </template>
@@ -648,8 +652,8 @@ const toggleFavorite = () => {
                         <!-- Multi-Slot Thumbnail Strip -->
                         <div class="thumbnail-strip-section mb-4">
                             <div class="d-flex align-center justify-space-between mb-2">
-                                <span class="text-caption font-weight-bold" style="color: #1e257c;">
-                                    <v-icon size="14" class="mr-1" style="color: #1e257c;">mdi-view-grid-outline</v-icon>
+                                <span class="text-caption font-weight-bold" style="color: #1e257c">
+                                    <v-icon size="14" class="mr-1" style="color: #1e257c">mdi-view-grid-outline</v-icon>
                                     Bộ sưu tập hình ảnh ({{ allImages.length }} hình ảnh)
                                 </span>
                             </div>
@@ -657,10 +661,16 @@ const toggleFavorite = () => {
                             <v-row class="g-2">
                                 <template v-if="allImages.length > 0">
                                     <v-col v-for="(img, i) in allImages" :key="'img-' + i" cols="3" sm="2" class="mb-2">
-                                        <v-card class="rounded-lg overflow-hidden"
+                                        <v-card
+                                            class="rounded-lg overflow-hidden"
                                             :elevation="activeSlide === i ? 4 : 0"
-                                            :style="activeSlide === i ? 'border: 2px solid #1e257c; box-shadow: 0 4px 10px rgba(30, 37, 124, 0.25);' : 'border: 1px solid #e2e8f0; cursor: pointer;'"
-                                            @click="activeSlide = i">
+                                            :style="
+                                                activeSlide === i
+                                                    ? 'border: 2px solid #1e257c; box-shadow: 0 4px 10px rgba(30, 37, 124, 0.25);'
+                                                    : 'border: 1px solid #e2e8f0; cursor: pointer;'
+                                            "
+                                            @click="activeSlide = i"
+                                        >
                                             <v-img :src="img.duongDanAnh" cover class="aspect-square">
                                                 <template #placeholder>
                                                     <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
@@ -673,11 +683,21 @@ const toggleFavorite = () => {
                                 </template>
 
                                 <template v-if="allImages.length < 4">
-                                    <v-col v-for="(angleLabel, idx) in placeholderAngles.slice(allImages.length)" :key="'angle-' + idx" cols="3" sm="2" class="mb-2">
-                                        <v-card class="rounded-lg bg-grey-lighten-5 overflow-hidden d-flex flex-column align-center justify-center aspect-square text-center pa-1"
-                                            style="border: 1px dashed #cbd5e1; opacity: 0.85;">
+                                    <v-col
+                                        v-for="(angleLabel, idx) in placeholderAngles.slice(allImages.length)"
+                                        :key="'angle-' + idx"
+                                        cols="3"
+                                        sm="2"
+                                        class="mb-2"
+                                    >
+                                        <v-card
+                                            class="rounded-lg bg-grey-lighten-5 overflow-hidden d-flex flex-column align-center justify-center aspect-square text-center pa-1"
+                                            style="border: 1px dashed #cbd5e1; opacity: 0.85"
+                                        >
                                             <v-icon color="#1e257c" size="20" class="mb-1">mdi-camera-outline</v-icon>
-                                            <span style="font-size: 0.65rem; color: #64748b; font-weight: 600; line-height: 1;">{{ angleLabel }}</span>
+                                            <span style="font-size: 0.65rem; color: #64748b; font-weight: 600; line-height: 1">{{
+                                                angleLabel
+                                            }}</span>
                                         </v-card>
                                     </v-col>
                                 </template>
@@ -693,10 +713,10 @@ const toggleFavorite = () => {
                         <div class="product-brand-tag text-uppercase mb-2">
                             {{ product.tenThuongHieu || 'AEROSTRIDE' }}
                         </div>
-                        
+
                         <!-- Product Title -->
                         <h1 class="product-title-new mb-2">{{ product.tenSanPham }}</h1>
-                        
+
                         <!-- Ratings, Review & Sold Count -->
                         <div class="product-meta-row d-flex align-center gap-2 mb-6">
                             <template v-if="totalReviews > 0">
@@ -722,9 +742,7 @@ const toggleFavorite = () => {
                             <span v-if="discountPercent > 0 && formattedOldPrice" class="old-price-label-new">
                                 {{ formattedOldPrice }}
                             </span>
-                            <span v-if="discountPercent > 0" class="discount-badge-new">
-                                -{{ discountPercent }}%
-                            </span>
+                            <span v-if="discountPercent > 0" class="discount-badge-new"> -{{ discountPercent }}% </span>
                         </div>
 
                         <!-- Color Selection -->
@@ -736,17 +754,14 @@ const toggleFavorite = () => {
                                 </span>
                             </div>
                             <div class="d-flex flex-wrap ga-3">
-                                <div 
-                                    v-for="color in colors" 
-                                    :key="color" 
+                                <div
+                                    v-for="color in colors"
+                                    :key="color"
                                     class="color-dot-wrapper"
                                     :class="{ active: selectedColor === color }"
                                     @click="selectedColor = color"
                                 >
-                                    <div 
-                                        class="color-dot-inner" 
-                                        :style="{ backgroundColor: colorHexMap[color] || '#CCCCCC' }"
-                                    ></div>
+                                    <div class="color-dot-inner" :style="{ backgroundColor: colorHexMap[color] || '#CCCCCC' }"></div>
                                 </div>
                             </div>
                         </div>
@@ -761,12 +776,12 @@ const toggleFavorite = () => {
                                     </span>
                                 </div>
                             </div>
-                            
+
                             <div class="d-flex flex-wrap ga-2" v-if="sizes.length > 0">
-                                <div 
-                                    v-for="size in sizes" 
-                                    :key="size" 
-                                    class="size-box-item" 
+                                <div
+                                    v-for="size in sizes"
+                                    :key="size"
+                                    class="size-box-item"
                                     :class="{ active: selectedSize === size }"
                                     @click="selectedSize = size"
                                 >
@@ -785,36 +800,29 @@ const toggleFavorite = () => {
                             <div class="quantity-cart-row d-flex align-center gap-4 mb-4">
                                 <!-- Modern Rounded Quantity Selector -->
                                 <div class="quantity-selector-pill d-flex align-center">
-                                    <button 
-                                        class="qty-btn" 
-                                        :disabled="selectedQuantity <= 1" 
-                                        @click="selectedQuantity--"
-                                    >
+                                    <button class="qty-btn" :disabled="selectedQuantity <= 1" @click="selectedQuantity--">
                                         <v-icon size="14">mdi-minus</v-icon>
                                     </button>
-                                    <input 
-                                        type="text" 
-                                        inputmode="numeric" 
-                                        class="qty-input" 
-                                        :value="selectedQuantity" 
-                                        @keypress="onlyNumbers" 
-                                        @input="onQuantityInput" 
+                                    <input
+                                        type="text"
+                                        inputmode="numeric"
+                                        class="qty-input"
+                                        :value="selectedQuantity"
+                                        @keypress="onlyNumbers"
+                                        @input="onQuantityInput"
                                         @blur="onQuantityBlur"
                                     />
-                                    <button 
-                                        class="qty-btn" 
-                                        @click="handleIncrement"
-                                    >
+                                    <button class="qty-btn" @click="handleIncrement">
                                         <v-icon size="14">mdi-plus</v-icon>
                                     </button>
                                 </div>
 
                                 <!-- Add to Cart Button -->
-                                <v-btn 
+                                <v-btn
                                     flat
-                                    color="#2962FF" 
-                                    class="add-to-cart-btn-new flex-grow-1" 
-                                    :loading="addingToCart" 
+                                    color="#2962FF"
+                                    class="add-to-cart-btn-new flex-grow-1"
+                                    :loading="addingToCart"
                                     @click="addToCart"
                                 >
                                     THÊM VÀO GIỎ HÀNG
@@ -822,14 +830,7 @@ const toggleFavorite = () => {
                             </div>
 
                             <!-- Buy Now Button -->
-                            <v-btn 
-                                flat
-                                color="#0B1329" 
-                                class="buy-now-btn-new block w-100" 
-                                @click="buyNow"
-                            >
-                                MUA NGAY
-                            </v-btn>
+                            <v-btn flat color="#0B1329" class="buy-now-btn-new block w-100" @click="buyNow"> MUA NGAY </v-btn>
                         </div>
 
                         <!-- Description Details Section -->
@@ -862,25 +863,38 @@ const toggleFavorite = () => {
                             <v-col cols="12" md="4" class="d-flex align-center justify-center bg-grey-lighten-4 pa-6">
                                 <div class="text-center">
                                     <div class="text-h2 font-weight-semibold text-amber-darken-3">{{ averageRating }}</div>
-                                    <v-rating :model-value="Number(averageRating) || 5" color="amber" active-color="amber"
-                                        half-increments readonly size="large" class="mb-2"></v-rating>
-                                    <div class="text-body-1 text-grey-darken-1 font-weight-medium">{{ totalReviews }} đánh giá
-                                    </div>
+                                    <v-rating
+                                        :model-value="Number(averageRating) || 5"
+                                        color="amber"
+                                        active-color="amber"
+                                        half-increments
+                                        readonly
+                                        size="large"
+                                        class="mb-2"
+                                    ></v-rating>
+                                    <div class="text-body-1 text-grey-darken-1 font-weight-medium">{{ totalReviews }} đánh giá</div>
                                 </div>
                             </v-col>
 
                             <!-- Rating Bars & Filters -->
                             <v-col cols="12" md="8" class="pa-6">
                                 <div class="d-flex flex-wrap ga-2 mb-2">
-                                    <v-chip :variant="selectedFilter === 'all' ? 'flat' : 'outlined'"
+                                    <v-chip
+                                        :variant="selectedFilter === 'all' ? 'flat' : 'outlined'"
                                         :color="selectedFilter === 'all' ? 'black' : 'grey-darken-1'"
-                                        @click="selectedFilter = 'all'" class="font-weight-bold px-4">
+                                        @click="selectedFilter = 'all'"
+                                        class="font-weight-bold px-4"
+                                    >
                                         Tất cả ({{ totalReviews }})
                                     </v-chip>
-                                    <v-chip v-for="star in [5, 4, 3, 2, 1]" :key="star"
+                                    <v-chip
+                                        v-for="star in [5, 4, 3, 2, 1]"
+                                        :key="star"
                                         :variant="selectedFilter === star ? 'flat' : 'outlined'"
                                         :color="selectedFilter === star ? 'black' : 'grey-darken-1'"
-                                        @click="selectedFilter = star" class="font-weight-bold px-4">
+                                        @click="selectedFilter = star"
+                                        class="font-weight-bold px-4"
+                                    >
                                         {{ star }} Sao ({{ ratingCounts[star] }})
                                     </v-chip>
                                 </div>
@@ -893,7 +907,15 @@ const toggleFavorite = () => {
                             <v-card variant="outlined" class="pa-4 rounded-xl border-grey-lighten-2 h-100 bg-white elevation-1">
                                 <div class="d-flex align-center mb-3">
                                     <v-avatar color="grey-lighten-3" size="44" class="mr-3 border border-grey-lighten-2">
-                                        <v-img :src="review.khachHang?.anhDaiDien || review.avatarKhachHang || 'https://i.pinimg.com/736x/c0/74/9b/c0749b7cc401421662ae901ec8f9f660.jpg'" alt="avatar" cover></v-img>
+                                        <v-img
+                                            :src="
+                                                review.khachHang?.anhDaiDien ||
+                                                review.avatarKhachHang ||
+                                                'https://i.pinimg.com/736x/c0/74/9b/c0749b7cc401421662ae901ec8f9f660.jpg'
+                                            "
+                                            alt="avatar"
+                                            cover
+                                        ></v-img>
                                     </v-avatar>
                                     <div class="flex-grow-1">
                                         <div class="d-flex align-center justify-space-between mb-1">
@@ -914,58 +936,55 @@ const toggleFavorite = () => {
                                         ></v-rating>
                                     </div>
                                 </div>
-                                <div class="text-body-2 text-grey-darken-3 mt-2 px-1 font-weight-medium" style="line-height: 1.6;">
+                                <div class="text-body-2 text-grey-darken-3 mt-2 px-1 font-weight-medium" style="line-height: 1.6">
                                     {{ review.noiDung || review.comment || 'Khách hàng không để lại bình luận chi tiết.' }}
                                 </div>
                             </v-card>
                         </v-col>
                     </v-row>
-
                 </div>
 
-                <div v-else
+                <div
+                    v-else
                     class="text-center py-12 bg-grey-lighten-4 rounded-xl border-dashed border-grey-lighten-1"
-                    style="border-width: 2px;">
+                    style="border-width: 2px"
+                >
                     <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-comment-text-outline</v-icon>
                     <h3 class="text-h5 font-weight-bold text-grey-darken-2 mb-2">Chưa có đánh giá nào</h3>
-                    <p class="text-body-1 text-grey">Hãy là người đầu tiên trải nghiệm và đánh giá sản phẩm
-                        này.</p>
-                    <v-btn color="black" variant="outlined" rounded="pill"
-                        class="mt-4 font-weight-bold px-6" @click="handleWriteReview">
+                    <p class="text-body-1 text-grey">Hãy là người đầu tiên trải nghiệm và đánh giá sản phẩm này.</p>
+                    <v-btn color="black" variant="outlined" rounded="pill" class="mt-4 font-weight-bold px-6" @click="handleWriteReview">
                         Viết đánh giá ngay
                     </v-btn>
                 </div>
             </div>
 
             <!-- Recommended Products Section -->
-                        <div class="recommended-section mt-16 pt-8 border-top" v-if="recommendedProducts.length > 0">
-                            <h2 class="text-h4 font-weight-semibold mb-8 text-center text-primary">Có Thể Bạn Cũng Thích
-                            </h2>
-                            <v-row>
-                                <v-col v-for="p in recommendedProducts" :key="p.id" cols="12" sm="6" md="4" lg="3">
-                                    <div class="product-card-placeholder" @click="$router.push(`/product/${p.id}`)">
-                                        <!-- Image Placeholder -->
-                                        <div class="image-box-placeholder mb-4">
-                                            <img 
-                                                :src="getValidImgUrl(p.hinhAnh) || DEFAULT_SHOE_IMAGE" 
-                                                :alt="p.tenSanPham" 
-                                                style="width: 100%; height: 100%; object-fit: cover;"
-                                                referrerpolicy="no-referrer"
-                                                @error="(e) => e.target.src = DEFAULT_SHOE_IMAGE"
-                                            />
-                                        </div>
+            <div class="recommended-section mt-16 pt-8 border-top" v-if="recommendedProducts.length > 0">
+                <h2 class="text-h4 font-weight-semibold mb-8 text-center text-primary">Có Thể Bạn Cũng Thích</h2>
+                <v-row>
+                    <v-col v-for="p in recommendedProducts" :key="p.id" cols="12" sm="6" md="4" lg="3">
+                        <div class="product-card-placeholder" @click="$router.push(`/product/${p.id}`)">
+                            <!-- Image Placeholder -->
+                            <div class="image-box-placeholder mb-4">
+                                <img
+                                    :src="getValidImgUrl(p.hinhAnh) || DEFAULT_SHOE_IMAGE"
+                                    :alt="p.tenSanPham"
+                                    style="width: 100%; height: 100%; object-fit: cover"
+                                    referrerpolicy="no-referrer"
+                                    @error="(e) => (e.target.src = DEFAULT_SHOE_IMAGE)"
+                                />
+                            </div>
 
-                                        <!-- Content -->
-                                        <div class="product-info text-left">
-                                            <span class="promo-label">{{ p.tenThuongHieu || 'NIKE' }}</span>
-                                            <h4 class="product-name text-truncate">{{ p.tenSanPham }}</h4>
-                                            <p class="product-price">{{ formatPrice(p.giaBanThapNhat) }}</p>
-                                        </div>
-                                    </div>
-                                </v-col>
-                            </v-row>
+                            <!-- Content -->
+                            <div class="product-info text-left">
+                                <span class="promo-label">{{ p.tenThuongHieu || 'NIKE' }}</span>
+                                <h4 class="product-name text-truncate">{{ p.tenSanPham }}</h4>
+                                <p class="product-price">{{ formatPrice(p.giaBanThapNhat) }}</p>
+                            </div>
                         </div>
-
+                    </v-col>
+                </v-row>
+            </div>
         </v-container>
         <v-container v-else-if="loading" class="text-center py-16">
             <v-progress-circular indeterminate color="primary"></v-progress-circular>
@@ -995,8 +1014,13 @@ const toggleFavorite = () => {
                     {{ stockAlertModal.message }}
                 </v-card-text>
                 <v-card-actions class="justify-center pb-2">
-                    <v-btn color="primary" variant="flat" rounded="pill" class="px-8 font-weight-medium text-none"
-                        @click="stockAlertModal.show = false">
+                    <v-btn
+                        color="primary"
+                        variant="flat"
+                        rounded="pill"
+                        class="px-8 font-weight-medium text-none"
+                        @click="stockAlertModal.show = false"
+                    >
                         Đã hiểu
                     </v-btn>
                 </v-card-actions>
@@ -1010,43 +1034,60 @@ const toggleFavorite = () => {
                     <v-icon icon="mdi-star-circle-outline" class="mr-2"></v-icon>
                     Viết đánh giá
                     <v-spacer></v-spacer>
-                    <v-btn icon="mdi-close" variant="text" color="white" @click="showReviewModal = false"
-                        density="compact" :disabled="submittingReview"></v-btn>
+                    <v-btn
+                        icon="mdi-close"
+                        variant="text"
+                        color="white"
+                        @click="showReviewModal = false"
+                        density="compact"
+                        :disabled="submittingReview"
+                    ></v-btn>
                 </v-card-title>
 
                 <v-card-text class="pa-4">
                     <div class="d-flex align-center mb-4 pa-2 bg-grey-lighten-4 rounded-lg pa-3" v-if="product">
                         <v-avatar rounded size="48" class="mr-3 bg-white elevation-1">
-                            <img 
-                                :src="getValidImgUrl(product.hinhAnh) || DEFAULT_SHOE_IMAGE" 
-                                style="width: 100%; height: 100%; object-fit: cover;"
+                            <img
+                                :src="getValidImgUrl(product.hinhAnh) || DEFAULT_SHOE_IMAGE"
+                                style="width: 100%; height: 100%; object-fit: cover"
                                 @error="handleImgError"
                             />
                         </v-avatar>
                         <div>
-                            <div class="font-weight-bold text-body-2 text-truncate" style="max-width: 300px;">{{
-                                product.tenSanPham }}</div>
+                            <div class="font-weight-bold text-body-2 text-truncate" style="max-width: 300px">{{ product.tenSanPham }}</div>
                             <div class="text-caption text-grey">{{ product.tenThuongHieu }}</div>
                         </div>
                     </div>
 
                     <div class="text-center mb-4">
                         <p class="text-subtitle-2 font-weight-bold mb-1">Chất lượng sản phẩm</p>
-                        <v-rating v-model="newReview.rating" color="amber" active-color="amber" hover
-                            size="x-large"></v-rating>
+                        <v-rating v-model="newReview.rating" color="amber" active-color="amber" hover size="x-large"></v-rating>
                     </div>
 
-                    <v-textarea v-model="newReview.comment" label="Nhận xét của bạn"
-                        placeholder="Hãy chia sẻ cảm nhận của bạn về sản phẩm này nhé..." variant="outlined" rows="4"
-                        auto-grow hide-details="auto" bg-color="grey-lighten-5"></v-textarea>
+                    <v-textarea
+                        v-model="newReview.comment"
+                        label="Nhận xét của bạn"
+                        placeholder="Hãy chia sẻ cảm nhận của bạn về sản phẩm này nhé..."
+                        variant="outlined"
+                        rows="4"
+                        auto-grow
+                        hide-details="auto"
+                        bg-color="grey-lighten-5"
+                    ></v-textarea>
                 </v-card-text>
 
                 <v-card-actions class="pa-4 pt-0">
                     <v-spacer></v-spacer>
-                    <v-btn variant="text" class="text-none font-weight-bold" @click="showReviewModal = false"
-                        :disabled="submittingReview">Hủy</v-btn>
-                    <v-btn color="black" variant="flat" class="text-none font-weight-bold px-6 rounded-pill"
-                        :loading="submittingReview" @click="submitDirectReview">
+                    <v-btn variant="text" class="text-none font-weight-bold" @click="showReviewModal = false" :disabled="submittingReview"
+                        >Hủy</v-btn
+                    >
+                    <v-btn
+                        color="black"
+                        variant="flat"
+                        class="text-none font-weight-bold px-6 rounded-pill"
+                        :loading="submittingReview"
+                        @click="submitDirectReview"
+                    >
                         Gửi đánh giá
                     </v-btn>
                 </v-card-actions>
@@ -1112,7 +1153,7 @@ const toggleFavorite = () => {
 }
 
 .size-box {
-    border: 1px solid #DFE5EF;
+    border: 1px solid #dfe5ef;
     border-radius: 8px;
     padding: 12px;
     text-align: center;
@@ -1292,7 +1333,7 @@ const toggleFavorite = () => {
     font-family: 'Outfit', sans-serif;
     font-size: 13px;
     font-weight: 700;
-    color: #2962FF;
+    color: #2962ff;
     letter-spacing: 1.5px;
     text-transform: uppercase;
 }
@@ -1302,23 +1343,24 @@ const toggleFavorite = () => {
     font-size: 32px;
     font-weight: 800;
     line-height: 1.25;
-    color: #0A1329;
+    color: #0a1329;
 }
 
 .product-meta-row {
     font-size: 13px;
-    color: #64748B;
+    color: #64748b;
     font-weight: 500;
-    
+
     .rating-value-text {
         font-weight: 700;
-        color: #0A1329;
+        color: #0a1329;
     }
-    
-    .reviews-count-text, .sold-count-text {
-        color: #64748B;
+
+    .reviews-count-text,
+    .sold-count-text {
+        color: #64748b;
     }
-    
+
     .meta-separator {
         margin: 0 4px;
     }
@@ -1328,24 +1370,24 @@ const toggleFavorite = () => {
     display: flex;
     align-items: center;
     gap: 12px;
-    
+
     .current-price-label-new {
         font-size: 30px;
         font-weight: 800;
-        color: #E53935;
+        color: #e53935;
         font-family: 'Outfit', sans-serif;
     }
-    
+
     .old-price-label-new {
         font-size: 18px;
         font-weight: 500;
-        color: #94A3B8;
+        color: #94a3b8;
         text-decoration: line-through;
     }
-    
+
     .discount-badge-new {
-        background-color: #FEE2E2;
-        color: #EF4444;
+        background-color: #fee2e2;
+        color: #ef4444;
         font-size: 13px;
         font-weight: 700;
         padding: 4px 8px;
@@ -1355,14 +1397,14 @@ const toggleFavorite = () => {
 
 .selection-label-row {
     font-size: 14px;
-    color: #0A1329;
-    
+    color: #0a1329;
+
     .label-title {
         font-weight: 600;
     }
-    
+
     .label-selected-value {
-        color: #64748B;
+        color: #64748b;
         font-weight: 500;
     }
 }
@@ -1388,16 +1430,16 @@ const toggleFavorite = () => {
         border: 1px solid rgba(0, 0, 0, 0.08);
         transition: transform 0.2s;
     }
-    
+
     &:hover {
         transform: scale(1.05);
         .color-dot-inner {
             transform: scale(0.95);
         }
     }
-    
+
     &.active {
-        border-color: #2962FF;
+        border-color: #2962ff;
         box-shadow: 0 4px 12px rgba(41, 98, 255, 0.25);
     }
 }
@@ -1405,11 +1447,11 @@ const toggleFavorite = () => {
 /* Size Box Selectors */
 .size-guide-link {
     font-size: 13px;
-    color: #2962FF;
+    color: #2962ff;
     font-weight: 600;
     text-decoration: none;
     transition: opacity 0.2s;
-    
+
     &:hover {
         opacity: 0.8;
         text-decoration: underline;
@@ -1421,9 +1463,9 @@ const toggleFavorite = () => {
     height: 48px;
     padding: 0 12px;
     border-radius: 12px;
-    background-color: #F8FAFC;
-    border: 1px solid #E2E8F0;
-    color: #0A1329;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #0a1329;
     font-size: 14px;
     font-weight: 600;
     display: flex;
@@ -1431,17 +1473,17 @@ const toggleFavorite = () => {
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    
+
     &:hover {
-        border-color: #2962FF;
-        color: #2962FF;
-        background-color: #F0F4FF;
+        border-color: #2962ff;
+        color: #2962ff;
+        background-color: #f0f4ff;
     }
-    
+
     &.active {
-        background-color: #2962FF !important;
-        border-color: #2962FF !important;
-        color: #FFFFFF !important;
+        background-color: #2962ff !important;
+        border-color: #2962ff !important;
+        color: #ffffff !important;
         box-shadow: 0 4px 12px rgba(41, 98, 255, 0.25);
     }
 }
@@ -1450,7 +1492,7 @@ const toggleFavorite = () => {
 .availability-status-row {
     font-size: 14px;
     font-weight: 600;
-    color: #10B981;
+    color: #10b981;
 }
 
 /* Action Section */
@@ -1462,43 +1504,43 @@ const toggleFavorite = () => {
 
 .quantity-selector-pill {
     height: 48px;
-    background-color: #F8FAFC;
-    border: 1px solid #E2E8F0;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
     padding: 0 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     width: 130px;
-    
+
     .qty-btn {
         width: 32px;
         height: 32px;
         border-radius: 8px;
         border: none;
         background: transparent;
-        color: #0A1329;
+        color: #0a1329;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         transition: background-color 0.2s;
-        
+
         &:hover:not(:disabled) {
-            background-color: #E2E8F0;
+            background-color: #e2e8f0;
         }
-        
+
         &:disabled {
             opacity: 0.35;
             cursor: not-allowed;
         }
     }
-    
+
     .qty-number,
     .qty-input {
         font-size: 16px;
         font-weight: 700;
-        color: #0A1329;
+        color: #0a1329;
         width: 48px;
         text-align: center;
         border: none;
@@ -1507,7 +1549,7 @@ const toggleFavorite = () => {
         appearance: textfield;
         -moz-appearance: textfield;
     }
-    
+
     .qty-input::-webkit-outer-spin-button,
     .qty-input::-webkit-inner-spin-button {
         -webkit-appearance: none;
@@ -1522,9 +1564,9 @@ const toggleFavorite = () => {
     font-weight: 700 !important;
     letter-spacing: 0.5px !important;
     box-shadow: 0 4px 14px rgba(41, 98, 255, 0.25) !important;
-    color: #FFFFFF !important;
+    color: #ffffff !important;
     transition: transform 0.2s !important;
-    
+
     &:hover {
         transform: translateY(-2px);
     }
@@ -1537,9 +1579,9 @@ const toggleFavorite = () => {
     font-weight: 700 !important;
     letter-spacing: 0.5px !important;
     box-shadow: 0 4px 14px rgba(11, 19, 41, 0.2) !important;
-    color: #FFFFFF !important;
+    color: #ffffff !important;
     transition: transform 0.2s !important;
-    
+
     &:hover {
         transform: translateY(-2px);
     }
@@ -1549,11 +1591,11 @@ const toggleFavorite = () => {
     top: 16px;
     right: 16px;
     z-index: 10;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
     border-radius: 50% !important;
     width: 44px !important;
     height: 44px !important;
-    
+
     &:hover {
         transform: scale(1.05);
     }
@@ -1562,7 +1604,7 @@ const toggleFavorite = () => {
 .desc-section-title {
     font-size: 16px;
     font-weight: 700;
-    color: #0A1329;
+    color: #0a1329;
 }
 
 .desc-text-new {

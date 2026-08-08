@@ -96,18 +96,23 @@ export function useCustomerSelect(selectedOrder, updateOrderInList, refreshBestV
             if (!kw) return null;
             const res = await dichVuDonHang.searchKhachHang(kw);
             const foundList = res || [];
-            
-            const normalize = (str) => String(str || '').trim().toLowerCase();
+
+            const normalize = (str) =>
+                String(str || '')
+                    .trim()
+                    .toLowerCase();
             const pNorm = normalize(phone);
             const eNorm = normalize(email);
 
-            return foundList.find(c => {
-                const cPhone = normalize(c.sdt);
-                const cEmail = normalize(c.email);
-                if (pNorm && cPhone === pNorm) return true;
-                if (eNorm && cEmail === eNorm) return true;
-                return false;
-            }) || null;
+            return (
+                foundList.find((c) => {
+                    const cPhone = normalize(c.sdt);
+                    const cEmail = normalize(c.email);
+                    if (pNorm && cPhone === pNorm) return true;
+                    if (eNorm && cEmail === eNorm) return true;
+                    return false;
+                }) || null
+            );
         } catch (e) {
             console.error('Error finding existing customer', e);
             return null;

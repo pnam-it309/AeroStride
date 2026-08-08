@@ -38,7 +38,9 @@
 .pos-card {
     background: #ffffff;
     border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.04), 0 4px 6px -4px rgba(15, 23, 42, 0.04) !important;
+    box-shadow:
+        0 10px 15px -3px rgba(15, 23, 42, 0.04),
+        0 4px 6px -4px rgba(15, 23, 42, 0.04) !important;
     border-radius: 24px !important;
 }
 
@@ -60,7 +62,9 @@
     font-size: 13px !important;
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 :deep(.compact-select) .v-field--focused {
@@ -104,7 +108,9 @@
     font-size: 13px !important;
     border: 1px solid #cbd5e1 !important;
     background-color: #ffffff !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 :deep(.search-input) .v-field__input {
@@ -168,7 +174,9 @@
     font-size: 13px !important;
     border: 1px solid #cbd5e1 !important;
     background-color: #ffffff !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 :deep(.text-right-input) .v-field--focused {
@@ -186,7 +194,9 @@
     box-shadow: none !important;
     border-radius: 8px !important;
     overflow: hidden !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 :deep(.custom-value-input) .v-field--focused {
@@ -284,7 +294,9 @@
     overflow: hidden !important;
     border: 1px solid #cbd5e1 !important;
     background-color: #ffffff !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 :deep(.note-textarea) .v-field--focused {
@@ -335,7 +347,9 @@
 }
 
 .product-dropdown-card {
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Right Column Styles */
@@ -352,11 +366,13 @@
     font-size: 13px !important;
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .compact-select-right :deep(.v-field--focused) {
-    border-color: #4285F4 !important;
+    border-color: #4285f4 !important;
     box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
@@ -377,11 +393,13 @@
     font-size: 13px !important;
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .right-input-field :deep(.v-field--focused) {
-    border-color: #4285F4 !important;
+    border-color: #4285f4 !important;
     box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
@@ -432,7 +450,9 @@
 .note-tab-active {
     background-color: #ffffff !important;
     color: #0c3866 !important;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+    box-shadow:
+        0 1px 3px 0 rgba(0, 0, 0, 0.1),
+        0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
     border: 1px solid #e2e8f0 !important;
 }
 
@@ -450,7 +470,9 @@
     --v-input-control-height: 32px !important;
     font-size: 13px !important;
     border: 1px solid #cbd5e1 !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 :deep(.dim-input-field) .v-field--focused {
@@ -475,11 +497,13 @@
     --v-input-control-height: 28px !important;
     font-size: 13px !important;
     border: 1px solid #cbd5e1 !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .dim-select :deep(.v-field--focused) {
-    border-color: #4285F4 !important;
+    border-color: #4285f4 !important;
     box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
@@ -504,7 +528,9 @@
     z-index: 9999;
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 15px -3px rgba(0, 0, 0, 0.05),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
     border-radius: 20px !important;
     margin-top: 4px;
 }
@@ -526,7 +552,9 @@
     --v-input-control-height: 32px !important;
     font-size: 13px !important;
     border: 1px solid #cbd5e1 !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 :deep(.dim-select-field) .v-field--focused {
@@ -545,12 +573,12 @@
     font-size: 13px !important;
 }
 
-.date-input-field :deep(input[type="date"]) {
+.date-input-field :deep(input[type='date']) {
     position: relative;
     cursor: pointer;
 }
 
-.date-input-field :deep(input[type="date"]::-webkit-calendar-picker-indicator) {
+.date-input-field :deep(input[type='date']::-webkit-calendar-picker-indicator) {
     position: absolute;
     top: 0;
     left: 0;
@@ -638,7 +666,8 @@
 /* Expand & Fade Transition for shipping card */
 .expand-fade-enter-active,
 .expand-fade-leave-active {
-    transition: max-height 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transition:
+        max-height 0.85s cubic-bezier(0.16, 1, 0.3, 1),
         opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
         margin-bottom 0.85s cubic-bezier(0.16, 1, 0.3, 1),
         padding 0.85s cubic-bezier(0.16, 1, 0.3, 1),
@@ -680,7 +709,9 @@
     border-radius: 7px !important;
     background-color: #cbd5e1 !important;
     opacity: 0.6 !important;
-    transition: background-color 0.3s ease, opacity 0.3s ease;
+    transition:
+        background-color 0.3s ease,
+        opacity 0.3s ease;
 }
 
 .custom-switch-giao-hang.is-active :deep(.v-switch__track) {
@@ -693,7 +724,9 @@
     width: 20px !important;
     background-color: #ffffff !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
-    transition: background-color 0.3s ease, transform 0.3s ease;
+    transition:
+        background-color 0.3s ease,
+        transform 0.3s ease;
 }
 
 .custom-switch-giao-hang.is-active :deep(.v-switch__thumb) {

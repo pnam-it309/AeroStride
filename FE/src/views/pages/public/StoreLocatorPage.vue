@@ -10,16 +10,51 @@ const selectedCity = ref('Tất cả');
 const cities = ['Tất cả', 'Hà Nội', 'TP. Hồ Chí Minh', 'Đà Nẵng'];
 
 const stores = [
-    { id: 1, name: 'AeroStride Cầu Giấy', city: 'Hà Nội', address: '123 Đường Cầu Giấy, Phường Quan Hoa, Cầu Giấy, Hà Nội', phone: '024 1234 5678', time: '08:00 - 22:00' },
-    { id: 2, name: 'AeroStride Hai Bà Trưng', city: 'Hà Nội', address: '456 Phố Huế, Phường Phạm Đình Hổ, Hai Bà Trưng, Hà Nội', phone: '024 8765 4321', time: '08:00 - 22:00' },
-    { id: 3, name: 'AeroStride Quận 1', city: 'TP. Hồ Chí Minh', address: '789 Nguyễn Trãi, Phường Bến Thành, Quận 1, TP. HCM', phone: '028 9999 8888', time: '08:30 - 22:30' },
-    { id: 4, name: 'AeroStride Gò Vấp', city: 'TP. Hồ Chí Minh', address: '101 Phan Văn Trị, Phường 10, Gò Vấp, TP. HCM', phone: '028 7777 6666', time: '08:30 - 22:30' },
-    { id: 5, name: 'AeroStride Hải Châu', city: 'Đà Nẵng', address: '202 Lê Duẩn, Phường Hải Châu 1, Hải Châu, Đà Nẵng', phone: '023 5555 4444', time: '08:00 - 21:30' },
+    {
+        id: 1,
+        name: 'AeroStride Cầu Giấy',
+        city: 'Hà Nội',
+        address: '123 Đường Cầu Giấy, Phường Quan Hoa, Cầu Giấy, Hà Nội',
+        phone: '024 1234 5678',
+        time: '08:00 - 22:00'
+    },
+    {
+        id: 2,
+        name: 'AeroStride Hai Bà Trưng',
+        city: 'Hà Nội',
+        address: '456 Phố Huế, Phường Phạm Đình Hổ, Hai Bà Trưng, Hà Nội',
+        phone: '024 8765 4321',
+        time: '08:00 - 22:00'
+    },
+    {
+        id: 3,
+        name: 'AeroStride Quận 1',
+        city: 'TP. Hồ Chí Minh',
+        address: '789 Nguyễn Trãi, Phường Bến Thành, Quận 1, TP. HCM',
+        phone: '028 9999 8888',
+        time: '08:30 - 22:30'
+    },
+    {
+        id: 4,
+        name: 'AeroStride Gò Vấp',
+        city: 'TP. Hồ Chí Minh',
+        address: '101 Phan Văn Trị, Phường 10, Gò Vấp, TP. HCM',
+        phone: '028 7777 6666',
+        time: '08:30 - 22:30'
+    },
+    {
+        id: 5,
+        name: 'AeroStride Hải Châu',
+        city: 'Đà Nẵng',
+        address: '202 Lê Duẩn, Phường Hải Châu 1, Hải Châu, Đà Nẵng',
+        phone: '023 5555 4444',
+        time: '08:00 - 21:30'
+    }
 ];
 
 const filteredStores = computed(() => {
     if (selectedCity.value === 'Tất cả') return stores;
-    return stores.filter(s => s.city === selectedCity.value);
+    return stores.filter((s) => s.city === selectedCity.value);
 });
 
 onMounted(() => {
@@ -34,13 +69,15 @@ onMounted(() => {
 <template>
     <div class="app-container bg-grey-lighten-4">
         <MainHeader />
-        
+
         <main class="main-content">
             <!-- Header Section -->
             <div class="page-header py-12 bg-white border-b">
                 <v-container>
                     <h1 class="text-h3 font-weight-black text-center text-grey-darken-4 mb-4">HỆ THỐNG CỬA HÀNG</h1>
-                    <p class="text-center text-grey-darken-1 text-subtitle-1">Trải nghiệm trực tiếp các mẫu giày mới nhất tại 50+ chi nhánh trên toàn quốc.</p>
+                    <p class="text-center text-grey-darken-1 text-subtitle-1">
+                        Trải nghiệm trực tiếp các mẫu giày mới nhất tại 50+ chi nhánh trên toàn quốc.
+                    </p>
                 </v-container>
             </div>
 
@@ -61,7 +98,7 @@ onMounted(() => {
                                     class="bg-white rounded-lg"
                                 ></v-select>
                             </div>
-                            
+
                             <v-list class="overflow-y-auto flex-grow-1 store-list" max-height="600">
                                 <template v-for="store in filteredStores" :key="store.id">
                                     <v-list-item class="pa-4 store-item border-b">
@@ -92,10 +129,19 @@ onMounted(() => {
 
                     <!-- Map / Image Banner -->
                     <v-col cols="12" md="8">
-                        <v-card class="rounded-xl elevation-2 h-100 overflow-hidden d-flex flex-column align-center justify-center bg-white min-h-400">
+                        <v-card
+                            class="rounded-xl elevation-2 h-100 overflow-hidden d-flex flex-column align-center justify-center bg-white min-h-400"
+                        >
                             <!-- In a real app, this would be a Google Map component -->
-                            <v-img src="https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&q=80&w=1200" cover class="w-100 h-100">
-                                <div class="fill-height d-flex flex-column align-center justify-center" style="background: rgba(0,0,0,0.5)">
+                            <v-img
+                                src="https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&q=80&w=1200"
+                                cover
+                                class="w-100 h-100"
+                            >
+                                <div
+                                    class="fill-height d-flex flex-column align-center justify-center"
+                                    style="background: rgba(0, 0, 0, 0.5)"
+                                >
                                     <v-icon size="64" color="white" class="mb-4">mdi-store-search-outline</v-icon>
                                     <h2 class="text-h4 font-weight-black text-white text-center px-4">CHỌN CỬA HÀNG ĐỂ XEM TRÊN BẢN ĐỒ</h2>
                                 </div>
@@ -105,7 +151,7 @@ onMounted(() => {
                 </v-row>
             </v-container>
         </main>
-        
+
         <footer class="footer-landing py-10 text-center text-grey-darken-1 bg-white border-t">
             <LogoClient class="mb-4 d-inline-block" style="max-width: 150px" />
             <p>&copy; 2026 AeroStride All rights reserved.</p>
@@ -114,7 +160,9 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.main-content { padding-top: 60px; }
+.main-content {
+    padding-top: 60px;
+}
 
 .store-list::-webkit-scrollbar {
     width: 6px;

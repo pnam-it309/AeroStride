@@ -32,7 +32,7 @@ export function useAddressMapping() {
      * @param {String} id - Address ID
      * @returns {Boolean}
      */
-    const isLegacyAddressId = (id) => { 
+    const isLegacyAddressId = (id) => {
         return id && String(id).startsWith(ADDRESS_CONSTANTS.LEGACY_ID_PREFIX);
     };
 

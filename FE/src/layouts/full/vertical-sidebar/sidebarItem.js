@@ -120,8 +120,14 @@ const sidebarItem = [
         BgColor: 'teal',
         roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF],
         children: [
-            { title: 'Lịch làm việc', icon: CalendarIcon, to: PATH.LICH_LAM_VIEC, BgColor: 'teal', roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF] },
-            // { title: 'Bàn giao ca', icon: ClockIcon, to: PATH.LICH_SU_GIAO_CA, BgColor: 'teal', roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF] },
+            {
+                title: 'Lịch làm việc',
+                icon: CalendarIcon,
+                to: PATH.LICH_LAM_VIEC,
+                BgColor: 'teal',
+                roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF]
+            },
+            { title: 'Bàn giao ca', icon: ClockIcon, to: PATH.LICH_SU_GIAO_CA, BgColor: 'teal', roles: [APP_ROLES.STAFF] },
             { title: 'Lịch ca làm', icon: ClockIcon, to: PATH.LICH_CA_LAM, BgColor: 'teal', roles: [APP_ROLES.ADMIN] },
             // { title: 'Chấm công', icon: UserCheckIcon, to: PATH.CHAM_CONG, BgColor: 'teal', roles: [APP_ROLES.ADMIN] },
             { title: 'Lịch sử hoạt động', icon: HistoryIcon, to: PATH.LICH_SU_HOAT_DONG, BgColor: 'teal', roles: [APP_ROLES.ADMIN] }

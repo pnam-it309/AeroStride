@@ -8,7 +8,15 @@ const props = defineProps({ active: Boolean, warm: Boolean });
             <div class="cta-bg"></div>
             <v-container class="z-index-10" :class="{ 'animate-in-up': props.active }">
                 <h2 class="text-h1 font-weight-black text-blue-darken-4 mb-8">Ready to Stride?</h2>
-                <v-btn size="x-large" color="#2962ff" rounded="xl" variant="flat" height="72" class="px-16 text-h5 text-white font-weight-bold" to="/shoes">
+                <v-btn
+                    size="x-large"
+                    color="#2962ff"
+                    rounded="xl"
+                    variant="flat"
+                    height="72"
+                    class="px-16 text-h5 text-white font-weight-bold"
+                    to="/shoes"
+                >
                     KHÁM PHÁ CÁC MẪU GIÀY
                 </v-btn>
                 <p class="mt-8 text-h6 opacity-60">Ghé thăm showroom hoặc săn voucher giảm giá ngay hôm nay!</p>

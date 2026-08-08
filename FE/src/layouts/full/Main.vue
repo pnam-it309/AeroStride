@@ -52,12 +52,12 @@ const sidebarMenu = computed(() => {
     const userRole = dichVuXacThuc.layUserHienTai()?.role;
 
     return sidebarItems
-        .filter(item => !item.roles || item.roles.includes(userRole))
+        .filter((item) => !item.roles || item.roles.includes(userRole))
         .map((item) => {
             let filteredItem = { ...item };
-            
+
             if (filteredItem.children) {
-                filteredItem.children = filteredItem.children.filter(child => !child.roles || child.roles.includes(userRole));
+                filteredItem.children = filteredItem.children.filter((child) => !child.roles || child.roles.includes(userRole));
             }
 
             if (filteredItem.title === 'Quản lý tin nhắn' && unreadChatCount.value > 0) {
@@ -168,7 +168,9 @@ onMounted(() => {
 }
 
 .header-toggle-btn {
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition:
+        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .header-toggle-btn:hover {
@@ -199,7 +201,10 @@ onMounted(() => {
 
 /* HIỆU ỨNG DI CHUỘT VÀ ĐÓNG MỞ CAO CẤP */
 :deep(.v-list-item) {
-    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition:
+        background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     position: relative;
     overflow: hidden;
     margin-bottom: 4px !important;
@@ -236,7 +241,9 @@ onMounted(() => {
 
 /* Hiệu ứng mượt cho sub-menu (Accordion) */
 :deep(.v-list-group__items) {
-    transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition:
+        height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
     overflow: hidden;
     background: transparent;
     border-radius: 12px;

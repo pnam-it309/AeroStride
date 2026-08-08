@@ -3,8 +3,7 @@ const toMoney = (value) => {
     return Number.isFinite(number) ? Math.max(0, number) : 0;
 };
 
-const getMinimumOrderValue = (voucher) =>
-    toMoney(voucher?.donHangToiThieu ?? voucher?.min_order_value ?? voucher?.minOrderValue);
+const getMinimumOrderValue = (voucher) => toMoney(voucher?.donHangToiThieu ?? voucher?.min_order_value ?? voucher?.minOrderValue);
 
 const getVoucherDiscount = (voucher, orderValue) => {
     const base = toMoney(orderValue);
@@ -13,7 +12,7 @@ const getVoucherDiscount = (voucher, orderValue) => {
     if (type === 'PHAN_TRAM' || type === 'PERCENT' || type === '1') {
         const percentage = toMoney(voucher?.phanTramGiamGia ?? voucher?.discountPercent);
         const maximum = toMoney(voucher?.giamToiDa ?? voucher?.maxDiscount);
-        const percentageDiscount = base * percentage / 100;
+        const percentageDiscount = (base * percentage) / 100;
         return Math.min(base, maximum > 0 ? Math.min(percentageDiscount, maximum) : percentageDiscount);
     }
 
@@ -36,39 +35,32 @@ const isSameVoucher = (left, right) => {
     return leftKey != null && rightKey != null && String(leftKey) === String(rightKey);
 };
 
-export const findBestVoucherUpsell = (
-    vouchers,
-    currentOrderValue,
-    now = Date.now(),
-    currentVoucher = null
-) => {
+export const findBestVoucherUpsell = (vouchers, currentOrderValue, now = Date.now(), currentVoucher = null) => {
     const currentTotal = toMoney(currentOrderValue);
 
-    return (Array.isArray(vouchers) ? vouchers : [])
-        .filter((voucher) => isCurrentlyAvailable(voucher, now))
-        .filter((voucher) => !isSameVoucher(voucher, currentVoucher))
-        .map((voucher) => {
-            const minimumOrderValue = getMinimumOrderValue(voucher);
-            const discountAmount = getVoucherDiscount(voucher, minimumOrderValue);
-            const currentVoucherDiscount = getVoucherDiscount(currentVoucher, minimumOrderValue);
-            return {
-                voucher,
-                minimumOrderValue,
-                remainingAmount: Math.max(0, minimumOrderValue - currentTotal),
-                discountAmount,
-                extraDiscountAmount: Math.max(0, discountAmount - currentVoucherDiscount)
-            };
-        })
-        .filter((candidate) =>
-            candidate.remainingAmount > 0
-            && candidate.discountAmount > 0
-            && candidate.extraDiscountAmount > 0
-        )
-        .sort((left, right) =>
-            right.extraDiscountAmount - left.extraDiscountAmount
-            || right.discountAmount - left.discountAmount
-            || left.remainingAmount - right.remainingAmount
-            || String(left.voucher?.ma || left.voucher?.id || '')
-                .localeCompare(String(right.voucher?.ma || right.voucher?.id || ''))
-        )[0] || null;
+    return (
+        (Array.isArray(vouchers) ? vouchers : [])
+            .filter((voucher) => isCurrentlyAvailable(voucher, now))
+            .filter((voucher) => !isSameVoucher(voucher, currentVoucher))
+            .map((voucher) => {
+                const minimumOrderValue = getMinimumOrderValue(voucher);
+                const discountAmount = getVoucherDiscount(voucher, minimumOrderValue);
+                const currentVoucherDiscount = getVoucherDiscount(currentVoucher, minimumOrderValue);
+                return {
+                    voucher,
+                    minimumOrderValue,
+                    remainingAmount: Math.max(0, minimumOrderValue - currentTotal),
+                    discountAmount,
+                    extraDiscountAmount: Math.max(0, discountAmount - currentVoucherDiscount)
+                };
+            })
+            .filter((candidate) => candidate.remainingAmount > 0 && candidate.discountAmount > 0 && candidate.extraDiscountAmount > 0)
+            .sort(
+                (left, right) =>
+                    right.extraDiscountAmount - left.extraDiscountAmount ||
+                    right.discountAmount - left.discountAmount ||
+                    left.remainingAmount - right.remainingAmount ||
+                    String(left.voucher?.ma || left.voucher?.id || '').localeCompare(String(right.voucher?.ma || right.voucher?.id || ''))
+            )[0] || null
+    );
 };

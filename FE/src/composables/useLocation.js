@@ -82,11 +82,13 @@ export function useLocation(options = {}) {
             const res = await api.get(`${API_ADMIN.GHN}/provinces`, { silent: true });
             const list = extractList(res);
             if (!list.length) throw new Error('GHN provinces empty');
-            provinces.value = list.map((p) => ({
-                code: p.ProvinceID ?? p.code,
-                name: p.ProvinceName ?? p.name,
-                source: 'GHN'
-            })).filter((p) => p.code && p.name);
+            provinces.value = list
+                .map((p) => ({
+                    code: p.ProvinceID ?? p.code,
+                    name: p.ProvinceName ?? p.name,
+                    source: 'GHN'
+                }))
+                .filter((p) => p.code && p.name);
         } catch (e) {
             logLocationFallback('GHN provinces unavailable, fallback to open-api.', e);
             if (!allowFallback) return;
@@ -117,11 +119,13 @@ export function useLocation(options = {}) {
             const res = await api.get(`${API_ADMIN.GHN}/districts`, { params: { provinceId: provinceCode }, silent: true });
             const list = extractList(res);
             if (!list.length) throw new Error('GHN districts empty');
-            districts.value = list.map((d) => ({
-                code: d.DistrictID ?? d.code,
-                name: d.DistrictName ?? d.name,
-                source: 'GHN'
-            })).filter((d) => d.code && d.name);
+            districts.value = list
+                .map((d) => ({
+                    code: d.DistrictID ?? d.code,
+                    name: d.DistrictName ?? d.name,
+                    source: 'GHN'
+                }))
+                .filter((d) => d.code && d.name);
         } catch (e) {
             logLocationFallback('GHN districts unavailable.', e);
         } finally {
@@ -144,11 +148,13 @@ export function useLocation(options = {}) {
             const res = await api.get(`${API_ADMIN.GHN}/wards`, { params: { districtId: districtCode }, silent: true });
             const list = extractList(res);
             if (!list.length) throw new Error('GHN wards empty');
-            wards.value = list.map((w) => ({
-                code: w.WardCode ?? w.code,
-                name: w.WardName ?? w.name,
-                source: 'GHN'
-            })).filter((w) => w.code && w.name);
+            wards.value = list
+                .map((w) => ({
+                    code: w.WardCode ?? w.code,
+                    name: w.WardName ?? w.name,
+                    source: 'GHN'
+                }))
+                .filter((w) => w.code && w.name);
         } catch (e) {
             logLocationFallback('GHN wards unavailable.', e);
         } finally {

@@ -304,7 +304,7 @@
     text-transform: none;
 }
 
-.variant-group-row+.variant-group-row {
+.variant-group-row + .variant-group-row {
     border-top: 1px solid rgba(148, 163, 184, 0.12);
 }
 
@@ -374,7 +374,7 @@
     border-radius: 999px;
     display: inline-block;
     margin-right: 10px;
-    background: #0085DB;
+    background: #0085db;
     box-shadow: 0 0 0 4px rgba(0, 133, 219, 0.12);
 }
 
@@ -383,7 +383,7 @@
 }
 
 .brand-logo-icon {
-    color: #0085DB;
+    color: #0085db;
 }
 
 .variant-edit-filter-wrap {
@@ -553,8 +553,6 @@
 .hover-bg-slate-50:hover {
     background-color: #f8fafc !important;
 }
-
-
 
 /* Cưỡng chế kích cỡ chữ 13px cho danh sách dropdown được render qua cơ chế Overlay (ngoài Scope) */
 .v-overlay-container .v-list-item-title {

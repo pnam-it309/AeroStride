@@ -45,12 +45,15 @@ const handleScroll = () => {
     }
     lastScrollY = y;
 };
-const handleMouseEnter = () => { isHidden.value = false; };
+const handleMouseEnter = () => {
+    isHidden.value = false;
+};
 
 // ─── Nav links ────────────────────────────────────────────────────────────────
 const navLinks = [
     { label: 'TRANG CHỦ', path: PATH.LANDING },
     { label: 'SẢN PHẨM', path: PATH.SHOES },
+    { label: 'GỢI Ý AI', path: PATH.AI_RECOMMEND },
     { label: 'GIỚI THIỆU', path: '/gioi-thieu' },
     { label: 'TIN TỨC', path: '/tin-tuc' },
     { label: 'LIÊN HỆ', path: '/lien-he' },
@@ -94,7 +97,9 @@ watch(searchQuery, (val) => {
     searchTimer = setTimeout(() => doSearch(val), 320);
 });
 
-const openSearch = () => { isSearchOpen.value = true; };
+const openSearch = () => {
+    isSearchOpen.value = true;
+};
 const closeSearch = () => {
     isSearchOpen.value = false;
     searchResults.value = [];
@@ -140,15 +145,9 @@ onUnmounted(() => {
 
 <template>
     <div class="header-hover-zone" v-if="isHidden" @mouseenter="handleMouseEnter"></div>
-    <header
-        class="main-header-system"
-        :class="{ scrolled: isScrolled, 'header-hidden': isHidden }"
-        @mouseenter="handleMouseEnter"
-    >
+    <header class="main-header-system" :class="{ scrolled: isScrolled, 'header-hidden': isHidden }" @mouseenter="handleMouseEnter">
         <!-- Top Announcement Bar (mockup requirement) -->
-        <div class="top-announcement-bar">
-            Hàng chính hãng 100% • Giao hàng miễn phí toàn quốc • Đổi trả trong vòng 30 ngày
-        </div>
+        <div class="top-announcement-bar">Hàng chính hãng 100% • Giao hàng miễn phí toàn quốc • Đổi trả trong vòng 30 ngày</div>
 
         <!-- Main Nav -->
         <nav class="main-navbar">
@@ -182,15 +181,13 @@ onUnmounted(() => {
                         v-model="searchQuery"
                         @keyup.enter="handleSearchSubmit"
                         @focus="openSearch"
-                        @blur="() => { window.setTimeout(closeSearch, 250) }"
+                        @blur="
+                            () => {
+                                window.setTimeout(closeSearch, 250);
+                            }
+                        "
                     />
-                    <v-icon 
-                        v-if="searchQuery" 
-                        size="16" 
-                        class="clear-icon-custom" 
-                        color="grey-darken-1"
-                        @mousedown.prevent="clearSearch"
-                    >
+                    <v-icon v-if="searchQuery" size="16" class="clear-icon-custom" color="grey-darken-1" @mousedown.prevent="clearSearch">
                         mdi-close-circle
                     </v-icon>
                     <!-- Dropdown results -->
@@ -295,7 +292,7 @@ onUnmounted(() => {
 .top-announcement-bar {
     width: 100%;
     height: 36px;
-    background: #0A1329;
+    background: #0a1329;
     color: #ffffff;
     display: flex;
     align-items: center;
@@ -321,11 +318,11 @@ onUnmounted(() => {
     font-family: 'Outfit', sans-serif;
     font-size: 25px;
     font-weight: 700;
-    color: #2962FF;
+    color: #2962ff;
     text-decoration: none;
     letter-spacing: 0.5px;
     transition: opacity 0.2s ease;
-    
+
     &:hover {
         opacity: 0.85;
     }
@@ -342,7 +339,7 @@ onUnmounted(() => {
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 600;
-    color: #0A1329;
+    color: #0a1329;
     text-decoration: none;
     letter-spacing: 0.5px;
     transition: color 0.2s ease;
@@ -356,21 +353,21 @@ onUnmounted(() => {
         left: 0;
         width: 100%;
         height: 2px;
-        background: #2962FF;
+        background: #2962ff;
         transform: scaleX(0);
         transition: transform 0.25s ease;
         transform-origin: center;
     }
 
     &:hover {
-        color: #2962FF;
+        color: #2962ff;
         &::after {
             transform: scaleX(1);
         }
     }
 
     &.active {
-        color: #2962FF;
+        color: #2962ff;
         &::after {
             transform: scaleX(1);
         }
@@ -389,7 +386,7 @@ onUnmounted(() => {
     position: relative;
     width: 230px;
     height: 44px;
-    background: #F5F7FA;
+    background: #f5f7fa;
     border-radius: 22px;
     display: flex;
     align-items: center;
@@ -399,7 +396,7 @@ onUnmounted(() => {
 
     &:focus-within {
         background: #ffffff;
-        border-color: #2962FF;
+        border-color: #2962ff;
         box-shadow: 0 4px 12px rgba(41, 98, 255, 0.08);
     }
 }
@@ -417,7 +414,7 @@ onUnmounted(() => {
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 400;
-    color: #0A1329;
+    color: #0a1329;
 
     &::placeholder {
         color: #637085;
@@ -465,7 +462,7 @@ onUnmounted(() => {
     transition: background 0.15s;
 
     &:hover {
-        background: #F8FAFC;
+        background: #f8fafc;
     }
 }
 
@@ -473,7 +470,7 @@ onUnmounted(() => {
     width: 40px;
     height: 40px;
     border-radius: 8px;
-    background: #F5F7FA;
+    background: #f5f7fa;
     overflow: hidden;
     flex-shrink: 0;
     display: flex;
@@ -496,7 +493,7 @@ onUnmounted(() => {
 .result-name {
     font-size: 0.85rem;
     font-weight: 700;
-    color: #0A1329;
+    color: #0a1329;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -518,16 +515,16 @@ onUnmounted(() => {
 .result-price {
     font-size: 0.78rem;
     font-weight: 800;
-    color: #2962FF;
+    color: #2962ff;
 }
 
 .search-footer {
     padding: 12px 16px;
     font-size: 0.8rem;
     font-weight: 700;
-    color: #2962FF;
+    color: #2962ff;
     cursor: pointer;
-    border-top: 1px solid #F5F7FA;
+    border-top: 1px solid #f5f7fa;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -545,12 +542,14 @@ onUnmounted(() => {
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    color: #0A1329;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    color: #0a1329;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
 
     &:hover {
-        background-color: #F5F7FA;
-        color: #2962FF;
+        background-color: #f5f7fa;
+        color: #2962ff;
     }
 }
 

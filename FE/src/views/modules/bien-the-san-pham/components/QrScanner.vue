@@ -36,11 +36,11 @@ const startScanner = () => {
             startScanner();
             return;
         }
-        
+
         if (scanner.value) {
-            scanner.value.clear().catch(e => console.error(e));
+            scanner.value.clear().catch((e) => console.error(e));
         }
-        
+
         scanner.value = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: { width: 250, height: 250 } }, /* verbose= */ false);
         scanner.value.render(onScanSuccess, (err) => {
             // silent fail for non-detections

@@ -19,7 +19,7 @@ export function useSeoMeta() {
     const type = ref(DEFAULTS.type);
     const jsonLd = ref(null);
 
-    const fullTitle = computed(() => title.value !== DEFAULTS.siteName ? `${title.value}${DEFAULTS.titleSuffix}` : DEFAULTS.siteName);
+    const fullTitle = computed(() => (title.value !== DEFAULTS.siteName ? `${title.value}${DEFAULTS.titleSuffix}` : DEFAULTS.siteName));
 
     // Call useUnheadSeoMeta and useHead synchronously during setup!
     useUnheadSeoMeta({
@@ -45,12 +45,16 @@ export function useSeoMeta() {
                 href: url.value
             }
         ]),
-        script: computed(() => jsonLd.value ? [
-            {
-                type: 'application/ld+json',
-                innerHTML: JSON.stringify(jsonLd.value)
-            }
-        ] : [])
+        script: computed(() =>
+            jsonLd.value
+                ? [
+                      {
+                          type: 'application/ld+json',
+                          innerHTML: JSON.stringify(jsonLd.value)
+                      }
+                  ]
+                : []
+        )
     });
 
     function setSeoMeta(config = {}) {

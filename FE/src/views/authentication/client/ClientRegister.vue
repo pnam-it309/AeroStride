@@ -50,7 +50,8 @@ onMounted(() => {
                             HÀNH TRÌNH<br /><span class="text-blue-accent-4">BẮT ĐẦU ĐÂY</span>
                         </h1>
                         <p class="text-body-1 text-black font-weight-medium max-w-md mx-auto mb-8 leading-relaxed opacity-80">
-                            Tạo tài khoản miễn phí và khám phá bộ sưu tập giày thể thao đẳng cấp của AeroStride. Trải nghiệm mua sắm cá nhân hóa dành riêng cho bạn.
+                            Tạo tài khoản miễn phí và khám phá bộ sưu tập giày thể thao đẳng cấp của AeroStride. Trải nghiệm mua sắm cá nhân
+                            hóa dành riêng cho bạn.
                         </p>
 
                         <!-- Benefits list -->
@@ -196,8 +197,12 @@ onMounted(() => {
 }
 
 @keyframes float-slow {
-    0% { transform: translate(0, 0) rotate(0deg); }
-    100% { transform: translate(50px, 50px) rotate(15deg); }
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    100% {
+        transform: translate(50px, 50px) rotate(15deg);
+    }
 }
 
 .floating-shoe-premium {
@@ -207,9 +212,15 @@ onMounted(() => {
 }
 
 @keyframes float {
-    0% { transform: translateY(0px) rotate(-2deg); }
-    50% { transform: translateY(-20px) rotate(2deg); }
-    100% { transform: translateY(0px) rotate(-2deg); }
+    0% {
+        transform: translateY(0px) rotate(-2deg);
+    }
+    50% {
+        transform: translateY(-20px) rotate(2deg);
+    }
+    100% {
+        transform: translateY(0px) rotate(-2deg);
+    }
 }
 
 .form-section {

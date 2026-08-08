@@ -21,13 +21,16 @@ const rating = ref(5);
 const comment = ref('');
 const isSubmitting = ref(false);
 
-watch(() => props.show, (newVal) => {
-    if (newVal) {
-        rating.value = 5;
-        comment.value = '';
-        selectedItem.value = props.order?.items?.[0] || null;
+watch(
+    () => props.show,
+    (newVal) => {
+        if (newVal) {
+            rating.value = 5;
+            comment.value = '';
+            selectedItem.value = props.order?.items?.[0] || null;
+        }
     }
-});
+);
 
 import { useAuthStore } from '@/stores/authStore';
 
@@ -68,7 +71,6 @@ const submitReview = async () => {
         isSubmitting.value = false;
     }
 };
-
 </script>
 
 <template>
@@ -78,9 +80,16 @@ const submitReview = async () => {
                 <v-icon icon="mdi-star-circle-outline" class="mr-2"></v-icon>
                 Đánh giá sản phẩm
                 <v-spacer></v-spacer>
-                <v-btn icon="mdi-close" variant="text" color="white" @click="showModal = false" density="compact" :disabled="isSubmitting"></v-btn>
+                <v-btn
+                    icon="mdi-close"
+                    variant="text"
+                    color="white"
+                    @click="showModal = false"
+                    density="compact"
+                    :disabled="isSubmitting"
+                ></v-btn>
             </v-card-title>
-            
+
             <v-card-text class="pa-4">
                 <div v-if="order" class="mb-4">
                     <p class="text-subtitle-2 mb-2">Chọn sản phẩm cần đánh giá:</p>
@@ -88,16 +97,25 @@ const submitReview = async () => {
                         <v-row dense>
                             <v-col cols="12" v-for="item in order.items" :key="item.idChiTietSanPham">
                                 <v-item v-slot="{ isSelected, toggle }" :value="item">
-                                    <v-card 
+                                    <v-card
                                         :color="isSelected ? 'indigo-lighten-5' : ''"
                                         :style="isSelected ? 'border: 1px solid #1e257c;' : 'border: 1px solid #e0e0e0;'"
                                         class="d-flex align-center pa-2 rounded-lg cursor-pointer"
                                         flat
                                         @click="toggle"
                                     >
-                                        <v-img :src="item.hinhAnh" width="48" height="48" cover class="rounded mr-3" style="flex: none;"></v-img>
+                                        <v-img
+                                            :src="item.hinhAnh"
+                                            width="48"
+                                            height="48"
+                                            cover
+                                            class="rounded mr-3"
+                                            style="flex: none"
+                                        ></v-img>
                                         <div class="flex-grow-1">
-                                            <div class="text-body-2 font-weight-bold text-truncate" style="max-width: 300px;">{{ item.tenSanPham }}</div>
+                                            <div class="text-body-2 font-weight-bold text-truncate" style="max-width: 300px">
+                                                {{ item.tenSanPham }}
+                                            </div>
                                             <div class="text-caption text-grey">{{ item.tenMauSac }} / {{ item.tenKichThuoc }}</div>
                                         </div>
                                         <v-icon v-if="isSelected" color="#1e257c">mdi-check-circle</v-icon>
@@ -110,13 +128,7 @@ const submitReview = async () => {
 
                 <div class="text-center mb-4">
                     <p class="text-subtitle-2 mb-1">Chất lượng sản phẩm</p>
-                    <v-rating
-                        v-model="rating"
-                        color="amber"
-                        active-color="amber"
-                        hover
-                        size="x-large"
-                    ></v-rating>
+                    <v-rating v-model="rating" color="amber" active-color="amber" hover size="x-large"></v-rating>
                 </div>
 
                 <v-textarea
@@ -128,17 +140,17 @@ const submitReview = async () => {
                     auto-grow
                     hide-details="auto"
                 ></v-textarea>
-                
+
                 <!-- TODO: Add image upload for review if needed -->
             </v-card-text>
 
             <v-card-actions class="pa-4 pt-0">
                 <v-spacer></v-spacer>
                 <v-btn variant="text" class="text-none font-weight-bold" @click="showModal = false" :disabled="isSubmitting">Hủy</v-btn>
-                <v-btn 
-                    color="indigo-darken-4" 
-                    variant="flat" 
-                    class="text-none font-weight-bold px-6 rounded-pill" 
+                <v-btn
+                    color="indigo-darken-4"
+                    variant="flat"
+                    class="text-none font-weight-bold px-6 rounded-pill"
                     :loading="isSubmitting"
                     @click="submitReview"
                 >

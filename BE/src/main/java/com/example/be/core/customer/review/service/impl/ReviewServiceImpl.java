@@ -1,6 +1,7 @@
 package com.example.be.core.customer.review.service.impl;
 
 import com.example.be.core.customer.review.model.request.ReviewRequest;
+import com.example.be.core.customer.review.model.response.CustomerReviewResponse;
 import com.example.be.core.customer.review.service.ReviewService;
 import com.example.be.entity.DanhGiaSanPham;
 import com.example.be.entity.HoaDon;
@@ -80,9 +81,14 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<DanhGiaSanPham> getReviewsByProduct(String idSanPham, Pageable pageable) {
-        // Trả về đánh giá của sản phẩm (bao gồm APPROVED và PENDING)
-        return danhGiaSanPhamRepository.findBySanPham_Id(idSanPham, pageable);
+    public Page<CustomerReviewResponse> getReviewsByProduct(String idSanPham, Pageable pageable) {
+        // Trả về đánh giá của sản phẩm (chỉ lấy APPROVED cho giao diện khách hàng)
+        Page<DanhGiaSanPham> reviews = danhGiaSanPhamRepository.findBySanPham_IdAndTrangThai(
+                idSanPham, 
+                DanhGiaSanPham.TrangThaiDanhGia.APPROVED, 
+                pageable
+        );
+        return reviews.map(CustomerReviewResponse::new);
     }
 
     @Override

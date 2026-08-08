@@ -145,18 +145,18 @@ export const getVariantThumbnailUrl = (variant, fallback = '') => {
     return (
         normalizeUploadedFileUrl(
             variant.urlAnh ||
-            variant.images?.find((img) => img?.hinhAnhDaiDien || img?.anhDaiDien || img?.laAnhChinh)?.duongDanAnh ||
-            variant.images?.[0]?.duongDanAnh ||
-            variant.hinhAnhs?.find((img) => img?.hinhAnhDaiDien)?.duongDanAnh ||
-            variant.hinhAnhs?.[0]?.duongDanAnh ||
-            variant.anhChiTietSanPhams?.find((img) => img?.hinhAnhDaiDien)?.duongDanAnh ||
-            variant.anhChiTietSanPhams?.[0]?.duongDanAnh ||
-            variant.hinhAnh?.[0]?.duongDanAnh ||
-            variant.hinhAnh?.[0]?.url ||
-            variant.hinhAnh ||
-            variant.duongDanAnh ||
-            variant.imageUrl ||
-            variant.anh
+                variant.images?.find((img) => img?.hinhAnhDaiDien || img?.anhDaiDien || img?.laAnhChinh)?.duongDanAnh ||
+                variant.images?.[0]?.duongDanAnh ||
+                variant.hinhAnhs?.find((img) => img?.hinhAnhDaiDien)?.duongDanAnh ||
+                variant.hinhAnhs?.[0]?.duongDanAnh ||
+                variant.anhChiTietSanPhams?.find((img) => img?.hinhAnhDaiDien)?.duongDanAnh ||
+                variant.anhChiTietSanPhams?.[0]?.duongDanAnh ||
+                variant.hinhAnh?.[0]?.duongDanAnh ||
+                variant.hinhAnh?.[0]?.url ||
+                variant.hinhAnh ||
+                variant.duongDanAnh ||
+                variant.imageUrl ||
+                variant.anh
         ) || fallback
     );
 };

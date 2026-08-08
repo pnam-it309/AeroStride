@@ -87,7 +87,7 @@ api.interceptors.response.use(
 
                 const currentPath = window.location.pathname;
                 const isAdminPath = currentPath.startsWith('/admin');
-                const isCustomerAuthPath = ['/profile', '/my-orders', '/favorites'].some(path => currentPath.startsWith(path));
+                const isCustomerAuthPath = ['/profile', '/my-orders', '/favorites'].some((path) => currentPath.startsWith(path));
 
                 if (isAdminPath) {
                     window.location.href = '/admin/login';

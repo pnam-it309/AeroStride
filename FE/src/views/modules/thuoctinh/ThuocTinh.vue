@@ -17,6 +17,7 @@ import { isActiveStatus } from '@/utils/statusUtils';
 import { SYSTEM_STATUS } from '@/constants/statusConstants';
 import { generateRandomCode } from '@/utils/codeGenerator';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
+import { noSpecialChar, lengthBetween3And255 } from '@/utils/validators';
 
 // REUSABLE COMPONENTS
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
@@ -166,11 +167,7 @@ const tableHeaders = computed(() => {
     if (selectedTab.value === 'colors') {
         headers.push({ text: 'Mã màu', width: '120px' });
     }
-    headers.push(
-        { text: 'Mô tả', width: '200px' },
-        { text: 'Trạng thái', width: '130px' },
-        { text: 'Hành động', width: '120px' }
-    );
+    headers.push({ text: 'Mô tả', width: '200px' }, { text: 'Trạng thái', width: '130px' }, { text: 'Hành động', width: '120px' });
     return headers;
 });
 
@@ -196,10 +193,7 @@ const normalizeSizeInput = (value) => {
 };
 
 const getApiErrorMessage = (error) =>
-    error?.response?.data?.message ||
-    error?.response?.data?.error ||
-    error?.message ||
-    'Không thể lưu dữ liệu, vui lòng thử lại.';
+    error?.response?.data?.message || error?.response?.data?.error || error?.message || 'Không thể lưu dữ liệu, vui lòng thử lại.';
 
 const notifySaveError = (error, actionText) => {
     const apiMessage = getApiErrorMessage(error);
@@ -265,15 +259,26 @@ const loadItems = async () => {
 };
 
 const confirmSaveItem = () => {
-    const rawName = itemForm.value.ten;
-    if (!rawName || !String(rawName).trim()) {
-        addNotification({ title: 'Lỗi', subtitle: `Vui lòng nhập tên ${getCurrentTabTitle().toLowerCase()}`, color: 'error' });
-        return;
-    }
+    if (selectedTab.value !== 'sizes') {
+        const rawName = itemForm.value.ten;
+        const trimmed = rawName ? String(rawName).trim() : '';
 
-    if (String(rawName).trim().length > 255) {
-        addNotification({ title: 'Lỗi', subtitle: `Tên ${getCurrentTabTitle().toLowerCase()} không được vượt quá 255 ký tự`, color: 'error' });
-        return;
+        if (!trimmed) {
+            addNotification({ title: 'Lỗi', subtitle: `Vui lòng nhập tên ${getCurrentTabTitle().toLowerCase()}`, color: 'error' });
+            return;
+        }
+
+        const lengthRes = lengthBetween3And255(trimmed);
+        if (lengthRes !== true) {
+            addNotification({ title: 'Lỗi', subtitle: `Tên ${getCurrentTabTitle().toLowerCase()}: ${lengthRes}`, color: 'error' });
+            return;
+        }
+
+        const noSpecialCharRes = noSpecialChar(trimmed);
+        if (noSpecialCharRes !== true) {
+            addNotification({ title: 'Lỗi', subtitle: `Tên ${getCurrentTabTitle().toLowerCase()}: ${noSpecialCharRes}`, color: 'error' });
+            return;
+        }
     }
 
     if (selectedTab.value === 'colors') {
@@ -287,7 +292,7 @@ const confirmSaveItem = () => {
     if (selectedTab.value === 'sizes') {
         const rawInput = itemForm.value.giaTriKichThuoc || itemForm.value.ten;
         const normalizedSize = normalizeSizeInput(rawInput);
-        
+
         if (!normalizedSize) {
             addNotification({ title: 'Lỗi', subtitle: 'Kích thước không hợp lệ', color: 'error' });
             return;
@@ -329,44 +334,44 @@ const confirmSaveItem = () => {
 
 const createItem = async () => {
     try {
-    const service = services[selectedTab.value];
-    let res;
-    switch (selectedTab.value) {
-        case 'brands':
-            res = await service.taoThuongHieu(itemForm.value);
-            break;
+        const service = services[selectedTab.value];
+        let res;
+        switch (selectedTab.value) {
+            case 'brands':
+                res = await service.taoThuongHieu(itemForm.value);
+                break;
 
-        case 'colors':
-            res = await service.taoMauSac(itemForm.value);
-            break;
-        case 'sizes':
-            res = await service.taoKichThuoc(itemForm.value);
-            break;
-        case 'materials':
-            res = await service.taoChatLieu(itemForm.value);
-            break;
-        case 'soles':
-            res = await service.taoDeGiay(itemForm.value);
-            break;
-        case 'collars':
-            res = await service.taoCoGiay(itemForm.value);
-            break;
-        case 'origins':
-            res = await service.taoXuatXu(itemForm.value);
-            break;
-        case 'purposes':
-            res = await service.taoMucDichChay(itemForm.value);
-            break;
-    }
-    addNotification({
-        title: 'Thêm mới thành công',
-        subtitle: `Đã thêm [${itemForm.value.ten}] vào danh mục ${getCurrentTabTitle()}`,
-        icon: 'CircleCheckIcon',
-        color: 'success'
-    });
-    dataRefs[selectedTab.value].value.unshift(res);
-    showDialog.value = false;
-    loadItems();
+            case 'colors':
+                res = await service.taoMauSac(itemForm.value);
+                break;
+            case 'sizes':
+                res = await service.taoKichThuoc(itemForm.value);
+                break;
+            case 'materials':
+                res = await service.taoChatLieu(itemForm.value);
+                break;
+            case 'soles':
+                res = await service.taoDeGiay(itemForm.value);
+                break;
+            case 'collars':
+                res = await service.taoCoGiay(itemForm.value);
+                break;
+            case 'origins':
+                res = await service.taoXuatXu(itemForm.value);
+                break;
+            case 'purposes':
+                res = await service.taoMucDichChay(itemForm.value);
+                break;
+        }
+        addNotification({
+            title: 'Thêm mới thành công',
+            subtitle: `Đã thêm [${itemForm.value.ten}] vào danh mục ${getCurrentTabTitle()}`,
+            icon: 'CircleCheckIcon',
+            color: 'success'
+        });
+        dataRefs[selectedTab.value].value.unshift(res);
+        showDialog.value = false;
+        loadItems();
     } catch (error) {
         console.error(error);
         notifySaveError(error, 'Thêm mới');
@@ -375,45 +380,45 @@ const createItem = async () => {
 
 const updateItem = async () => {
     try {
-    const service = services[selectedTab.value];
-    let res;
-    const id = selectedItem.value.id;
-    switch (selectedTab.value) {
-        case 'brands':
-            res = await service.capNhatThuongHieu(id, itemForm.value);
-            break;
+        const service = services[selectedTab.value];
+        let res;
+        const id = selectedItem.value.id;
+        switch (selectedTab.value) {
+            case 'brands':
+                res = await service.capNhatThuongHieu(id, itemForm.value);
+                break;
 
-        case 'colors':
-            res = await service.capNhatMauSac(id, itemForm.value);
-            break;
-        case 'sizes':
-            res = await service.capNhatKichThuoc(id, itemForm.value);
-            break;
-        case 'materials':
-            res = await service.capNhatChatLieu(id, itemForm.value);
-            break;
-        case 'soles':
-            res = await service.capNhatDeGiay(id, itemForm.value);
-            break;
-        case 'collars':
-            res = await service.capNhatCoGiay(id, itemForm.value);
-            break;
-        case 'origins':
-            res = await service.capNhatXuatXu(id, itemForm.value);
-            break;
-        case 'purposes':
-            res = await service.capNhatMucDichChay(id, itemForm.value);
-            break;
-    }
-    const idx = dataRefs[selectedTab.value].value.findIndex((i) => i.id === id);
-    if (idx !== -1) dataRefs[selectedTab.value].value[idx] = res;
-    addNotification({
-        title: 'Cập nhật thành công',
-        subtitle: `Đã cập nhật thông tin cho [${itemForm.value.ten}]`,
-        icon: 'EditIcon',
-        color: 'primary'
-    });
-    showDialog.value = false;
+            case 'colors':
+                res = await service.capNhatMauSac(id, itemForm.value);
+                break;
+            case 'sizes':
+                res = await service.capNhatKichThuoc(id, itemForm.value);
+                break;
+            case 'materials':
+                res = await service.capNhatChatLieu(id, itemForm.value);
+                break;
+            case 'soles':
+                res = await service.capNhatDeGiay(id, itemForm.value);
+                break;
+            case 'collars':
+                res = await service.capNhatCoGiay(id, itemForm.value);
+                break;
+            case 'origins':
+                res = await service.capNhatXuatXu(id, itemForm.value);
+                break;
+            case 'purposes':
+                res = await service.capNhatMucDichChay(id, itemForm.value);
+                break;
+        }
+        const idx = dataRefs[selectedTab.value].value.findIndex((i) => i.id === id);
+        if (idx !== -1) dataRefs[selectedTab.value].value[idx] = res;
+        addNotification({
+            title: 'Cập nhật thành công',
+            subtitle: `Đã cập nhật thông tin cho [${itemForm.value.ten}]`,
+            icon: 'EditIcon',
+            color: 'primary'
+        });
+        showDialog.value = false;
     } catch (error) {
         console.error(error);
         notifySaveError(error, 'Cập nhật');
@@ -485,7 +490,7 @@ const openCreateDialog = async (event) => {
     activatorElement.value = target;
     resetForm();
     isEditMode.value = false;
-    
+
     try {
         const typeMap = {
             brands: 'ThuongHieu',

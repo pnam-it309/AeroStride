@@ -62,10 +62,16 @@ const handleCancel = () => {
 
                 <div v-if="showInput" class="mt-6">
                     <label class="text-body-2 text-slate-700 font-weight-medium mb-2 d-block">{{ inputLabel }}</label>
-                    <v-textarea v-model="inputValue" variant="outlined" density="comfortable" hide-details rows="3"
-                        class="custom-textarea" :placeholder="`Nhập ${inputLabel.toLowerCase()}...`"></v-textarea>
-                    <div v-if="inputRequired && !inputValue"
-                        class="text-caption text-red-500 mt-2 ml-1 d-flex align-center">
+                    <v-textarea
+                        v-model="inputValue"
+                        variant="outlined"
+                        density="comfortable"
+                        hide-details
+                        rows="3"
+                        class="custom-textarea"
+                        :placeholder="`Nhập ${inputLabel.toLowerCase()}...`"
+                    ></v-textarea>
+                    <div v-if="inputRequired && !inputValue" class="text-caption text-red-500 mt-2 ml-1 d-flex align-center">
                         <v-icon size="14" class="mr-1">mdi-alert-circle</v-icon>
                         Vui lòng nhập {{ inputLabel.toLowerCase() }}
                     </div>
@@ -76,8 +82,14 @@ const handleCancel = () => {
                 <v-btn variant="text" class="confirm-btn-cancel px-6" :disabled="loading" @click="handleCancel">
                     {{ cancelText }}
                 </v-btn>
-                <v-btn variant="flat" :color="confirmColor || color || 'primary'" class="confirm-btn-submit px-8" :loading="loading"
-                    :disabled="inputRequired && !inputValue" @click="handleConfirm">
+                <v-btn
+                    variant="flat"
+                    :color="confirmColor || color || 'primary'"
+                    class="confirm-btn-submit px-8"
+                    :loading="loading"
+                    :disabled="inputRequired && !inputValue"
+                    @click="handleConfirm"
+                >
                     {{ confirmText }}
                 </v-btn>
             </v-card-actions>

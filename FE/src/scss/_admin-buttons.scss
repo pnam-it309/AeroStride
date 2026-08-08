@@ -63,7 +63,9 @@
     display: flex !important;
     align-items: center;
     justify-content: center;
-    transition: transform 0.3s ease, background-color 0.3s ease !important;
+    transition:
+        transform 0.3s ease,
+        background-color 0.3s ease !important;
 
     &:hover {
         background: rgba(0, 0, 0, 0.04) !important;

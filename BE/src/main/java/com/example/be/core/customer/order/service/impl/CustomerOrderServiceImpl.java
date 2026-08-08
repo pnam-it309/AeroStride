@@ -11,6 +11,7 @@ import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.infrastructure.constants.DeliveryMethod;
 import com.example.be.infrastructure.constants.TrangThai;
+import com.example.be.infrastructure.constants.HinhThucPhieuGiamGia;
 import com.example.be.utils.CodeUtils;
 import com.example.be.utils.DiscountPriceUtils;
 import lombok.RequiredArgsConstructor;
@@ -551,7 +552,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
         // 1. Phiếu công khai
         phieuGiamGiaRepository.findAll().stream()
-                .filter(v -> "CONG_KHAI".equals(v.getHinhThuc()))
+                .filter(v -> HinhThucPhieuGiamGia.isCongKhai(v.getHinhThuc()))
                 .filter(hopLeCongKhai)
                 .forEach(v -> result.put(v.getId(), v));
 
