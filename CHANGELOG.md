@@ -1,3 +1,10 @@
+# [1.36.0](https://github.com/pnam-it309/AeroStride/compare/v1.35.0...v1.36.0) (2026-08-08)
+
+
+### Features
+
+* **system:** remove api keys, fix sorting and quick-add customer flows, add AI recommendation quiz, optimize order states and shift handover ([50325ec](https://github.com/pnam-it309/AeroStride/commit/50325ec7c5e4b56e32cf82d3e18927b31356d7f5))
+
 # [1.35.0](https://github.com/pnam-it309/AeroStride/compare/v1.34.0...v1.35.0) (2026-08-05)
 
 
