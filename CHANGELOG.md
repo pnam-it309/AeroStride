@@ -1,3 +1,10 @@
+## [1.36.1](https://github.com/pnam-it309/AeroStride/compare/v1.36.0...v1.36.1) (2026-08-08)
+
+
+### Bug Fixes
+
+* update validation, customer/employee requests, and UI assets on DUC_FIX ([1fd54bd](https://github.com/pnam-it309/AeroStride/commit/1fd54bdcdd7b3fd9a5220fe851493c2a2597bf48))
+
 # [1.36.0](https://github.com/pnam-it309/AeroStride/compare/v1.35.0...v1.36.0) (2026-08-08)
 
 
