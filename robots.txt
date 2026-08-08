@@ -1,0 +1,25 @@
+# AeroStride - robots.txt
+# https://www.robotstxt.org/
+
+User-agent: *
+Allow: /
+Allow: /shoes
+Allow: /vouchers
+Allow: /product/
+
+# Block admin & auth pages
+Disallow: /admin/
+Disallow: /user/
+Disallow: /auth/
+Disallow: /checkout
+Disallow: /my-orders
+Disallow: /order-success
+Disallow: /error/
+
+# Block API & WebSocket endpoints
+Disallow: /api/
+Disallow: /ws
+Disallow: /ws-chat
+
+# Sitemap location
+Sitemap: https://aerostride.me/sitemap.xml
