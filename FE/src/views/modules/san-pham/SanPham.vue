@@ -7,23 +7,20 @@
  */
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
-import { SYSTEM_STATUS, STATUS_OPTIONS } from '@/constants/statusConstants';
+import { getStatusLabel, getStatusColor } from '@/utils/statusUtils';
+import { STATUS_OPTIONS } from '@/constants/statusConstants';
 import { formatCurrency } from '@/utils/formatters';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import QrScanner from '@/views/modules/bien-the-san-pham/components/QrScanner.vue';
-import FormattedNumberField from '@/views/modules/san-pham/components/FormattedNumberField.vue';
 import { downloadFile } from '@/utils/fileUtils';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useRefreshHandler } from '@/composables/useRefreshHandler';
 import { useServerPagination } from '@/composables/useServerPagination';
 
-const MIN_PRICE = 0;
 const DEFAULT_MAX_PRICE = 6500000;
-const PRICE_STEP = 500000;
 
 const { addNotification } = useNotifications();
 const router = useRouter();

@@ -1,10 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 import { dichVuFile } from '@/services/core/dichVuFile';
 
-const route = useRoute();
 const loading = ref(true);
 const profile = ref(null);
 

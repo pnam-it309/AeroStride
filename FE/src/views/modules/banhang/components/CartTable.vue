@@ -5,11 +5,10 @@
  * so luong va phat emit cap nhat/xoa dong ve BanHang.vue.
  */
 import { ShoppingCartIcon, TrashIcon, MinusIcon, PlusIcon, BoxIcon } from 'vue-tabler-icons';
+import { formatCurrency } from '@/utils/formatters';
 
 const props = defineProps(['items']);
 const emit = defineEmits(['update-qty', 'remove']);
-
-const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
 
 const handleDirectInput = (item, event) => {
     let val = event.target.value;

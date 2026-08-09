@@ -2,8 +2,6 @@
 import { ref, onMounted, computed } from 'vue';
 import { AdminFilter, AdminTable, AdminPagination, AdminBreadcrumbs } from '@/components/common';
 import apiService from '@/services/apiService';
-import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
-import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useNotifications } from '@/services/notificationService';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';

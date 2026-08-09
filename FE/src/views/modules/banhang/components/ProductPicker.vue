@@ -4,9 +4,8 @@ import { BoxIcon, XIcon } from 'vue-tabler-icons';
 import { Html5Qrcode } from 'html5-qrcode';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { dichVuThuongHieu, dichVuMucDichChay, dichVuMauSac, dichVuKichThuoc } from '@/services/product/dichVuThuocTinh';
-import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
-import { isActiveStatus } from '@/utils/statusUtils';
+import { formatCurrency } from '@/utils/formatters';
 import { useBanHangStore } from '@/stores/banHangStore';
 
 const emit = defineEmits(['add-product']);
@@ -18,8 +17,6 @@ const props = defineProps({
 });
 const store = useBanHangStore();
 const { addNotification } = useNotifications();
-
-const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
 
 // Data loading
 const fetchProductSearchResults = async (keyword) => {

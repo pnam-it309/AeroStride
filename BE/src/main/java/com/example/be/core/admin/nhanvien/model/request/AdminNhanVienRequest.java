@@ -60,6 +60,14 @@ public class AdminNhanVienRequest extends PageRequest {
 
     // ── FILTER / TÌM KIẾM / LỌC / PHÂN TRANG ───────
     private String keyword;
+    private String search;
     private TrangThai trangThai;
+
+    public String getKeyword() {
+        if (keyword != null && !keyword.isBlank()) {
+            return keyword;
+        }
+        return search;
+    }
 }
 

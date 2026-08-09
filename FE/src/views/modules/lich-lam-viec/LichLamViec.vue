@@ -4,11 +4,9 @@ import { AdminFilter, AdminTable, AdminBreadcrumbs, AdminPagination, TableEmptyS
 import AppDatePicker from '@/components/common/AppDatePicker.vue';
 import { CalendarIcon, LayoutGridIcon } from 'vue-tabler-icons';
 import apiService from '@/services/apiService';
-import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useNotifications } from '@/services/notificationService';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
-import { APP_ROLES } from '@/constants/appConstants';
 
 const { addNotification } = useNotifications();
 

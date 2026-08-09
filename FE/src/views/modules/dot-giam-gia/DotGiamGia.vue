@@ -4,8 +4,8 @@ import { PATH } from '@/router/routePaths';
 import { useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
-import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
-import { SYSTEM_STATUS, STATUS_OPTIONS } from '@/constants/statusConstants';
+import { getStatusLabel } from '@/utils/statusUtils';
+import { STATUS_OPTIONS } from '@/constants/statusConstants';
 
 // REUSABLE COMPONENTS
 import AdminFilter from '@/components/common/AdminFilter.vue';
@@ -24,7 +24,6 @@ import { useNotifications } from '@/services/notificationService';
 const router = useRouter();
 const { addNotification } = useNotifications();
 const { isRefreshing, handleRefresh: executeRefresh } = useRefreshHandler();
-const startDateRef = ref(null);
 
 const {
     items: campaigns,

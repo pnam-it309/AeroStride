@@ -28,11 +28,10 @@ import SafeProductImage from '../san-pham/components/SafeProductImage.vue';
 import QrcodeVue from 'qrcode.vue';
 import { exportQrImageZip } from '@/utils/qrExcelWorkbook';
 import { formatCurrency, formatNumber, toNumber } from '@/utils/formatters';
-import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
+import { getStatusLabel } from '@/utils/statusUtils';
 
 const MIN_VARIANT_PRICE = 0;
 const MAX_VARIANT_PRICE = 6500000;
-const VARIANT_PRICE_STEP = 50000;
 
 const router = useRouter();
 const route = useRoute();
@@ -553,7 +552,6 @@ const buildVariantRequestPayload = (payload, existingVariant = null) => {
         idMauSac: payload.idMauSac,
         idKichThuoc: payload.idKichThuoc,
         soLuong: Number(payload.soLuong ?? 0),
-        giaNhap: Number(payload.giaNhap ?? 0),
         giaBan: Number(payload.giaBan ?? 0),
         trangThai: payload.trangThai || 'DANG_HOAT_DONG'
     };
@@ -580,7 +578,6 @@ const buildVariantStatusPayload = (variant, nextStatus) => ({
     idMauSac: variant.idMauSac,
     idKichThuoc: variant.idKichThuoc,
     soLuong: Number(variant.soLuong ?? 0),
-    giaNhap: Number(variant.giaNhap ?? 0),
     giaBan: Number(variant.giaGoc ?? variant.giaBan ?? 0),
     trangThai: nextStatus
 });

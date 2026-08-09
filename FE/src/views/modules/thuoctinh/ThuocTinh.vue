@@ -13,8 +13,6 @@ import {
     dichVuMucDichChay
 } from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
-import { isActiveStatus } from '@/utils/statusUtils';
-import { SYSTEM_STATUS } from '@/constants/statusConstants';
 import { generateRandomCode } from '@/utils/codeGenerator';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { noSpecialChar, lengthBetween2And255 } from '@/utils/validators';

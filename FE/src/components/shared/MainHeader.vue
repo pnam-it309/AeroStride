@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import CartDrawer from '@/components/shared/CartDrawer.vue';
+import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import { PATH } from '@/router/routePaths';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
@@ -158,7 +159,7 @@ onUnmounted(() => {
         <nav class="main-navbar">
             <!-- Logo -->
             <div class="logo-wrap">
-                <router-link to="/" class="text-logo-brand">AEROSTRIDE</router-link>
+                <LogoClient class="header-logo" />
             </div>
 
             <!-- Nav Links -->
@@ -314,18 +315,18 @@ onUnmounted(() => {
     background: #ffffff;
 }
 
-/* Brand Text Logo */
-.text-logo-brand {
-    font-family: 'Outfit', sans-serif;
-    font-size: 25px;
-    font-weight: 700;
-    color: #2962ff;
-    text-decoration: none;
-    letter-spacing: 0.5px;
-    transition: opacity 0.2s ease;
+/* Header Logo Image */
+.logo-wrap {
+    display: flex;
+    align-items: center;
+}
 
-    &:hover {
-        opacity: 0.85;
+:deep(.header-logo) {
+    .logo-img {
+        max-width: 150px;
+        max-height: 52px;
+        height: auto;
+        object-fit: contain;
     }
 }
 

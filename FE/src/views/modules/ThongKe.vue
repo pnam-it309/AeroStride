@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { AdminBreadcrumbs, AdminFilter, AdminTable, AdminPagination } from '@/components/common';
 import AppDatePicker from '@/components/common/AppDatePicker.vue';
+import { formatCurrency, formatNumber } from '@/utils/formatters';
 import { dichVuThongKe } from '@/services/admin/dichVuThongKe';
 import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
@@ -967,17 +968,6 @@ const loadStatistics = async () => {
     } finally {
         loading.value = false;
     }
-};
-
-const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND'
-    }).format(amount);
-};
-
-const formatNumber = (num) => {
-    return new Intl.NumberFormat('vi-VN').format(num);
 };
 
 const getGrowthColor = (growth) => {

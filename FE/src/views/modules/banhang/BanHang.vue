@@ -7,36 +7,17 @@
  *            và in hóa đơn sau khi hoàn tất.
  */
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { BoxIcon, XIcon } from 'vue-tabler-icons';
-import { Html5Qrcode } from 'html5-qrcode';
-import QrcodeVue from 'qrcode.vue';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { dichVuVnPay } from './composables/dichVuVnPay.js';
 import { initializePendingOrders } from './posInitialization.js';
-import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
-import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
-import {
-    dichVuThuongHieu,
-    dichVuXuatXu,
-    dichVuMucDichChay,
-    dichVuChatLieu,
-    dichVuMauSac,
-    dichVuKichThuoc
-} from '@/services/product/dichVuThuocTinh';
-import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
-import api from '@/services/apiService';
-import { API_ADMIN } from '@/constants/apiPaths';
-import { MESSAGES } from '@/constants/messages';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/authStore';
 import { useBanHangStore } from '@/stores/banHangStore';
 import { useLocation } from '@/composables/useLocation';
 import { useAddressMapping } from '@/composables/useAddressMapping';
 import { useHoaDonPrinter } from '@/composables/useHoaDonPrinter';
-import { GIOI_TINH_OPTIONS, ORDER_TYPES, DELIVERY_METHODS } from '@/constants/appConstants';
-import { isActiveStatus } from '@/utils/statusUtils';
-
+import { formatNumberWithDots, parseNumberFromDots, formatDateTime } from '@/utils/formatters';
 import { useCustomerSelect } from './composables/useCustomerSelect';
 
 // Import Components
@@ -65,6 +46,7 @@ const POS_ACTIVE_ORDER_KEY = 'aerostride_pos_active_order_id';
 
 // Giao Ca State
 const showGiaoCaModal = ref(false);
+const giaoCaModalMode = ref('open'); // 'open' or 'close'
 const currentGiaoCa = ref(null);
 
 const checkGiaoCa = async () => {
@@ -72,15 +54,33 @@ const checkGiaoCa = async () => {
         const res = await dichVuGiaoCa.getCaHienTai();
         const data = res?.data || res;
         if (!data || !data.id) {
-            // Tạm thời comment Giao ca theo yêu cầu
-            // showGiaoCaModal.value = true;
+            currentGiaoCa.value = null;
+            // Chỉ yêu cầu mở ca bắt buộc đối với Nhân viên (Staff). Quản lý (Admin) không bắt buộc.
+            if (!authStore.isAdmin) {
+                giaoCaModalMode.value = 'open';
+                showGiaoCaModal.value = true;
+            }
         } else {
             currentGiaoCa.value = data;
         }
     } catch (e) {
-        // Tạm thời comment Giao ca
-        // showGiaoCaModal.value = true;
+        currentGiaoCa.value = null;
+        if (!authStore.isAdmin) {
+            giaoCaModalMode.value = 'open';
+            showGiaoCaModal.value = true;
+        }
     }
+};
+
+const openMoCaModal = () => {
+    giaoCaModalMode.value = 'open';
+    showGiaoCaModal.value = true;
+};
+
+const openChotCaModal = async () => {
+    await checkGiaoCa();
+    giaoCaModalMode.value = 'close';
+    showGiaoCaModal.value = true;
 };
 
 const handleGiaoCaSuccess = () => {
@@ -1960,32 +1960,11 @@ const handleVnPayCallbackFromUrl = async () => {
         });
     }
 };
-
-const formatNumberWithDots = (val) => {
-    if (val === undefined || val === null || val === '') return '';
-    const clean = String(val).replace(/\D/g, '');
-    return clean.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-};
-
-const parseNumberFromDots = (val) => {
-    if (!val) return 0;
-    const clean = String(val).replace(/\D/g, '');
-    return clean ? Number(clean) : 0;
-};
-
-const formatDateTime = (dateStr) => {
-    if (!dateStr) return '21:58 18/06/2026';
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
-    const pad = (n) => String(n).padStart(2, '0');
-    return `${pad(date.getHours())}:${pad(date.getMinutes())} ${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
-};
 </script>
 
 <template>
     <v-container fluid class="pos-wrapper pa-0">
         <div class="pos-shell">
-            <!-- Header section containing title and tabs -->
             <header class="pos-header-row d-flex align-center justify-space-between">
                 <div class="d-flex align-center ga-4">
                     <OrderTabs
@@ -1995,6 +1974,34 @@ const formatDateTime = (dateStr) => {
                         @create="createNewOrder"
                         @close="closeOrder"
                     />
+                </div>
+                <div class="d-flex align-center ga-2 mr-2">
+                    <v-chip v-if="currentGiaoCa" color="success" size="small" variant="tonal" class="font-weight-medium">
+                        <v-icon start size="14">mdi-clock-outline</v-icon>
+                        Ca làm: {{ currentGiaoCa.maGiaoCa || 'Đang mở' }}
+                    </v-chip>
+                    <v-btn
+                        v-if="currentGiaoCa"
+                        color="warning"
+                        size="small"
+                        variant="flat"
+                        class="rounded-lg text-white"
+                        @click="openChotCaModal"
+                    >
+                        <v-icon start size="14">mdi-store-remove</v-icon>
+                        Chốt Ca / Giao Ca
+                    </v-btn>
+                    <v-btn
+                        v-else
+                        color="primary"
+                        size="small"
+                        variant="flat"
+                        class="rounded-lg"
+                        @click="openMoCaModal"
+                    >
+                        <v-icon start size="14">mdi-store-clock</v-icon>
+                        Mở Ca Làm Việc
+                    </v-btn>
                 </div>
             </header>
 
@@ -2155,9 +2162,12 @@ const formatDateTime = (dateStr) => {
         <QuickAddCustomerDialog v-model="showQuickAddDialog" :initial-data="quickAddInitialData" @success="onQuickAddSuccess" />
 
         <!-- Giao Ca Modal -->
-        <!-- Tạm thời ẩn chức năng giao ca
-        <GiaoCaModal v-model="showGiaoCaModal" mode="open" @success="handleGiaoCaSuccess" /> 
-        -->
+        <GiaoCaModal
+            v-model="showGiaoCaModal"
+            :mode="giaoCaModalMode"
+            :current-shift="currentGiaoCa"
+            @success="handleGiaoCaSuccess"
+        />
     </v-container>
 </template>
 

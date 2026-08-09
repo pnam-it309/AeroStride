@@ -11,6 +11,7 @@ import com.example.be.core.common.dto.PageResponse;
 import com.example.be.entity.*;
 import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.TrangThai;
+import com.example.be.infrastructure.exceptions.BusinessException;
 import com.example.be.infrastructure.exceptions.DuplicateResourceException;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.infrastructure.exceptions.ValidationException;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -318,6 +320,12 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
                 throw new DuplicateResourceException(MessageConstants.SAN_PHAM_VARIANT_DUPLICATE);
             }
         } else {
+            if (req.getIdMauSac() != null && existing.getMauSac() != null && !existing.getMauSac().getId().equals(req.getIdMauSac())) {
+                throw new BusinessException("Không được phép chỉnh sửa Màu sắc của biến thể đã tạo!");
+            }
+            if (req.getIdKichThuoc() != null && existing.getKichThuoc() != null && !existing.getKichThuoc().getId().equals(req.getIdKichThuoc())) {
+                throw new BusinessException("Không được phép chỉnh sửa Kích thước của biến thể đã tạo!");
+            }
             if (adminChiTietSanPhamRepository.existsBySanPhamIdAndMauSacIdAndKichThuocIdAndXoaMemFalseAndIdNot(
                     sp.getId(), req.getIdMauSac(), req.getIdKichThuoc(), existing.getId())) {
                 throw new DuplicateResourceException(MessageConstants.SAN_PHAM_VARIANT_DUPLICATE);
@@ -326,10 +334,14 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
         ChiTietSanPham v = existing != null ? existing : new ChiTietSanPham();
         v.setSanPham(sp);
-        v.setMauSac(mauSacRepository.findById(req.getIdMauSac()).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.MAU_SAC_NOT_FOUND)));
-        v.setKichThuoc(kichThuocRepository.findById(req.getIdKichThuoc()).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KICH_THUOC_NOT_FOUND)));
+        if (existing == null) {
+            v.setMauSac(mauSacRepository.findById(req.getIdMauSac()).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.MAU_SAC_NOT_FOUND)));
+            v.setKichThuoc(kichThuocRepository.findById(req.getIdKichThuoc()).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KICH_THUOC_NOT_FOUND)));
+        }
         v.setSoLuong(req.getSoLuong());
-        v.setGiaNhap(req.getGiaNhap());
+        if (v.getGiaNhap() == null) {
+            v.setGiaNhap(java.math.BigDecimal.ZERO);
+        }
         v.setGiaBan(req.getGiaBan());
         v.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : TrangThai.DANG_HOAT_DONG);
         v.setXoaMem(false);

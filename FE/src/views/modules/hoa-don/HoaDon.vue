@@ -16,7 +16,7 @@ import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { useAdminTable } from '@/composables/useAdminTable';
 import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
 import { getOrderStatusMeta } from '@/utils/orderStatus';
-import { ORDER_TYPES, ORDER_TYPE_OPTIONS } from '@/constants/appConstants';
+import { ORDER_TYPE_OPTIONS } from '@/constants/appConstants';
 import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();

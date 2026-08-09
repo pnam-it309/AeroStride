@@ -12,10 +12,10 @@ public final class AdminPhieuGiamGiaSpecification {
     public static Specification<PhieuGiamGia> keywordLike(String keyword) {
         return (root, query, cb) -> {
             if (keyword == null || keyword.trim().isEmpty()) return null;
-            String pattern = "%" + keyword.trim() + "%";
+            String pattern = "%" + keyword.trim().toLowerCase() + "%";
             return cb.or(
-                cb.like(root.get("ma"), pattern),
-                cb.like(root.get("ten"), pattern)
+                cb.like(cb.lower(root.get("ma")), pattern),
+                cb.like(cb.lower(root.get("ten")), pattern)
             );
         };
     }

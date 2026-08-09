@@ -4,8 +4,8 @@ import logo from '@/assets/images/logos/logoclient.jpg';
 </script>
 <template>
     <div class="logo">
-        <RouterLink to="/" class="d-flex justify-center">
-            <img :src="logo" alt="home" class="logo-img" />
+        <RouterLink to="/" class="d-flex justify-center align-center">
+            <img :src="logo" alt="AeroStride Logo" class="logo-img" />
         </RouterLink>
     </div>
 </template>
@@ -14,6 +14,7 @@ import logo from '@/assets/images/logos/logoclient.jpg';
 .logo {
     display: flex;
     justify-content: center;
+    align-items: center;
     width: 100%;
 }
 .logo-img {
@@ -22,5 +23,9 @@ import logo from '@/assets/images/logos/logoclient.jpg';
     object-fit: contain;
     display: block;
     mix-blend-mode: multiply;
+    transition: opacity 0.2s ease;
+}
+.logo-img:hover {
+    opacity: 0.85;
 }
 </style>

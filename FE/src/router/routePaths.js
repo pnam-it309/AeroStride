@@ -39,7 +39,7 @@ export const PATH = {
     LICH_CA_LAM: '/admin/lich-ca-lam',
     LICH_SU_HOAT_DONG: '/admin/lich-su-hoat-dong',
     LICH_SU_GIAO_CA: '/admin/giao-ca',
-    CHAM_CONG: '/admin/cham-cong',
+    BAN_GIAO_CA: '/admin/ban-giao-ca',
     AI_RECOMMEND: '/ai-recommend',
     PROFILE: '/profile',
     ORDERS: '/my-orders',

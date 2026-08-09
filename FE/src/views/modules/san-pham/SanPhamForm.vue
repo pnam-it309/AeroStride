@@ -13,10 +13,6 @@ import { dichVuBienThe } from '@/services/product/dichVuBienThe';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import { useNotifications } from '@/services/notificationService';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
-import AdminFilter from '@/components/common/AdminFilter.vue';
-import AdminTable from '@/components/common/AdminTable.vue';
-import AdminPagination from '@/components/common/AdminPagination.vue';
-import VariantFormModal from '../bien-the-san-pham/components/VariantFormModal.vue';
 import FormattedNumberField from './components/FormattedNumberField.vue';
 import SafeProductImage from './components/SafeProductImage.vue';
 import {
@@ -313,7 +309,6 @@ const colorFileInputRefs = ref({});
 // Gia/ton kho ap dung nhanh cho tat ca bien the hoac theo tung nhom mau.
 const bulkAllForm = ref({
     soLuong: '',
-    giaNhap: '',
     giaBan: ''
 });
 const bulkByColorForms = ref({});
@@ -397,23 +392,21 @@ const variantsByColor = computed(() => {
 
 const activeColorTab = ref('ALL');
 
-// Form ap dung nhanh gia ban/gia nhap/ton kho cho nhom bien the dang hien.
+// Form ap dung nhanh gia ban/ton kho cho nhom bien the dang hien.
 const quickApplyValues = reactive({
     giaBan: '',
-    giaNhap: '',
     soLuong: ''
 });
 
 const handleQuickApply = () => {
-    const { giaBan, giaNhap, soLuong } = quickApplyValues;
-    if (giaBan === '' && giaNhap === '' && soLuong === '') return;
+    const { giaBan, soLuong } = quickApplyValues;
+    if (giaBan === '' && soLuong === '') return;
 
     variantItems.value = variantItems.value.map((item) => {
         if (activeColorTab.value === 'ALL' || String(item.idMauSac) === String(activeColorTab.value)) {
             return {
                 ...item,
                 giaBan: giaBan !== '' ? Number(giaBan) : item.giaBan,
-                giaNhap: giaNhap !== '' ? Number(giaNhap) : item.giaNhap,
                 soLuong: soLuong !== '' ? Number(soLuong) : item.soLuong
             };
         }
@@ -421,7 +414,6 @@ const handleQuickApply = () => {
     });
 
     quickApplyValues.giaBan = '';
-    quickApplyValues.giaNhap = '';
     quickApplyValues.soLuong = '';
     addNotification({ title: 'Thành công', subtitle: 'Đã áp dụng nhanh giá trị', color: 'success' });
 };
@@ -453,25 +445,23 @@ const bulkEditModal = reactive({
     targetColorId: null,
     form: {
         soLuong: '',
-        giaNhap: '',
         giaBan: ''
     }
 });
 
 const openBulkEdit = (colorId = null) => {
     bulkEditModal.targetColorId = colorId;
-    bulkEditModal.form = { soLuong: '', giaNhap: '', giaBan: '' };
+    bulkEditModal.form = { soLuong: '', giaBan: '' };
     bulkEditModal.show = true;
 };
 
 const applyBulkEdit = () => {
-    const { soLuong, giaNhap, giaBan } = bulkEditModal.form;
+    const { soLuong, giaBan } = bulkEditModal.form;
     variantItems.value = variantItems.value.map((item) => {
         if (bulkEditModal.targetColorId === null || String(item.idMauSac) === String(bulkEditModal.targetColorId)) {
             return {
                 ...item,
                 soLuong: soLuong !== '' ? Number(soLuong) : item.soLuong,
-                giaNhap: giaNhap !== '' ? Number(giaNhap) : item.giaNhap,
                 giaBan: giaBan !== '' ? Number(giaBan) : item.giaBan
             };
         }
@@ -1712,28 +1702,10 @@ const validateProduct = () => {
             return false;
         }
 
-        if (isNaN(giaNhap) || giaNhap < 0) {
-            addNotification({
-                title: 'Lỗi',
-                subtitle: 'Giá nhập của biến thể không hợp lệ.',
-                color: 'error'
-            });
-            return false;
-        }
-
         if (isNaN(giaBan) || giaBan < 0) {
             addNotification({
                 title: 'Lỗi',
                 subtitle: 'Giá bán của biến thể không hợp lệ.',
-                color: 'error'
-            });
-            return false;
-        }
-
-        if (giaBan < giaNhap) {
-            addNotification({
-                title: 'Lỗi',
-                subtitle: `Biến thể (Màu: ${item.tenMauSac || getVariantColorLabel(item.idMauSac)}, Size: ${item.tenKichThuoc || getVariantSizeLabel(item.idKichThuoc)}) có giá bán (${formatCurrency(giaBan)}) thấp hơn giá nhập (${formatCurrency(giaNhap)}). Vui lòng kiểm tra lại.`,
                 color: 'error'
             });
             return false;
@@ -2695,15 +2667,6 @@ const handleSave = async () => {
                                                     style="width: 120px"
                                                 />
                                                 <FormattedNumberField
-                                                    v-model="quickApplyValues.giaNhap"
-                                                    placeholder="Giá nhập"
-                                                    variant="outlined"
-                                                    density="compact"
-                                                    hide-details
-                                                    class="custom-input-dense"
-                                                    style="width: 120px"
-                                                />
-                                                <FormattedNumberField
                                                     v-model="quickApplyValues.soLuong"
                                                     placeholder="Số lượng"
                                                     variant="outlined"
@@ -2790,12 +2753,6 @@ const handleSave = async () => {
                                                         </th>
                                                         <th
                                                             class="text-left font-weight-bold text-slate-800 text-caption"
-                                                            style="width: 140px; border-bottom: 1px solid #cbd5e1 !important"
-                                                        >
-                                                            Giá nhập (đ)
-                                                        </th>
-                                                        <th
-                                                            class="text-left font-weight-bold text-slate-800 text-caption"
                                                             style="width: 110px; border-bottom: 1px solid #cbd5e1 !important"
                                                         >
                                                             Số lượng sản phẩm
@@ -2838,15 +2795,6 @@ const handleSave = async () => {
                                                         <td>
                                                             <FormattedNumberField
                                                                 v-model="variant.giaBan"
-                                                                hide-details
-                                                                variant="outlined"
-                                                                density="compact"
-                                                                class="custom-input-dense"
-                                                            />
-                                                        </td>
-                                                        <td>
-                                                            <FormattedNumberField
-                                                                v-model="variant.giaNhap"
                                                                 hide-details
                                                                 variant="outlined"
                                                                 density="compact"
@@ -3225,17 +3173,7 @@ const handleSave = async () => {
                                 class="custom-input"
                             />
                         </v-col>
-                        <v-col cols="12">
-                            <div class="field-label">Giá nhập <span class="text-error">*</span></div>
-                            <FormattedNumberField
-                                v-model="bulkEditModal.form.giaNhap"
-                                placeholder="Nhập giá nhập..."
-                                variant="outlined"
-                                density="comfortable"
-                                hide-details
-                                class="custom-input"
-                            />
-                        </v-col>
+
                         <v-col cols="12">
                             <div class="field-label">Giá bán (VNĐ) <span class="text-error">*</span></div>
                             <FormattedNumberField

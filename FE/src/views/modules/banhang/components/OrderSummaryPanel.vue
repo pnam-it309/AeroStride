@@ -241,6 +241,7 @@
 <script setup>
 import { computed } from 'vue';
 import { findBestVoucherUpsell } from '../voucherUpsell.js';
+import { formatCurrency, formatNumberWithDots, parseNumberFromDots, formatShortAmount } from '@/utils/formatters';
 
 const props = defineProps({
     isGiaoHang: { type: Boolean, default: false },
@@ -337,29 +338,6 @@ const upsellVoucherLabel = computed(() => {
     const voucher = upsellSuggestion.value?.voucher;
     return voucher?.ma || voucher?.maPhieu || voucher?.tenPhieu || voucher?.ten || 'ưu đãi tốt hơn';
 });
-
-const formatShortAmount = (num) => {
-    if (!num) return '0';
-    if (num >= 1000000) return (num / 1000000).toFixed(0) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
-    return num.toString();
-};
-
-const formatNumberWithDots = (num) => {
-    if (num === null || num === undefined) return '';
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-};
-
-const parseNumberFromDots = (str) => {
-    if (!str) return 0;
-    const parsed = parseInt(str.replace(/\./g, ''), 10);
-    return isNaN(parsed) ? 0 : parsed;
-};
-
-const formatCurrency = (value) => {
-    if (value == null) return '';
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-};
 
 const onShippingInput = (e) => {
     const val = parseNumberFromDots(e.target.value);

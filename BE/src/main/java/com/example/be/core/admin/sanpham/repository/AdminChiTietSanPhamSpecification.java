@@ -22,7 +22,7 @@ public final class AdminChiTietSanPhamSpecification {
         );
     }
 
-    // Tìm theo mã biến thể hoặc tên sản phẩm gốc
+    // Tìm theo mã biến thể, tên sản phẩm gốc, mã sản phẩm gốc, tên màu sắc, tên kích thước
     public static Specification<ChiTietSanPham> hasKeyword(String keyword) {
         if (!StringUtils.hasText(keyword)) {
             return null;
@@ -30,7 +30,10 @@ public final class AdminChiTietSanPhamSpecification {
         String normalized = "%" + keyword.trim().toLowerCase() + "%";
         return (root, query, cb) -> cb.or(
                 cb.like(cb.lower(root.get("maChiTietSanPham")), normalized),
-                cb.like(cb.lower(root.get("sanPham").get("ten")), normalized)
+                cb.like(cb.lower(root.get("sanPham").get("ten")), normalized),
+                cb.like(cb.lower(root.get("sanPham").get("ma")), normalized),
+                cb.like(cb.lower(root.get("mauSac").get("ten")), normalized),
+                cb.like(cb.lower(root.get("kichThuoc").get("ten")), normalized)
         );
     }
 

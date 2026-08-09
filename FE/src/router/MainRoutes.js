@@ -149,9 +149,9 @@ const MainRoutes = {
             component: () => import('@/views/modules/lich-lam-viec/LichSuHoatDong.vue')
         },
         {
-            name: 'ChamCong',
-            path: PATH.CHAM_CONG,
-            component: () => import('@/views/modules/lich-lam-viec/ChamCong.vue')
+            name: 'BanGiaoCa',
+            path: PATH.BAN_GIAO_CA,
+            component: () => import('@/views/modules/lich-lam-viec/BanGiaoCa.vue')
         },
         {
             name: 'LichSuGiaoCa',

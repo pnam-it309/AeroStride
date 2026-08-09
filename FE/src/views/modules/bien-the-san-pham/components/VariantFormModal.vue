@@ -1,10 +1,5 @@
 <script setup>
 /**
- * Component: VariantFormModal
- * Y nghia: form them/sua mot bien the san pham, gom mau, size, SKU, ton kho,
- * gia nhap, gia ban goc va anh dai dien gui ve ProductVariantRequest.
- */
-/**
  * Module: Biến thể sản phẩm (Admin)
  * Component: VariantFormModal
  * Chức năng: Form chỉnh sửa chi tiết của 1 biến thể (ảnh, kích cỡ, màu sắc, giá nhập, giá bán, số lượng).
@@ -63,7 +58,6 @@ const createDefaultFormData = () => ({
     idMauSac: '',
     idKichThuoc: '',
     soLuong: 0,
-    giaNhap: 0,
     giaBan: 0,
     trangThai: 'DANG_HOAT_DONG',
     urlAnh: ''
@@ -385,7 +379,6 @@ const populateEditFormData = () => {
         idMauSac: resolveOptionId(props.options.mauSacs, getVariantColorId(props.variant), getVariantColorLabel(props.variant)),
         idKichThuoc: resolveOptionId(props.options.kichThuocs, getVariantSizeId(props.variant), getVariantSizeLabel(props.variant)),
         soLuong: Number(props.variant.soLuong ?? 0),
-        giaNhap: Number(props.variant.giaNhap ?? 0),
         giaBan: Number(props.variant.giaGoc ?? props.variant.giaBan ?? 0),
         trangThai: props.variant.trangThai || 'DANG_HOAT_DONG',
         urlAnh: getVariantImageUrl(props.variant)
@@ -409,6 +402,8 @@ watch(
     },
     { immediate: true }
 );
+
+const isEditing = computed(() => props.mode === 'edit' || !!(props.variant && (props.variant.id || props.variant.maChiTietSanPham)));
 
 watch(
     () => [props.open, props.mode, props.variant?.id, props.options.mauSacs?.length, props.options.kichThuocs?.length],
@@ -544,7 +539,6 @@ const handleSubmit = async () => {
     const result = await formRef.value?.validate();
     if (!result?.valid) return;
 
-    const giaNhap = Number(formData.value.giaNhap);
     const giaBan = Number(formData.value.giaBan);
     const soLuong = Number(formData.value.soLuong);
 
@@ -552,15 +546,6 @@ const handleSubmit = async () => {
         addNotification({
             title: 'Lỗi',
             subtitle: 'Số lượng tồn kho phải là số nguyên lớn hơn hoặc bằng 0.',
-            color: 'error'
-        });
-        return;
-    }
-
-    if (giaBan < giaNhap) {
-        addNotification({
-            title: 'Lỗi',
-            subtitle: 'Giá bán không được thấp hơn giá nhập.',
             color: 'error'
         });
         return;
@@ -635,6 +620,7 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                                         <v-combobox
                                             v-model="formData.idMauSac"
                                             v-bind="comboboxProps"
+                                            :disabled="isEditing"
                                             :custom-filter="comboboxFilter"
                                             :items="colorComboboxItems"
                                             item-title="ten"
@@ -655,26 +641,11 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
-                                        <div class="field-label">Số lượng tồn <span class="text-error">*</span></div>
-                                        <FormattedNumberField
-                                            v-model="formData.soLuong"
-                                            min="0"
-                                            :rules="[rules.required, rules.min0]"
-                                            variant="outlined"
-                                            density="comfortable"
-                                            hide-details="auto"
-                                            placeholder="0"
-                                            class="modern-input"
-                                        ></FormattedNumberField>
-                                    </div>
-                                </v-col>
-
-                                <v-col cols="12" md="6">
-                                    <div class="form-group">
                                         <div class="field-label">Kích thước <span class="text-error">*</span></div>
                                         <v-combobox
                                             v-model="formData.idKichThuoc"
                                             v-bind="comboboxProps"
+                                            :disabled="isEditing"
                                             :custom-filter="comboboxFilter"
                                             :items="sizeComboboxItems"
                                             item-title="ten"
@@ -697,16 +668,15 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
-                                        <div class="field-label">Giá nhập (VNĐ)</div>
+                                        <div class="field-label">Số lượng tồn <span class="text-error">*</span></div>
                                         <FormattedNumberField
-                                            v-model="formData.giaNhap"
+                                            v-model="formData.soLuong"
                                             min="0"
-                                            :rules="[rules.min0]"
+                                            :rules="[rules.required, rules.min0]"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             placeholder="0"
-                                            suffix="₫"
                                             class="modern-input"
                                         ></FormattedNumberField>
                                     </div>

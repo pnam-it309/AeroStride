@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { dichVuThanhToan } from '@/services/sales/dichVuThanhToan';
+import { formatCurrency, formatDate } from '@/utils/formatters';
 import TableEmptyState from '@/components/common/TableEmptyState.vue';
 
 const loading = ref(false);
@@ -68,17 +69,6 @@ const refundPayment = async (paymentId) => {
     } catch (error) {
         console.error('Error refunding payment:', error);
     }
-};
-
-const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND'
-    }).format(amount);
-};
-
-const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('vi-VN');
 };
 
 const getStatusColor = (status) => {

@@ -28,6 +28,24 @@ export const formatDateTime = (date) => {
     return formatDate(date, 'HH:mm dd/MM/yyyy');
 };
 
+export const formatNumberWithDots = (num) => {
+    if (num === null || num === undefined || num === '') return '';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
+export const parseNumberFromDots = (str) => {
+    if (!str) return 0;
+    const parsed = parseInt(str.toString().replace(/\./g, ''), 10);
+    return isNaN(parsed) ? 0 : parsed;
+};
+
+export const formatShortAmount = (num) => {
+    if (!num) return '0';
+    if (num >= 1000000) return (num / 1000000).toFixed(0) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
+    return num.toString();
+};
+
 /**
  * Safely parse a value to number with fallback
  * @param {any} value - Value to parse

@@ -92,12 +92,12 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         NhanVien nv = currentNhanVien.orElse(null);
         if (nv != null) {
             hoaDon.setNhanVien(nv);
+            com.example.be.entity.GiaoCa activeGiaoCa = giaoCaRepository.findGiaoCaHienTai(nv.getId()).orElse(null);
             boolean isAdmin = nv.getPhanQuyen() != null && "ADMIN".equals(nv.getPhanQuyen().getMa());
-            if (!isAdmin) {
-                // Link to active GiaoCa
-                com.example.be.entity.GiaoCa activeGiaoCa = giaoCaRepository.findGiaoCaHienTai(nv.getId())
-                        .orElseThrow(() -> new BusinessException("Bạn phải Mở Ca làm việc trước khi tạo hóa đơn!"));
+            if (activeGiaoCa != null) {
                 hoaDon.setGiaoCa(activeGiaoCa);
+            } else if (!isAdmin) {
+                throw new BusinessException("Bạn phải Mở Ca làm việc trước khi tạo hóa đơn!");
             }
         }
 

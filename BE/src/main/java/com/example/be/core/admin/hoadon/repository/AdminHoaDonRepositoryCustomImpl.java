@@ -63,7 +63,9 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
             String search = req.getSearch().toLowerCase().trim();
             builder.and(hd.maHoaDon.toLowerCase().contains(search)
                     .or(kh.ten.toLowerCase().contains(search))
-                    .or(hd.soDienThoaiNguoiNhan.contains(search)));
+                    .or(hd.tenNguoiNhan.toLowerCase().contains(search))
+                    .or(hd.soDienThoaiNguoiNhan.contains(search))
+                    .or(kh.sdt.contains(search)));
         }
 
         if (req.getTenKhachHang() != null && !req.getTenKhachHang().trim().isEmpty()) {

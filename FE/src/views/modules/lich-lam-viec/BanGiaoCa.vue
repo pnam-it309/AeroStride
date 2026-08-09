@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import { AdminTable } from '@/components/common';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/ui';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
@@ -14,12 +13,9 @@ import {
     UserCheckIcon,
     AlertCircleIcon,
     ReceiptIcon,
-    PlusIcon,
     RefreshIcon,
-    CalculatorIcon,
     CircleCheckIcon,
-    HistoryIcon,
-    FileTextIcon
+    HistoryIcon
 } from 'vue-tabler-icons';
 
 const uiStore = useUIStore();

@@ -5,7 +5,7 @@ const toMoney = (value) => {
 
 const getMinimumOrderValue = (voucher) => toMoney(voucher?.donHangToiThieu ?? voucher?.min_order_value ?? voucher?.minOrderValue);
 
-const getVoucherDiscount = (voucher, orderValue) => {
+export const getVoucherDiscount = (voucher, orderValue) => {
     const base = toMoney(orderValue);
     const type = String(voucher?.loaiPhieu || voucher?.type || '').toUpperCase();
 

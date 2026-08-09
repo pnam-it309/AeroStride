@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuPhieuGiamGia } from '@/services/admin/dichVuPhieuGiamGia';
 import { generateRandomCode } from '@/utils/codeGenerator';
+import { formatCurrency, formatDate, formatNumberWithDots, parseNumberFromDots } from '@/utils/formatters';
 import { PATH } from '@/router/routePaths';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { useNotifications } from '@/services/notificationService';
@@ -155,30 +156,6 @@ const filteredCustomers = computed(() => {
         return matchesSearch && matchesDateRange;
     });
 });
-
-const formatCurrency = (value) => {
-    if (!value) return '0 VNĐ';
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-};
-
-const formatDate = (value) => {
-    if (!value) return '---';
-    const date = typeof value === 'number' ? new Date(value) : new Date(value);
-    return date.toLocaleDateString('vi-VN');
-};
-
-const formatNumberWithDots = (value) => {
-    if (value === undefined || value === null || value === '') return '';
-    const num = String(value).replace(/\D/g, '');
-    if (!num) return '';
-    return new Intl.NumberFormat('vi-VN').format(Number(num));
-};
-
-const parseNumberFromDots = (value) => {
-    if (value === undefined || value === null || value === '') return 0;
-    const cleanValue = String(value).replace(/\./g, '').replace(/\D/g, '');
-    return cleanValue ? Number(cleanValue) : 0;
-};
 
 const formattedSoTienGiam = computed({
     get: () => formatNumberWithDots(form.value.soTienGiam),

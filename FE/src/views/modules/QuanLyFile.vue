@@ -8,7 +8,6 @@ const files = ref([]);
 const selectedFile = ref(null);
 const uploadDialog = ref(false);
 const previewDialog = ref(false);
-const dragging = ref(false);
 
 const pagination = ref({
     page: 1,

@@ -20,12 +20,15 @@ export function useServerPagination(fetchPage, { pageSize = 5, onError, onLoaded
     const totalElements = ref(0);
     const totalPages = ref(1);
 
+    let currentRequestId = 0;
+
     // Tải trang hiện tại. Nếu trang vượt quá tổng số trang (vd. sau khi xóa dòng cuối) thì lùi về trang cuối và tải lại.
     const load = async () => {
-        if (loading.value) return;
+        const requestId = ++currentRequestId;
         loading.value = true;
         try {
             const response = await fetchPage({ page: Math.max(pagination.page - 1, 0), size: pagination.size });
+            if (requestId !== currentRequestId) return;
             const result = response?.data || response;
             items.value = Array.isArray(result?.content) ? result.content : [];
             totalElements.value = Number(result?.totalElements ?? items.value.length);
@@ -33,13 +36,13 @@ export function useServerPagination(fetchPage, { pageSize = 5, onError, onLoaded
 
             if (pagination.page > totalPages.value) {
                 pagination.page = totalPages.value;
-                loading.value = false;
                 await load();
                 return;
             }
 
             if (onLoaded) onLoaded();
         } catch (error) {
+            if (requestId !== currentRequestId) return;
             items.value = [];
             totalElements.value = 0;
             totalPages.value = 1;
@@ -49,7 +52,9 @@ export function useServerPagination(fetchPage, { pageSize = 5, onError, onLoaded
                 console.error('useServerPagination load error:', error);
             }
         } finally {
-            loading.value = false;
+            if (requestId === currentRequestId) {
+                loading.value = false;
+            }
         }
     };
 

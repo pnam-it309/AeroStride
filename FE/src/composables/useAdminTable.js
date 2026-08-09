@@ -23,9 +23,11 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
         ...initialFilters
     });
 
-    const loadData = async () => {
-        if (loading.value) return;
+    let currentRequestId = 0;
+    let searchDebounceTimer = null;
 
+    const loadData = async () => {
+        const requestId = ++currentRequestId;
         loading.value = true;
         try {
             // Chuẩn bị params sạch sẽ để gửi đi
@@ -36,6 +38,7 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
             };
 
             const response = await fetchFn(params);
+            if (requestId !== currentRequestId) return;
 
             // Map dữ liệu
             const result = response;
@@ -55,7 +58,7 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
                     }
                 }
 
-                const possibleTotals = ['totalElements', 'totalCount', 'total', 'total_elements', 'total_count', 'total_records', 'count'];
+                const possibleTotals = ['totalElements', 'totalCount', 'total', 'total_records', 'count'];
                 for (const key of possibleTotals) {
                     if (typeof obj[key] === 'number') {
                         total = obj[key];
@@ -107,37 +110,45 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
             // thì tự động quay về trang cuối cùng hợp lệ
             if (pagination.value.page > finalTotalPages && finalTotalPages > 0) {
                 pagination.value.page = finalTotalPages;
-                // Không cần gọi loadData() ở đây vì watch(pagination.page) sẽ tự động kích hoạt lại
             }
         } catch (error) {
+            if (requestId !== currentRequestId) return;
             if (import.meta.env.DEV) {
                 console.error('Error loading table data:', error);
             }
             items.value = [];
         } finally {
-            loading.value = false;
+            if (requestId === currentRequestId) {
+                loading.value = false;
+            }
         }
     };
 
     watch(
         () => [pagination.value.page, pagination.value.size],
         () => {
+            if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
             loadData();
         }
     );
 
     const handleFilter = () => {
         pagination.value.page = 1;
-        loadData();
+        if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+            loadData();
+        }, 300);
     };
 
     const handleReset = () => {
+        if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
         filters.value = {
             search: '',
             trangThai: null,
             ...initialFilters
         };
-        handleFilter();
+        pagination.value.page = 1;
+        loadData();
     };
 
     return {

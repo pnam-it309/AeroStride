@@ -7,10 +7,9 @@ import { useUIStore } from '@/stores/ui';
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import { downloadFile } from '@/utils/fileUtils';
 import { formatDateTime, formatCurrency } from '@/utils/formatters';
-import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
-import { SYSTEM_STATUS, STATUS_OPTIONS } from '@/constants/statusConstants';
+import { getStatusLabel, getStatusColor } from '@/utils/statusUtils';
+import { STATUS_OPTIONS } from '@/constants/statusConstants';
 import { PlusIcon, PencilIcon, StarIcon, TrashIcon, MapPinIcon, EyeIcon } from 'vue-tabler-icons';
-import axios from 'axios';
 
 import { useAdminTable } from '@/composables/useAdminTable';
 import { useLocation } from '@/composables/useLocation';

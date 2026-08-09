@@ -4,13 +4,11 @@ import { useRouter } from 'vue-router';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import { PATH } from '@/router/routePaths';
 import { formatDateTime } from '@/utils/formatters';
-import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
-import { SYSTEM_STATUS } from '@/constants/statusConstants';
+import { getStatusLabel } from '@/utils/statusUtils';
 
 // REUSABLE COMPONENTS
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import { downloadFile } from '@/utils/fileUtils';
-import { EditIcon, RefreshIcon } from 'vue-tabler-icons';
 
 import { useNotifications } from '@/services/notificationService';
 
@@ -26,10 +24,16 @@ const {
     loading,
     pagination,
     filters,
-    loadData: loadEmployees,
-    handleFilter: handleSearch,
-    handleReset
-} = useAdminTable(dichVuNhanVien.layNhanVienPhanTrang, { search: '', gioiTinh: null, trangThai: null });
+} = useAdminTable(
+    async (params) => {
+        const payload = { ...params };
+        if (payload.search) {
+            payload.keyword = payload.search;
+        }
+        return dichVuNhanVien.layNhanVienPhanTrang(payload);
+    },
+    { search: '', gioiTinh: null, trangThai: null }
+);
 
 const router = useRouter();
 const { confirmDialog, setConfirm, clearConfirm, handleConfirm } = useConfirmDialog();
@@ -160,7 +164,7 @@ onMounted(() => {
                         density="compact"
                         hide-details
                         prepend-inner-icon="mdi-magnify"
-                        class="compact-input"
+                        @input="handleSearch"
                         @keyup.enter="handleSearch"
                     ></v-text-field>
                 </v-col>

@@ -1,11 +1,6 @@
 <script setup>
 /**
- * Component: OrderTabs
- * Y nghia: thanh tab hoa don cho cua POS, cho phep chuyen don, tao don moi,
- * dong don va gioi han so hoa don cho.
- */
-/**
- * Module: Bán hàng tại quầy (Admin)
+ * Module: Bán hàng tại quầy (Admin/POS)
  * Component: OrderTabs
  * Chức năng: Hiển thị thanh tabs các hóa đơn đang chờ thanh toán (tối đa 5 hóa đơn),
  *            cho phép tạo thêm hoặc chuyển đổi giữa các hóa đơn.

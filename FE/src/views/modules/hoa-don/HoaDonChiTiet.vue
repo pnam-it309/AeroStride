@@ -26,6 +26,7 @@ import {
 } from 'vue-tabler-icons';
 import { AdminConfirm, AdminBreadcrumbs, AdminTable, AdminPagination, AdminFilter } from '@/components/common';
 import SafeProductImage from '../san-pham/components/SafeProductImage.vue';
+import { formatCurrency, formatDate } from '@/utils/formatters';
 import { getOrderStatusMeta, getOrderStatusOrdinal } from '@/utils/orderStatus';
 import { ORDER_STATUS_ORDINALS } from '@/constants/hoaDonConstants';
 
@@ -700,9 +701,6 @@ const timelineSteps = computed(() => {
             };
         });
 });
-
-const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
-const formatDate = (date) => (date ? new Date(date).toLocaleString('vi-VN') : 'N/A');
 
 const openStatusDialog = () => {
     selectedStatus.value = order.value.trangThai;

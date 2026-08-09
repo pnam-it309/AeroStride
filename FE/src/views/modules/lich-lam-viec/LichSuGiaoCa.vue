@@ -4,7 +4,7 @@ import { AdminTable } from '@/components/common';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 import { useNotifications } from '@/services/notificationService';
 import { useUIStore } from '@/stores/ui';
-import { formatDateTime } from '@/utils/formatters';
+import { formatDateTime, formatCurrency } from '@/utils/formatters';
 
 const uiStore = useUIStore();
 const { addNotification } = useNotifications();
@@ -59,10 +59,6 @@ const getStatusLabel = (status) => {
 const formatDate = (dateNum) => {
     if (!dateNum) return '--';
     return formatDateTime(dateNum);
-};
-
-const formatCurrency = (val) => {
-    return Number(val || 0).toLocaleString() + ' đ';
 };
 
 const getChenhLech = (item) => {

@@ -6,8 +6,7 @@ import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { generateRandomCode } from '@/utils/codeGenerator';
 import { dichVuThuongHieu, dichVuMauSac, dichVuKichThuoc, dichVuChatLieu } from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
-import { MESSAGES } from '@/constants/messages';
-import { STATUS } from '@/utils/statusUtils';
+import { formatCurrency } from '@/utils/formatters';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import AdminFilter from '@/components/common/AdminFilter.vue';
@@ -287,10 +286,6 @@ watch(
 
 const calculateDiscountedPrice = (originalPrice) => {
     return originalPrice * (1 - (form.value.soTienGiam || 0) / 100);
-};
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
 
 const isVariantSelected = (id) => selectedVariantsIds.value.includes(id);

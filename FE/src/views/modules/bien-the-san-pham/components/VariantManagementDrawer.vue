@@ -1,10 +1,5 @@
 <script setup>
 /**
- * Component: VariantManagementDrawer
- * Y nghia: drawer quan ly nhanh mot bien the da co, gom trang thai, ton kho,
- * gia goc va danh sach anh cua bien the.
- */
-/**
  * Module: Quản lý Hình ảnh Biến thể Sản phẩm (Variant Management Drawer)
  * Chức năng: Component dạng Drawer (ngăn kéo) cho phép người dùng xem, thêm, xóa và
  * đặt ảnh chính (ảnh đại diện) cho một biến thể sản phẩm cụ thể.
@@ -16,7 +11,6 @@ import { dichVuBienThe } from '@/services/product/dichVuBienThe';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import SafeProductImage from '../../san-pham/components/SafeProductImage.vue';
 import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
-import QrcodeVue from 'qrcode.vue';
 
 const props = defineProps({
     show: Boolean,
@@ -36,8 +30,7 @@ const uploading = ref(false);
 const formData = reactive({
     trangThai: 'DANG_HOAT_DONG',
     soLuong: 0,
-    giaBan: 0,
-    giaNhap: 0
+    giaBan: 0
 });
 
 const images = ref([]);
@@ -69,7 +62,6 @@ watch(
             formData.trangThai = v.trangThai;
             formData.soLuong = v.soLuong;
             formData.giaBan = v.giaGoc ?? v.giaBan;
-            formData.giaNhap = v.giaNhap;
             images.value = v.images || [];
         }
     },

@@ -107,8 +107,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import QrcodeVue from 'qrcode.vue';
+import { formatCurrency, formatNumberWithDots, parseNumberFromDots } from '@/utils/formatters';
 
 const props = defineProps({
     paymentMethod: { type: String, default: 'CASH' },
@@ -116,39 +115,15 @@ const props = defineProps({
     remainingBalance: { type: Number, default: 0 },
     changeAmount: { type: Number, default: 0 },
     isProcessing: { type: Boolean, default: false },
-    hasItems: { type: Boolean, default: false },
-    vnpayMethod: { type: String, default: 'QR' },
-    vnpayDialog: {
-        type: Object,
-        default: () => ({ show: false, orderId: '', loading: false, verified: false, statusText: '', paymentUrl: '', amount: 0 })
-    }
+    hasItems: { type: Boolean, default: false }
 });
 
 const emit = defineEmits([
     'update:paymentMethod',
     'update:receivedAmount',
     'print-invoice',
-    'checkout',
-    'update:vnpayDialog',
-    'cancel-vnpay',
-    'vnpay-redirect'
+    'checkout'
 ]);
-
-const formatNumberWithDots = (num) => {
-    if (num === null || num === undefined) return '';
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-};
-
-const parseNumberFromDots = (str) => {
-    if (!str) return 0;
-    const parsed = parseInt(str.replace(/\./g, ''), 10);
-    return isNaN(parsed) ? 0 : parsed;
-};
-
-const formatCurrency = (value) => {
-    if (value == null) return '';
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-};
 
 const onAmountInput = (e) => {
     const val = parseNumberFromDots(e.target.value);
@@ -157,10 +132,6 @@ const onAmountInput = (e) => {
 
 const emitMethodChange = (method) => {
     emit('update:paymentMethod', method);
-};
-
-const emitDialogChange = (key, val) => {
-    emit('update:vnpayDialog', { ...props.vnpayDialog, [key]: val });
 };
 </script>
 

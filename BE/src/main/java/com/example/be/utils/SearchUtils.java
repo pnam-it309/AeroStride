@@ -32,8 +32,8 @@ public final class SearchUtils {
      */
     public static Pageable buildPageable(PageRequest req) {
         int rawPage = (req.getPage() == null || req.getPage() < 0) ? 0 : req.getPage();
-        // Chuyển đổi 1-based index (từ Frontend) sang 0-based index (cho Spring Data JPA)
-        int page = rawPage > 0 ? rawPage - 1 : 0;
+        // Frontend gửi 0-based index (0 = trang 1, 1 = trang 2) -> dùng trực tiếp cho Spring Data JPA
+        int page = Math.max(rawPage, 0);
         int size = (req.getSize() == null || req.getSize() <= 0) ? DEFAULT_SIZE : req.getSize();
         
         String sortBy = StringUtils.hasText(req.getSortBy()) ? req.getSortBy() : DEFAULT_SORT;
