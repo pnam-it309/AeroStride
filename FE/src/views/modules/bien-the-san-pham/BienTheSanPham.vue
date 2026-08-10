@@ -553,7 +553,6 @@ const buildVariantRequestPayload = (payload, existingVariant = null) => {
         idMauSac: payload.idMauSac,
         idKichThuoc: payload.idKichThuoc,
         soLuong: Number(payload.soLuong ?? 0),
-        giaNhap: Number(payload.giaNhap ?? 0),
         giaBan: Number(payload.giaBan ?? 0),
         trangThai: payload.trangThai || 'DANG_HOAT_DONG'
     };
@@ -580,7 +579,6 @@ const buildVariantStatusPayload = (variant, nextStatus) => ({
     idMauSac: variant.idMauSac,
     idKichThuoc: variant.idKichThuoc,
     soLuong: Number(variant.soLuong ?? 0),
-    giaNhap: Number(variant.giaNhap ?? 0),
     giaBan: Number(variant.giaGoc ?? variant.giaBan ?? 0),
     trangThai: nextStatus
 });

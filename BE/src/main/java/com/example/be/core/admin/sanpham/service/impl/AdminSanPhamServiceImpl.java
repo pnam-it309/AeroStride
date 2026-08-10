@@ -329,7 +329,6 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         v.setMauSac(mauSacRepository.findById(req.getIdMauSac()).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.MAU_SAC_NOT_FOUND)));
         v.setKichThuoc(kichThuocRepository.findById(req.getIdKichThuoc()).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KICH_THUOC_NOT_FOUND)));
         v.setSoLuong(req.getSoLuong());
-        v.setGiaNhap(req.getGiaNhap());
         v.setGiaBan(req.getGiaBan());
         v.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : TrangThai.DANG_HOAT_DONG);
         v.setXoaMem(false);

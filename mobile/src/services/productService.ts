@@ -60,7 +60,6 @@ export interface ProductVariant {
   tenKichThuoc: string;
   giaTriKichThuoc: string;
   soLuong: number;
-  giaNhap: number;
   giaBan: number;
   phanTramGiam: number;
   trangThai: string;

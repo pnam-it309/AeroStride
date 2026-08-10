@@ -343,7 +343,6 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                     .tenKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getTen() : null)
                     .giaTriKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getGiaTriKichThuoc() : null)
                     .soLuong(v.getSoLuong())
-                    .giaNhap(v.getGiaNhap())
                     .giaBan(v.getGiaBan())
                     .phanTramGiam(activeDiscount)
                     .trangThai(v.getTrangThai())

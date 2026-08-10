@@ -6,6 +6,9 @@ import CustomerChat from '@/components/shared/CustomerChat.vue';
 
 import { dichVuDatHang } from '@/services/public/dichVuDatHang';
 import { ORDER_STATUS, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, ORDER_STATUS_ICONS } from '@/constants/hoaDonConstants';
+import defaultShoeImg from '@/assets/images/products/cat_running.jpg';
+
+const DEFAULT_SHOE_IMAGE = defaultShoeImg || new URL('/src/assets/images/products/cat_running.jpg', import.meta.url).href;
 
 const route = useRoute();
 const router = useRouter();
@@ -383,7 +386,7 @@ onMounted(async () => {
                             >
                                 <div class="detail-thumb-wrapper">
                                     <v-img
-                                        :src="item.hinhAnh || 'https://via.placeholder.com/150?text=Sản+Phẩm'"
+                                        :src="item.hinhAnh || DEFAULT_SHOE_IMAGE"
                                         cover
                                         width="76"
                                         height="76"

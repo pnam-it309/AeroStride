@@ -36,8 +36,7 @@ const uploading = ref(false);
 const formData = reactive({
     trangThai: 'DANG_HOAT_DONG',
     soLuong: 0,
-    giaBan: 0,
-    giaNhap: 0
+    giaBan: 0
 });
 
 const images = ref([]);
@@ -69,7 +68,6 @@ watch(
             formData.trangThai = v.trangThai;
             formData.soLuong = v.soLuong;
             formData.giaBan = v.giaGoc ?? v.giaBan;
-            formData.giaNhap = v.giaNhap;
             images.value = v.images || [];
         }
     },

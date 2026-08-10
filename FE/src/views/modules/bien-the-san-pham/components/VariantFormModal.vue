@@ -63,7 +63,6 @@ const createDefaultFormData = () => ({
     idMauSac: '',
     idKichThuoc: '',
     soLuong: 0,
-    giaNhap: 0,
     giaBan: 0,
     trangThai: 'DANG_HOAT_DONG',
     urlAnh: ''
@@ -385,7 +384,6 @@ const populateEditFormData = () => {
         idMauSac: resolveOptionId(props.options.mauSacs, getVariantColorId(props.variant), getVariantColorLabel(props.variant)),
         idKichThuoc: resolveOptionId(props.options.kichThuocs, getVariantSizeId(props.variant), getVariantSizeLabel(props.variant)),
         soLuong: Number(props.variant.soLuong ?? 0),
-        giaNhap: Number(props.variant.giaNhap ?? 0),
         giaBan: Number(props.variant.giaGoc ?? props.variant.giaBan ?? 0),
         trangThai: props.variant.trangThai || 'DANG_HOAT_DONG',
         urlAnh: getVariantImageUrl(props.variant)
@@ -544,7 +542,6 @@ const handleSubmit = async () => {
     const result = await formRef.value?.validate();
     if (!result?.valid) return;
 
-    const giaNhap = Number(formData.value.giaNhap);
     const giaBan = Number(formData.value.giaBan);
     const soLuong = Number(formData.value.soLuong);
 
@@ -552,15 +549,6 @@ const handleSubmit = async () => {
         addNotification({
             title: 'Lỗi',
             subtitle: 'Số lượng tồn kho phải là số nguyên lớn hơn hoặc bằng 0.',
-            color: 'error'
-        });
-        return;
-    }
-
-    if (giaBan < giaNhap) {
-        addNotification({
-            title: 'Lỗi',
-            subtitle: 'Giá bán không được thấp hơn giá nhập.',
             color: 'error'
         });
         return;
@@ -697,11 +685,11 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
-                                        <div class="field-label">Giá nhập (VNĐ)</div>
+                                        <div class="field-label">Giá bán (VNĐ) <span class="text-error">*</span></div>
                                         <FormattedNumberField
-                                            v-model="formData.giaNhap"
+                                            v-model="formData.giaBan"
                                             min="0"
-                                            :rules="[rules.min0]"
+                                            :rules="[rules.required, rules.min0]"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
@@ -731,34 +719,14 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                         </v-col>
                     </v-row>
 
-                    <!-- Bottom row for aligned Delete Image button and Price Input -->
-                    <v-row class="mt-2">
+                    <!-- Bottom row for aligned Delete Image button -->
+                    <v-row class="mt-2" v-if="formData.urlAnh">
                         <v-col cols="12" md="4">
                             <div class="form-group mb-0">
-                                <div class="field-label" style="visibility: hidden">Spacer</div>
-                                <div v-if="formData.urlAnh" class="d-flex">
-                                    <v-btn variant="outlined" class="text-none delete-image-btn w-100" @click.stop="formData.urlAnh = ''">
-                                        <v-icon start size="14">mdi-trash-can-outline</v-icon>
-                                        Xóa ảnh
-                                    </v-btn>
-                                </div>
-                            </div>
-                        </v-col>
-
-                        <v-col cols="12" md="8">
-                            <div class="form-group mb-0">
-                                <div class="field-label">Giá bán (VNĐ) <span class="text-error">*</span></div>
-                                <FormattedNumberField
-                                    v-model="formData.giaBan"
-                                    min="0"
-                                    :rules="[rules.required, rules.min0]"
-                                    variant="outlined"
-                                    density="comfortable"
-                                    hide-details="auto"
-                                    placeholder="0"
-                                    suffix="₫"
-                                    class="modern-input"
-                                ></FormattedNumberField>
+                                <v-btn variant="outlined" class="text-none delete-image-btn w-100" @click.stop="formData.urlAnh = ''">
+                                    <v-icon start size="14">mdi-trash-can-outline</v-icon>
+                                    Xóa ảnh
+                                </v-btn>
                             </div>
                         </v-col>
                     </v-row>

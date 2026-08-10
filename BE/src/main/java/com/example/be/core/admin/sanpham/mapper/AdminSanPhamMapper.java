@@ -107,7 +107,6 @@ public class AdminSanPhamMapper {
                 .tenKichThuoc(variant.getKichThuoc() != null ? variant.getKichThuoc().getTen() : null)
                 .giaTriKichThuoc(variant.getKichThuoc() != null ? variant.getKichThuoc().getGiaTriKichThuoc() : null)
                 .soLuong(variant.getSoLuong())
-                .giaNhap(variant.getGiaNhap())
                 .giaGoc(activeDiscountPercent.compareTo(BigDecimal.ZERO) > 0 ? originalPrice : null)
                 .giaBan(discountedPrice)
                 .phanTramGiam(activeDiscountPercent)
