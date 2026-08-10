@@ -1,3 +1,10 @@
+## [1.36.2](https://github.com/pnam-it309/AeroStride/compare/v1.36.1...v1.36.2) (2026-08-10)
+
+
+### Bug Fixes
+
+* update product variants, schema seeds, cart drawer and order details on DUC_FIX ([bdbfa50](https://github.com/pnam-it309/AeroStride/commit/bdbfa506ca6dade3a942736145409271a9b50add))
+
 ## [1.36.1](https://github.com/pnam-it309/AeroStride/compare/v1.36.0...v1.36.1) (2026-08-08)
 
 
