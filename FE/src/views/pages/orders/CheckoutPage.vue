@@ -12,6 +12,9 @@ import { dichVuKhachHang } from '@/services/public/dichVuKhachHang';
 import { dichVuVnPay } from '@/views/modules/banhang/composables/dichVuVnPay';
 import { PATH } from '@/router/routePaths';
 import { useLocation } from '@/composables/useLocation';
+import defaultShoeImg from '@/assets/images/products/cat_running.jpg';
+
+const DEFAULT_SHOE_IMAGE = defaultShoeImg || new URL('/src/assets/images/products/cat_running.jpg', import.meta.url).href;
 
 const router = useRouter();
 const cartStore = useCartStore();
@@ -927,7 +930,7 @@ onUnmounted(() => {
                                     >
                                         <div class="product-img-wrapper position-relative flex-shrink-0">
                                             <v-img
-                                                :src="item.hinhAnh || 'https://via.placeholder.com/150?text=Sản+Phẩm'"
+                                                :src="item.hinhAnh || DEFAULT_SHOE_IMAGE"
                                                 cover
                                                 width="72"
                                                 height="72"

@@ -171,7 +171,6 @@ const handleCheckout = () => {
                                     class="rounded-xl"
                                     width="90"
                                     height="90"
-                                    lazy-src="https://via.placeholder.com/90?text=..."
                                 ></v-img>
                                 <div v-else class="image-placeholder rounded-xl">
                                     <v-icon size="36" color="grey-lighten-2">mdi-shoe-sneaker</v-icon>

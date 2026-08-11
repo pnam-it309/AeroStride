@@ -121,6 +121,9 @@ public class SecurityConfig {
                 // Allow all OPTIONS requests (CORS preflight)
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 
+                // Allow public GET for product reviews
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/customer/review/product/**").permitAll()
+                
                 // Public endpoints
                 .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
                 

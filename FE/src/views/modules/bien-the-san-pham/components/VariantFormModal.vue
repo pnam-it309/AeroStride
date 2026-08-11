@@ -668,9 +668,9 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
-                                        <div class="field-label">Số lượng tồn <span class="text-error">*</span></div>
+                                        <div class="field-label">Giá bán (VNĐ) <span class="text-error">*</span></div>
                                         <FormattedNumberField
-                                            v-model="formData.soLuong"
+                                            v-model="formData.giaBan"
                                             min="0"
                                             :rules="[rules.required, rules.min0]"
                                             variant="outlined"
@@ -701,34 +701,14 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                         </v-col>
                     </v-row>
 
-                    <!-- Bottom row for aligned Delete Image button and Price Input -->
-                    <v-row class="mt-2">
+                    <!-- Bottom row for aligned Delete Image button -->
+                    <v-row class="mt-2" v-if="formData.urlAnh">
                         <v-col cols="12" md="4">
                             <div class="form-group mb-0">
-                                <div class="field-label" style="visibility: hidden">Spacer</div>
-                                <div v-if="formData.urlAnh" class="d-flex">
-                                    <v-btn variant="outlined" class="text-none delete-image-btn w-100" @click.stop="formData.urlAnh = ''">
-                                        <v-icon start size="14">mdi-trash-can-outline</v-icon>
-                                        Xóa ảnh
-                                    </v-btn>
-                                </div>
-                            </div>
-                        </v-col>
-
-                        <v-col cols="12" md="8">
-                            <div class="form-group mb-0">
-                                <div class="field-label">Giá bán (VNĐ) <span class="text-error">*</span></div>
-                                <FormattedNumberField
-                                    v-model="formData.giaBan"
-                                    min="0"
-                                    :rules="[rules.required, rules.min0]"
-                                    variant="outlined"
-                                    density="comfortable"
-                                    hide-details="auto"
-                                    placeholder="0"
-                                    suffix="₫"
-                                    class="modern-input"
-                                ></FormattedNumberField>
+                                <v-btn variant="outlined" class="text-none delete-image-btn w-100" @click.stop="formData.urlAnh = ''">
+                                    <v-icon start size="14">mdi-trash-can-outline</v-icon>
+                                    Xóa ảnh
+                                </v-btn>
                             </div>
                         </v-col>
                     </v-row>

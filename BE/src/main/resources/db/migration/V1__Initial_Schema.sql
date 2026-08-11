@@ -237,7 +237,6 @@ CREATE TABLE IF NOT EXISTS chi_tiet_san_pham (
     id_mau_sac VARCHAR(36),
     ma_chi_tiet_san_pham VARCHAR(50) UNIQUE,
     so_luong INT,
-    gia_nhap DECIMAL(20,2),
     gia_ban DECIMAL(20,2),
     trang_thai INT,
     xoa_mem BIT DEFAULT 0,

@@ -35,9 +35,6 @@ public class ProductVariantRequest {
     @Min(value = 0, message = "soLuong phai lon hon hoac bang 0")
     private Integer soLuong;
 
-    /** Gia nhap. */
-    private BigDecimal giaNhap;
-
     /** Gia ban goc cua bien the; dot giam gia se tinh gia hien thi rieng. */
     @NotNull(message = "giaBan khong duoc de trong")
     @DecimalMin(value = "0.0", inclusive = true, message = "giaBan phai lon hon hoac bang 0")

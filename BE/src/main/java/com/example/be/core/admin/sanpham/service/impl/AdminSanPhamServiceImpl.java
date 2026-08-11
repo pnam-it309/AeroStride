@@ -339,9 +339,6 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             v.setKichThuoc(kichThuocRepository.findById(req.getIdKichThuoc()).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KICH_THUOC_NOT_FOUND)));
         }
         v.setSoLuong(req.getSoLuong());
-        if (v.getGiaNhap() == null) {
-            v.setGiaNhap(java.math.BigDecimal.ZERO);
-        }
         v.setGiaBan(req.getGiaBan());
         v.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : TrangThai.DANG_HOAT_DONG);
         v.setXoaMem(false);

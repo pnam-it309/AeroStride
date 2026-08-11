@@ -795,12 +795,12 @@ const getColorUploadEntry = (colorId) => colorImageState.value[colorId] || { url
 const getColorUploadPreviewUrl = (colorId) => getColorUploadEntry(colorId).url || logoPlaceholder;
 const getBulkColorForm = (colorId) => {
     if (!bulkByColorForms.value[colorId]) {
-        bulkByColorForms.value[colorId] = { soLuong: '', giaNhap: '', giaBan: '' };
+        bulkByColorForms.value[colorId] = { soLuong: '', giaBan: '' };
     }
     return bulkByColorForms.value[colorId];
 };
 const hasAnyBulkValue = (form) =>
-    ['soLuong', 'giaNhap', 'giaBan'].some((field) => form[field] !== '' && form[field] !== null && form[field] !== undefined);
+    ['soLuong', 'giaBan'].some((field) => form[field] !== '' && form[field] !== null && form[field] !== undefined);
 const getVariantColorLabel = (colorId) => getOptionLabel(colors, colorId);
 const getVariantSizeLabel = (sizeId) => getOptionLabel(sizes, sizeId);
 const getVariantDescriptor = () => variantContextSummary.value.join(' • ');
@@ -819,7 +819,6 @@ const mapVariantToFormState = (variant = {}) => ({
         getVariantSizeLabelValue(variant) ||
         (getOptionLabel(sizes, getVariantSizeIdValue(variant)) !== '--' ? getOptionLabel(sizes, getVariantSizeIdValue(variant)) : ''),
     soLuong: Number(variant.soLuong ?? 0),
-    giaNhap: Number(variant.giaNhap ?? 0),
     giaBan: Number(variant.giaBan ?? 0),
     giaGoc: variant.giaGoc != null ? Number(variant.giaGoc) : null,
     phanTramGiam: Number(variant.phanTramGiam ?? 0),
@@ -881,7 +880,6 @@ const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackI
         idMauSac: colorId,
         idKichThuoc: sizeId,
         soLuong: Number(existingVariant.soLuong ?? 0),
-        giaNhap: Number(existingVariant.giaNhap ?? 0),
         giaBan: Number(existingVariant.giaBan ?? 0),
         trangThai: existingVariant.trangThai || defaultVariantStatus,
         maChiTietSanPham: existingVariant.maChiTietSanPham || defaultSku,
@@ -897,7 +895,6 @@ const buildVariantPayload = (variant, includeImages = true) => {
         idMauSac: variant.idMauSac,
         idKichThuoc: variant.idKichThuoc,
         soLuong: Number(variant.soLuong ?? 0),
-        giaNhap: Number(variant.giaNhap ?? 0),
         giaBan: Number(variant.giaBan ?? 0),
         trangThai: variant.trangThai || defaultVariantStatus
     };
@@ -1162,7 +1159,6 @@ const applyBulkValues = (predicate, form, successMessage) => {
         return {
             ...variant,
             soLuong: form.soLuong !== '' ? Number(form.soLuong) : variant.soLuong,
-            giaNhap: form.giaNhap !== '' ? Number(form.giaNhap) : variant.giaNhap,
             giaBan: form.giaBan !== '' ? Number(form.giaBan) : variant.giaBan
         };
     });
@@ -1191,7 +1187,7 @@ const clearAllDraftVariants = () => {
     selectedColors.value = [];
     selectedSizes.value = [];
     colorImageState.value = {};
-    bulkAllForm.value = { soLuong: '', giaNhap: '', giaBan: '' };
+    bulkAllForm.value = { soLuong: '', giaBan: '' };
     bulkByColorForms.value = {};
 };
 
@@ -1691,7 +1687,6 @@ const validateProduct = () => {
         }
 
         const soLuong = Number(item.soLuong);
-        const giaNhap = Number(item.giaNhap);
         const giaBan = Number(item.giaBan);
 
         if (isNaN(soLuong) || soLuong < 0 || !Number.isInteger(soLuong)) {
@@ -3174,7 +3169,6 @@ const handleSave = async () => {
                                 class="custom-input"
                             />
                         </v-col>
-
                         <v-col cols="12">
                             <div class="field-label">Giá bán (VNĐ) <span class="text-error">*</span></div>
                             <FormattedNumberField

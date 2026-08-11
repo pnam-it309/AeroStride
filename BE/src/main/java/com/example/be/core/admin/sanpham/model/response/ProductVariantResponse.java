@@ -36,8 +36,6 @@ public class ProductVariantResponse {
     private String giaTriKichThuoc;
     /** Ton kho hien tai cua bien the. */
     private Integer soLuong;
-    /** Gia nhap noi bo. */
-    private BigDecimal giaNhap;
     /** Gia ban goc luu tren bien the. */
     private BigDecimal giaGoc;
     /** Gia ban hien thi sau khi tinh dot giam gia dang hoat dong. */

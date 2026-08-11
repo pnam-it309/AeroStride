@@ -1026,6 +1026,15 @@ const toggleFavorite = () => {
             <v-progress-circular indeterminate color="primary"></v-progress-circular>
         </v-container>
 
+        <v-container v-else class="text-center py-16 my-12">
+            <v-icon size="80" color="grey-lighten-1" class="mb-4">mdi-shoe-sneaker</v-icon>
+            <h2 class="text-h5 font-weight-bold mb-2">Sản phẩm không tồn tại hoặc đã bị gỡ bỏ</h2>
+            <p class="text-body-1 text-grey-darken-1 mb-6">Rất tiếc, mẫu giày bạn đang tìm kiếm không có sẵn trong hệ thống.</p>
+            <v-btn color="#2962FF" class="rounded-xl px-8 text-none font-weight-bold" height="48" @click="router.push(PATH.SHOES)">
+                Khám phá danh sách giày
+            </v-btn>
+        </v-container>
+
         <!-- Landing style Footer -->
         <footer class="footer-landing py-10 text-center text-grey-darken-1 bg-white border-t mt-16">
             <LogoClient class="mb-4 d-inline-block" style="max-width: 150px" />

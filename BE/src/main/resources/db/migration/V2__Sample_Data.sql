@@ -127,12 +127,12 @@ INSERT INTO san_pham (id, id_thuong_hieu, id_xuat_xu, id_muc_dich_chay, id_chat_
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- 13. Bảng Chi Tiết Sản Phẩm (chi_tiet_san_pham)
-INSERT INTO chi_tiet_san_pham (id, id_san_pham, id_kich_thuoc, id_mau_sac, ma_chi_tiet_san_pham, so_luong, gia_nhap, gia_ban, trang_thai, xoa_mem, ngay_tao) VALUES
-('ct1', 'sp1', 'kt2', 'ms1', 'CT001', 100, 1000000, 1500000, 0, 0, 1711814400000),
-('ct2', 'sp1', 'kt3', 'ms1', 'CT002', 50, 1000000, 1500000, 0, 0, 1711814400000),
-('ct3', 'sp2', 'kt2', 'ms2', 'CT003', 80, 1200000, 1800000, 0, 0, 1711814400000),
-('ct4', 'sp3', 'kt1', 'ms3', 'CT004', 30, 800000, 1200000, 0, 0, 1711814400000),
-('ct5', 'sp4', 'kt4', 'ms4', 'CT005', 60, 1500000, 2200000, 0, 0, 1711814400000)
+INSERT INTO chi_tiet_san_pham (id, id_san_pham, id_kich_thuoc, id_mau_sac, ma_chi_tiet_san_pham, so_luong, gia_ban, trang_thai, xoa_mem, ngay_tao) VALUES
+('ct1', 'sp1', 'kt2', 'ms1', 'CT001', 100, 1500000, 0, 0, 1711814400000),
+('ct2', 'sp1', 'kt3', 'ms1', 'CT002', 50, 1500000, 0, 0, 1711814400000),
+('ct3', 'sp2', 'kt2', 'ms2', 'CT003', 80, 1800000, 0, 0, 1711814400000),
+('ct4', 'sp3', 'kt1', 'ms3', 'CT004', 30, 1200000, 0, 0, 1711814400000),
+('ct5', 'sp4', 'kt4', 'ms4', 'CT005', 60, 2200000, 0, 0, 1711814400000)
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- 14. Bảng Ảnh Chi Tiết Sản Phẩm (anh_chi_tiet_san_pham)

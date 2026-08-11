@@ -32,7 +32,6 @@ public class CustomerProductVariantResponse {
     private String tenKichThuoc;
     private String giaTriKichThuoc;
     private Integer soLuong;
-    private BigDecimal giaNhap;
     private BigDecimal giaBan;
     private BigDecimal phanTramGiam;
     private TrangThai trangThai;

@@ -50,9 +50,6 @@ public class ChiTietSanPham extends PrimaryEntity {
     @Column(name = "so_luong")
     private Integer soLuong;
 
-    @Column(name = "gia_nhap")
-    private BigDecimal giaNhap;
-
     @Column(name = "gia_ban")
     private BigDecimal giaBan;
 
