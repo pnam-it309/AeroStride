@@ -1,3 +1,4 @@
+
 <script setup>
 /**
  * Module: Form san pham
@@ -12,9 +13,10 @@ import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { dichVuBienThe } from '@/services/product/dichVuBienThe';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import { useNotifications } from '@/services/notificationService';
-import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
+import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import FormattedNumberField from './components/FormattedNumberField.vue';
 import SafeProductImage from './components/SafeProductImage.vue';
+import VariantFormModal from '@/views/modules/bien-the-san-pham/components/VariantFormModal.vue';
 import {
     ArrowLeftIcon,
     BoxIcon,
@@ -26,7 +28,6 @@ import {
     SettingsIcon,
     TrashIcon
 } from 'vue-tabler-icons';
-import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import QrcodeVue from 'qrcode.vue';
 import {
     dichVuThuongHieu,

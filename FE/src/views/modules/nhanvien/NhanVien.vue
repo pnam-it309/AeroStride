@@ -4,7 +4,8 @@ import { useRouter } from 'vue-router';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import { PATH } from '@/router/routePaths';
 import { formatDateTime } from '@/utils/formatters';
-import { getStatusLabel } from '@/utils/statusUtils';
+import { getStatusLabel, isActiveStatus } from '@/utils/statusUtils';
+import { SYSTEM_STATUS } from '@/constants/statusConstants';
 
 // REUSABLE COMPONENTS
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
@@ -24,16 +25,33 @@ const {
     loading,
     pagination,
     filters,
+    loadData: loadEmployees,
+    handleFilter,
+    handleReset,
 } = useAdminTable(
     async (params) => {
         const payload = { ...params };
         if (payload.search) {
             payload.keyword = payload.search;
         }
+        // Remove custom filters from params before sending to API if needed
+        // Or transform them as required by the API
         return dichVuNhanVien.layNhanVienPhanTrang(payload);
     },
     { search: '', gioiTinh: null, trangThai: null }
 );
+
+// Override handleReset to preserve custom filters
+const originalHandleReset = handleReset;
+const customHandleReset = () => {
+    filters.value = {
+        search: '',
+        gioiTinh: null,
+        trangThai: null
+    };
+    pagination.value.page = 1;
+    loadEmployees();
+};
 
 const router = useRouter();
 const { confirmDialog, setConfirm, clearConfirm, handleConfirm } = useConfirmDialog();
@@ -55,7 +73,7 @@ const tableHeaders = [
 ];
 
 const handleRefresh = async () => {
-    await refreshData(() => handleReset());
+    await refreshData(() => customHandleReset());
 };
 
 const handleExport = async () => {
@@ -133,6 +151,7 @@ const goToEdit = (id) => {
 
 const updatePaginationSize = (size) => {
     pagination.value.size = size;
+    pagination.value.page = 1;
 };
 
 onMounted(() => {
@@ -164,8 +183,8 @@ onMounted(() => {
                         density="compact"
                         hide-details
                         prepend-inner-icon="mdi-magnify"
-                        @input="handleSearch"
-                        @keyup.enter="handleSearch"
+                        @input="handleFilter"
+                        @keyup.enter="handleFilter"
                     ></v-text-field>
                 </v-col>
                 <v-col cols="12" md="3" class="filter-cell">
@@ -178,7 +197,7 @@ onMounted(() => {
                         density="compact"
                         hide-details
                         class="compact-input"
-                        @update:model-value="handleSearch"
+                        @update:model-value="handleFilter"
                     ></v-select>
                 </v-col>
                 <v-col cols="12" md="3" class="filter-cell">
@@ -191,7 +210,7 @@ onMounted(() => {
                         density="compact"
                         hide-details
                         class="compact-input"
-                        @update:model-value="handleSearch"
+                        @update:model-value="handleFilter"
                     ></v-select>
                 </v-col>
             </AdminFilter>

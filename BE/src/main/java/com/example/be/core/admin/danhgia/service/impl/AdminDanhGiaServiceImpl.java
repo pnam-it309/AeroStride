@@ -1,6 +1,7 @@
 package com.example.be.core.admin.danhgia.service.impl;
 
 import com.example.be.core.admin.danhgia.model.request.AdminDanhGiaFilterRequest;
+import org.springframework.transaction.annotation.Transactional;
 import com.example.be.core.admin.danhgia.model.response.AdminDanhGiaResponse;
 import com.example.be.core.admin.danhgia.repository.AdminDanhGiaRepository;
 import com.example.be.core.admin.danhgia.repository.AdminDanhGiaSpecification;
@@ -19,6 +20,7 @@ public class AdminDanhGiaServiceImpl implements AdminDanhGiaService {
     private final AdminDanhGiaRepository repository;
 
     @Override
+    @Transactional(readOnly = true)
     public Page<AdminDanhGiaResponse> getPageDanhGia(AdminDanhGiaFilterRequest request, Pageable pageable) {
         Page<DanhGiaSanPham> page = repository.findAll(AdminDanhGiaSpecification.filter(request), pageable);
         return page.map(AdminDanhGiaResponse::new);

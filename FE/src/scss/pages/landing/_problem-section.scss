@@ -408,7 +408,7 @@
     }
 
     .shoe-name {
-        font-size: 3rem;
+        font-size: clamp(1.5rem, 4vw, 2.25rem);
     }
 
     .the-shoe {

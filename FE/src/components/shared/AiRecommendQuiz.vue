@@ -34,10 +34,11 @@ const fetchNextQuestion = async () => {
         const res = await dichVuSanPhamPublic.layGoiYQuiz(answers.value);
         if (res.nextQuestion) {
             currentQuestion.value = res.nextQuestion;
-            recommendedProducts.value = [];
         } else {
             currentQuestion.value = null;
-            recommendedProducts.value = res.recommendedProducts || [];
+        }
+        if (res.recommendedProducts && res.recommendedProducts.length > 0) {
+            recommendedProducts.value = res.recommendedProducts;
         }
     } catch (e) {
         console.error(e);

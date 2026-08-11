@@ -1,5 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { PATH } from '@/router/routePaths';
 import { AdminFilter, AdminTable, AdminBreadcrumbs, AdminPagination, TableEmptyState } from '@/components/common';
 import AppDatePicker from '@/components/common/AppDatePicker.vue';
 import { CalendarIcon, LayoutGridIcon } from 'vue-tabler-icons';
@@ -7,8 +9,12 @@ import apiService from '@/services/apiService';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useNotifications } from '@/services/notificationService';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
+import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
+import { useRoleAccess } from '@/composables/useRoleAccess';
 
+const router = useRouter();
 const { addNotification } = useNotifications();
+const { currentUser, isStaff, canManageSchedule } = useRoleAccess();
 
 const loading = ref(false);
 const isRefreshing = ref(false);
@@ -16,10 +22,6 @@ const items = ref([]);
 const shiftOptions = ref(['Tất cả']);
 const employeeOptions = ref([]);
 const rawShifts = ref([]);
-
-// Check logged in user role & staff info
-const isStaff = computed(() => dichVuXacThuc.laStaff());
-const currentUser = computed(() => dichVuXacThuc.layUserHienTai());
 
 const currentStaffInfo = computed(() => {
     if (!currentUser.value) return null;
@@ -857,6 +859,10 @@ const monthDays = computed(() => {
 });
 
 onMounted(() => {
+    if (isStaff.value) {
+        router.push(PATH.BAN_HANG);
+        return;
+    }
     loadData();
 });
 </script>
@@ -920,7 +926,7 @@ onMounted(() => {
                     <h3 class="text-h6 font-weight-bold text-black tracking-tight">Danh sách lịch làm việc</h3>
                 </div>
                 <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions ga-2">
-                    <template v-if="!isStaff">
+                    <template v-if="canManageSchedule">
                         <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-export" @click="handleDownloadTemplate">
                             Tải Excel
                         </v-btn>
@@ -997,10 +1003,11 @@ onMounted(() => {
                                         size="small"
                                         @click="handleEditSchedule(item)"
                                     >
-                                        <v-icon size="18">mdi-eye-outline</v-icon>
-                                        <v-tooltip activator="parent" location="top">Xem / Sửa</v-tooltip>
+                                        <v-icon size="18">{{ canManageSchedule ? 'mdi-pencil-outline' : 'mdi-eye-outline' }}</v-icon>
+                                        <v-tooltip activator="parent" location="top">{{ canManageSchedule ? 'Sửa lịch' : 'Xem chi tiết' }}</v-tooltip>
                                     </v-btn>
                                     <v-btn
+                                        v-if="canManageSchedule"
                                         variant="text"
                                         color="primary"
                                         class="action-icon-btn"

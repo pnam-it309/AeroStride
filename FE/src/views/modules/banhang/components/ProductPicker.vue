@@ -4,6 +4,7 @@ import { BoxIcon, XIcon } from 'vue-tabler-icons';
 import { Html5Qrcode } from 'html5-qrcode';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { dichVuThuongHieu, dichVuMucDichChay, dichVuMauSac, dichVuKichThuoc } from '@/services/product/dichVuThuocTinh';
+import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
 import { formatCurrency } from '@/utils/formatters';
 import { useBanHangStore } from '@/stores/banHangStore';

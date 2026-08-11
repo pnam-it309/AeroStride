@@ -5,7 +5,7 @@ import { useUIStore } from '@/stores/ui';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import { useNotifications } from '@/services/notificationService';
-import { formatCurrency, formatDateTime, readMoneyInVietnameseWords } from '@/utils/formatters';
+import { formatCurrency, formatDateTime, readMoneyInVietnameseWords, formatNumberWithDots, parseNumberFromDots } from '@/utils/formatters';
 import {
     BuildingStoreIcon,
     CashIcon,
@@ -56,6 +56,20 @@ const closeShiftForm = ref({
     tienThucTe: 0,
     nhanVienNhanCaId: null,
     ghiChuChotCa: ''
+});
+
+const tienBanDauFormatted = computed({
+    get: () => formatNumberWithDots(openShiftForm.value.tienBanDau),
+    set: (val) => {
+        openShiftForm.value.tienBanDau = parseNumberFromDots(val);
+    }
+});
+
+const tienThucTeFormatted = computed({
+    get: () => formatNumberWithDots(closeShiftForm.value.tienThucTe),
+    set: (val) => {
+        closeShiftForm.value.tienThucTe = parseNumberFromDots(val);
+    }
 });
 
 // Cash Denomination Calculator Modal State
@@ -374,8 +388,8 @@ const getStatusBadge = (status) => {
                                 Tiền Mặt Đầu Ca Trong Két (VNĐ) <span class="text-error">*</span>
                             </label>
                             <v-text-field
-                                v-model.number="openShiftForm.tienBanDau"
-                                type="number"
+                                v-model="tienBanDauFormatted"
+                                type="text"
                                 variant="outlined"
                                 density="comfortable"
                                 color="primary"
@@ -482,8 +496,8 @@ const getStatusBadge = (status) => {
                                 Tiền Mặt Thực Tế Kiểm Đếm Chốt Ca (VNĐ) <span class="text-error">*</span>
                             </label>
                             <v-text-field
-                                v-model.number="closeShiftForm.tienThucTe"
-                                type="number"
+                                v-model="tienThucTeFormatted"
+                                type="text"
                                 variant="outlined"
                                 density="comfortable"
                                 color="primary"

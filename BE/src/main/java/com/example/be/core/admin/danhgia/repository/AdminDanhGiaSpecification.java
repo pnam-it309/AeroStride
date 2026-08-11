@@ -16,9 +16,9 @@ public class AdminDanhGiaSpecification {
 
             if (request.getKeyword() != null && !request.getKeyword().trim().isEmpty()) {
                 String keyword = "%" + request.getKeyword().trim().toLowerCase() + "%";
-                Predicate searchTenKh = cb.like(cb.lower(root.join("khachHang").get("tenKhachHang")), keyword);
-                Predicate searchSdt = cb.like(cb.lower(root.join("khachHang").get("soDienThoai")), keyword);
-                Predicate searchTenSp = cb.like(cb.lower(root.join("sanPham").get("tenSanPham")), keyword);
+                Predicate searchTenKh = cb.like(cb.lower(root.join("khachHang").get("ten")), keyword);
+                Predicate searchSdt = cb.like(cb.lower(root.join("khachHang").get("sdt")), keyword);
+                Predicate searchTenSp = cb.like(cb.lower(root.join("sanPham").get("ten")), keyword);
                 predicates.add(cb.or(searchTenKh, searchSdt, searchTenSp));
             }
 

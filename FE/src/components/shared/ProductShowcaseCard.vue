@@ -109,6 +109,10 @@ const highlights = computed(() => {
     overflow: hidden;
     background: #f8f9fa;
 
+    @media (max-width: 600px) {
+        height: 130px;
+    }
+
     .product-image {
         height: 100%;
         transition: transform 0.5s ease;

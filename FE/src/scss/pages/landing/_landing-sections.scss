@@ -24,26 +24,28 @@
 
     .section-tag {
         font-size: 0.75rem;
-        font-weight: 600;
+        font-weight: 700;
         color: #2962ff;
-        letter-spacing: 2px;
-        display: block;
+        letter-spacing: 1.5px;
+        display: inline-block;
         margin-bottom: 8px;
         text-transform: uppercase;
     }
 
     .section-title {
-        font-size: 2.5rem;
+        font-size: clamp(1.35rem, 3.2vw, 2.25rem);
         font-weight: 700;
-        color: #1e293b;
-        letter-spacing: normal;
+        color: #0f172a;
+        line-height: 1.25;
+        letter-spacing: -0.5px;
     }
 
     .section-desc {
-        font-size: 1rem;
+        font-size: clamp(0.875rem, 1.5vw, 1rem);
         color: #64748b;
-        max-width: 500px;
-        margin: 0 auto;
+        max-width: 540px;
+        margin: 8px auto 0;
+        line-height: 1.5;
     }
 }
 
@@ -87,15 +89,24 @@
 
 /* RESPONSIVE */
 @media (max-width: 960px) {
-    .section-header .section-title {
-        font-size: 1.8rem;
+    .snap-section {
+        min-height: auto !important;
+        padding-top: 2.5rem;
+        padding-bottom: 2.5rem;
     }
 
-    .section-title {
-        font-size: 1.8rem;
+    .section-header {
+        margin-bottom: 1.25rem;
     }
 
     .product-col {
         padding: 4px !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .snap-section {
+        padding-top: 1.75rem;
+        padding-bottom: 1.75rem;
     }
 }

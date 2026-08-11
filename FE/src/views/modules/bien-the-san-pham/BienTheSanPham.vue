@@ -28,10 +28,11 @@ import SafeProductImage from '../san-pham/components/SafeProductImage.vue';
 import QrcodeVue from 'qrcode.vue';
 import { exportQrImageZip } from '@/utils/qrExcelWorkbook';
 import { formatCurrency, formatNumber, toNumber } from '@/utils/formatters';
-import { getStatusLabel } from '@/utils/statusUtils';
+import { getStatusLabel, isActiveStatus } from '@/utils/statusUtils';
 
 const MIN_VARIANT_PRICE = 0;
 const MAX_VARIANT_PRICE = 6500000;
+const VARIANT_PRICE_STEP = 50000;
 
 const router = useRouter();
 const route = useRoute();

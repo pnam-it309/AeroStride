@@ -35,6 +35,9 @@ CREATE TABLE IF NOT EXISTS nhan_vien (
     thanh_pho NVARCHAR(300),
     phuong_xa NVARCHAR(300),
     dia_chi_chi_tiet NVARCHAR(300),
+    face_encoding LONGTEXT,
+    reset_status VARCHAR(50),
+    reset_requested_at DATETIME,
     xoa_mem BIT DEFAULT 0,
     trang_thai INT,
     ngay_tao BIGINT,
@@ -339,6 +342,28 @@ CREATE TABLE IF NOT EXISTS phieu_giam_gia_ca_nhan (
     FOREIGN KEY (id_phieu_giam_gia) REFERENCES phieu_giam_gia(id)
 );
 
+-- Bảng Giao Ca
+CREATE TABLE IF NOT EXISTS giao_ca (
+    id VARCHAR(36) PRIMARY KEY,
+    ma_giao_ca VARCHAR(50) UNIQUE,
+    id_nhan_vien_trong_ca VARCHAR(36),
+    id_nhan_vien_nhan_ca VARCHAR(36),
+    thoi_gian_vao_ca BIGINT,
+    thoi_gian_ra_ca BIGINT,
+    tien_ban_dau DECIMAL(20,2),
+    tong_doanh_thu DECIMAL(20,2),
+    tien_thuc_te DECIMAL(20,2),
+    tien_chenh_lech DECIMAL(20,2),
+    ghi_chu NVARCHAR(500),
+    trang_thai VARCHAR(50),
+    ngay_tao BIGINT,
+    ngay_cap_nhat BIGINT,
+    nguoi_tao VARCHAR(100),
+    nguoi_cap_nhat VARCHAR(100),
+    FOREIGN KEY (id_nhan_vien_trong_ca) REFERENCES nhan_vien(id),
+    FOREIGN KEY (id_nhan_vien_nhan_ca) REFERENCES nhan_vien(id)
+);
+
 -- Bảng Hóa Đơn
 CREATE TABLE IF NOT EXISTS hoa_don (
     id VARCHAR(36) PRIMARY KEY,
@@ -346,15 +371,18 @@ CREATE TABLE IF NOT EXISTS hoa_don (
     id_phieu_giam_gia_ca_nhan VARCHAR(36),
     id_khach_hang VARCHAR(36),
     id_nhan_vien VARCHAR(36),
+    id_giao_ca VARCHAR(36),
     ma_hoa_don VARCHAR(50) UNIQUE,
     loai_don VARCHAR(50),
     order_type VARCHAR(20) NULL,
     delivery_method VARCHAR(20) NULL,
     phi_van_chuyen DECIMAL(20,2),
+    phi_hoan_hang DECIMAL(20,2),
     tong_tien DECIMAL(20,2),
     tong_tien_sau_giam DECIMAL(20,2),
     tien_nguoi_mua DECIMAL(20,2),
     ten_nguoi_nhan VARCHAR(255),
+    email_nguoi_nhan VARCHAR(100),
     dia_chi_nguoi_nhan VARCHAR(500),
     so_dien_thoai_nguoi_nhan VARCHAR(15),
     ngay_du_kien_nhan BIGINT,
@@ -368,7 +396,8 @@ CREATE TABLE IF NOT EXISTS hoa_don (
     FOREIGN KEY (id_phieu_giam_gia) REFERENCES phieu_giam_gia(id),
     FOREIGN KEY (id_phieu_giam_gia_ca_nhan) REFERENCES phieu_giam_gia_ca_nhan(id),
     FOREIGN KEY (id_khach_hang) REFERENCES khach_hang(id),
-    FOREIGN KEY (id_nhan_vien) REFERENCES nhan_vien(id)
+    FOREIGN KEY (id_nhan_vien) REFERENCES nhan_vien(id),
+    FOREIGN KEY (id_giao_ca) REFERENCES giao_ca(id)
 );
 
 -- Bảng Hóa Đơn Chi Tiết
@@ -520,6 +549,34 @@ CREATE TABLE IF NOT EXISTS danh_gia_san_pham (
     FOREIGN KEY (id_hoa_don) REFERENCES hoa_don(id),
     FOREIGN KEY (id_san_pham) REFERENCES san_pham(id),
     FOREIGN KEY (id_khach_hang) REFERENCES khach_hang(id)
+);
+
+-- Bảng Kiến Thức AI
+CREATE TABLE IF NOT EXISTS kien_thuc_ai (
+    id VARCHAR(36) PRIMARY KEY,
+    muc_dich VARCHAR(255) NOT NULL,
+    tu_khoa TEXT,
+    mau_cau_tra_loi TEXT,
+    do_uu_tien INT
+);
+
+-- Bảng Từ Đồng Nghĩa AI
+CREATE TABLE IF NOT EXISTS tu_dong_nghia_ai (
+    id VARCHAR(36) PRIMARY KEY,
+    tu_goc VARCHAR(255) NOT NULL,
+    tu_chuan_hoa VARCHAR(255) NOT NULL
+);
+
+-- Bảng Lịch Sử Hoạt Động
+CREATE TABLE IF NOT EXISTS lich_su_hoat_dong (
+    id VARCHAR(36) PRIMARY KEY,
+    hanh_dong VARCHAR(255),
+    doi_tuong VARCHAR(255),
+    trang_thai INT,
+    ngay_tao BIGINT,
+    ngay_cap_nhat BIGINT,
+    nguoi_tao VARCHAR(100),
+    nguoi_cap_nhat VARCHAR(100)
 );
 
 SET FOREIGN_KEY_CHECKS = 1;

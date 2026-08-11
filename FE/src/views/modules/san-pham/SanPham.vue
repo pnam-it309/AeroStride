@@ -7,8 +7,8 @@
  */
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { getStatusLabel, getStatusColor } from '@/utils/statusUtils';
-import { STATUS_OPTIONS } from '@/constants/statusConstants';
+import { getStatusLabel, getStatusColor, isActiveStatus } from '@/utils/statusUtils';
+import { STATUS_OPTIONS, SYSTEM_STATUS } from '@/constants/statusConstants';
 import { formatCurrency } from '@/utils/formatters';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
@@ -20,7 +20,9 @@ import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useRefreshHandler } from '@/composables/useRefreshHandler';
 import { useServerPagination } from '@/composables/useServerPagination';
 
+const MIN_PRICE = 0;
 const DEFAULT_MAX_PRICE = 6500000;
+const PRICE_STEP = 50000;
 
 const { addNotification } = useNotifications();
 const router = useRouter();

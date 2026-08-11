@@ -337,6 +337,22 @@ const activeSortLabel = computed(() => {
     if (searchParams.value.sortBy === 'price_desc') return 'Giá: Cao - Thấp';
     return 'Nổi bật';
 });
+
+// ── Mobile filter drawer ──────────────────────────────────────────────────────
+const isMobileFilterOpen = ref(false);
+
+const activeFilterCount = computed(() => {
+    let count = 0;
+    if (searchParams.value.thuongHieuId) count++;
+    if (priceRange.value) count++;
+    if (searchParams.value.mucDichChayId) count++;
+    if (selectedSize.value) count++;
+    return count;
+});
+
+const closeMobileFilter = () => {
+    isMobileFilterOpen.value = false;
+};
 </script>
 
 <template>
@@ -346,7 +362,7 @@ const activeSortLabel = computed(() => {
 
         <div class="header-spacing"></div>
 
-        <v-container fluid class="main-catalog-container py-8 px-16">
+        <v-container fluid class="main-catalog-container py-8">
             <!-- Breadcrumbs -->
             <div class="breadcrumbs-row mb-2">
                 <span class="crumb-link" @click="router.push('/')">Trang chủ</span>
@@ -354,64 +370,53 @@ const activeSortLabel = computed(() => {
                 <span class="crumb-active">Giày thể thao</span>
             </div>
 
-            <!-- Page Title and Count & Sort Section -->
-            <div class="d-flex align-center justify-space-between mb-6">
+            <!-- Page Title + Sort row -->
+            <div class="title-sort-row mb-6">
                 <div class="title-details">
                     <h1 class="page-catalog-title">Giày thể thao</h1>
                     <span class="product-count-label">{{ totalElements }} sản phẩm</span>
                 </div>
 
-                <!-- Custom Sort Dropdown -->
-                <v-menu offset-y>
-                    <template v-slot:activator="{ props }">
-                        <div class="custom-sort-card-btn" v-bind="props">
-                            <span>Sắp xếp: {{ activeSortLabel }}</span>
-                            <v-icon size="16" class="ml-2">mdi-chevron-down</v-icon>
-                        </div>
-                    </template>
-                    <v-list class="sort-dropdown-menu">
-                        <v-list-item
-                            @click="
-                                searchParams.sortBy = 'newest';
-                                handleFilterChange();
-                            "
-                            class="sort-menu-item"
-                        >
-                            <v-list-item-title>Nổi bật</v-list-item-title>
-                        </v-list-item>
-                        <v-list-item
-                            @click="
-                                searchParams.sortBy = 'price_asc';
-                                handleFilterChange();
-                            "
-                            class="sort-menu-item"
-                        >
-                            <v-list-item-title>Giá: Thấp - Cao</v-list-item-title>
-                        </v-list-item>
-                        <v-list-item
-                            @click="
-                                searchParams.sortBy = 'price_desc';
-                                handleFilterChange();
-                            "
-                            class="sort-menu-item"
-                        >
-                            <v-list-item-title>Giá: Cao - Thấp</v-list-item-title>
-                        </v-list-item>
-                    </v-list>
-                </v-menu>
+                <div class="title-row-actions">
+                    <!-- Mobile: Filter trigger button -->
+                    <button class="mobile-filter-btn" @click="isMobileFilterOpen = true">
+                        <v-icon size="18">mdi-filter-variant</v-icon>
+                        <span>Bộ lọc</span>
+                        <span v-if="activeFilterCount > 0" class="filter-badge">{{ activeFilterCount }}</span>
+                    </button>
+
+                    <!-- Sort Dropdown -->
+                    <v-menu offset-y>
+                        <template v-slot:activator="{ props }">
+                            <div class="custom-sort-card-btn" v-bind="props">
+                                <span>Sắp xếp: {{ activeSortLabel }}</span>
+                                <v-icon size="16" class="ml-2">mdi-chevron-down</v-icon>
+                            </div>
+                        </template>
+                        <v-list class="sort-dropdown-menu">
+                            <v-list-item @click="searchParams.sortBy = 'newest'; handleFilterChange();" class="sort-menu-item">
+                                <v-list-item-title>Nổi bật</v-list-item-title>
+                            </v-list-item>
+                            <v-list-item @click="searchParams.sortBy = 'price_asc'; handleFilterChange();" class="sort-menu-item">
+                                <v-list-item-title>Giá: Thấp - Cao</v-list-item-title>
+                            </v-list-item>
+                            <v-list-item @click="searchParams.sortBy = 'price_desc'; handleFilterChange();" class="sort-menu-item">
+                                <v-list-item-title>Giá: Cao - Thấp</v-list-item-title>
+                            </v-list-item>
+                        </v-list>
+                    </v-menu>
+                </div>
             </div>
 
             <v-row class="mt-2">
-                <!-- Left Sidebar Filters (Mockup specs: 250px, border-radius-18, background white) -->
-                <v-col cols="12" md="3" lg="2.5" class="pr-6">
+                <!-- Left Sidebar Filters — desktop only -->
+                <v-col cols="12" md="3" lg="2" class="pr-4 desktop-filter-col">
                     <div class="sidebar-filter-panel">
-                        <!-- Filters Header -->
                         <div class="filter-header-row mb-6">
                             <span class="filter-main-title">BỘ LỌC</span>
                             <span class="filter-reset-action" @click="resetFilters">Đặt lại</span>
                         </div>
 
-                        <!-- Brand Combobox Group -->
                         <div class="filter-section-group mb-4">
                             <h4 class="filter-group-title">THƯƠNG HIỆU</h4>
                             <v-select
@@ -429,7 +434,6 @@ const activeSortLabel = computed(() => {
                             ></v-select>
                         </div>
 
-                        <!-- Price Range Combobox Group -->
                         <div class="filter-section-group mb-6">
                             <h4 class="filter-group-title">KHOẢNG GIÁ</h4>
                             <v-select
@@ -446,7 +450,6 @@ const activeSortLabel = computed(() => {
                             ></v-select>
                         </div>
 
-                        <!-- Purpose Checkboxes Group -->
                         <div class="filter-section-group mb-6">
                             <h4 class="filter-group-title">MỤC ĐÍCH</h4>
                             <div class="checkboxes-list">
@@ -466,7 +469,6 @@ const activeSortLabel = computed(() => {
                             </div>
                         </div>
 
-                        <!-- Shoe Sizes Grid -->
                         <div class="filter-section-group">
                             <h4 class="filter-group-title">KÍCH CỠ</h4>
                             <div class="sizes-boxes-grid">
@@ -484,12 +486,11 @@ const activeSortLabel = computed(() => {
                     </div>
                 </v-col>
 
-                <!-- Right Products Grid (Mockup specs: 3 columns layout, 310px width, rounded-18 card) -->
-                <v-col cols="12" md="9" lg="9.5">
+                <!-- Right Products Grid -->
+                <v-col cols="12" md="9" lg="10">
                     <v-row v-if="products.length > 0" class="products-list-row">
-                        <v-col v-for="p in products" :key="p.id" cols="12" sm="4" md="4" lg="3" class="product-col-item">
+                        <v-col v-for="p in products" :key="p.id" cols="6" sm="4" md="4" lg="3" class="product-col-item">
                             <div class="product-item-card" @click="goToDetail(p.id)">
-                                <!-- Image box in card (286x238 layout specification, F2F7FC background, 14px border-radius) -->
                                 <div class="card-image-wrapper">
                                     <img
                                         :src="getImageUrl(p)"
@@ -498,23 +499,17 @@ const activeSortLabel = computed(() => {
                                         referrerpolicy="no-referrer"
                                         @error="(e) => handleImageError(e, p.id)"
                                     />
-                                    <!-- Badges -->
                                     <div v-if="p.phanTramGiam > 0" class="badge-label-new">-{{ p.phanTramGiam }}%</div>
                                     <div v-else class="badge-label-new">MỚI</div>
-
-                                    <!-- Favorite Button -->
                                     <div class="favorite-overlay-btn" @click.stop="(e) => toggleFavorite(p.id, e)">
                                         <v-icon :color="isFavorite(p.id) ? 'red' : 'grey-darken-1'" size="20">
                                             {{ isFavorite(p.id) ? 'mdi-heart' : 'mdi-heart-outline' }}
                                         </v-icon>
                                     </div>
                                 </div>
-
-                                <!-- Card Details Info -->
                                 <div class="card-info-wrapper">
                                     <span class="product-brand-badge">{{ p.tenThuongHieu || 'AEROSTRIDE' }}</span>
                                     <h4 class="product-name-title">{{ p.tenSanPham }}</h4>
-
                                     <div class="price-row-block">
                                         <span class="current-price-label">{{ formatPrice(getProductPrice(p)) }}</span>
                                         <span v-if="p.phanTramGiam > 0 && getOldPrice(p)" class="old-price-label">
@@ -526,18 +521,16 @@ const activeSortLabel = computed(() => {
                         </v-col>
                     </v-row>
 
-                    <!-- Loading / Empty States -->
                     <div v-else-if="!loading" class="empty-state-card text-center py-16">
                         <v-icon size="64" color="grey-lighten-1">mdi-package-variant</v-icon>
                         <p class="text-h6 text-grey-darken-1 mt-4">Không tìm thấy sản phẩm nào.</p>
                     </div>
 
-                    <!-- Custom Pagination layout (← 1 2 3 4 … 12 →) -->
                     <div class="pagination-wrapper mt-12" v-if="totalElements > pageSize">
                         <v-pagination
                             v-model="currentPage"
                             :length="Math.ceil(totalElements / pageSize)"
-                            :total-visible="7"
+                            :total-visible="5"
                             @update:model-value="onPageChange"
                             color="#2962FF"
                             class="custom-nav-pagination"
@@ -546,6 +539,103 @@ const activeSortLabel = computed(() => {
                 </v-col>
             </v-row>
         </v-container>
+
+        <!-- ── Mobile Filter Drawer ────────────────────────────────────────── -->
+        <transition name="filter-overlay-fade">
+            <div v-if="isMobileFilterOpen" class="mobile-filter-overlay" @click.self="closeMobileFilter">
+                <transition name="filter-drawer-slide">
+                    <div v-if="isMobileFilterOpen" class="mobile-filter-drawer">
+                        <!-- Drawer header -->
+                        <div class="mobile-filter-drawer-header">
+                            <span class="filter-main-title">BỘ LỌC</span>
+                            <div class="mobile-filter-header-actions">
+                                <span class="filter-reset-action" @click="resetFilters">Đặt lại</span>
+                                <button class="drawer-close-btn" @click="closeMobileFilter">
+                                    <v-icon size="20">mdi-close</v-icon>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Scrollable filter content -->
+                        <div class="mobile-filter-body">
+                            <div class="filter-section-group mb-4">
+                                <h4 class="filter-group-title">THƯƠNG HIỆU</h4>
+                                <v-select
+                                    v-model="searchParams.thuongHieuId"
+                                    :items="brandList"
+                                    item-title="ten"
+                                    item-value="id"
+                                    placeholder="Tất cả thương hiệu"
+                                    variant="outlined"
+                                    density="compact"
+                                    clearable
+                                    hide-details
+                                    class="custom-filter-select"
+                                    @update:model-value="handleFilterChange"
+                                ></v-select>
+                            </div>
+
+                            <div class="filter-section-group mb-4">
+                                <h4 class="filter-group-title">KHOẢNG GIÁ</h4>
+                                <v-select
+                                    v-model="priceRange"
+                                    :items="priceRangeOptions"
+                                    item-title="title"
+                                    item-value="value"
+                                    placeholder="Tất cả mức giá"
+                                    variant="outlined"
+                                    density="compact"
+                                    clearable
+                                    hide-details
+                                    class="custom-filter-select"
+                                ></v-select>
+                            </div>
+
+                            <div class="filter-section-group mb-4">
+                                <h4 class="filter-group-title">MỤC ĐÍCH</h4>
+                                <div class="checkboxes-list">
+                                    <label v-for="purpose in purposeList" :key="purpose.id" class="checkbox-item-row">
+                                        <input
+                                            type="checkbox"
+                                            :checked="searchParams.mucDichChayId === purpose.id"
+                                            @change="
+                                                searchParams.mucDichChayId = searchParams.mucDichChayId === purpose.id ? null : purpose.id;
+                                                handleFilterChange();
+                                            "
+                                            class="custom-check-input"
+                                        />
+                                        <span class="checkbox-label-text">{{ purpose.ten }}</span>
+                                    </label>
+                                    <div v-if="purposeList.length === 0" class="empty-list-indicator">Không có mục đích</div>
+                                </div>
+                            </div>
+
+                            <div class="filter-section-group mb-6">
+                                <h4 class="filter-group-title">KÍCH CỠ</h4>
+                                <div class="sizes-boxes-grid">
+                                    <div
+                                        v-for="size in sizeList"
+                                        :key="size"
+                                        class="size-box-cell"
+                                        :class="{ active: selectedSize === size }"
+                                        @click="selectedSize = selectedSize === size ? null : size"
+                                    >
+                                        {{ size }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Drawer footer -->
+                        <div class="mobile-filter-drawer-footer">
+                            <button class="filter-apply-btn" @click="closeMobileFilter">
+                                Xem {{ totalElements }} sản phẩm
+                            </button>
+                        </div>
+                    </div>
+                </transition>
+            </div>
+        </transition>
 
         <!-- Customer Chat Overlay -->
         <CustomerChat />
@@ -560,11 +650,36 @@ const activeSortLabel = computed(() => {
     color: #0a1329;
 }
 
+/* ── Header spacing (matches MainHeader height at each breakpoint) ── */
 .header-spacing {
-    height: 120px; /* 36px announcement bar + 84px header */
+    height: 120px; /* 36px announcement + 84px navbar */
+
+    @media (max-width: 768px) {
+        height: 96px;
+    }
+    @media (max-width: 480px) {
+        height: 100px;
+    }
 }
 
-/* Breadcrumbs styles */
+/* ── Container padding ────────────────────────────────────────────── */
+.main-catalog-container {
+    padding-left: 48px !important;
+    padding-right: 48px !important;
+
+    @media (max-width: 1024px) {
+        padding-left: 24px !important;
+        padding-right: 24px !important;
+    }
+    @media (max-width: 768px) {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+        padding-top: 16px !important;
+        padding-bottom: 16px !important;
+    }
+}
+
+/* ── Breadcrumbs ──────────────────────────────────────────────────── */
 .breadcrumbs-row {
     display: flex;
     align-items: center;
@@ -576,22 +691,28 @@ const activeSortLabel = computed(() => {
 .crumb-link {
     cursor: pointer;
     transition: color 0.2s;
-
-    &:hover {
-        color: #2962ff;
-    }
+    &:hover { color: #2962ff; }
 }
 
-.crumb-sep {
-    color: #667387;
-    opacity: 0.6;
+.crumb-sep { color: #667387; opacity: 0.6; }
+.crumb-active { font-weight: 500; }
+
+/* ── Title + Sort row ─────────────────────────────────────────────── */
+.title-sort-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
-.crumb-active {
-    font-weight: 500;
+.title-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
-/* Page title components */
 .title-details {
     display: flex;
     flex-direction: column;
@@ -603,15 +724,20 @@ const activeSortLabel = computed(() => {
     font-weight: 700;
     line-height: 1.2;
     color: #0a1329;
+
+    @media (max-width: 768px) { font-size: 22px; }
+    @media (max-width: 480px) { font-size: 20px; }
 }
 
 .product-count-label {
     font-size: 14px;
     color: #667387;
     margin-top: 4px;
+
+    @media (max-width: 768px) { font-size: 12px; margin-top: 2px; }
 }
 
-/* Custom Sort button card */
+/* ── Custom Sort button ────────────────────────────────────────────── */
 .custom-sort-card-btn {
     background: #ffffff;
     border-radius: 10px;
@@ -625,10 +751,13 @@ const activeSortLabel = computed(() => {
     display: flex;
     align-items: center;
     transition: all 0.2s;
+    white-space: nowrap;
 
-    &:hover {
-        border-color: #2962ff;
-        color: #2962ff;
+    &:hover { border-color: #2962ff; color: #2962ff; }
+
+    @media (max-width: 480px) {
+        padding: 8px 12px;
+        font-size: 12px;
     }
 }
 
@@ -643,20 +772,60 @@ const activeSortLabel = computed(() => {
     font-weight: 500;
     color: #0a1329;
     cursor: pointer;
-
-    &:hover {
-        background-color: #f2f7fc;
-        color: #2962ff;
-    }
+    &:hover { background-color: #f2f7fc; color: #2962ff; }
 }
 
-/* Sidebar Filters (specs: 250px width, border-radius-18, background white) */
+/* ── Mobile filter trigger button (hidden on desktop) ─────────────── */
+.mobile-filter-btn {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid rgba(229, 235, 245, 0.8);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0a1329;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+
+    &:hover { border-color: #2962ff; color: #2962ff; }
+
+    @media (max-width: 959px) { display: flex; }
+    @media (max-width: 480px) { padding: 8px 12px; font-size: 12px; }
+}
+
+.filter-badge {
+    background: #2962ff;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+}
+
+/* ── Desktop filter column (hidden on mobile/tablet) ──────────────── */
+.desktop-filter-col {
+    @media (max-width: 959px) { display: none !important; }
+}
+
+/* ── Sidebar Filters ──────────────────────────────────────────────── */
 .sidebar-filter-panel {
     background: #ffffff;
     border-radius: 18px;
     padding: 24px;
     border: 1px solid rgba(229, 235, 245, 0.6);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01);
+    position: sticky;
+    top: 130px;
 }
 
 .filter-header-row {
@@ -680,10 +849,7 @@ const activeSortLabel = computed(() => {
     color: #2962ff;
     cursor: pointer;
     transition: opacity 0.2s;
-
-    &:hover {
-        opacity: 0.8;
-    }
+    &:hover { opacity: 0.8; }
 }
 
 .filter-group-title {
@@ -718,10 +884,7 @@ const activeSortLabel = computed(() => {
     font-size: 13px;
     color: #667387;
     transition: color 0.2s;
-
-    &:hover {
-        color: #0a1329;
-    }
+    &:hover { color: #0a1329; }
 }
 
 .empty-list-indicator {
@@ -730,7 +893,7 @@ const activeSortLabel = computed(() => {
     font-style: italic;
 }
 
-/* Shoe Sizes Grid selector (Mockup specifications) */
+/* ── Shoe Sizes Grid ──────────────────────────────────────────────── */
 .sizes-boxes-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -751,21 +914,11 @@ const activeSortLabel = computed(() => {
     background: #ffffff;
     transition: all 0.2s;
 
-    &:hover {
-        border-color: #2962ff;
-        color: #2962ff;
-        background: #f2f7fc;
-    }
-
-    &.active {
-        background: #2962ff;
-        border-color: #2962ff;
-        color: #ffffff;
-        font-weight: 700;
-    }
+    &:hover { border-color: #2962ff; color: #2962ff; background: #f2f7fc; }
+    &.active { background: #2962ff; border-color: #2962ff; color: #ffffff; font-weight: 700; }
 }
 
-/* Right Products Grid (310px width, 372px height, border-radius-18 card) */
+/* ── Product Grid ─────────────────────────────────────────────────── */
 .products-list-row {
     margin: 0 !important;
 }
@@ -774,23 +927,26 @@ const activeSortLabel = computed(() => {
     display: flex;
     justify-content: center;
     padding: 5px !important;
+
+    @media (max-width: 768px) {
+        padding: 4px !important;
+    }
 }
+
 .product-item-card {
     background: #ffffff;
     border-radius: 18px;
     padding: 11px 10px;
     width: 100%;
     max-width: none;
-    min-height: 334px;
+    min-height: 300px;
     height: auto;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01);
     border: 1px solid rgba(229, 235, 245, 0.5);
     display: flex;
     flex-direction: column;
-    transition:
-        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-        box-shadow 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
     margin: 0 auto;
 
     &:hover {
@@ -798,9 +954,13 @@ const activeSortLabel = computed(() => {
         box-shadow: 0 15px 30px rgba(41, 98, 255, 0.05);
         border-color: rgba(41, 98, 255, 0.12);
 
-        .card-shoe-img {
-            transform: scale(1.05) rotate(-2deg);
-        }
+        .card-shoe-img { transform: scale(1.05) rotate(-2deg); }
+    }
+
+    @media (max-width: 768px) {
+        border-radius: 12px;
+        padding: 8px;
+        min-height: unset;
     }
 }
 
@@ -808,19 +968,24 @@ const activeSortLabel = computed(() => {
     background: #f2f7fc;
     border-radius: 14px;
     width: 100%;
-    height: 211px;
+    height: 180px;
     position: relative;
     overflow: hidden;
     display: block;
-    padding-top: 0 !important;
+
+    @media (max-width: 768px) {
+        height: 130px;
+        border-radius: 8px;
+    }
+    @media (max-width: 480px) {
+        height: 110px;
+    }
 }
 
 .card-shoe-img {
     position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important; height: 100% !important;
     object-fit: cover;
     display: block;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -828,19 +993,21 @@ const activeSortLabel = computed(() => {
 
 .badge-label-new {
     position: absolute;
-    top: 14px;
-    left: 14px;
+    top: 10px;
+    left: 10px;
     color: #2962ff;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.5px;
     text-transform: uppercase;
+
+    @media (max-width: 768px) { font-size: 9px; top: 7px; left: 7px; }
 }
 
 .favorite-overlay-btn {
     position: absolute;
-    top: 14px;
-    right: 14px;
+    top: 10px;
+    right: 10px;
     width: 28px;
     height: 28px;
     display: flex;
@@ -848,61 +1015,74 @@ const activeSortLabel = computed(() => {
     justify-content: center;
     border-radius: 50%;
     transition: background-color 0.2s;
+    &:hover { background-color: rgba(239, 68, 68, 0.08); }
 
-    &:hover {
-        background-color: rgba(239, 68, 68, 0.08);
-    }
+    @media (max-width: 768px) { width: 24px; height: 24px; top: 7px; right: 7px; }
 }
 
 .card-info-wrapper {
-    padding: 14px 4px 4px 4px;
+    padding: 12px 4px 4px 4px;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+
+    @media (max-width: 768px) {
+        padding: 8px 3px 3px;
+    }
 }
 
 .product-brand-badge {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: #2962ff;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
+
+    @media (max-width: 768px) { font-size: 9px; }
 }
 
 .product-name-title {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     color: #0a1329;
     line-height: 1.3;
-    height: 20px;
-    white-space: nowrap;
+    height: 36px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+
+    @media (max-width: 768px) { font-size: 12px; height: 30px; margin-bottom: 4px; }
+    @media (max-width: 480px) { font-size: 11px; height: 28px; }
 }
 
 .price-row-block {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    flex-wrap: wrap;
     margin-top: auto;
 }
 
 .current-price-label {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: #0a1329;
+    @media (max-width: 768px) { font-size: 13px; }
+    @media (max-width: 480px) { font-size: 12px; }
 }
 
 .old-price-label {
-    font-size: 12px;
+    font-size: 11px;
     color: #667387;
     text-decoration: line-through;
     font-weight: 500;
+    @media (max-width: 768px) { font-size: 10px; }
 }
 
-/* Pagination wrapper */
+/* ── Pagination ───────────────────────────────────────────────────── */
 .pagination-wrapper {
     display: flex;
     justify-content: center;
@@ -917,6 +1097,7 @@ const activeSortLabel = computed(() => {
     }
 }
 
+/* ── Filter Select Overrides ──────────────────────────────────────── */
 .custom-filter-select {
     margin-top: 6px;
     :deep(.v-field) {
@@ -931,11 +1112,9 @@ const activeSortLabel = computed(() => {
             border-color: #cbd5e1 !important;
         }
 
-        &.v-field--focused {
-            .v-field__outline {
-                --v-field-border-opacity: 1 !important;
-                border-color: #2962ff !important;
-            }
+        &.v-field--focused .v-field__outline {
+            --v-field-border-opacity: 1 !important;
+            border-color: #2962ff !important;
         }
     }
     :deep(.v-select__selection-text) {
@@ -944,19 +1123,111 @@ const activeSortLabel = computed(() => {
     }
 }
 
+/* ── Empty state ──────────────────────────────────────────────────── */
 .empty-state-card {
     background: #ffffff;
     border-radius: 18px;
     border: 1px dashed rgba(229, 235, 245, 1);
 }
 
-/* Responsiveness overrides */
-@media (max-width: 960px) {
-    .main-catalog-container {
-        padding: 16px;
-    }
-    .sidebar-filter-panel {
-        margin-bottom: 24px;
-    }
+/* ── Mobile Filter Drawer ─────────────────────────────────────────── */
+.mobile-filter-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 19, 41, 0.5);
+    z-index: 1300;
+    backdrop-filter: blur(2px);
 }
+
+.mobile-filter-drawer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 88vh;
+    background: #ffffff;
+    border-radius: 24px 24px 0 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+}
+
+.mobile-filter-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
+}
+
+.mobile-filter-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.drawer-close-btn {
+    background: #f5f7fa;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #0a1329;
+    transition: background 0.2s;
+    &:hover { background: #e8edf5; }
+}
+
+.mobile-filter-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 20px 8px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mobile-filter-drawer-footer {
+    padding: 12px 20px 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
+}
+
+.filter-apply-btn {
+    width: 100%;
+    height: 52px;
+    background: #2962ff;
+    color: #ffffff;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    &:hover { background: #1a4fd4; }
+    &:active { transform: scale(0.98); }
+}
+
+/* ── Mobile Drawer Transitions ────────────────────────────────────── */
+.filter-overlay-fade-enter-active,
+.filter-overlay-fade-leave-active { transition: opacity 0.3s ease; }
+.filter-overlay-fade-enter-from,
+.filter-overlay-fade-leave-to { opacity: 0; }
+
+.filter-drawer-slide-enter-active,
+.filter-drawer-slide-leave-active {
+    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.filter-drawer-slide-enter-from,
+.filter-drawer-slide-leave-to { transform: translateY(100%); }
+.filter-drawer-slide-enter-to,
+.filter-drawer-slide-leave-from { transform: translateY(0); }
 </style>
+
+

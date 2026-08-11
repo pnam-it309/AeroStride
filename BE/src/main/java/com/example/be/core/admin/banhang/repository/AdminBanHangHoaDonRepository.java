@@ -27,12 +27,14 @@ public interface AdminBanHangHoaDonRepository extends HoaDonRepository {
           )
           AND (h.loaiDon IN ('TAI_QUAY', 'GIAO_HANG') OR h.loaiDon IS NULL)
           AND (:idNhanVien IS NULL OR h.nhanVien.id = :idNhanVien)
+          AND ((:idGiaoCa IS NULL AND h.giaoCa IS NULL) OR h.giaoCa.id = :idGiaoCa)
         ORDER BY h.ngayTao ASC
         """)
     List<HoaDon> findAllPendingPOSOrders(
             @Param("trangThai") OrderStatus trangThai,
             @Param("orderType") OrderType orderType,
-            @Param("idNhanVien") String idNhanVien
+            @Param("idNhanVien") String idNhanVien,
+            @Param("idGiaoCa") String idGiaoCa
     );
 
     @Query("""
@@ -44,11 +46,13 @@ public interface AdminBanHangHoaDonRepository extends HoaDonRepository {
           )
           AND (h.loaiDon IN ('TAI_QUAY', 'GIAO_HANG') OR h.loaiDon IS NULL)
           AND (:idNhanVien IS NULL OR h.nhanVien.id = :idNhanVien)
+          AND ((:idGiaoCa IS NULL AND h.giaoCa IS NULL) OR h.giaoCa.id = :idGiaoCa)
         """)
     long countPendingPOSOrders(
             @Param("trangThai") OrderStatus trangThai,
             @Param("orderType") OrderType orderType,
-            @Param("idNhanVien") String idNhanVien
+            @Param("idNhanVien") String idNhanVien,
+            @Param("idGiaoCa") String idGiaoCa
     );
     List<HoaDon> findAllByTrangThaiAndLoaiDon(OrderStatus trangThai, String loaiDon);
     long countByTrangThaiAndLoaiDon(OrderStatus trangThai, String loaiDon);

@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 import { useNotifications } from '@/services/notificationService';
+import { formatNumberWithDots, parseNumberFromDots } from '@/utils/formatters';
 
 const props = defineProps({
     modelValue: { type: Boolean, default: false },
@@ -26,6 +27,20 @@ const tienThucTe = ref(0);
 const ghiChu = ref('');
 const nhanVienNhanCaId = ref(null);
 const listNhanVien = ref([]);
+
+const tienBanDauFormatted = computed({
+    get: () => formatNumberWithDots(tienBanDau.value || 0),
+    set: (val) => {
+        tienBanDau.value = parseNumberFromDots(val);
+    }
+});
+
+const tienThucTeFormatted = computed({
+    get: () => formatNumberWithDots(tienThucTe.value || 0),
+    set: (val) => {
+        tienThucTe.value = parseNumberFromDots(val);
+    }
+});
 
 const tienChenhLech = computed(() => {
     if (props.mode !== 'close' || !props.currentShift) return 0;
@@ -101,7 +116,7 @@ const submit = async () => {
                 <template v-if="mode === 'open'">
                     <p class="mb-4 text-slate-600">Bạn cần nhập số tiền lẻ ban đầu trong két trước khi bắt đầu bán hàng.</p>
                     <div class="filter-field-label">Tiền mặt đầu ca (VNĐ)</div>
-                    <v-text-field v-model.number="tienBanDau" type="number" variant="outlined" density="compact" />
+                    <v-text-field v-model="tienBanDauFormatted" type="text" variant="outlined" density="compact" />
                 </template>
                 <template v-else>
                     <v-row dense class="mb-4">
@@ -119,7 +134,7 @@ const submit = async () => {
                     <v-divider class="mb-4" />
 
                     <div class="filter-field-label">Tiền mặt thực tế đếm được (VNĐ) <span class="text-error">*</span></div>
-                    <v-text-field v-model.number="tienThucTe" type="number" variant="outlined" density="compact" />
+                    <v-text-field v-model="tienThucTeFormatted" type="text" variant="outlined" density="compact" />
 
                     <div
                         class="d-flex justify-space-between align-center mb-4 pa-3 rounded"

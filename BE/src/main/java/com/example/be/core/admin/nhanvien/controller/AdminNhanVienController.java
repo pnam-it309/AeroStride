@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_NHAN_VIEN)
 @RequiredArgsConstructor
-@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
+@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_STAFF)
 public class AdminNhanVienController {
 
     private final AdminNhanVienService adminNhanVienService;
@@ -42,18 +42,21 @@ public class AdminNhanVienController {
     }
 
     @PostMapping(RoutesConstant.ADD) // Compatibility Alias
+    @PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
     public ResponseEntity<ApiResponse<Void>> add(@Valid @RequestBody AdminNhanVienRequest request) {
         adminNhanVienService.add(request);
         return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.NHAN_VIEN_ADD_SUCCESS));
     }
 
     @PostMapping("/{id}/register-face")
+    @PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
     public ResponseEntity<ApiResponse<Void>> registerFace(@PathVariable String id, @RequestParam("image") MultipartFile image) {
         adminNhanVienService.registerFace(id, image);
         return ResponseEntity.ok(ApiResponse.success(null, "Đăng ký khuôn mặt thành công!"));
     }
 
     @PutMapping(RoutesConstant.UPDATE) // Compatibility Alias
+    @PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
     public ResponseEntity<ApiResponse<Void>> update(@PathVariable String id,
                                                      @Valid @RequestBody AdminNhanVienRequest request) {
         adminNhanVienService.update(id, request);
@@ -61,12 +64,14 @@ public class AdminNhanVienController {
     }
 
     @DeleteMapping(RoutesConstant.DELETE) // Compatibility Alias
+    @PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         adminNhanVienService.delete(id);
         return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.NHAN_VIEN_DELETE_SUCCESS));
     }
 
     @PatchMapping(RoutesConstant.STATUS_ALT)
+    @PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
     public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id,
                                                            @Valid @RequestBody UpdateStatusRequest body) {
         adminNhanVienService.doiTrangThai(id, body.getStatus());
@@ -74,11 +79,13 @@ public class AdminNhanVienController {
     }
 
     @PostMapping(RoutesConstant.AVATAR)
+    @PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
     public ResponseEntity<ApiResponse<String>> uploadAvatar(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.uploadAvatar(file)));
     }
 
     @GetMapping(RoutesConstant.EXPORT_EXCEL)
+    @PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
     public ResponseEntity<byte[]> exportExcel() {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=nhan_vien.xlsx")
@@ -87,6 +94,7 @@ public class AdminNhanVienController {
     }
 
     @GetMapping(RoutesConstant.PHAN_QUYEN)
+    @PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
     public ResponseEntity<ApiResponse<?>> layDanhSachPhanQuyen() {
         return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.getAllPhanQuyen()));
     }

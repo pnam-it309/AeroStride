@@ -5,6 +5,8 @@ import apiService from '@/services/apiService';
 import { useNotifications } from '@/services/notificationService';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
+import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
+import { ADMIN_ICONS } from '@/constants/adminIcons';
 
 const { addNotification } = useNotifications();
 const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();

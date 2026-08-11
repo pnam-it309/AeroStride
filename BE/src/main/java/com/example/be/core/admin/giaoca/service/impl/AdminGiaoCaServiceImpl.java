@@ -55,6 +55,7 @@ public class AdminGiaoCaServiceImpl implements AdminGiaoCaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AdminGiaoCaResponse getCaHienTai(String username) {
         NhanVien nhanVien = nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(username, username, username, username)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên"));
@@ -98,6 +99,7 @@ public class AdminGiaoCaServiceImpl implements AdminGiaoCaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AdminGiaoCaResponse> getAllLichSu() {
         return giaoCaRepository.findAllOrderByThoiGianVaoCaDesc().stream()
                 .map(this::mapToResponse)

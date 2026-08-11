@@ -31,10 +31,11 @@ const fetchNextQuestion = async () => {
         const res = await dichVuSanPhamPublic.layGoiYQuiz(answers.value);
         if (res.nextQuestion) {
             currentQuestion.value = res.nextQuestion;
-            recommendedProducts.value = [];
         } else {
             currentQuestion.value = null;
-            recommendedProducts.value = res.recommendedProducts || [];
+        }
+        if (res.recommendedProducts && res.recommendedProducts.length > 0) {
+            recommendedProducts.value = res.recommendedProducts;
         }
     } catch (e) {
         console.error(e);
@@ -47,7 +48,6 @@ const fetchNextQuestion = async () => {
 const selectOption = async (optionValue) => {
     if (!currentQuestion.value) return;
 
-    // Save current state to history
     history.value.push({
         answers: { ...answers.value },
         question: { ...currentQuestion.value }
@@ -57,12 +57,12 @@ const selectOption = async (optionValue) => {
     await fetchNextQuestion();
 };
 
-const goBack = () => {
+const goBack = async () => {
     if (history.value.length === 0) return;
     const previous = history.value.pop();
     answers.value = previous.answers;
     currentQuestion.value = previous.question;
-    recommendedProducts.value = [];
+    await fetchNextQuestion();
 };
 
 const viewProductDetail = (productId) => {
@@ -274,6 +274,71 @@ onMounted(() => {
                     </v-col>
                 </v-row>
             </v-container>
+
+            <!-- Dynamic AI Recommended Products Section -->
+            <section v-if="recommendedProducts.length > 0" class="ai-recommendations-section py-12 bg-slate-100 border-t">
+                <v-container>
+                    <div class="d-flex align-center justify-space-between flex-wrap ga-4 mb-8">
+                        <div>
+                            <div class="d-flex align-center mb-2">
+                                <v-chip color="primary" variant="flat" size="small" class="font-weight-bold mr-2">
+                                    <v-icon start size="16">mdi-robot-outline</v-icon>
+                                    AI ASSISTED
+                                </v-chip>
+                                <span class="text-caption font-weight-bold text-slate-500 text-uppercase tracking-wider">Tự động gợi ý theo lựa chọn</span>
+                            </div>
+                            <h2 class="text-h4 font-weight-black text-slate-800">DANH SÁCH SẢN PHẨM GỢI Ý BỞI AI</h2>
+                            <p class="text-body-2 text-slate-600 mb-0">
+                                Dưới đây là danh sách đôi giày phù hợp nhất với tiêu chí của bạn (Tìm thấy {{ recommendedProducts.length }} sản phẩm):
+                            </p>
+                        </div>
+                    </div>
+
+                    <v-row class="products-grid-row">
+                        <v-col v-for="prod in recommendedProducts" :key="prod.id" cols="6" sm="6" md="4" lg="3" class="pa-2 pa-sm-3">
+                            <v-card class="product-item-card bg-white rounded-xl overflow-hidden border elevation-1 h-100 d-flex flex-column cursor-pointer transition" @click="viewProductDetail(prod.id)">
+                                <div class="position-relative overflow-hidden bg-slate-100 recommend-card-img-box">
+                                    <v-img :src="prod.hinhAnh || '/assets/images/products/s4.jpg'" height="100%" cover class="product-img">
+                                        <template #placeholder>
+                                            <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
+                                                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                                            </div>
+                                        </template>
+                                    </v-img>
+                                    <v-chip color="primary" size="x-small" class="position-absolute font-weight-bold shadow-sm" style="top: 10px; left: 10px; z-index: 2">
+                                        🤖 AI Phù hợp 98%
+                                    </v-chip>
+                                </div>
+
+                                <div class="pa-4 d-flex flex-column flex-grow-1">
+                                    <div class="text-caption font-weight-bold text-primary text-uppercase mb-1">
+                                        {{ prod.tenThuongHieu || 'AEROSTRIDE' }}
+                                    </div>
+                                    <h3 class="product-title font-weight-bold text-body-1 text-slate-800 mb-2 line-clamp-2" style="height: 42px; line-height: 1.3">
+                                        {{ prod.tenSanPham }}
+                                    </h3>
+                                    <div class="d-flex ga-1 flex-wrap mb-3">
+                                        <v-chip size="x-small" variant="tonal" color="secondary" class="font-weight-medium" v-if="prod.tenMucDichChay">
+                                            {{ prod.tenMucDichChay }}
+                                        </v-chip>
+                                        <v-chip size="x-small" variant="tonal" color="info" class="font-weight-medium" v-if="prod.tenChatLieu">
+                                            {{ prod.tenChatLieu }}
+                                        </v-chip>
+                                    </div>
+                                    <div class="mt-auto d-flex align-center justify-space-between pt-2 border-t">
+                                        <div class="font-weight-black text-primary text-body-1">
+                                            {{ formatCurrency(prod.giaBanMin || prod.giaBan) }}
+                                        </div>
+                                        <v-btn size="small" variant="flat" color="primary" class="rounded-pill font-weight-bold text-none px-3">
+                                            Xem chi tiết
+                                        </v-btn>
+                                    </div>
+                                </div>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </section>
         </main>
 
         <footer class="footer-landing py-10 text-center text-grey-darken-1 bg-white border-t">
@@ -421,6 +486,16 @@ onMounted(() => {
     }
     50% {
         opacity: 0.55;
+    }
+}
+
+.recommend-card-img-box {
+    height: 180px;
+}
+
+@media (max-width: 600px) {
+    .recommend-card-img-box {
+        height: 130px !important;
     }
 }
 </style>

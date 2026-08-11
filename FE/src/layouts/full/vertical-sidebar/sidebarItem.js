@@ -125,7 +125,7 @@ const sidebarItem = [
                 icon: CalendarIcon,
                 to: PATH.LICH_LAM_VIEC,
                 BgColor: 'teal',
-                roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF]
+                roles: [APP_ROLES.ADMIN]
             },
             { title: 'Bàn giao ca', icon: ClockIcon, to: PATH.BAN_GIAO_CA, BgColor: 'teal', roles: [APP_ROLES.STAFF] },
             { title: 'Lịch sử giao ca', icon: ClockIcon, to: PATH.LICH_SU_GIAO_CA, BgColor: 'teal', roles: [APP_ROLES.ADMIN] },

@@ -15,7 +15,8 @@ defineProps({
     emptyText: { type: String, default: 'Không có dữ liệu phù hợp để hiển thị' },
     emptyIcon: { type: String, default: 'mdi-package-variant' },
     selectable: { type: Boolean, default: false },
-    hideToolbar: { type: Boolean, default: false }
+    hideToolbar: { type: Boolean, default: false },
+    totalCount: { type: Number, default: 0 }
 });
 
 const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);

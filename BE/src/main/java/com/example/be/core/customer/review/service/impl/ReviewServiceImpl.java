@@ -17,8 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.example.be.utils.SecurityUtils;
+import java.util.Optional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
@@ -60,6 +60,17 @@ public class ReviewServiceImpl implements ReviewService {
         KhachHang khachHang = null;
         if (request.getIdKhachHang() != null && !request.getIdKhachHang().isBlank()) {
             khachHang = khachHangRepository.findById(request.getIdKhachHang()).orElse(null);
+        }
+
+        // Nếu idKhachHang chưa có trong request, lấy từ Security Context của phiên đăng nhập JWT
+        if (khachHang == null) {
+            Optional<String> currentUser = SecurityUtils.getCurrentUserEmail();
+            if (currentUser.isPresent()) {
+                String userIdentifier = currentUser.get();
+                khachHang = khachHangRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(
+                        userIdentifier, userIdentifier, userIdentifier, userIdentifier
+                ).orElse(null);
+            }
         }
 
         // Đơn đánh giá trực tiếp được tự động duyệt APPROVED để hiển thị trên chi tiết sản phẩm

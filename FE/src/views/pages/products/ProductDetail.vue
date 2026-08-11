@@ -7,6 +7,7 @@ import PromotionBar from '@/components/shared/PromotionBar.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
+import { dichVuKhachHang } from '@/services/public/dichVuKhachHang';
 import api from '@/services/apiService';
 import { useCartStore } from '@/stores/cartStore';
 import { useToastStore } from '@/stores/toastStore';
@@ -25,6 +26,7 @@ const toastStore = useToastStore();
 const authStore = useAuthStore();
 const loading = ref(true);
 const product = ref(null);
+const userProfile = ref(null);
 const selectedColor = ref(null);
 const selectedSize = ref(null);
 const selectedQuantity = ref(1);
@@ -38,6 +40,17 @@ const averageRating = ref(0);
 const reviewsLoading = ref(false);
 const ratingCounts = ref({ 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 });
 const selectedFilter = ref('all');
+
+const fetchUserProfile = async () => {
+    if (authStore.isLoggedIn) {
+        try {
+            const profile = await dichVuKhachHang.layThongTinCaNhan();
+            userProfile.value = profile?.data || profile;
+        } catch (e) {
+            console.error('Không thể lấy thông tin cá nhân:', e);
+        }
+    }
+};
 
 const filteredReviews = computed(() => {
     if (selectedFilter.value === 'all') return reviews.value;
@@ -55,7 +68,6 @@ const handleWriteReview = () => {
         router.push(PATH.LOGIN);
         return;
     }
-    // Mở modal viết bình luận
     showReviewModal.value = true;
 };
 
@@ -70,7 +82,7 @@ const submitDirectReview = async () => {
         const payload = {
             idHoaDon: null,
             idSanPham: product.value.id,
-            idKhachHang: authStore.user?.id || null,
+            idKhachHang: userProfile.value?.id || authStore.user?.id || null,
             diemDanhGia: newReview.value.rating,
             noiDung: newReview.value.comment
         };
@@ -81,7 +93,7 @@ const submitDirectReview = async () => {
             showReviewModal.value = false;
             newReview.value.comment = '';
             newReview.value.rating = 5;
-            fetchReviews(); // Reload reviews
+            fetchReviews();
         } else {
             toastStore.showToast(response.data?.message || 'Có lỗi xảy ra', 'error');
         }
@@ -155,6 +167,7 @@ onMounted(() => {
     fetchProduct();
     fetchRecommendations();
     fetchReviews();
+    fetchUserProfile();
 });
 
 watch(
@@ -600,18 +613,17 @@ const toggleFavorite = () => {
     <div class="product-detail-page bg-white min-vh-100">
         <MainHeader />
 
-        <div class="header-spacing" style="height: 104px"></div>
+        <div class="header-spacing"></div>
         <PromotionBar />
 
-        <v-container class="mt-12" v-if="product">
+        <v-container class="mt-2 mt-md-6" v-if="product">
             <v-row>
                 <!-- Left: Image Gallery -->
                 <v-col cols="12" md="6" lg="5" class="image-gallery">
                     <div class="product-gallery-wrapper">
                         <!-- Main Image Box -->
                         <div
-                            class="rounded-xl bg-grey-lighten-4 mb-4 elevation-1 position-relative overflow-hidden"
-                            style="aspect-ratio: 1; max-height: 480px; border: 1px solid #e2e8f0"
+                            class="rounded-xl bg-grey-lighten-4 mb-4 elevation-1 position-relative overflow-hidden main-image-box-custom"
                         >
                             <!-- Floating Favorite Button -->
                             <v-btn
@@ -853,7 +865,23 @@ const toggleFavorite = () => {
 
             <!-- Reviews Section -->
             <div class="reviews-section mt-16 pt-8 border-top">
-                <h2 class="text-h4 font-weight-semibold mb-8 text-center text-primary">Đánh Giá Sản Phẩm</h2>
+                <div class="d-flex align-center justify-space-between flex-wrap ga-4 mb-8">
+                    <div>
+                        <h2 class="text-h4 font-weight-semibold text-primary mb-1">Đánh Giá Sản Phẩm</h2>
+                        <p class="text-caption text-grey mb-0">Ý kiến từ khách hàng đã sử dụng sản phẩm</p>
+                    </div>
+                    <v-btn
+                        v-if="authStore.isLoggedIn"
+                        color="black"
+                        variant="flat"
+                        rounded="pill"
+                        class="font-weight-bold text-none px-6"
+                        @click="handleWriteReview"
+                    >
+                        <v-icon start class="mr-1">mdi-pencil-outline</v-icon>
+                        Viết đánh giá
+                    </v-btn>
+                </div>
 
                 <div v-if="reviewsLoading" class="text-center py-8">
                     <v-progress-circular indeterminate color="primary"></v-progress-circular>
@@ -921,7 +949,7 @@ const toggleFavorite = () => {
                                     <div class="flex-grow-1">
                                         <div class="d-flex align-center justify-space-between mb-1">
                                             <div class="font-weight-bold text-slate-900">
-                                                {{ review.khachHang?.ten || review.tenKhachHang || 'Khách hàng AeroStride' }}
+                                                {{ review.khachHang?.ten || review.tenKhachHang || 'Khách hàng ẩn danh' }}
                                             </div>
                                             <span class="text-caption text-grey-darken-1 font-weight-medium">
                                                 {{ review.ngayTao ? new Date(review.ngayTao).toLocaleDateString('vi-VN') : '' }}
@@ -953,20 +981,27 @@ const toggleFavorite = () => {
                     <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-comment-text-outline</v-icon>
                     <h3 class="text-h5 font-weight-bold text-grey-darken-2 mb-2">Chưa có đánh giá nào</h3>
                     <p class="text-body-1 text-grey">Hãy là người đầu tiên trải nghiệm và đánh giá sản phẩm này.</p>
-                    <v-btn color="black" variant="outlined" rounded="pill" class="mt-4 font-weight-bold px-6" @click="handleWriteReview">
+                    <v-btn
+                        v-if="authStore.isLoggedIn"
+                        color="black"
+                        variant="outlined"
+                        rounded="pill"
+                        class="mt-4 font-weight-bold px-6"
+                        @click="handleWriteReview"
+                    >
                         Viết đánh giá ngay
                     </v-btn>
                 </div>
             </div>
 
             <!-- Recommended Products Section -->
-            <div class="recommended-section mt-16 pt-8 border-top" v-if="recommendedProducts.length > 0">
-                <h2 class="text-h4 font-weight-semibold mb-8 text-center text-primary">Có Thể Bạn Cũng Thích</h2>
-                <v-row>
-                    <v-col v-for="p in recommendedProducts" :key="p.id" cols="12" sm="6" md="4" lg="3">
+            <div class="recommended-section mt-10 pt-6 border-top" v-if="recommendedProducts.length > 0">
+                <h2 class="text-h5 text-md-h4 font-weight-bold mb-6 text-center text-primary">Có Thể Bạn Cũng Thích</h2>
+                <v-row class="products-grid-row">
+                    <v-col v-for="p in recommendedProducts" :key="p.id" cols="6" sm="6" md="4" lg="3" class="pa-2 pa-sm-3">
                         <div class="product-card-placeholder" @click="$router.push(`/product/${p.id}`)">
                             <!-- Image Placeholder -->
-                            <div class="image-box-placeholder mb-4">
+                            <div class="image-box-placeholder mb-3">
                                 <img
                                     :src="getValidImgUrl(p.hinhAnh) || DEFAULT_SHOE_IMAGE"
                                     :alt="p.tenSanPham"
@@ -978,9 +1013,9 @@ const toggleFavorite = () => {
 
                             <!-- Content -->
                             <div class="product-info text-left">
-                                <span class="promo-label">{{ p.tenThuongHieu || 'NIKE' }}</span>
+                                <span class="promo-label">{{ p.tenThuongHieu || 'AEROSTRIDE' }}</span>
                                 <h4 class="product-name text-truncate">{{ p.tenSanPham }}</h4>
-                                <p class="product-price">{{ formatPrice(p.giaBanThapNhat) }}</p>
+                                <p class="product-price font-weight-bold">{{ formatPrice(p.giaBanThapNhat) }}</p>
                             </div>
                         </div>
                     </v-col>
@@ -1214,12 +1249,31 @@ const toggleFavorite = () => {
     aspect-ratio: 1;
 }
 
+.main-image-box-custom {
+    aspect-ratio: 1;
+    max-height: 440px;
+    border: 1px solid #e2e8f0;
+    width: 100%;
+    margin: 0 auto;
+}
+
 @media (max-width: 960px) {
+    .main-image-box-custom {
+        max-height: 300px !important;
+        aspect-ratio: 4 / 3 !important;
+    }
     .sticky-info-panel {
         position: relative;
         top: 0;
         padding: 0;
-        margin-top: 40px;
+        margin-top: 16px !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .main-image-box-custom {
+        max-height: 230px !important;
+        aspect-ratio: 4 / 3 !important;
     }
 }
 
@@ -1266,23 +1320,18 @@ const toggleFavorite = () => {
     }
 }
 
-/* Product Card Styling (Synced with ShoeListing.vue) */
 .product-card-placeholder {
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 20px;
-    padding: 10px;
-    background: transparent;
-    border: 1px solid transparent;
+    border-radius: 16px;
+    padding: 8px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
 
     &:hover {
         background: #f8fafc;
         box-shadow: 0 12px 24px -10px rgba(30, 37, 124, 0.15);
-        transform: translateY(-6px);
-
-        .image-box-placeholder :deep(.v-img__img) {
-            transform: scale(1.08);
-        }
+        transform: translateY(-4px);
 
         .product-name {
             color: #2563eb;
@@ -1292,43 +1341,54 @@ const toggleFavorite = () => {
 
 .image-box-placeholder {
     width: 100%;
-    aspect-ratio: 1;
-    background: transparent;
-    border-radius: 16px;
+    height: 180px;
+    background: #f8fafc;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     overflow: hidden;
 
-    :deep(.v-img__img) {
-        transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    @media (max-width: 600px) {
+        height: 125px !important;
+        border-radius: 10px;
     }
 }
 
 .product-info {
-    padding: 8px 4px 0;
+    padding: 6px 2px 0;
 
     .promo-label {
-        color: #ff3d00;
-        font-size: 0.85rem;
+        color: #2962ff;
+        font-size: 0.75rem;
         font-weight: 800;
         display: block;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .product-name {
-        font-size: 1rem;
+        font-size: 0.925rem;
         font-weight: 700;
-        color: #1e257c;
-        margin-bottom: 2px;
+        color: #0f172a;
+        margin-bottom: 4px;
         transition: color 0.3s ease;
+
+        @media (max-width: 600px) {
+            font-size: 0.8rem;
+        }
     }
 
     .product-price {
-        font-size: 1.05rem;
+        font-size: 0.95rem;
         font-weight: 800;
-        color: #1e257c;
+        color: #e53935;
+
+        @media (max-width: 600px) {
+            font-size: 0.85rem;
+        }
     }
 }
 
@@ -1344,7 +1404,7 @@ const toggleFavorite = () => {
 
 .product-title-new {
     font-family: 'Outfit', sans-serif;
-    font-size: 32px;
+    font-size: clamp(1.35rem, 3vw, 2rem);
     font-weight: 800;
     line-height: 1.25;
     color: #0a1329;
@@ -1376,7 +1436,7 @@ const toggleFavorite = () => {
     gap: 12px;
 
     .current-price-label-new {
-        font-size: 30px;
+        font-size: clamp(1.4rem, 3vw, 1.875rem);
         font-weight: 800;
         color: #e53935;
         font-family: 'Outfit', sans-serif;

@@ -456,6 +456,14 @@ const scrollToCategories = () => {
 
 .header-spacing {
     height: 120px; /* 36px announcement + 84px header */
+
+    @media (max-width: 768px) {
+        height: 96px; /* announcement (auto ~32px) + 64px navbar */
+    }
+
+    @media (max-width: 480px) {
+        height: 100px;
+    }
 }
 
 /* Sections alignment */
@@ -995,82 +1003,120 @@ const scrollToCategories = () => {
     transform: translateY(-100%);
 }
 
-/* Responsiveness overrides */
+/* ── Responsive ─────────────────────────────────────────────────── */
+
+/* Tablet landscape: hero stacks, 3-col products */
 @media (max-width: 1200px) {
-    .products-grid-row {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    .categories-grid-row {
-        gap: 20px;
-    }
+    .products-grid-row { grid-template-columns: repeat(3, 1fr); gap: 20px; }
     .hero-banner-container {
         height: auto;
         flex-direction: column;
-        padding: 40px 30px;
-        gap: 30px;
+        padding: 32px 28px 24px;
+        gap: 20px;
     }
-    .hero-content-left {
-        max-width: 100%;
-        text-align: center;
-    }
-    .hero-actions-row {
-        justify-content: center;
-    }
-    .hero-graphic-right {
-        width: 100%;
-        height: 300px;
-    }
-    .blue-badge-card {
-        width: 100%;
-        height: 250px;
-        padding-left: 30px;
-        justify-content: center;
-        padding-left: 0;
-    }
-    .shoe-model-container {
-        width: 400px;
-        height: 280px;
-        transform: translate(-50%, -55%);
-    }
+    .hero-content-left { max-width: 100%; text-align: center; }
+    .hero-actions-row { justify-content: center; }
+    .hero-title { font-size: 38px; }
+    .hero-graphic-right { width: 100%; height: 220px; }
+    .blue-badge-card { width: 100%; height: 220px; justify-content: center; padding-left: 0; }
+    .badge-brand-text { font-size: 38px; }
+    .shoe-model-container { width: 320px; height: 210px; right: 50%; transform: translate(50%, -50%); }
 }
 
+/* Tablet portrait */
 @media (max-width: 960px) {
-    .features-grid-bar {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 24px;
-    }
-    .categories-grid-row {
-        grid-template-columns: 1fr;
-    }
-    .products-grid-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .section-heading-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-    .product-filters-tabs {
-        width: 100%;
-        justify-content: space-between;
-    }
+    .section-container { padding: 0 20px; }
+    .features-grid-bar { grid-template-columns: repeat(2, 1fr); gap: 16px; padding-bottom: 20px; }
+    .feature-icon { width: 34px; height: 34px; font-size: 18px; }
+    .feature-title { font-size: 13px; }
+    .feature-desc { font-size: 11px; }
+    .feature-item { gap: 10px; }
+    .categories-grid-row { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .category-card { height: 160px; padding: 18px; }
+    .category-card .category-title { font-size: 18px; }
+    .category-card .category-desc { font-size: 12px; }
+    .category-card .category-shoe-img { width: 150px; height: 120px; }
+    .products-grid-row { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .section-heading { font-size: 22px; }
+    .section-heading-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .product-filters-tabs { gap: 20px; }
+    .product-card-custom { padding: 10px; }
+    .card-image-box { border-radius: 12px; }
+    .card-details-box { padding: 10px 4px 4px; }
+    .product-name-title { font-size: 13px; height: 36px; }
+    .current-price-text { font-size: 14px; }
 }
 
+/* Mobile */
 @media (max-width: 600px) {
-    .section-container {
-        padding: 0 16px;
+    .section-container { padding: 0 14px; }
+
+    /* Hero: compact layout */
+    .hero-banner-container { padding: 22px 18px 18px; border-radius: 18px; gap: 16px; }
+    .hero-tag { font-size: 11px; margin-bottom: 8px; }
+    .hero-title { font-size: 22px; line-height: 1.25; margin-bottom: 10px; }
+    .hero-subtitle { font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+    .hero-actions-row { flex-direction: row; gap: 8px; justify-content: center; }
+    .hero-btn-primary,
+    .hero-btn-secondary {
+        height: 38px !important;
+        padding: 0 16px !important;
+        font-size: 12px;
+        flex: 1;
+        max-width: 160px;
     }
-    .features-grid-bar {
-        grid-template-columns: 1fr;
-    }
-    .hero-title {
-        font-size: 32px;
-    }
-    .hero-subtitle {
-        font-size: 15px;
-    }
-    .products-grid-row {
-        grid-template-columns: 1fr;
-    }
+    /* Hero graphic: small strip */
+    .hero-graphic-right { height: 140px; }
+    .blue-badge-card { height: 140px; border-radius: 16px; }
+    .badge-brand-text { font-size: 26px; letter-spacing: 1px; }
+    .shoe-model-container { width: 200px; height: 140px; }
+
+    /* Features: 2 columns, very compact */
+    .features-grid-bar { grid-template-columns: repeat(2, 1fr); gap: 10px 12px; padding-bottom: 16px; }
+    .feature-item { gap: 8px; }
+    .feature-icon { width: 28px; height: 28px; font-size: 14px; flex-shrink: 0; }
+    .feature-title { font-size: 12px; }
+    .feature-desc { font-size: 10px; }
+
+    /* Categories: 1 col, shorter */
+    .categories-grid-row { grid-template-columns: 1fr; gap: 10px; }
+    .category-card { height: 120px; padding: 16px; border-radius: 16px; }
+    .category-card .category-title { font-size: 16px; }
+    .category-card .category-desc { font-size: 11px; }
+    .category-card .category-shoe-img { width: 120px; height: 100px; top: -8px; right: -15px; }
+
+    /* Section headings */
+    .section-heading { font-size: 18px; }
+    .heading-see-all-link { font-size: 12px; }
+    .product-filters-tabs { gap: 14px; }
+    .filter-tab-item { font-size: 11px; }
+
+    /* Products: 2 columns, compact cards */
+    .products-grid-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .product-card-custom { padding: 8px; border-radius: 14px; }
+    .card-image-box { border-radius: 10px; }
+    .card-details-box { padding: 8px 2px 2px; }
+    .product-brand-tag { font-size: 10px; }
+    .product-name-title { font-size: 12px; height: 32px; margin-bottom: 6px; }
+    .current-price-text { font-size: 13px; }
+    .old-price-text { font-size: 10px; }
+    .favorite-heart-btn { width: 24px; height: 24px; }
+    .sale-tag-badge { font-size: 9px; padding: 2px 6px; top: 8px; left: 8px; }
+
+    /* Footer */
+    .footer-custom { height: auto; padding: 16px 14px; margin-top: 32px; }
+    .footer-text-content { font-size: 11px; line-height: 1.7; }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+    .section-container { padding: 0 10px; }
+    .hero-title { font-size: 19px; }
+    .hero-btn-primary, .hero-btn-secondary { font-size: 11px; padding: 0 12px !important; }
+    .hero-graphic-right { height: 120px; }
+    .blue-badge-card { height: 120px; }
+    .shoe-model-container { width: 160px; height: 120px; }
+    .products-grid-row { gap: 8px; }
+    .product-name-title { font-size: 11px; }
 }
 </style>

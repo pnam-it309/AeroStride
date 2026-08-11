@@ -352,6 +352,25 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                     .images(imgs)
                     .build();
         }).toList();
+
+        return CustomerProductDetailResponse.builder()
+                .id(sp.getId())
+                .maSanPham(sp.getMa())
+                .tenSanPham(sp.getTen())
+                .hinhAnh(sp.getHinhAnh())
+                .tenThuongHieu(sp.getThuongHieu() != null ? sp.getThuongHieu().getTen() : null)
+                .tenChatLieu(sp.getChatLieu() != null ? sp.getChatLieu().getTen() : null)
+                .tenXuatXu(sp.getXuatXu() != null ? sp.getXuatXu().getTen() : null)
+                .tenMucDichChay(sp.getMucDichChay() != null ? sp.getMucDichChay().getTen() : null)
+                .gioiTinhKhachHang(sp.getGioiTinhKhachHang() != null ? sp.getGioiTinhKhachHang().name() : null)
+                .moTaChiTiet(sp.getMoTaChiTiet())
+                .trangThai(sp.getTrangThai() != null ? sp.getTrangThai().name() : null)
+                .variants(variantResponses)
+                .minPrice(minPrice)
+                .maxPrice(maxPrice)
+                .totalStock(totalStock)
+                .stockByColor(stockByColor)
+                .build();
     }
 
     @Override
@@ -361,60 +380,55 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
             answers = new HashMap<>();
         }
 
-        // Bước 1: Hỏi giới tính
         String gioiTinh = answers.get("gioiTinh");
+        String mucDichChay = answers.get("mucDichChay");
+        String thuongHieu = answers.get("thuongHieu");
+        String kichThuoc = answers.get("kichThuoc");
+        String khoangGia = answers.get("khoangGia");
+
+        RecommendQuizQuestion nextQuestion = null;
+
+        // Bước 1: Hỏi giới tính
         if (gioiTinh == null || gioiTinh.isBlank()) {
-            return RecommendQuizResponse.builder()
-                    .nextQuestion(RecommendQuizQuestion.builder()
-                            .key("gioiTinh")
-                            .questionText("Bạn đang tìm giày dành cho đối tượng nào?")
-                            .options(List.of(
-                                    new RecommendQuizOption("Nam", "NAM"),
-                                    new RecommendQuizOption("Nữ", "NU"),
-                                    new RecommendQuizOption("Unisex (Cả nam và nữ)", "UNISEX")
-                            ))
-                            .build())
+            nextQuestion = RecommendQuizQuestion.builder()
+                    .key("gioiTinh")
+                    .questionText("Bạn đang tìm giày dành cho đối tượng nào?")
+                    .options(List.of(
+                            new RecommendQuizOption("Nam", "NAM"),
+                            new RecommendQuizOption("Nữ", "NU"),
+                            new RecommendQuizOption("Unisex (Cả nam và nữ)", "UNISEX")
+                    ))
                     .build();
         }
-
         // Bước 2: Hỏi mục đích sử dụng
-        String mucDichChay = answers.get("mucDichChay");
-        if (mucDichChay == null || mucDichChay.isBlank()) {
+        else if (mucDichChay == null || mucDichChay.isBlank()) {
             List<RecommendQuizOption> purposeOptions = mucDichChayRepository.findAll().stream()
                     .filter(x -> x.getTrangThai() == TrangThai.DANG_HOAT_DONG)
                     .map(x -> new RecommendQuizOption(x.getTen(), x.getId()))
                     .collect(Collectors.toList());
 
-            return RecommendQuizResponse.builder()
-                    .nextQuestion(RecommendQuizQuestion.builder()
-                            .key("mucDichChay")
-                            .questionText("Mục đích sử dụng chính của đôi giày này là gì?")
-                            .options(purposeOptions)
-                            .build())
+            nextQuestion = RecommendQuizQuestion.builder()
+                    .key("mucDichChay")
+                    .questionText("Mục đích sử dụng chính của đôi giày này là gì?")
+                    .options(purposeOptions)
                     .build();
         }
-
         // Bước 3: Hỏi thương hiệu
-        String thuongHieu = answers.get("thuongHieu");
-        if (thuongHieu == null || thuongHieu.isBlank()) {
+        else if (thuongHieu == null || thuongHieu.isBlank()) {
             List<RecommendQuizOption> brandOptions = thuongHieuRepository.findAll().stream()
                     .filter(x -> x.getTrangThai() == TrangThai.DANG_HOAT_DONG)
                     .map(x -> new RecommendQuizOption(x.getTen(), x.getId()))
                     .collect(Collectors.toList());
             brandOptions.add(0, new RecommendQuizOption("Tất cả thương hiệu / Không quan trọng", "ALL"));
 
-            return RecommendQuizResponse.builder()
-                    .nextQuestion(RecommendQuizQuestion.builder()
-                            .key("thuongHieu")
-                            .questionText("Bạn yêu thích hoặc đang hướng tới thương hiệu nào?")
-                            .options(brandOptions)
-                            .build())
+            nextQuestion = RecommendQuizQuestion.builder()
+                    .key("thuongHieu")
+                    .questionText("Bạn yêu thích hoặc đang hướng tới thương hiệu nào?")
+                    .options(brandOptions)
                     .build();
         }
-
         // Bước 4: Hỏi kích cỡ
-        String kichThuoc = answers.get("kichThuoc");
-        if (kichThuoc == null || kichThuoc.isBlank()) {
+        else if (kichThuoc == null || kichThuoc.isBlank()) {
             List<RecommendQuizOption> sizeOptions = kichThuocRepository.findAll().stream()
                     .filter(x -> x.getTrangThai() == TrangThai.DANG_HOAT_DONG)
                     .sorted((a, b) -> {
@@ -429,50 +443,62 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                     .map(x -> new RecommendQuizOption("Size " + x.getTen(), x.getId()))
                     .collect(Collectors.toList());
 
-            return RecommendQuizResponse.builder()
-                    .nextQuestion(RecommendQuizQuestion.builder()
-                            .key("kichThuoc")
-                            .questionText("Kích cỡ giày của bạn là bao nhiêu (Size EU)?")
-                            .options(sizeOptions)
-                            .build())
+            nextQuestion = RecommendQuizQuestion.builder()
+                    .key("kichThuoc")
+                    .questionText("Kích cỡ giày của bạn là bao nhiêu (Size EU)?")
+                    .options(sizeOptions)
                     .build();
         }
-
         // Bước 5: Hỏi khoảng giá mong muốn
-        String khoangGia = answers.get("khoangGia");
-        if (khoangGia == null || khoangGia.isBlank()) {
-            return RecommendQuizResponse.builder()
-                    .nextQuestion(RecommendQuizQuestion.builder()
-                            .key("khoangGia")
-                            .questionText("Mức giá mong muốn cho đôi giày của bạn?")
-                            .options(List.of(
-                                    new RecommendQuizOption("Dưới 1 triệu VNĐ", "UNDER_1M"),
-                                    new RecommendQuizOption("Từ 1 - 2 triệu VNĐ", "1M_TO_2M"),
-                                    new RecommendQuizOption("Trên 2 triệu VNĐ", "OVER_2M"),
-                                    new RecommendQuizOption("Bất kỳ mức giá nào", "ALL")
-                            ))
-                            .build())
+        else if (khoangGia == null || khoangGia.isBlank()) {
+            nextQuestion = RecommendQuizQuestion.builder()
+                    .key("khoangGia")
+                    .questionText("Mức giá mong muốn cho đôi giày của bạn?")
+                    .options(List.of(
+                            new RecommendQuizOption("Dưới 1 triệu VNĐ", "UNDER_1M"),
+                            new RecommendQuizOption("Từ 1 - 2 triệu VNĐ", "1M_TO_2M"),
+                            new RecommendQuizOption("Trên 2 triệu VNĐ", "OVER_2M"),
+                            new RecommendQuizOption("Bất kỳ mức giá nào", "ALL")
+                    ))
                     .build();
         }
 
-        // Hoàn thành quiz -> Trả về danh sách sản phẩm gợi ý
+        // Luôn tính toán danh sách sản phẩm gợi ý tương ứng với các tiêu chí đã chọn
+        List<CustomerProductResponse> recommended = computeRecommendations(gioiTinh, mucDichChay, thuongHieu, kichThuoc, khoangGia);
+
+        return RecommendQuizResponse.builder()
+                .nextQuestion(nextQuestion)
+                .recommendedProducts(recommended)
+                .build();
+    }
+
+    private List<CustomerProductResponse> computeRecommendations(String gioiTinh, String mucDichChay, String thuongHieu, String kichThuoc, String khoangGia) {
         CustomerSearchProductRequest searchReq = new CustomerSearchProductRequest();
         searchReq.setPage(1);
-        searchReq.setSize(100);
+        searchReq.setSize(60);
         searchReq.setTrangThai(TrangThai.DANG_HOAT_DONG);
 
-        if (!"UNISEX".equalsIgnoreCase(gioiTinh)) {
+        if (gioiTinh != null && !gioiTinh.isBlank() && !"UNISEX".equalsIgnoreCase(gioiTinh)) {
             searchReq.setGioiTinhKhachHang(gioiTinh);
         }
-        if (!"ALL".equalsIgnoreCase(thuongHieu)) {
+        if (thuongHieu != null && !thuongHieu.isBlank() && !"ALL".equalsIgnoreCase(thuongHieu)) {
             searchReq.setThuongHieuId(thuongHieu);
         }
-        searchReq.setMucDichChayId(mucDichChay);
+        if (mucDichChay != null && !mucDichChay.isBlank()) {
+            searchReq.setMucDichChayId(mucDichChay);
+        }
 
         PageResponse<CustomerProductResponse> baseProductsPage = getProducts(searchReq);
         List<CustomerProductResponse> baseProducts = baseProductsPage.getContent();
+        if (baseProducts == null || baseProducts.isEmpty()) {
+            CustomerSearchProductRequest fallbackReq = new CustomerSearchProductRequest();
+            fallbackReq.setPage(1);
+            fallbackReq.setSize(12);
+            fallbackReq.setTrangThai(TrangThai.DANG_HOAT_DONG);
+            return getProducts(fallbackReq).getContent();
+        }
 
-        List<CustomerProductResponse> recommended = baseProducts.stream()
+        List<CustomerProductResponse> filtered = baseProducts.stream()
                 .filter(sp -> {
                     List<ChiTietSanPham> variants = customerSanPhamChiTietRepository
                             .findBySanPhamIdAndXoaMemFalse(sp.getId());
@@ -481,17 +507,18 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                         return false;
                     }
 
-                    boolean matchSize = variants.stream()
-                            .anyMatch(v -> v.getKichThuoc() != null 
-                                    && v.getKichThuoc().getId().equals(kichThuoc)
-                                    && TrangThai.DANG_HOAT_DONG.equals(v.getTrangThai())
-                                    && v.getSoLuong() > 0);
-
-                    if (!matchSize) {
-                        return false;
+                    if (kichThuoc != null && !kichThuoc.isBlank()) {
+                        boolean matchSize = variants.stream()
+                                .anyMatch(v -> v.getKichThuoc() != null 
+                                        && v.getKichThuoc().getId().equals(kichThuoc)
+                                        && TrangThai.DANG_HOAT_DONG.equals(v.getTrangThai())
+                                        && v.getSoLuong() > 0);
+                        if (!matchSize) {
+                            return false;
+                        }
                     }
 
-                    if ("ALL".equalsIgnoreCase(khoangGia)) {
+                    if (khoangGia == null || khoangGia.isBlank() || "ALL".equalsIgnoreCase(khoangGia)) {
                         return true;
                     }
 
@@ -513,9 +540,10 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 })
                 .collect(Collectors.toList());
 
-        return RecommendQuizResponse.builder()
-                .nextQuestion(null)
-                .recommendedProducts(recommended)
-                .build();
+        if (filtered.isEmpty()) {
+            return baseProducts.stream().limit(8).collect(Collectors.toList());
+        }
+
+        return filtered.stream().limit(12).collect(Collectors.toList());
     }
 }

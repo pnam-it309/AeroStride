@@ -182,3 +182,45 @@
         box-shadow: inherit !important;
     }
 }
+
+@media (max-width: 960px) {
+    .features-section {
+        min-height: auto;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+
+    .diagonal-bento-wall {
+        gap: 16px;
+        width: 200vw;
+        left: -50vw;
+    }
+
+    .bento-col {
+        width: 220px;
+        gap: 16px;
+    }
+
+    .bento-card {
+        padding: 16px;
+        border-radius: 18px;
+
+        &.s, &.m, &.l {
+            min-height: 140px;
+        }
+
+        .icon-wrap {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+        }
+
+        .text-wrap h4 {
+            font-size: 0.925rem;
+        }
+
+        .text-wrap p {
+            font-size: 0.8rem;
+        }
+    }
+}

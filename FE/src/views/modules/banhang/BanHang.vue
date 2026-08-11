@@ -11,6 +11,8 @@ import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { dichVuVnPay } from './composables/dichVuVnPay.js';
 import { initializePendingOrders } from './posInitialization.js';
 import { useNotifications } from '@/services/notificationService';
+import { MESSAGES } from '@/constants/messages';
+import { ORDER_TYPES, DELIVERY_METHODS } from '@/constants/appConstants';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/authStore';
 import { useBanHangStore } from '@/stores/banHangStore';
@@ -35,11 +37,14 @@ import ScannerDialog from './components/ScannerDialog.vue';
 import QuickAddCustomerDialog from './components/QuickAddCustomerDialog.vue';
 import BetterVoucherModal from './components/BetterVoucherModal.vue';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
+import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
+import { useRoleAccess } from '@/composables/useRoleAccess';
 
 const { addNotification } = useNotifications();
 const { printHoaDonById } = useHoaDonPrinter();
 const uiStore = useUIStore();
 const authStore = useAuthStore();
+const { isAdmin, isStaff } = useRoleAccess();
 const MAX_WAITING_ORDERS = 5;
 const VNPAY_PENDING_KEY = 'aerostride_pos_vnpay_pending';
 const POS_ACTIVE_ORDER_KEY = 'aerostride_pos_active_order_id';
@@ -55,20 +60,11 @@ const checkGiaoCa = async () => {
         const data = res?.data || res;
         if (!data || !data.id) {
             currentGiaoCa.value = null;
-            // Chỉ yêu cầu mở ca bắt buộc đối với Nhân viên (Staff). Quản lý (Admin) không bắt buộc.
-            if (!authStore.isAdmin) {
-                giaoCaModalMode.value = 'open';
-                showGiaoCaModal.value = true;
-            }
         } else {
             currentGiaoCa.value = data;
         }
     } catch (e) {
         currentGiaoCa.value = null;
-        if (!authStore.isAdmin) {
-            giaoCaModalMode.value = 'open';
-            showGiaoCaModal.value = true;
-        }
     }
 };
 
@@ -1192,6 +1188,7 @@ const createNewOrder = async ({ silent = false, force = false } = {}) => {
         orders.value.push(normalizeSalesOrder(newOrder));
         activeOrderIndex.value = orders.value.length - 1;
     } catch (e) {
+        console.error('Lỗi tạo hóa đơn:', e.response?.data || e.message || e);
         if (!silent) {
             addNotification({ title: 'Không thể tạo hóa đơn', subtitle: getErrorMessage(e, MESSAGES.ERROR.SAVE_DATA), color: 'error' });
         }
@@ -1975,7 +1972,7 @@ const handleVnPayCallbackFromUrl = async () => {
                         @close="closeOrder"
                     />
                 </div>
-                <div class="d-flex align-center ga-2 mr-2">
+                <div class="d-flex align-center ga-2 mr-2" v-if="isStaff">
                     <v-chip v-if="currentGiaoCa" color="success" size="small" variant="tonal" class="font-weight-medium">
                         <v-icon start size="14">mdi-clock-outline</v-icon>
                         Ca làm: {{ currentGiaoCa.maGiaoCa || 'Đang mở' }}

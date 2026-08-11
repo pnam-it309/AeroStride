@@ -26,6 +26,7 @@ export function requireAuth(to, from, next) {
                 '/admin/dot-giam-gia',
                 '/admin/thuoc-tinh',
                 '/admin/san-pham',
+                '/admin/lich-lam-viec',
                 '/admin/lich-ca-lam',
                 '/admin/lich-su-hoat-dong',
                 '/admin/cham-cong'

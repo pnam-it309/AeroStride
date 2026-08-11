@@ -65,8 +65,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Transactional(readOnly = true)
     /** Lay danh sach hoa don POS dang cho xu ly de FE hien thi tab don hang. */
     public List<AdminBanHangHoaDonResponse> getHoaDonCho() {
-        String idNhanVien = getCurrentNhanVien().map(NhanVien::getId).orElse(null);
-        return hoaDonRepository.findAllPendingPOSOrders(OrderStatus.CHO_XAC_NHAN, OrderType.IN_STORE, idNhanVien)
+        NhanVien nv = getCurrentNhanVien().orElse(null);
+        String idNhanVien = nv != null ? nv.getId() : null;
+        String idGiaoCa = (nv != null) ? giaoCaRepository.findGiaoCaHienTai(nv.getId()).map(com.example.be.entity.GiaoCa::getId).orElse(null) : null;
+        return hoaDonRepository.findAllPendingPOSOrders(OrderStatus.CHO_XAC_NHAN, OrderType.IN_STORE, idNhanVien, idGiaoCa)
                 .stream().map(this::mapToHoaDonResponse).collect(Collectors.toList());
     }
 
@@ -74,11 +76,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Transactional
     /** Tao hoa don tai quay moi, gioi han so don cho de tranh mo qua nhieu tab. */
     public AdminBanHangHoaDonResponse createHoaDon() {
-        java.util.Optional<NhanVien> currentNhanVien = getCurrentNhanVien();
-        String idNhanVien = currentNhanVien.map(NhanVien::getId).orElse(null);
-        if (hoaDonRepository.countPendingPOSOrders(OrderStatus.CHO_XAC_NHAN, OrderType.IN_STORE, idNhanVien) >= 5) {
-            throw new BusinessException("Chỉ được tạo tối đa 5 hóa đơn chờ");
-        }
+        NhanVien nv = getCurrentNhanVien().orElse(null);
+        String idNhanVien = nv != null ? nv.getId() : null;
+        String idGiaoCa = (nv != null) ? giaoCaRepository.findGiaoCaHienTai(nv.getId()).map(com.example.be.entity.GiaoCa::getId).orElse(null) : null;
         HoaDon hoaDon = new HoaDon();
         hoaDon.setMaHoaDon(CodeUtils.generateRandom(HoaDon.class));
         hoaDon.setTrangThai(OrderStatus.CHO_XAC_NHAN);
@@ -89,16 +89,19 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         hoaDon.setTongTien(BigDecimal.ZERO);
         hoaDon.setTongTienSauGiam(BigDecimal.ZERO);
 
-        NhanVien nv = currentNhanVien.orElse(null);
         if (nv != null) {
             hoaDon.setNhanVien(nv);
             com.example.be.entity.GiaoCa activeGiaoCa = giaoCaRepository.findGiaoCaHienTai(nv.getId()).orElse(null);
-            boolean isAdmin = nv.getPhanQuyen() != null && "ADMIN".equals(nv.getPhanQuyen().getMa());
+            boolean isAdmin = nv.getPhanQuyen() != null && com.example.be.infrastructure.constants.VaiTro.ADMIN.equals(nv.getPhanQuyen().getMa());
             if (activeGiaoCa != null) {
                 hoaDon.setGiaoCa(activeGiaoCa);
             } else if (!isAdmin) {
                 throw new BusinessException("Bạn phải Mở Ca làm việc trước khi tạo hóa đơn!");
             }
+        }
+
+        if (hoaDonRepository.countPendingPOSOrders(OrderStatus.CHO_XAC_NHAN, OrderType.IN_STORE, idNhanVien, idGiaoCa) >= 5) {
+            throw new BusinessException("Chỉ được tạo tối đa 5 hóa đơn chờ");
         }
 
         hoaDonRepository.save(hoaDon);

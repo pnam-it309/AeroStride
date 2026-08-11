@@ -586,11 +586,10 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         java.util.function.Predicate<PhieuGiamGia> hopLeCaNhan = v ->
                 (v.getNgayBatDau() == null || now >= v.getNgayBatDau())
                 && (v.getNgayKetThuc() == null || now <= v.getNgayKetThuc())
-                && (v.getDonHangToiThieu() == null || tongTien == null || tongTien.compareTo(v.getDonHangToiThieu()) >= 0)
                 && v.getTrangThai() == com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG;
 
         java.util.function.Predicate<PhieuGiamGia> hopLeCongKhai = v ->
-                (v.getSoLuong() == null || v.getSoLuong() > 0)
+                (v.getSoLuong() == null || v.getSoLuong() != 0)
                 && hopLeCaNhan.test(v);
 
         // LinkedHashMap: loại trùng theo id, giữ thứ tự (công khai trước, cá nhân sau)

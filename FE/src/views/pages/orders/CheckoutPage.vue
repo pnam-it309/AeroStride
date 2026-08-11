@@ -359,6 +359,11 @@ const openVoucherModal = () => {
 };
 
 const selectVoucher = (voucher) => {
+    if (voucher.donHangToiThieu && cartStore.cartTotal < voucher.donHangToiThieu) {
+        const diff = voucher.donHangToiThieu - cartStore.cartTotal;
+        alert(`Đơn hàng chưa đạt đơn tối thiểu ${formatPrice(voucher.donHangToiThieu)}. Cần mua thêm ${formatPrice(diff)} để sử dụng mã này!`);
+        return;
+    }
     selectedVoucher.value = voucher;
     showVoucherDialog.value = false;
 };
@@ -628,9 +633,9 @@ onUnmounted(() => {
 <template>
     <div class="checkout-page bg-white min-vh-100 pb-16">
         <MainHeader />
-        <div class="header-spacing" style="height: 124px"></div>
+        <div class="header-spacing"></div>
 
-        <v-container style="max-width: 1480px">
+        <v-container style="max-width: 1480px" class="pt-2">
             <!-- Breadcrumb -->
             <div class="d-flex align-center mb-6 pt-4">
                 <router-link to="/" class="breadcrumb-link">Trang chủ</router-link>
@@ -656,7 +661,7 @@ onUnmounted(() => {
                 <v-col cols="12" md="7">
                     <!-- Shipping Info -->
                     <div class="section-block mb-6">
-                        <div class="pa-8">
+                        <div class="pa-4 pa-sm-6 pa-md-8">
                             <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-6">
                                 <div class="d-flex align-center">
                                     <div class="step-number mr-4 font-weight-bold">
@@ -801,7 +806,7 @@ onUnmounted(() => {
 
                     <!-- Payment Method -->
                     <div class="section-block mb-6">
-                        <div class="pa-8">
+                        <div class="pa-4 pa-sm-6 pa-md-8">
                             <div class="d-flex align-center mb-6">
                                 <div class="step-number mr-4 font-weight-bold">
                                     <v-icon color="white">mdi-credit-card-outline</v-icon>
@@ -862,7 +867,7 @@ onUnmounted(() => {
 
                     <!-- Estimated Delivery -->
                     <div class="section-block">
-                        <div class="pa-8">
+                        <div class="pa-4 pa-sm-6 pa-md-8">
                             <div class="d-flex align-center mb-4">
                                 <div class="step-number mr-4 font-weight-bold">
                                     <v-icon color="white">mdi-truck-fast-outline</v-icon>
@@ -905,7 +910,7 @@ onUnmounted(() => {
                 <v-col cols="12" md="5">
                     <div class="order-summary-sticky">
                         <div class="section-block">
-                            <div class="pa-6">
+                            <div class="pa-4 pa-sm-6">
                                 <div class="d-flex align-center mb-6">
                                     <div class="summary-icon mr-3">
                                         <v-icon size="20" style="color: #ffffff !important">mdi-receipt-text-outline</v-icon>
@@ -1258,7 +1263,10 @@ onUnmounted(() => {
                             v-for="v in availableVouchers"
                             :key="v.id"
                             class="voucher-item d-flex pa-4 mb-3"
-                            :class="{ selected: selectedVoucher?.id === v.id }"
+                            :class="{ 
+                                selected: selectedVoucher?.id === v.id,
+                                'opacity-60': v.donHangToiThieu && cartStore.cartTotal < v.donHangToiThieu 
+                            }"
                             @click="selectVoucher(v)"
                         >
                             <div class="voucher-badge mr-4 px-2">
@@ -1283,10 +1291,15 @@ onUnmounted(() => {
                                     </span>
                                     <span v-else>Giảm {{ formatPrice(v.soTienGiam) }} trực tiếp</span>
                                 </p>
-                                <p v-if="v.donHangToiThieu" class="text-caption font-weight-bold mb-0" style="color: #1e257c">
-                                    <v-icon size="12" class="mr-1" style="color: #1e257c">mdi-cart-outline</v-icon>
-                                    Đơn tối thiểu {{ formatPrice(v.donHangToiThieu) }}
-                                </p>
+                                <div class="d-flex align-center justify-space-between mt-1">
+                                    <p v-if="v.donHangToiThieu" class="text-caption font-weight-bold mb-0" style="color: #1e257c">
+                                        <v-icon size="12" class="mr-1" style="color: #1e257c">mdi-cart-outline</v-icon>
+                                        Đơn tối thiểu {{ formatPrice(v.donHangToiThieu) }}
+                                    </p>
+                                    <span v-if="v.donHangToiThieu && cartStore.cartTotal < v.donHangToiThieu" class="text-caption font-weight-medium text-warning">
+                                        Chưa đủ điều kiện
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1583,5 +1596,12 @@ onUnmounted(() => {
 <style scoped>
 :deep(.v-field) {
     font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+    .order-summary-sticky {
+        position: relative !important;
+        top: 0 !important;
+    }
 }
 </style>
