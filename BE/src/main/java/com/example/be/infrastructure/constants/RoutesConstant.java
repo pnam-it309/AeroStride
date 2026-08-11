@@ -43,6 +43,9 @@ public final class RoutesConstant {
     public static final String CUSTOMER_CART = CUSTOMER + "/cart";
     public static final String CUSTOMER_LANDING = CUSTOMER + "/landing";
     public static final String CUSTOMER_ORDER = CUSTOMER + "/order";
+    public static final String CUSTOMER_LIEN_HE = CUSTOMER + "/lien-he";
+    public static final String CUSTOMER_TIN_TUC = CUSTOMER + "/tin-tuc";
+    public static final String CUSTOMER_GIOI_THIEU = CUSTOMER + "/gioi-thieu";
     public static final String CUSTOMER_PROFILE = CUSTOMER + "/profile";
     public static final String CUSTOMER_SAN_PHAM = CUSTOMER + "/san-pham";
     public static final String CUSTOMER_SITEMAP = CUSTOMER + "/sitemap";

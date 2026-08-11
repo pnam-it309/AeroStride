@@ -135,6 +135,12 @@ export const router = createRouter({
             meta: { seoTitle: 'Tin Tức' }
         },
         {
+            path: '/tin-tuc/:id',
+            name: 'NewsDetail',
+            component: () => import('@/views/pages/public/NewsDetailPage.vue'),
+            meta: { seoTitle: 'Chi Tiết Tin Tức' }
+        },
+        {
             path: '/lien-he',
             name: 'LienHe',
             component: () => import('@/views/pages/public/ContactPage.vue'),

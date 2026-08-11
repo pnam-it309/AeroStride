@@ -19,21 +19,38 @@ const props = defineProps({
 const store = useBanHangStore();
 const { addNotification } = useNotifications();
 
+let lastSearchParamsKey = '';
+
 // Data loading
-const fetchProductSearchResults = async (keyword) => {
+const fetchProductSearchResults = async (keyword, force = false) => {
+    let minGia = undefined;
+    let maxGia = undefined;
+    if (store.filterKhoangGia && store.filterKhoangGia !== 'ALL') {
+        const option = priceRangeOptions.value.find((o) => o.value === store.filterKhoangGia);
+        if (option) {
+            minGia = option.min;
+            maxGia = option.max;
+        }
+    }
+    const paramsKey = JSON.stringify({
+        kw: (keyword || '').trim(),
+        th: store.filterThuongHieu,
+        md: store.filterMucDich,
+        ms: store.filterMauSac,
+        kc: store.filterKichCo,
+        min: minGia,
+        max: maxGia
+    });
+
+    if (!force && paramsKey === lastSearchParamsKey && store.productSearchResults?.length > 0) {
+        return;
+    }
+    lastSearchParamsKey = paramsKey;
+
     store.productSearchLoading = true;
     try {
-        let minGia = undefined;
-        let maxGia = undefined;
-        if (store.filterKhoangGia && store.filterKhoangGia !== 'ALL') {
-            const option = priceRangeOptions.value.find((o) => o.value === store.filterKhoangGia);
-            if (option) {
-                minGia = option.min;
-                maxGia = option.max;
-            }
-        }
         const params = {
-            keyword: keyword || '',
+            keyword: (keyword || '').trim(),
             thuongHieu: store.filterThuongHieu,
             mucDich: store.filterMucDich,
             mauSac: store.filterMauSac,
@@ -120,6 +137,7 @@ const onFilterChange = () => {
 
 const resetFilters = () => {
     store.resetFilters();
+    lastSearchParamsKey = '';
 };
 
 let searchDebounce = null;
@@ -135,14 +153,14 @@ watch(
     () => {
         if (searchDebounce) clearTimeout(searchDebounce);
         searchDebounce = setTimeout(() => {
-            fetchProductSearchResults(store.productSearchKeyword);
+            fetchProductSearchResults(store.productSearchKeyword, true);
         }, 300);
     }
 );
 
 const onProductSearchFocus = () => {
     store.showProductAutocomplete = true;
-    fetchProductSearchResults(store.productSearchKeyword);
+    fetchProductSearchResults(store.productSearchKeyword, false);
 };
 
 const onProductSearchBlur = () => {

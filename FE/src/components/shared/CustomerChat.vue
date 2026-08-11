@@ -497,9 +497,10 @@ const openChatImage = (url) => {
         </v-dialog>
         <!-- Floating Chat Icon -->
         <div v-if="!isOpen" class="chat-fab-container" @click="isOpen = true">
-            <div class="chat-badge" v-if="false">1</div>
-            <v-btn icon="mdi-chat-processing" color="black" size="large" elevation="8" class="chat-fab"></v-btn>
-            <div class="chat-tooltip">Chat với chúng tôi!</div>
+            <v-btn icon color="primary" size="large" elevation="8" class="chat-fab">
+                <v-icon size="26" color="white">mdi-message-text-outline</v-icon>
+            </v-btn>
+            <div class="chat-tooltip">Chat hỗ trợ trực tuyến!</div>
         </div>
 
         <!-- Chat Window -->
@@ -602,6 +603,12 @@ const openChatImage = (url) => {
                                 Gặp nhân viên hỗ trợ
                             </button>
 
+                            <!-- Zalo Quick Link -->
+                            <a href="https://zalo.me/0987654321" target="_blank" class="handoff-btn zalo-btn text-decoration-none">
+                                <v-icon icon="mdi-message-processing" size="small" class="mr-2"></v-icon>
+                                Chat Qua Zalo CSKH (0987.654.321)
+                            </a>
+
                             <div class="suggestions-title">
                                 <v-icon icon="mdi-lightbulb-on" color="amber-darken-2" size="small" class="mr-1"></v-icon>
                                 Câu hỏi gợi ý:
@@ -695,6 +702,11 @@ const openChatImage = (url) => {
 }
 
 .chat-fab {
+    width: 58px !important;
+    height: 58px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #1e257c 0%, #2563eb 100%) !important;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4) !important;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -1088,6 +1100,17 @@ const openChatImage = (url) => {
 
     &:active {
         transform: translateY(0);
+    }
+}
+
+.zalo-btn {
+    background: #0068ff !important;
+    color: #ffffff !important;
+    border-color: #0068ff !important;
+    &:hover {
+        background: #0052cc !important;
+        border-color: #0052cc !important;
+        color: #ffffff !important;
     }
 }
 

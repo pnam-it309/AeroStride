@@ -87,20 +87,20 @@ public class DataRetrievalLibrary {
         if (allProductsCache == null || now > allProductsCacheExpires) {
             synchronized (this) {
                 if (allProductsCache == null || now > allProductsCacheExpires) {
-                    allProductsCache = transactionTemplate.execute(status -> {
-                        List<SanPham> list = sanPhamRepository.findAll();
-                        for (SanPham sp : list) {
-                            if (sp.getChiTietSanPhams() != null) {
-                                sp.getChiTietSanPhams().size(); // Force lazy loading initialization
-                            }
+                    try {
+                        if (transactionTemplate != null) {
+                            allProductsCache = transactionTemplate.execute(status -> sanPhamRepository.findAll());
+                        } else {
+                            allProductsCache = sanPhamRepository.findAll();
                         }
-                        return list;
-                    });
+                    } catch (Exception e) {
+                        allProductsCache = sanPhamRepository.findAll();
+                    }
                     allProductsCacheExpires = now + CACHE_TTL_MS;
                 }
             }
         }
-        return allProductsCache;
+        return allProductsCache != null ? allProductsCache : List.of();
     }
 
     public List<SanPham> getTopProducts(int limit) {

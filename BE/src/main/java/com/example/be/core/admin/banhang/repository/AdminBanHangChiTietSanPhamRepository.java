@@ -81,5 +81,6 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
         @Param("mauSac") String mauSac,
         @Param("kichCo") String kichCo,
         @Param("minGia") java.math.BigDecimal minGia,
-        @Param("maxGia") java.math.BigDecimal maxGia);
+        @Param("maxGia") java.math.BigDecimal maxGia,
+        Pageable pageable);
 }

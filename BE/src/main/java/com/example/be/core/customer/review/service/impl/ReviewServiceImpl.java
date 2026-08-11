@@ -17,10 +17,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.example.be.utils.SecurityUtils;
 import java.util.Optional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+
+import com.example.be.repository.ChiTietSanPhamRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final DanhGiaSanPhamRepository danhGiaSanPhamRepository;
     private final HoaDonRepository hoaDonRepository;
     private final SanPhamRepository sanPhamRepository;
+    private final ChiTietSanPhamRepository chiTietSanPhamRepository;
     private final KhachHangRepository khachHangRepository;
 
     @Override
@@ -43,9 +47,15 @@ public class ReviewServiceImpl implements ReviewService {
         SanPham sanPham = null;
         if (request.getIdSanPham() != null && !request.getIdSanPham().isBlank()) {
             sanPham = sanPhamRepository.findById(request.getIdSanPham()).orElse(null);
+            if (sanPham == null) {
+                var ctsp = chiTietSanPhamRepository.findById(request.getIdSanPham()).orElse(null);
+                if (ctsp != null) {
+                    sanPham = ctsp.getSanPham();
+                }
+            }
         }
 
-        // Fallback: Nếu không truyền idSanPham trực tiếp nhưng có idHoaDon, lấy sản phẩm từ chi tiết hóa đơn
+        // Fallback: Nếu không tìm thấy sản phẩm trực tiếp nhưng có idHoaDon, lấy sản phẩm từ chi tiết hóa đơn
         if (sanPham == null && hoaDon != null && hoaDon.getListsHoaDonChiTiet() != null && !hoaDon.getListsHoaDonChiTiet().isEmpty()) {
             com.example.be.entity.HoaDonChiTiet firstHdct = hoaDon.getListsHoaDonChiTiet().iterator().next();
             sanPham = (firstHdct != null && firstHdct.getChiTietSanPham() != null) 
@@ -62,7 +72,7 @@ public class ReviewServiceImpl implements ReviewService {
             khachHang = khachHangRepository.findById(request.getIdKhachHang()).orElse(null);
         }
 
-        // Nếu idKhachHang chưa có trong request, lấy từ Security Context của phiên đăng nhập JWT
+        // Nếu idKhachHang chưa có trong request, lấy từ Security Context của phiên đăng nhập
         if (khachHang == null) {
             Optional<String> currentUser = SecurityUtils.getCurrentUserEmail();
             if (currentUser.isPresent()) {
@@ -73,8 +83,13 @@ public class ReviewServiceImpl implements ReviewService {
             }
         }
 
-        // Đơn đánh giá trực tiếp được tự động duyệt APPROVED để hiển thị trên chi tiết sản phẩm
-        DanhGiaSanPham.TrangThaiDanhGia status = DanhGiaSanPham.TrangThaiDanhGia.APPROVED;
+        // Fallback: Lấy khách hàng từ hóa đơn nếu có
+        if (khachHang == null && hoaDon != null) {
+            khachHang = hoaDon.getKhachHang();
+        }
+
+        // Đánh giá mới tạo có trạng thái PENDING (Chờ duyệt) để Admin hiển thị và duyệt trong Quản lý đánh giá
+        DanhGiaSanPham.TrangThaiDanhGia status = DanhGiaSanPham.TrangThaiDanhGia.PENDING;
 
         DanhGiaSanPham review = DanhGiaSanPham.builder()
                 .hoaDon(hoaDon)

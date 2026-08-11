@@ -1,160 +1,354 @@
 <script setup>
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import CustomerChat from '@/components/shared/CustomerChat.vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 
+import { dichVuGioiThieu } from '@/services/public/dichVuGioiThieu';
+
+const router = useRouter();
 const { setSeoMeta } = useSeoMeta();
+
+const activeTab = ref('story');
+const statsData = ref({
+    totalProducts: 500,
+    totalBrands: 12,
+    totalShowrooms: 50,
+    satisfactionRate: '99.8%'
+});
+
+const fetchStatsFromApi = async () => {
+    try {
+        const res = await dichVuGioiThieu.layThongKeGioiThieu();
+        if (res?.data) {
+            statsData.value = { ...statsData.value, ...res.data };
+        }
+    } catch (e) {
+        console.error('Lỗi lấy thống kê giới thiệu:', e);
+    }
+};
+
+const milestones = [
+    {
+        year: '2024',
+        title: 'Khởi Đầu Đam Mê',
+        desc: 'AeroStride chính thức ra mắt cửa hàng đầu tiên tại Hà Nội với tầm nhìn mang lại những đôi giày thể thao chính hãng chất lượng cao nhất.'
+    },
+    {
+        year: '2025',
+        title: 'Bứt Phá Quy Mô',
+        desc: 'Mở rộng 20 chi nhánh trên các tỉnh thành lớn, ra mắt hệ thống mua sắm trực tuyến thông minh và dịch vụ CSKH 24/7.'
+    },
+    {
+        year: '2026',
+        title: 'Tiên Phong Công Nghệ AI',
+        desc: 'Tích hợp công nghệ tư vấn AI thông minh, mở rộng mạng lưới 50+ chi nhánh toàn quốc và đạt mốc 1.000.000+ khách hàng tin tưởng.'
+    }
+];
+
+const coreValues = [
+    {
+        icon: 'mdi-shield-check-outline',
+        title: '100% Chính Hãng',
+        desc: 'Cam kết tất cả sản phẩm đều nhập khẩu trực tiếp từ các thương hiệu hàng đầu thế giới với chứng nhận nguồn gốc rõ ràng.'
+    },
+    {
+        icon: 'mdi-lightning-bolt-outline',
+        title: 'Giao Hàng Siêu Tốc',
+        desc: 'Hệ thống vận chuyển tối ưu giúp sản phẩm đến tay bạn trong thời gian ngắn nhất. Không để đam mê phải chờ đợi.'
+    },
+    {
+        icon: 'mdi-refresh-auto',
+        title: 'Đổi Trả 30 Ngày',
+        desc: 'Chính sách đổi trả linh hoạt và miễn phí trong vòng 30 ngày nếu không vừa size hoặc không ưng ý.'
+    },
+    {
+        icon: 'mdi-heart-pulse',
+        title: 'Đồng Hành Thể Thao',
+        desc: 'Không chỉ bán hàng, chúng tôi luôn tạo dựng cộng đồng kết nối những người yêu thích chạy bộ và vận động.'
+    }
+];
+
+const teamMembers = [
+    {
+        name: 'Hoàng Phương Nam',
+        role: 'Founder & CEO',
+        image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400',
+        quote: 'Mỗi đôi giày là một bước tiến đưa bạn vượt qua giới hạn của chính mình.'
+    },
+    {
+        name: 'Phí Thu Trang',
+        role: 'Co-Founder & Product Director',
+        image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400',
+        quote: 'Chúng tôi tỉ mỉ lựa chọn từng mẫu thiết kế đạt tiêu chuẩn êm ái và thẩm mỹ cao nhất.'
+    },
+    {
+        name: 'Lê Thị Thu Huyền',
+        role: 'Head of Customer Success',
+        image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400',
+        quote: 'Sự hài lòng tuyệt đối của khách hàng là thước đo giá trị lớn nhất của AeroStride.'
+    }
+];
+
+const goToProducts = () => {
+    router.push('/san-pham');
+};
+
+const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+    }
+};
 
 onMounted(() => {
     window.scrollTo(0, 0);
     setSeoMeta({
         title: 'Giới Thiệu | AeroStride',
-        description:
-            'Khám phá câu chuyện thương hiệu AeroStride, sứ mệnh và hành trình mang đến những đôi giày thể thao đẳng cấp nhất cho người Việt.'
+        description: 'Khám phá câu chuyện thương hiệu AeroStride, sứ mệnh và hành trình mang đến những đôi giày thể thao đẳng cấp nhất cho người Việt.'
     });
+    fetchStatsFromApi();
 });
 </script>
 
 <template>
-    <div class="app-container bg-white">
+    <div class="app-container bg-white font-body">
         <MainHeader />
 
         <main class="main-content">
-            <!-- Hero Section Enhanced -->
-            <section class="about-hero">
+            <!-- Hero Banner -->
+            <section class="about-hero position-relative">
                 <div class="hero-overlay"></div>
-                <!-- Decorative elements -->
-                <div class="floating-shape shape-1"></div>
-                <div class="floating-shape shape-2"></div>
-                <div class="floating-shape shape-3"></div>
-
-                <div class="hero-content text-center">
-                    <div class="hero-badge animate-up text-white">EST. 2024</div>
-                    <h1 class="hero-title font-weight-black mb-4 animate-up delay-1">
-                        BƯỚC CHÂN CỦA SỰ <span class="text-gradient">ĐAM MÊ</span>
+                <v-container class="position-relative z-index-2 text-center text-white py-16">
+                    <v-chip color="white" variant="outlined" size="small" class="font-weight-bold mb-4 tracking-wider">
+                        EST. 2024 &bull; AEROSTRIDE VIỆT NAM
+                    </v-chip>
+                    <h1 class="hero-title font-weight-black mb-4 animate-up">
+                        BƯỚC CHÂN CỦA SỰ <span class="text-gradient">ĐAM MÊ & SẮC MÀU</span>
                     </h1>
-                    <p class="hero-subtitle animate-up delay-2">Hành trình kiến tạo chuẩn mực giày thể thao mới tại Việt Nam.</p>
-                    <v-btn
-                        color="white"
-                        variant="outlined"
-                        size="x-large"
-                        rounded="pill"
-                        class="mt-8 animate-up delay-3 explore-btn"
-                        append-icon="mdi-arrow-down"
-                        @click="scrollToAbout"
-                    >
-                        KHÁM PHÁ CÂU CHUYỆN
-                    </v-btn>
-                </div>
-            </section>
-
-            <!-- Mission & Vision -->
-            <section id="about-content" class="py-16 position-relative overflow-hidden">
-                <div class="bg-pattern"></div>
-                <v-container>
-                    <v-row align="center" justify="center">
-                        <v-col cols="12" md="5" class="pr-md-10 z-index-1">
-                            <div class="subtitle-badge mb-4">VỀ CHÚNG TÔI</div>
-                            <h2 class="text-h3 font-weight-black mb-6 text-black">AeroStride là ai?</h2>
-                            <p class="text-body-1 text-grey-darken-2 mb-6 leading-relaxed">
-                                Được thành lập vào năm 2024, <strong class="text-black">AeroStride</strong> không chỉ là một thương hiệu bán
-                                lẻ giày thể thao, mà còn là nơi hội tụ của những tâm hồn đam mê dịch chuyển. Chúng tôi tin rằng mỗi bước đi
-                                đều mang một ý nghĩa riêng, và một đôi giày tốt sẽ là người bạn đồng hành hoàn hảo nhất.
-                            </p>
-                            <p class="text-body-1 text-grey-darken-2 leading-relaxed mb-6">
-                                Với cam kết <strong class="text-black">100% sản phẩm chính hãng</strong>, dịch vụ khách hàng vượt trội và
-                                không gian mua sắm hiện đại, AeroStride đang từng bước khẳng định vị thế dẫn đầu trong ngành bán lẻ đồ thể
-                                thao cao cấp.
-                            </p>
-
-                            <div class="d-flex align-center ga-4 mt-8">
-                                <div class="founder-avatar">
-                                    <v-img
-                                        src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=200"
-                                        cover
-                                    ></v-img>
-                                </div>
-                                <div>
-                                    <div class="font-weight-black text-black">Tấn Dũng</div>
-                                    <div class="text-caption text-grey-darken-1">Founder & CEO</div>
-                                </div>
-                            </div>
-                        </v-col>
-                        <v-col cols="12" md="7" class="mt-8 mt-md-0 z-index-1">
-                            <div class="image-grid">
-                                <div class="img-wrapper img-1 hover-scale">
-                                    <v-img
-                                        src="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&q=80&w=800"
-                                        cover
-                                        height="100%"
-                                    ></v-img>
-                                </div>
-                                <div class="img-wrapper img-2 hover-scale">
-                                    <v-img
-                                        src="https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&q=80&w=800"
-                                        cover
-                                        height="100%"
-                                    ></v-img>
-                                </div>
-                                <div class="img-wrapper img-3 hover-scale">
-                                    <v-img
-                                        src="https://images.unsplash.com/photo-1514989940723-e8e51635b782?auto=format&fit=crop&q=80&w=800"
-                                        cover
-                                        height="100%"
-                                    ></v-img>
-                                </div>
-                            </div>
-                        </v-col>
-                    </v-row>
+                    <p class="hero-subtitle mb-8 text-grey-lighten-2 max-w-700 mx-auto">
+                        Hành trình mang lại chuẩn mực mua sắm giày thể thao chính hãng đỉnh cao, hiện đại và tràn đầy cảm hứng cho người Việt.
+                    </p>
+                    <div class="d-flex justify-center flex-wrap ga-4">
+                        <v-btn
+                            color="primary"
+                            size="x-large"
+                            rounded="pill"
+                            class="font-weight-bold px-8 shadow-blue"
+                            prepend-icon="mdi-arrow-down"
+                            @click="scrollToSection('story-section')"
+                        >
+                            Khám Phá Câu Chuyện
+                        </v-btn>
+                        <v-btn
+                            color="white"
+                            variant="outlined"
+                            size="x-large"
+                            rounded="pill"
+                            class="font-weight-bold px-8 text-white"
+                            append-icon="mdi-shopping-outline"
+                            @click="goToProducts"
+                        >
+                            Xem Sản Phẩm
+                        </v-btn>
+                    </div>
                 </v-container>
             </section>
 
-            <!-- Core Values (New Section) -->
-            <section class="core-values py-16 bg-black text-white">
+            <!-- Quick Navigation Tabs -->
+            <section id="story-section" class="py-8 bg-grey-lighten-5 border-b">
                 <v-container>
-                    <div class="text-center mb-12">
-                        <div class="subtitle-badge dark mb-4 mx-auto">GIÁ TRỊ CỐT LÕI</div>
-                        <h2 class="text-h3 font-weight-black text-white">Điều Chúng Tôi Theo Đuổi</h2>
+                    <div class="d-flex justify-center flex-wrap ga-3">
+                        <v-btn
+                            :variant="activeTab === 'story' ? 'flat' : 'text'"
+                            :color="activeTab === 'story' ? 'primary' : 'grey-darken-1'"
+                            rounded="pill"
+                            class="font-weight-bold px-6"
+                            @click="activeTab = 'story'"
+                        >
+                            <v-icon class="mr-2">mdi-book-open-variant</v-icon>
+                            Câu Chuyện Thương Hiệu
+                        </v-btn>
+                        <v-btn
+                            :variant="activeTab === 'values' ? 'flat' : 'text'"
+                            :color="activeTab === 'values' ? 'primary' : 'grey-darken-1'"
+                            rounded="pill"
+                            class="font-weight-bold px-6"
+                            @click="activeTab = 'values'"
+                        >
+                            <v-icon class="mr-2">mdi-star-outline</v-icon>
+                            Giá Trị Cốt Lõi
+                        </v-btn>
+                        <v-btn
+                            :variant="activeTab === 'timeline' ? 'flat' : 'text'"
+                            :color="activeTab === 'timeline' ? 'primary' : 'grey-darken-1'"
+                            rounded="pill"
+                            class="font-weight-bold px-6"
+                            @click="activeTab = 'timeline'"
+                        >
+                            <v-icon class="mr-2">mdi-timeline-text-outline</v-icon>
+                            Hành Trình Phát Triển
+                        </v-btn>
+                        <v-btn
+                            :variant="activeTab === 'team' ? 'flat' : 'text'"
+                            :color="activeTab === 'team' ? 'primary' : 'grey-darken-1'"
+                            rounded="pill"
+                            class="font-weight-bold px-6"
+                            @click="activeTab = 'team'"
+                        >
+                            <v-icon class="mr-2">mdi-account-group-outline</v-icon>
+                            Đội Ngũ Sáng Lập
+                        </v-btn>
+                    </div>
+                </v-container>
+            </section>
+
+            <!-- Dynamic Tab Contents -->
+            <section class="py-16">
+                <v-container>
+                    <!-- Tab 1: Story -->
+                    <div v-if="activeTab === 'story'" class="animate-fade-in">
+                        <v-row align="center">
+                            <v-col cols="12" md="6" class="pr-md-8">
+                                <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold mb-3">VỀ AEROSTRIDE</v-chip>
+                                <h2 class="text-h3 font-weight-black text-slate-900 mb-6">Chúng Tôi Là Ai?</h2>
+                                <p class="text-body-1 text-slate-700 leading-relaxed mb-4">
+                                    Được khởi nguồn vào năm 2024, <strong>AeroStride</strong> sinh ra từ tình yêu mãnh liệt với các bộ môn thể thao và văn hóa Sneakers năng động. Chúng tôi đặt mục tiêu xóa bỏ mọi lo lắng về hàng giả, mang đến không gian mua sắm đáng tin cậy 100%.
+                                </p>
+                                <p class="text-body-1 text-slate-700 leading-relaxed mb-6">
+                                    Mỗi đôi giày tại AeroStride không chỉ sở hữu thiết kế thời thượng mà còn được ứng dụng những công nghệ đệm tối tân giúp từng bước chạy trở nên nhẹ nhàng, bứt phá giới hạn.
+                                </p>
+                                <v-alert border="start" border-color="primary" class="bg-blue-lighten-5 text-slate-800 rounded-lg">
+                                    <template #title>
+                                        <div class="font-weight-bold text-primary">Sứ mệnh cốt lõi</div>
+                                    </template>
+                                    "Truyền cảm hứng và cung cấp trang thiết bị chạy bộ chính hãng tốt nhất để mọi người tự tin chinh phục mọi ước mơ."
+                                </v-alert>
+                            </v-col>
+                            <v-col cols="12" md="6" class="mt-6 mt-md-0">
+                                <v-row dense>
+                                    <v-col cols="6">
+                                        <v-img src="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&q=80&w=600" height="260" cover class="rounded-xl shadow-sm mb-4"></v-img>
+                                        <v-img src="https://images.unsplash.com/photo-1514989940723-e8e51635b782?auto=format&fit=crop&q=80&w=600" height="180" cover class="rounded-xl shadow-sm"></v-img>
+                                    </v-col>
+                                    <v-col cols="6">
+                                        <v-img src="https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&q=80&w=600" height="455" cover class="rounded-xl shadow-md"></v-img>
+                                    </v-col>
+                                </v-row>
+                            </v-col>
+                        </v-row>
                     </div>
 
-                    <v-row>
-                        <v-col cols="12" md="4" v-for="(value, i) in coreValues" :key="i">
-                            <div class="value-card hover-lift">
-                                <div class="icon-wrap mb-6">
-                                    <v-icon :icon="value.icon" size="40" color="white"></v-icon>
-                                </div>
-                                <h3 class="text-h5 font-weight-bold mb-3 text-white">{{ value.title }}</h3>
-                                <p class="text-grey-lighten-1 leading-relaxed">{{ value.desc }}</p>
-                            </div>
+                    <!-- Tab 2: Values -->
+                    <div v-else-if="activeTab === 'values'" class="animate-fade-in">
+                        <div class="text-center max-w-700 mx-auto mb-12">
+                            <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold mb-3">TIÊU CHUẨN DỊCH VỤ</v-chip>
+                            <h2 class="text-h3 font-weight-black text-slate-900 mb-3">Giá Trị Cốt Lõi</h2>
+                            <p class="text-slate-600">Những cam kết khẳng định đẳng cấp thương hiệu AeroStride</p>
+                        </div>
+                        <v-row>
+                            <v-col cols="12" sm="6" md="3" v-for="(val, i) in coreValues" :key="i">
+                                <v-card class="h-100 pa-6 rounded-xl border hover-lift text-center">
+                                    <div class="icon-wrap mx-auto mb-4 bg-primary-lighten">
+                                        <v-icon :icon="val.icon" size="36" color="primary"></v-icon>
+                                    </div>
+                                    <h3 class="text-h6 font-weight-bold text-slate-900 mb-3">{{ val.title }}</h3>
+                                    <p class="text-body-2 text-slate-600 leading-relaxed">{{ val.desc }}</p>
+                                </v-card>
+                            </v-col>
+                        </v-row>
+                    </div>
+
+                    <!-- Tab 3: Timeline -->
+                    <div v-else-if="activeTab === 'timeline'" class="animate-fade-in">
+                        <div class="text-center max-w-700 mx-auto mb-12">
+                            <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold mb-3">LỊCH SỬ</v-chip>
+                            <h2 class="text-h3 font-weight-black text-slate-900 mb-3">Hành Trình Phát Triển</h2>
+                        </div>
+                        <v-row justify="center">
+                            <v-col cols="12" md="10">
+                                <v-timeline align="start" dot-color="primary">
+                                    <v-timeline-item
+                                        v-for="(item, idx) in milestones"
+                                        :key="idx"
+                                        size="large"
+                                    >
+                                        <template #icon>
+                                            <div class="font-weight-black text-white text-caption">{{ item.year }}</div>
+                                        </template>
+                                        <v-card class="pa-6 rounded-xl elevation-2 border">
+                                            <div class="text-h6 font-weight-bold text-primary mb-2">{{ item.title }}</div>
+                                            <p class="text-slate-700 text-body-1 leading-relaxed mb-0">{{ item.desc }}</p>
+                                        </v-card>
+                                    </v-timeline-item>
+                                </v-timeline>
+                            </v-col>
+                        </v-row>
+                    </div>
+
+                    <!-- Tab 4: Team -->
+                    <div v-else-if="activeTab === 'team'" class="animate-fade-in">
+                        <div class="text-center max-w-700 mx-auto mb-12">
+                            <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold mb-3">CON NGƯỜI</v-chip>
+                            <h2 class="text-h3 font-weight-black text-slate-900 mb-3">Đội Ngũ Ban Lãnh Đạo</h2>
+                            <p class="text-slate-600">Những người kiến tạo nên hành trình tuyệt vời của AeroStride</p>
+                        </div>
+                        <v-row>
+                            <v-col cols="12" md="4" v-for="(member, idx) in teamMembers" :key="idx">
+                                <v-card class="h-100 rounded-xl overflow-hidden elevation-3 border">
+                                    <v-img :src="member.image" height="280" cover></v-img>
+                                    <v-card-text class="pa-6">
+                                        <h3 class="text-h6 font-weight-bold text-slate-900 mb-1">{{ member.name }}</h3>
+                                        <div class="text-caption font-weight-bold text-primary mb-4">{{ member.role }}</div>
+                                        <p class="text-body-2 text-slate-600 italic">"{{ member.quote }}"</p>
+                                    </v-card-text>
+                                </v-card>
+                            </v-col>
+                        </v-row>
+                    </div>
+                </v-container>
+            </section>
+
+            <!-- Animated Stats Bar -->
+            <section class="py-16 bg-slate-900 text-white">
+                <v-container>
+                    <v-row class="text-center">
+                        <v-col cols="12" sm="3">
+                            <div class="stat-num text-gradient-blue font-weight-black">{{ statsData.totalProducts }}+</div>
+                            <div class="stat-txt text-grey-lighten-1 font-weight-medium">Mẫu Giày Kinh Doanh</div>
+                        </v-col>
+                        <v-col cols="12" sm="3">
+                            <div class="stat-num text-gradient-blue font-weight-black">{{ statsData.totalBrands }}+</div>
+                            <div class="stat-txt text-grey-lighten-1 font-weight-medium">Thương Hiệu Đối Tác</div>
+                        </v-col>
+                        <v-col cols="12" sm="3">
+                            <div class="stat-num text-gradient-blue font-weight-black">{{ statsData.totalShowrooms }}+</div>
+                            <div class="stat-txt text-grey-lighten-1 font-weight-medium">Chi Nhánh Showroom</div>
+                        </v-col>
+                        <v-col cols="12" sm="3">
+                            <div class="stat-num text-gradient-blue font-weight-black">{{ statsData.satisfactionRate }}</div>
+                            <div class="stat-txt text-grey-lighten-1 font-weight-medium">Mức Độ Hài Lòng</div>
                         </v-col>
                     </v-row>
                 </v-container>
             </section>
 
-            <!-- Stats -->
-            <section class="stats-section py-16 position-relative">
-                <v-container>
-                    <v-row class="text-center">
-                        <v-col cols="12" sm="4">
-                            <div class="stat-card">
-                                <div class="stat-number">50+</div>
-                                <div class="stat-label">Chi Nhánh Toàn Quốc</div>
-                            </div>
-                        </v-col>
-                        <v-col cols="12" sm="4">
-                            <div class="stat-card">
-                                <div class="stat-number">1M+</div>
-                                <div class="stat-label">Khách Hàng Tin Tưởng</div>
-                            </div>
-                        </v-col>
-                        <v-col cols="12" sm="4">
-                            <div class="stat-card">
-                                <div class="stat-number">100%</div>
-                                <div class="stat-label">Sản Phẩm Chính Hãng</div>
-                            </div>
-                        </v-col>
-                    </v-row>
+            <!-- Bottom CTA -->
+            <section class="py-16 bg-blue-lighten-5 text-center">
+                <v-container class="max-w-700">
+                    <h2 class="text-h4 font-weight-black text-slate-900 mb-4">Sẵn Sàng Trải Nghiệm Cùng AeroStride?</h2>
+                    <p class="text-body-1 text-slate-600 mb-8">Khám phá hàng ngàn mẫu giày thể thao đỉnh cao đến từ Nike, Adidas, Puma, Mizuno ngay hôm nay!</p>
+                    <v-btn
+                        color="primary"
+                        size="x-large"
+                        rounded="pill"
+                        class="font-weight-bold px-10 elevation-4"
+                        @click="goToProducts"
+                    >
+                        MUA SẮM NGAY
+                    </v-btn>
                 </v-container>
             </section>
         </main>
@@ -163,386 +357,80 @@ onMounted(() => {
             <LogoClient class="mb-4 d-inline-block" style="max-width: 150px" />
             <p>&copy; 2026 AeroStride All rights reserved.</p>
         </footer>
+
+        <CustomerChat />
     </div>
 </template>
 
-<script>
-export default {
-    data() {
-        return {
-            coreValues: [
-                {
-                    icon: 'mdi-shield-check-outline',
-                    title: 'Chất Lượng',
-                    desc: 'Chỉ cung cấp những sản phẩm chính hãng với chất lượng kiểm định khắt khe nhất.'
-                },
-                {
-                    icon: 'mdi-lightning-bolt-outline',
-                    title: 'Tốc Độ',
-                    desc: 'Giao hàng nhanh chóng, hỗ trợ tức thì. Chúng tôi không để niềm đam mê của bạn phải chờ đợi.'
-                },
-                {
-                    icon: 'mdi-heart-outline',
-                    title: 'Tận Tâm',
-                    desc: 'Dịch vụ chăm sóc khách hàng 24/7, luôn đặt sự hài lòng của bạn lên hàng đầu.'
-                }
-            ]
-        };
-    },
-    methods: {
-        scrollToAbout() {
-            document.getElementById('about-content').scrollIntoView({ behavior: 'smooth' });
-        }
-    }
-};
-</script>
-
-<style scoped>
-/* Force text colors to override Vuetify defaults */
-.text-white {
-    color: #ffffff !important;
-}
-
-.text-black {
-    color: #000000 !important;
-}
-
+<style scoped lang="scss">
 .main-content {
     padding-top: 60px;
-    /* Offset for header */
 }
 
-/* Hero Section */
 .about-hero {
-    position: relative;
-    height: 75vh;
-    min-height: 500px;
-    background-image: url('https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=2000');
+    min-height: 480px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
     background-size: cover;
     background-position: center;
-    background-attachment: fixed;
     display: flex;
     align-items: center;
-    justify-content: center;
-    overflow: hidden;
 }
 
 .hero-overlay {
     position: absolute;
     inset: 0;
-    /* Stronger, darker gradient to guarantee white text contrast */
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(10, 10, 30, 0.85) 100%);
-}
-
-.hero-content {
-    position: relative;
-    z-index: 10;
-    max-width: 900px;
-    padding: 0 20px;
+    background: radial-gradient(circle at 30% 50%, rgba(37, 99, 235, 0.25) 0%, transparent 60%);
 }
 
 .hero-title {
-    font-size: clamp(2.5rem, 5vw, 4.5rem);
-    line-height: 1.1;
-    color: #ffffff !important;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-.hero-subtitle {
-    font-size: clamp(1.1rem, 2vw, 1.5rem);
-    color: rgba(255, 255, 255, 0.9) !important;
-    font-weight: 300;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    font-size: clamp(2.2rem, 4vw, 3.8rem);
+    line-height: 1.15;
 }
 
 .text-gradient {
-    background: linear-gradient(90deg, #ff416c, #ff4b2b);
+    background: linear-gradient(90deg, #60a5fa, #3b82f6, #93c5fd);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
-.hero-badge {
-    display: inline-block;
-    padding: 6px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 100px;
-    font-size: 0.85rem;
-    letter-spacing: 3px;
-    margin-bottom: 24px;
-    backdrop-filter: blur(4px);
-    background: rgba(0, 0, 0, 0.2);
+.text-gradient-blue {
+    background: linear-gradient(90deg, #38bdf8, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
-.explore-btn {
-    transition: all 0.3s ease;
-    border-width: 2px;
+.stat-num {
+    font-size: 3rem;
+    line-height: 1;
+    margin-bottom: 8px;
 }
 
-.explore-btn:hover {
-    background: #fff;
-    color: #000 !important;
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
-}
-
-/* Floating Shapes */
-.floating-shape {
-    position: absolute;
-    border-radius: 50%;
-    background: linear-gradient(45deg, rgba(41, 98, 255, 0.2), rgba(255, 65, 108, 0.2));
-    filter: blur(40px);
-    z-index: 1;
-    animation: float 10s infinite alternate ease-in-out;
-}
-
-.shape-1 {
-    width: 300px;
-    height: 300px;
-    top: -100px;
-    left: -100px;
-}
-
-.shape-2 {
-    width: 400px;
-    height: 400px;
-    bottom: -150px;
-    right: -100px;
-    animation-delay: -5s;
-}
-
-.shape-3 {
-    width: 200px;
-    height: 200px;
-    top: 30%;
-    left: 60%;
-    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), transparent);
-    animation-duration: 15s;
-}
-
-@keyframes float {
-    0% {
-        transform: translate(0, 0) rotate(0deg);
-    }
-
-    100% {
-        transform: translate(50px, 30px) rotate(20deg);
-    }
-}
-
-/* Content Elements */
-.subtitle-badge {
-    display: inline-block;
-    padding: 6px 14px;
-    background: rgba(41, 98, 255, 0.1);
-    color: #2962ff;
-    font-weight: 800;
-    letter-spacing: 2px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-
-    &.dark {
-        background: rgba(255, 255, 255, 0.1);
-        color: #fff;
-    }
-}
-
-.leading-relaxed {
-    line-height: 1.8;
-}
-
-.uppercase {
-    text-transform: uppercase;
-}
-
-.tracking-wide {
-    letter-spacing: 2px;
-}
-
-/* Image Grid */
-.image-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 200px);
-    gap: 16px;
-}
-
-.img-wrapper {
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.img-1 {
-    grid-column: 1 / 2;
-    grid-row: 1 / 3;
-}
-
-.img-2 {
-    grid-column: 2 / 3;
-    grid-row: 1 / 2;
-}
-
-.img-3 {
-    grid-column: 2 / 3;
-    grid-row: 2 / 3;
-}
-
-.hover-scale {
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.hover-scale:hover {
-    transform: scale(1.03);
-}
-
-.hover-scale .v-img {
-    transition: transform 0.8s ease;
-}
-
-.hover-scale:hover .v-img {
-    transform: scale(1.1);
-}
-
-/* Core Values */
-.core-values {
-    background-color: #0f172a !important;
-    /* Elegant slate-900 dark background */
-}
-
-.value-card {
-    padding: 40px 30px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 20px;
-    height: 100%;
-    transition: all 0.4s ease;
-}
-
-.value-card .icon-wrap {
-    width: 80px;
-    height: 80px;
-    background: rgba(255, 255, 255, 0.1);
+.icon-wrap {
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 24px;
-    transition: all 0.4s ease;
 }
 
-.hover-lift:hover {
-    transform: translateY(-10px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
+.bg-primary-lighten {
+    background: #eff6ff;
 }
 
-.hover-lift:hover .icon-wrap {
-    background: #fff;
-}
-
-.hover-lift:hover .icon-wrap i {
-    color: #000 !important;
-}
-
-/* Stats */
-.stats-section {
-    background-color: #f8fafc !important;
-    /* Soft light slate background */
-}
-
-.stat-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 24px;
-    padding: 40px 32px;
-    height: 100%;
-    box-shadow:
-        0 10px 25px -5px rgba(30, 37, 124, 0.04),
-        0 8px 10px -6px rgba(30, 37, 124, 0.04);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #1e257c, #2563eb);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     &:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 40px -15px rgba(30, 37, 124, 0.12);
-        border-color: rgba(30, 37, 124, 0.15);
-
-        &::before {
-            opacity: 1;
-        }
-
-        .stat-number {
-            background: linear-gradient(135deg, #1e257c 0%, #2563eb 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        transform: translateY(-6px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
     }
 }
 
-.stat-number {
-    font-size: 3.5rem;
-    line-height: 1;
-    font-weight: 900;
-    background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    transition: all 0.4s ease;
+.shadow-blue {
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3) !important;
 }
 
-.stat-label {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #475569;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-top: 12px;
-}
-
-/* Founder */
-.founder-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 2px solid #2962ff;
-}
-
-/* Animations */
-.animate-up {
-    animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    opacity: 0;
-    transform: translateY(40px);
-}
-
-.delay-1 {
-    animation-delay: 0.2s;
-}
-
-.delay-2 {
-    animation-delay: 0.4s;
-}
-
-.delay-3 {
-    animation-delay: 0.6s;
-}
-
-@keyframes fadeInUp {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.max-w-700 {
+    max-width: 700px;
 }
 </style>

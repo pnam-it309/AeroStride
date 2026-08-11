@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import CustomerChat from '@/components/shared/CustomerChat.vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 import { formatCurrency } from '@/utils/formatters';
@@ -258,19 +259,83 @@ onMounted(() => {
 
                                 <v-btn
                                     variant="text"
-                                    color="error"
-                                    class="text-none font-weight-bold px-5 py-2 rounded-lg"
-                                    :disabled="loading"
+                                    color="grey-darken-1"
+                                    class="text-none font-weight-bold"
                                     @click="
                                         resetQuiz();
                                         fetchNextQuestion();
                                     "
                                 >
                                     <v-icon start class="mr-1">mdi-refresh</v-icon>
-                                    Làm mới khảo sát
+                                    Làm lại từ đầu
                                 </v-btn>
                             </v-card-actions>
                         </v-card>
+
+                        <!-- Live Real-time Recommendations List Below Quiz Card -->
+                        <div v-if="currentQuestion && recommendedProducts && recommendedProducts.length > 0" class="mt-10 animate-fade-in">
+                            <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-2 border-b pb-3">
+                                <div class="d-flex align-center">
+                                    <v-icon color="primary" size="24" class="mr-2">mdi-sparkles</v-icon>
+                                    <h3 class="text-h6 font-weight-black text-slate-800">
+                                        GỢI Ý SẢN PHẨM PHÙ HỢP THỜI GIAN THỰC
+                                    </h3>
+                                </div>
+                                <v-chip color="success" variant="tonal" class="font-weight-bold size-small px-3">
+                                    {{ recommendedProducts.length }} Sản phẩm khớp lựa chọn
+                                </v-chip>
+                            </div>
+
+                            <v-row dense>
+                                <v-col v-for="prod in recommendedProducts" :key="prod.id" cols="12" sm="6" md="4" class="pa-2">
+                                    <v-card
+                                        class="result-product-card h-100 d-flex flex-column elevation-2 hover-lift border bg-white rounded-xl overflow-hidden cursor-pointer"
+                                        @click="viewProductDetail(prod.id)"
+                                    >
+                                        <div class="product-img-wrapper position-relative">
+                                            <v-img
+                                                :src="prod.hinhAnh || '/assets/images/products/s4.jpg'"
+                                                height="180"
+                                                cover
+                                                class="product-img"
+                                            >
+                                                <template #placeholder>
+                                                    <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
+                                                        <v-progress-circular indeterminate color="grey" size="24"></v-progress-circular>
+                                                    </div>
+                                                </template>
+                                            </v-img>
+                                            <v-chip
+                                                color="primary"
+                                                size="x-small"
+                                                class="brand-badge position-absolute font-weight-bold"
+                                                style="top: 10px; left: 10px"
+                                            >
+                                                {{ prod.tenThuongHieu || 'AeroStride' }}
+                                            </v-chip>
+                                        </div>
+                                        <div class="pa-4 d-flex flex-column justify-space-between flex-grow-1">
+                                            <div>
+                                                <h4 class="font-weight-bold text-subtitle-2 text-slate-800 text-truncate" :title="prod.tenSanPham">
+                                                    {{ prod.tenSanPham }}
+                                                </h4>
+                                                <div class="text-caption text-slate-500 mt-1">
+                                                    {{ prod.tenMucDichChay || 'Giày thể thao' }} &bull; {{ prod.tenChatLieu || 'Thoáng khí' }}
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-center justify-space-between mt-3 pt-2 border-t">
+                                                <div class="price-text font-weight-black text-primary text-body-1">
+                                                    {{ formatCurrency(prod.giaBanMin || prod.giaBan) }}
+                                                </div>
+                                                <v-btn color="primary" variant="flat" size="small" class="text-none font-weight-bold px-3 rounded-lg">
+                                                    Xem ngay
+                                                </v-btn>
+                                            </div>
+                                        </div>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
+                        </div>
                     </v-col>
                 </v-row>
             </v-container>
@@ -345,6 +410,8 @@ onMounted(() => {
             <LogoClient class="mb-4 d-inline-block" style="max-width: 150px" />
             <p>&copy; 2026 AeroStride All rights reserved.</p>
         </footer>
+
+        <CustomerChat />
     </div>
 </template>
 

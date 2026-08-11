@@ -17,8 +17,9 @@ import { useAdminTable } from '@/composables/useAdminTable';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useRefreshHandler } from '@/composables/useRefreshHandler';
 
+import { useAuthStore } from '@/stores/authStore';
 import { GIOI_TINH_FILTER_OPTIONS } from '@/constants/appConstants';
-import { TRANG_THAI_FILTER_OPTIONS } from '@/constants/nhanVienConstants';
+import { TRANG_THAI_FILTER_OPTIONS, NHAN_VIEN_MESSAGES } from '@/constants/nhanVienConstants';
 
 const {
     items: employees,
@@ -90,7 +91,65 @@ const handleExport = async () => {
     }
 };
 
+const authStore = useAuthStore();
+const currentUserInfo = ref(null);
+
+const fetchCurrentUser = async () => {
+    try {
+        const info = await dichVuNhanVien.layThongTinCaNhan();
+        currentUserInfo.value = info;
+    } catch (e) {
+        console.error('Error fetching current user info:', e);
+    }
+};
+
+const isSelf = (item) => {
+    if (!item) return false;
+    if (currentUserInfo.value?.id && item.id === currentUserInfo.value.id) return true;
+    if (currentUserInfo.value?.tenTaiKhoan && item.tenTaiKhoan === currentUserInfo.value.tenTaiKhoan) return true;
+    if (authStore.user?.username && (item.tenTaiKhoan === authStore.user.username || item.email === authStore.user.username)) return true;
+    return false;
+};
+
+const isAdminEmployee = (item) => {
+    if (!item) return false;
+    const ma = item.maPhanQuyen ? String(item.maPhanQuyen).toUpperCase() : '';
+    const ten = item.tenPhanQuyen ? String(item.tenPhanQuyen).toUpperCase() : '';
+    const quyen = item.quyenHan ? String(item.quyenHan).toUpperCase() : '';
+    return ma === 'ADMIN' || ma === 'QUAN_TRI_VIEN' || quyen === 'FULL_ACCESS' || ten.includes('ADMIN') || ten.includes('QUẢN TRỊ');
+};
+
+const canChangeStatus = (item) => {
+    if (isSelf(item)) return false;
+    if (isAdminEmployee(item)) return false;
+    return true;
+};
+
+const getStatusTooltipText = (item) => {
+    if (isSelf(item)) return NHAN_VIEN_MESSAGES.CANNOT_CHANGE_OWN_STATUS;
+    if (isAdminEmployee(item)) return NHAN_VIEN_MESSAGES.CANNOT_CHANGE_OTHER_ADMIN_STATUS;
+    return 'Chuyển đổi trạng thái';
+};
+
 const confirmChangeStatus = (item) => {
+    if (isSelf(item)) {
+        addNotification({
+            title: 'Cảnh báo',
+            subtitle: NHAN_VIEN_MESSAGES.CANNOT_CHANGE_OWN_STATUS,
+            color: 'warning'
+        });
+        return;
+    }
+
+    if (isAdminEmployee(item)) {
+        addNotification({
+            title: 'Cảnh báo',
+            subtitle: NHAN_VIEN_MESSAGES.CANNOT_CHANGE_OTHER_ADMIN_STATUS,
+            color: 'warning'
+        });
+        return;
+    }
+
     setConfirm({
         title: 'Thay đổi trạng thái',
         message: `Bạn có chắc muốn đổi trạng thái của nhân viên [${item.ten}]?`,
@@ -102,9 +161,10 @@ const confirmChangeStatus = (item) => {
                 item.trangThai = newS;
             } catch (e) {
                 console.error('Status change error:', e);
+                const errMsg = e.response?.data?.message || 'Không thể thay đổi trạng thái nhân viên';
                 addNotification({
                     title: 'Lỗi',
-                    subtitle: 'Không thể thay đổi trạng thái nhân viên',
+                    subtitle: errMsg,
                     color: 'error'
                 });
             }
@@ -155,6 +215,7 @@ const updatePaginationSize = (size) => {
 };
 
 onMounted(() => {
+    fetchCurrentUser();
     loadEmployees();
 });
 </script>
@@ -283,9 +344,10 @@ onMounted(() => {
                                     hide-details
                                     density="compact"
                                     class="tight-switch action-switch"
+                                    :disabled="!canChangeStatus(item)"
                                     @click.prevent.stop="confirmChangeStatus(item)"
                                 />
-                                <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
+                                <v-tooltip activator="parent" location="top">{{ getStatusTooltipText(item) }}</v-tooltip>
                             </div>
                         </div>
                     </td>

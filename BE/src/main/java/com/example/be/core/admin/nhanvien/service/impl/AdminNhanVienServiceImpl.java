@@ -6,9 +6,12 @@ import com.example.be.core.admin.nhanvien.repository.AdminNhanVienRepository;
 import com.example.be.core.admin.nhanvien.service.AdminNhanVienService;
 import com.example.be.core.notification.EmailService;
 import com.example.be.entity.NhanVien;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.TrangThai;
+import com.example.be.infrastructure.constants.VaiTro;
 import com.example.be.infrastructure.exceptions.DuplicateResourceException;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
+import com.example.be.infrastructure.exceptions.ValidationException;
 import com.example.be.repository.PhanQuyenRepository;
 import com.example.be.core.storage.StorageService;
 import com.example.be.utils.AccountUtils;
@@ -214,6 +217,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     public void doiTrangThai(String id, TrangThai trangThai) {
         NhanVien nv = adminNhanVienRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với id: " + id));
+        validateStatusChangePermission(nv);
         nv.setTrangThai(trangThai);
         adminNhanVienRepository.saveAndFlush(nv);
     }
@@ -224,8 +228,40 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     public void delete(String id) {
         NhanVien nv = adminNhanVienRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với id: " + id));
+        validateStatusChangePermission(nv);
         nv.setTrangThai(TrangThai.NGUNG_HOAT_DONG);
         adminNhanVienRepository.save(nv);
+    }
+
+    private void validateStatusChangePermission(NhanVien targetNv) {
+        String currentUsername = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication().getName();
+
+        boolean isSelf = (targetNv.getTenTaiKhoan() != null && targetNv.getTenTaiKhoan().equalsIgnoreCase(currentUsername))
+                || (targetNv.getEmail() != null && targetNv.getEmail().equalsIgnoreCase(currentUsername))
+                || (targetNv.getMa() != null && targetNv.getMa().equalsIgnoreCase(currentUsername));
+
+        if (isSelf) {
+            throw new ValidationException(MessageConstants.CANNOT_CHANGE_OWN_STATUS);
+        }
+
+        if (isRoleAdmin(targetNv)) {
+            throw new ValidationException(MessageConstants.CANNOT_CHANGE_OTHER_ADMIN_STATUS);
+        }
+    }
+
+    private boolean isRoleAdmin(NhanVien nv) {
+        if (nv == null || nv.getPhanQuyen() == null) {
+            return false;
+        }
+        String ma = nv.getPhanQuyen().getMa();
+        String quyenHan = nv.getPhanQuyen().getQuyenHan();
+        String ten = nv.getPhanQuyen().getTen();
+        return "ADMIN".equalsIgnoreCase(ma)
+                || "QUAN_TRI_VIEN".equalsIgnoreCase(ma)
+                || VaiTro.ADMIN.equalsIgnoreCase(ma)
+                || "FULL_ACCESS".equalsIgnoreCase(quyenHan)
+                || (ten != null && ten.toLowerCase().contains("quản trị"));
     }
 
     // ── EXPORT EXCEL ──────────────────────────────────────────────────────

@@ -28,6 +28,7 @@ import com.example.be.utils.CodeUtils;
 import com.example.be.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.cache.annotation.CacheEvict;
@@ -593,7 +594,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Transactional(readOnly = true)
     /** Tim bien the cho man ban hang, kem gia goc/gia sau giam/badge phan tram. */
     public List<BanHangSanPhamResponse> searchSanPham(String keyword, String thuongHieu, String chatLieu, String xuatXu, String mucDich, String mauSac, String kichCo, BigDecimal minGia, BigDecimal maxGia) {
-        List<ChiTietSanPham> variants = chiTietSanPhamRepository.searchForPOS(keyword, thuongHieu, chatLieu, xuatXu, mucDich, mauSac, kichCo, minGia, maxGia);
+        Pageable pageable = PageRequest.of(0, 50);
+        List<ChiTietSanPham> variants = chiTietSanPhamRepository.searchForPOS(keyword, thuongHieu, chatLieu, xuatXu, mucDich, mauSac, kichCo, minGia, maxGia, pageable);
         Map<String, List<ChiTietDotGiamGia>> discountMap = getDiscountRelationMap(variants);
 
         return variants

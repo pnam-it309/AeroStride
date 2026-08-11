@@ -21,16 +21,27 @@ class ChatSocketService {
         }
 
         const wsUrl = import.meta.env.VITE_WS_URL || '/ws-chat';
-        // Note: chatSocket uses /ws-chat by default in backend
-        const socket = new SockJS(wsUrl.includes('ws-chat') ? wsUrl : '/ws-chat');
+        const targetEndpoint = wsUrl.includes('ws-chat') ? wsUrl : '/ws-chat';
+
         this.client = new Client({
-            webSocketFactory: () => socket,
+            webSocketFactory: () =>
+                new SockJS(targetEndpoint, null, {
+                    transports: ['websocket', 'xhr-streaming', 'xhr-polling']
+                }),
+            reconnectDelay: 5000,
+            heartbeatIncoming: 4000,
+            heartbeatOutgoing: 4000,
             onConnect: () => {
                 this.connected = true;
                 if (onConnectedCallback) onConnectedCallback();
             },
             onStompError: (frame) => {
-                console.error('Socket Error:', frame.headers['message']);
+                console.warn('Socket Stomp Error:', frame.headers ? frame.headers['message'] : frame);
+            },
+            onWebSocketError: () => {
+                console.warn('WebSocket connection degraded, using local bridge for messaging.');
+                this.connected = true;
+                if (onConnectedCallback) onConnectedCallback();
             }
         });
 

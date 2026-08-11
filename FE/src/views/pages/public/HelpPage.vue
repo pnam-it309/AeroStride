@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import CustomerChat from '@/components/shared/CustomerChat.vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 
@@ -128,6 +129,8 @@ onMounted(() => {
             <LogoClient class="mb-4 d-inline-block" style="max-width: 150px" />
             <p>&copy; 2026 AeroStride All rights reserved.</p>
         </footer>
+
+        <CustomerChat />
     </div>
 </template>
 

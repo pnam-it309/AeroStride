@@ -53,10 +53,11 @@ const submitReview = async () => {
 
     isSubmitting.value = true;
     try {
+        const item = selectedItem.value || {};
         const payload = {
             idHoaDon: props.order?.id || null,
-            idSanPham: selectedItem.value?.idSanPham || selectedItem.value?.sanPhamId || selectedItem.value?.id || null,
-            idKhachHang: authStore.user?.id || props.order?.idKhachHang || null,
+            idSanPham: item.idSanPham || item.sanPhamId || item.idChiTietSanPham || item.chiTietSanPhamId || item.id || null,
+            idKhachHang: authStore.user?.id || props.order?.idKhachHang || props.order?.khachHang?.id || null,
             diemDanhGia: rating.value,
             noiDung: comment.value
         };

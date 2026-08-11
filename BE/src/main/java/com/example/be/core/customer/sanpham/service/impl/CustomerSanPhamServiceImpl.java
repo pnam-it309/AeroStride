@@ -360,6 +360,8 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
             answers = new HashMap<>();
         }
 
+        List<CustomerProductResponse> currentRecommended = calculateRecommendedProducts(answers);
+
         // Bước 1: Hỏi giới tính
         String gioiTinh = answers.get("gioiTinh");
         if (gioiTinh == null || gioiTinh.isBlank()) {
@@ -373,6 +375,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                                     new RecommendQuizOption("Unisex (Cả nam và nữ)", "UNISEX")
                             ))
                             .build())
+                    .recommendedProducts(currentRecommended)
                     .build();
         }
 
@@ -390,6 +393,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                             .questionText("Mục đích sử dụng chính của đôi giày này là gì?")
                             .options(purposeOptions)
                             .build())
+                    .recommendedProducts(currentRecommended)
                     .build();
         }
 
@@ -408,6 +412,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                             .questionText("Bạn yêu thích hoặc đang hướng tới thương hiệu nào?")
                             .options(brandOptions)
                             .build())
+                    .recommendedProducts(currentRecommended)
                     .build();
         }
 
@@ -434,6 +439,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                             .questionText("Kích cỡ giày của bạn là bao nhiêu (Size EU)?")
                             .options(sizeOptions)
                             .build())
+                    .recommendedProducts(currentRecommended)
                     .build();
         }
 
@@ -451,22 +457,45 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                                     new RecommendQuizOption("Bất kỳ mức giá nào", "ALL")
                             ))
                             .build())
+                    .recommendedProducts(currentRecommended)
                     .build();
         }
 
-        // Hoàn thành quiz -> Trả về danh sách sản phẩm gợi ý
+        return RecommendQuizResponse.builder()
+                .nextQuestion(null)
+                .recommendedProducts(currentRecommended)
+                .build();
+    }
+
+    private List<CustomerProductResponse> calculateRecommendedProducts(Map<String, String> answers) {
+        if (answers == null || answers.isEmpty()) {
+            CustomerSearchProductRequest defaultReq = new CustomerSearchProductRequest();
+            defaultReq.setPage(1);
+            defaultReq.setSize(12);
+            defaultReq.setTrangThai(TrangThai.DANG_HOAT_DONG);
+            return getProducts(defaultReq).getContent();
+        }
+
+        String gioiTinh = answers.get("gioiTinh");
+        String mucDichChay = answers.get("mucDichChay");
+        String thuongHieu = answers.get("thuongHieu");
+        String kichThuoc = answers.get("kichThuoc");
+        String khoangGia = answers.get("khoangGia");
+
         CustomerSearchProductRequest searchReq = new CustomerSearchProductRequest();
         searchReq.setPage(1);
         searchReq.setSize(100);
         searchReq.setTrangThai(TrangThai.DANG_HOAT_DONG);
 
-        if (!"UNISEX".equalsIgnoreCase(gioiTinh)) {
+        if (gioiTinh != null && !gioiTinh.isBlank() && !"UNISEX".equalsIgnoreCase(gioiTinh)) {
             searchReq.setGioiTinhKhachHang(gioiTinh);
         }
-        if (!"ALL".equalsIgnoreCase(thuongHieu)) {
+        if (thuongHieu != null && !thuongHieu.isBlank() && !"ALL".equalsIgnoreCase(thuongHieu)) {
             searchReq.setThuongHieuId(thuongHieu);
         }
-        searchReq.setMucDichChayId(mucDichChay);
+        if (mucDichChay != null && !mucDichChay.isBlank()) {
+            searchReq.setMucDichChayId(mucDichChay);
+        }
 
         PageResponse<CustomerProductResponse> baseProductsPage = getProducts(searchReq);
         List<CustomerProductResponse> baseProducts = baseProductsPage.getContent();
@@ -480,17 +509,16 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                         return false;
                     }
 
-                    boolean matchSize = variants.stream()
-                            .anyMatch(v -> v.getKichThuoc() != null 
-                                    && v.getKichThuoc().getId().equals(kichThuoc)
-                                    && TrangThai.DANG_HOAT_DONG.equals(v.getTrangThai())
-                                    && v.getSoLuong() > 0);
-
-                    if (!matchSize) {
-                        return false;
+                    if (kichThuoc != null && !kichThuoc.isBlank()) {
+                        boolean matchSize = variants.stream()
+                                .anyMatch(v -> v.getKichThuoc() != null 
+                                        && v.getKichThuoc().getId().equals(kichThuoc)
+                                        && TrangThai.DANG_HOAT_DONG.equals(v.getTrangThai())
+                                        && v.getSoLuong() > 0);
+                        if (!matchSize) return false;
                     }
 
-                    if ("ALL".equalsIgnoreCase(khoangGia)) {
+                    if (khoangGia == null || khoangGia.isBlank() || "ALL".equalsIgnoreCase(khoangGia)) {
                         return true;
                     }
 
@@ -512,9 +540,17 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 })
                 .collect(Collectors.toList());
 
-        return RecommendQuizResponse.builder()
-                .nextQuestion(null)
-                .recommendedProducts(recommended)
-                .build();
+        if (recommended.isEmpty()) {
+            recommended = baseProducts;
+        }
+        if (recommended.isEmpty()) {
+            CustomerSearchProductRequest fallbackReq = new CustomerSearchProductRequest();
+            fallbackReq.setPage(1);
+            fallbackReq.setSize(12);
+            fallbackReq.setTrangThai(TrangThai.DANG_HOAT_DONG);
+            recommended = getProducts(fallbackReq).getContent();
+        }
+
+        return recommended;
     }
 }

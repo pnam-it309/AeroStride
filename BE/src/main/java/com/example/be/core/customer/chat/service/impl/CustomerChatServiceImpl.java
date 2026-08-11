@@ -168,7 +168,7 @@ public class CustomerChatServiceImpl implements CustomerChatService {
 
         // AI Chatbot logic: Nếu khách hàng gửi tin và chưa có nhân viên tiếp nhận
         if (ChatConstants.SENDER_TYPE_CUSTOMER.equals(senderType) && 
-            Boolean.FALSE.equals(conversation.getDaChapNhan()) && 
+            !Boolean.TRUE.equals(conversation.getDaChapNhan()) && 
             (conversation.getLoaiHoiThoai() == null || conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER)) {
             log.info("Triggering AI response for conversation: {}", conversation.getId());
             aiChatService.generateAndSendResponse(conversation, text, imageBase64);

@@ -1,65 +1,96 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import CustomerChat from '@/components/shared/CustomerChat.vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 
+import { dichVuTinTuc } from '@/services/public/dichVuTinTuc';
+
 const { setSeoMeta } = useSeoMeta();
+const router = useRouter();
 
-// Mock data since BE doesn't have News entities yet
-const categories = ['Tất cả', 'Giới giày', 'Sự kiện', 'Khuyến mãi'];
+const searchKeyword = ref('');
 const activeCategory = ref('Tất cả');
+const categories = ['Tất cả', 'Giới giày', 'Sự kiện', 'Khuyến mãi', 'Bảo quản'];
 
-const newsList = [
-    {
-        id: 1,
-        title: 'Xu hướng giày thể thao 2026: Lên ngôi của các tông màu Retro',
-        category: 'Giới giày',
-        image: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&q=80&w=800',
-        date: '15 Thg 07, 2026',
-        excerpt: 'Năm 2026 chứng kiến sự trở lại mạnh mẽ của các thiết kế thập niên 90 với phối màu cổ điển.'
-    },
-    {
-        id: 2,
-        title: 'Khai trương chi nhánh thứ 50 của AeroStride tại Đà Nẵng',
-        category: 'Sự kiện',
-        image: 'https://images.unsplash.com/photo-1497215842964-222b430dc094?auto=format&fit=crop&q=80&w=800',
-        date: '02 Thg 07, 2026',
-        excerpt: 'Sự kiện đánh dấu mốc quan trọng trong quá trình phủ sóng toàn quốc của AeroStride.'
-    },
-    {
-        id: 3,
-        title: 'Black Friday Sớm: Giảm đến 50% toàn bộ giày chạy bộ',
-        category: 'Khuyến mãi',
-        image: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&q=80&w=800',
-        date: '28 Thg 06, 2026',
-        excerpt: 'Cơ hội duy nhất trong năm để sở hữu những siêu phẩm với giá cực hời.'
-    },
-    {
-        id: 4,
-        title: 'Đánh giá chi tiết Air Zoom Pegasus 40: Có đáng mua?',
-        category: 'Giới giày',
-        image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=800',
-        date: '20 Thg 06, 2026',
-        excerpt: 'Dòng giày chạy quốc dân thế hệ 40 đã ra mắt với nhiều cải tiến đáng giá ở phần upper.'
-    },
-    {
-        id: 5,
-        title: 'Cách bảo quản giày da bò đúng cách trong mùa mưa',
-        category: 'Giới giày',
-        image: 'https://images.unsplash.com/photo-1512374382149-233c42b6a83b?auto=format&fit=crop&q=80&w=800',
-        date: '10 Thg 06, 2026',
-        excerpt: 'Đừng để cơn mưa làm hỏng đôi giày đắt tiền của bạn. Dưới đây là bí kíp bảo quản.'
-    },
-    {
-        id: 6,
-        title: 'Sự kiện chạy bộ từ thiện cùng AeroStride Foundation',
-        category: 'Sự kiện',
-        image: 'https://images.unsplash.com/photo-1552674605-15c3705e970e?auto=format&fit=crop&q=80&w=800',
-        date: '05 Thg 06, 2026',
-        excerpt: 'Cùng chung tay vì một cộng đồng khỏe mạnh và gắn kết.'
+const selectedArticle = ref(null);
+const showDetailModal = ref(false);
+const isLoadingNews = ref(false);
+
+// Comment system state for modal
+const newCommentName = ref('');
+const newCommentText = ref('');
+const isSubmittingComment = ref(false);
+
+const newsList = ref([]);
+
+const fetchNewsFromApi = async () => {
+    isLoadingNews.value = true;
+    try {
+        const res = await dichVuTinTuc.layDanhSachTinTuc({
+            keyword: searchKeyword.value,
+            category: activeCategory.value
+        });
+        if (res?.data) {
+            newsList.value = res.data;
+        }
+    } catch (e) {
+        console.error('Lỗi khi lấy bài viết từ BE:', e);
+    } finally {
+        isLoadingNews.value = false;
     }
-];
+};
+
+const filteredNews = computed(() => {
+    return newsList.value.filter((n) => {
+        const matchCat = activeCategory.value === 'Tất cả' || n.category === activeCategory.value;
+        const matchKeyword = !searchKeyword.value.trim() ||
+            n.title.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
+            n.excerpt.toLowerCase().includes(searchKeyword.value.toLowerCase());
+        return matchCat && matchKeyword;
+    });
+});
+
+const openDetail = (news) => {
+    router.push(`/tin-tuc/${news.id}`);
+};
+
+const toggleLike = async (news) => {
+    news.likes += 1;
+    try {
+        await dichVuTinTuc.likeTinTuc(news.id);
+    } catch (e) {
+        console.error('Lỗi thả tim:', e);
+    }
+};
+
+const handleAddComment = async () => {
+    if (!newCommentText.value.trim() || !selectedArticle.value) return;
+    isSubmittingComment.value = true;
+    try {
+        const res = await dichVuTinTuc.binhLuanTinTuc(selectedArticle.value.id, {
+            name: newCommentName.value.trim(),
+            text: newCommentText.value.trim()
+        });
+        if (res?.data) {
+            selectedArticle.value.comments.push(res.data);
+        } else {
+            selectedArticle.value.comments.push({
+                name: newCommentName.value.trim() || 'Bạn đọc AeroStride',
+                text: newCommentText.value.trim(),
+                date: new Date().toLocaleDateString('vi-VN')
+            });
+        }
+        newCommentText.value = '';
+        newCommentName.value = '';
+    } catch (e) {
+        console.error('Lỗi gửi bình luận:', e);
+    } finally {
+        isSubmittingComment.value = false;
+    }
+};
 
 onMounted(() => {
     window.scrollTo(0, 0);
@@ -67,85 +98,125 @@ onMounted(() => {
         title: 'Tin Tức & Khuyến Mãi | AeroStride',
         description: 'Cập nhật những xu hướng giày mới nhất, mẹo bảo quản và các chương trình khuyến mãi hấp dẫn từ AeroStride.'
     });
+    fetchNewsFromApi();
 });
 </script>
 
 <template>
-    <div class="app-container bg-grey-lighten-4">
+    <div class="app-container bg-grey-lighten-4 font-body">
         <MainHeader />
 
         <main class="main-content pb-16">
             <!-- Header Section -->
             <div class="page-header py-12 bg-white mb-8 border-b">
                 <v-container>
-                    <h1 class="text-h3 font-weight-black text-center text-grey-darken-4 mb-4">TIN TỨC AEROSTRIDE</h1>
-                    <p class="text-center text-grey-darken-1 text-subtitle-1">Cập nhật xu hướng, đánh giá sản phẩm và tin tức mới nhất.</p>
+                    <h1 class="text-h3 font-weight-black text-center text-slate-900 mb-3">TIN TỨC & XU HƯỚNG AEROSTRIDE</h1>
+                    <p class="text-center text-slate-600 text-subtitle-1 max-w-600 mx-auto">
+                        Cập nhật các bài viết đánh giá giày, mẹo chăm sóc sản phẩm và sự kiện ưu đãi mới nhất.
+                    </p>
+
+                    <!-- Search Bar -->
+                    <div class="max-w-500 mx-auto mt-6">
+                        <v-text-field
+                            v-model="searchKeyword"
+                            placeholder="Tìm kiếm bài viết, tin tức..."
+                            prepend-inner-icon="mdi-magnify"
+                            variant="outlined"
+                            bg-color="white"
+                            density="comfortable"
+                            rounded="pill"
+                            hide-details
+                            clearable
+                        ></v-text-field>
+                    </div>
                 </v-container>
             </div>
 
             <v-container>
                 <!-- Categories -->
-                <div class="d-flex justify-center flex-wrap ga-4 mb-10">
+                <div class="d-flex justify-center flex-wrap ga-3 mb-10">
                     <v-btn
                         v-for="cat in categories"
                         :key="cat"
-                        :variant="activeCategory === cat ? 'elevated' : 'outlined'"
+                        :variant="activeCategory === cat ? 'flat' : 'outlined'"
                         :color="activeCategory === cat ? 'primary' : 'grey-darken-2'"
-                        rounded="xl"
-                        class="text-none font-weight-bold"
+                        rounded="pill"
+                        class="text-none font-weight-bold px-6"
                         @click="activeCategory = cat"
                     >
                         {{ cat }}
                     </v-btn>
                 </div>
 
-                <!-- Featured Post (Only show if 'Tất cả' is selected) -->
+                <!-- Empty State -->
+                <div v-if="filteredNews.length === 0" class="text-center py-16 bg-white rounded-xl elevation-1">
+                    <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-text-search-line</v-icon>
+                    <h3 class="text-h6 font-weight-bold text-slate-700 mb-2">Không tìm thấy bài viết phù hợp</h3>
+                    <p class="text-slate-500 text-body-2 mb-6">Thử thay đổi từ khóa hoặc chọn chuyên mục khác</p>
+                    <v-btn color="primary" variant="outlined" rounded="pill" @click="searchKeyword = ''; activeCategory = 'Tất cả'">
+                        Đặt lại bộ lọc
+                    </v-btn>
+                </div>
+
+                <!-- Featured Post (Only when all selected and no active search) -->
                 <v-card
-                    v-if="activeCategory === 'Tất cả'"
-                    class="featured-post rounded-xl elevation-5 mb-12 overflow-hidden cursor-pointer"
+                    v-else-if="activeCategory === 'Tất cả' && !searchKeyword"
+                    class="featured-post rounded-xl elevation-4 mb-12 overflow-hidden cursor-pointer"
+                    @click="openDetail(filteredNews[0])"
                 >
                     <v-row no-gutters>
                         <v-col cols="12" md="7">
-                            <v-img :src="newsList[0].image" height="100%" min-height="400" cover></v-img>
+                            <v-img :src="filteredNews[0].image" height="100%" min-height="380" cover></v-img>
                         </v-col>
-                        <v-col cols="12" md="5" class="d-flex flex-column justify-center pa-8 pa-md-12 bg-white">
-                            <v-chip color="error" size="small" class="font-weight-bold mb-4 align-self-start">{{
-                                newsList[0].category
-                            }}</v-chip>
-                            <h2 class="text-h4 font-weight-black text-grey-darken-4 mb-4 line-clamp-2">{{ newsList[0].title }}</h2>
-                            <p class="text-body-1 text-grey-darken-1 mb-6">{{ newsList[0].excerpt }}</p>
-                            <div class="d-flex align-center text-caption text-grey">
-                                <v-icon size="16" class="mr-2">mdi-calendar</v-icon>
-                                {{ newsList[0].date }}
+                        <v-col cols="12" md="5" class="d-flex flex-column justify-center pa-8 pa-md-10 bg-white">
+                            <div class="d-flex align-center ga-2 mb-3">
+                                <v-chip color="error" size="small" class="font-weight-bold">{{ filteredNews[0].category }}</v-chip>
+                                <span class="text-caption text-slate-500">&bull; {{ filteredNews[0].date }}</span>
+                            </div>
+                            <h2 class="text-h4 font-weight-black text-slate-900 mb-4 line-clamp-2 title-hover">{{ filteredNews[0].title }}</h2>
+                            <p class="text-body-1 text-slate-600 mb-6 line-clamp-3">{{ filteredNews[0].excerpt }}</p>
+                            <div class="d-flex align-center justify-space-between mt-auto">
+                                <span class="text-caption font-weight-bold text-slate-700">Tác giả: {{ filteredNews[0].author }}</span>
+                                <v-btn color="primary" variant="text" append-icon="mdi-arrow-right" class="font-weight-bold text-none">
+                                    Đọc bài viết
+                                </v-btn>
                             </div>
                         </v-col>
                     </v-row>
                 </v-card>
 
                 <!-- News Grid -->
-                <v-row>
+                <v-row v-if="filteredNews.length > 0">
                     <v-col
-                        v-for="news in newsList.filter((n) => activeCategory === 'Tất cả' || n.category === activeCategory)"
+                        v-for="news in (activeCategory === 'Tất cả' && !searchKeyword ? filteredNews.slice(1) : filteredNews)"
                         :key="news.id"
                         cols="12"
                         sm="6"
                         md="4"
                     >
-                        <v-card class="h-100 rounded-xl news-card cursor-pointer d-flex flex-column elevation-2">
+                        <v-card
+                            class="h-100 rounded-xl news-card cursor-pointer d-flex flex-column elevation-2 bg-white"
+                            @click="openDetail(news)"
+                        >
                             <div class="image-wrapper">
                                 <v-img :src="news.image" height="220" cover class="news-img"></v-img>
-                                <v-chip color="primary" size="small" class="category-chip">{{ news.category }}</v-chip>
+                                <v-chip color="primary" size="small" class="category-chip shadow-sm">{{ news.category }}</v-chip>
                             </div>
                             <v-card-text class="d-flex flex-column flex-grow-1 pa-5">
-                                <div class="text-caption text-grey mb-2 d-flex align-center">
-                                    <v-icon size="14" class="mr-1">mdi-clock-outline</v-icon>
-                                    {{ news.date }}
+                                <div class="text-caption text-slate-400 mb-2 d-flex align-center justify-space-between">
+                                    <span><v-icon size="14" class="mr-1">mdi-calendar</v-icon>{{ news.date }}</span>
+                                    <span @click.stop="toggleLike(news)" class="cursor-pointer hover-red">
+                                        <v-icon size="14" color="error" class="mr-1">mdi-heart</v-icon>{{ news.likes }}
+                                    </span>
                                 </div>
-                                <h3 class="text-h6 font-weight-bold mb-3 text-grey-darken-4 line-clamp-2 title-hover">{{ news.title }}</h3>
-                                <p class="text-body-2 text-grey-darken-1 line-clamp-3 mb-4">{{ news.excerpt }}</p>
+                                <h3 class="text-h6 font-weight-bold mb-3 text-slate-900 line-clamp-2 title-hover">{{ news.title }}</h3>
+                                <p class="text-body-2 text-slate-600 line-clamp-3 mb-4">{{ news.excerpt }}</p>
                                 <v-spacer></v-spacer>
-                                <div class="read-more text-primary font-weight-bold text-caption mt-auto">
-                                    Đọc tiếp <v-icon size="14">mdi-arrow-right</v-icon>
+                                <div class="d-flex align-center justify-space-between pt-2 border-t">
+                                    <span class="text-caption text-slate-500">{{ news.author }}</span>
+                                    <span class="text-primary font-weight-bold text-caption d-flex align-center">
+                                        Chi tiết <v-icon size="14" class="ml-1">mdi-arrow-right</v-icon>
+                                    </span>
                                 </div>
                             </v-card-text>
                         </v-card>
@@ -154,26 +225,135 @@ onMounted(() => {
             </v-container>
         </main>
 
+        <!-- Article Detail Modal -->
+        <v-dialog v-model="showDetailModal" max-width="850" scrollable>
+            <v-card v-if="selectedArticle" class="rounded-xl overflow-hidden">
+                <v-card-title class="d-flex align-center justify-space-between pa-4 bg-white border-b">
+                    <div class="d-flex align-center ga-2">
+                        <v-chip color="primary" size="small" class="font-weight-bold">{{ selectedArticle.category }}</v-chip>
+                        <span class="text-caption text-slate-500">{{ selectedArticle.date }}</span>
+                    </div>
+                    <v-btn icon="mdi-close" variant="text" density="comfortable" @click="showDetailModal = false"></v-btn>
+                </v-card-title>
+
+                <v-card-text class="pa-6 pa-md-8 bg-white">
+                    <h2 class="text-h4 font-weight-black text-slate-900 mb-4">{{ selectedArticle.title }}</h2>
+                    <div class="d-flex align-center justify-space-between mb-6 pb-4 border-b">
+                        <div class="d-flex align-center ga-3">
+                            <v-avatar color="primary" size="36">
+                                <span class="text-white text-subtitle-2 font-weight-bold">{{ selectedArticle.author.charAt(0) }}</span>
+                            </v-avatar>
+                            <div>
+                                <div class="font-weight-bold text-slate-800 text-body-2">{{ selectedArticle.author }}</div>
+                                <div class="text-caption text-slate-500">AeroStride Editorial</div>
+                            </div>
+                        </div>
+                        <v-btn
+                            variant="tonal"
+                            color="error"
+                            size="small"
+                            rounded="pill"
+                            prepend-icon="mdi-heart"
+                            @click="toggleLike(selectedArticle)"
+                        >
+                            {{ selectedArticle.likes }} Yêu thích
+                        </v-btn>
+                    </div>
+
+                    <v-img :src="selectedArticle.image" height="360" cover class="rounded-xl mb-6 shadow-sm"></v-img>
+
+                    <div class="article-body text-slate-800 leading-relaxed mb-8" v-html="selectedArticle.content"></div>
+
+                    <!-- Comments Section -->
+                    <div class="comments-section border-t pt-6">
+                        <h3 class="text-h6 font-weight-bold text-slate-900 mb-4">
+                            Bình luận ({{ selectedArticle.comments.length }})
+                        </h3>
+
+                        <div v-if="selectedArticle.comments.length > 0" class="mb-6">
+                            <div v-for="(c, idx) in selectedArticle.comments" :key="idx" class="bg-grey-lighten-5 pa-4 rounded-lg mb-3">
+                                <div class="d-flex justify-space-between mb-1">
+                                    <span class="font-weight-bold text-slate-900 text-body-2">{{ c.name }}</span>
+                                    <span class="text-caption text-slate-400">{{ c.date }}</span>
+                                </div>
+                                <p class="text-slate-700 text-body-2 mb-0">{{ c.text }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Add Comment Form -->
+                        <div class="bg-grey-lighten-5 pa-4 rounded-xl">
+                            <div class="font-weight-bold text-slate-800 mb-3 text-body-2">Viết bình luận của bạn</div>
+                            <v-row dense>
+                                <v-col cols="12" sm="6" class="mb-2">
+                                    <v-text-field
+                                        v-model="newCommentName"
+                                        placeholder="Họ tên của bạn (Tùy chọn)"
+                                        variant="outlined"
+                                        density="compact"
+                                        bg-color="white"
+                                        hide-details
+                                    ></v-text-field>
+                                </v-col>
+                                <v-col cols="12" class="mb-2">
+                                    <v-textarea
+                                        v-model="newCommentText"
+                                        placeholder="Chia sẻ ý kiến của bạn về bài viết..."
+                                        variant="outlined"
+                                        rows="2"
+                                        density="compact"
+                                        bg-color="white"
+                                        hide-details
+                                    ></v-textarea>
+                                </v-col>
+                                <v-col cols="12" class="text-right">
+                                    <v-btn
+                                        color="primary"
+                                        size="small"
+                                        rounded="pill"
+                                        class="font-weight-bold text-none px-6"
+                                        :loading="isSubmittingComment"
+                                        :disabled="!newCommentText.trim()"
+                                        @click="handleAddComment"
+                                    >
+                                        Gửi bình luận
+                                    </v-btn>
+                                </v-col>
+                            </v-row>
+                        </div>
+                    </div>
+                </v-card-text>
+            </v-card>
+        </v-dialog>
+
         <footer class="footer-landing py-10 text-center text-grey-darken-1 bg-white border-t">
             <LogoClient class="mb-4 d-inline-block" style="max-width: 150px" />
             <p>&copy; 2026 AeroStride All rights reserved.</p>
         </footer>
+
+        <CustomerChat />
     </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .main-content {
     padding-top: 60px;
 }
-.gap-4 {
-    gap: 16px;
+
+.max-w-600 {
+    max-width: 600px;
 }
+
+.max-w-500 {
+    max-width: 500px;
+}
+
 .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
 .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -181,33 +361,24 @@ onMounted(() => {
     overflow: hidden;
 }
 
-.featured-post {
-    transition:
-        transform 0.3s ease,
-        box-shadow 0.3s ease;
-}
-.featured-post:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
-}
-
+.featured-post,
 .news-card {
-    transition:
-        transform 0.3s ease,
-        box-shadow 0.3s ease;
-}
-.news-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    &:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1) !important;
+    }
 }
 
 .image-wrapper {
     position: relative;
     overflow: hidden;
 }
+
 .news-img {
     transition: transform 0.5s ease;
 }
+
 .news-card:hover .news-img {
     transform: scale(1.05);
 }
@@ -222,7 +393,31 @@ onMounted(() => {
 .title-hover {
     transition: color 0.2s ease;
 }
+
 .news-card:hover .title-hover {
-    color: #2962ff !important;
+    color: #2563eb !important;
+}
+
+.article-body :deep(h3) {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.article-body :deep(p) {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #334155;
+    margin-bottom: 1rem;
+}
+
+.article-body :deep(ul) {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+    li {
+        margin-bottom: 0.5rem;
+    }
 }
 </style>
