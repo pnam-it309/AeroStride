@@ -1,3 +1,10 @@
+## [1.37.4](https://github.com/pnam-it309/AeroStride/compare/v1.37.3...v1.37.4) (2026-08-12)
+
+
+### Bug Fixes
+
+* **websocket:** remove duplicate addEndpoint calls causing 405 Method Not Allowed on SockJS POST requests ([9a97a35](https://github.com/pnam-it309/AeroStride/commit/9a97a359f19abada4f9e363309c7f7656bcb12b7))
+
 ## [1.37.3](https://github.com/pnam-it309/AeroStride/compare/v1.37.2...v1.37.3) (2026-08-12)
 
 
