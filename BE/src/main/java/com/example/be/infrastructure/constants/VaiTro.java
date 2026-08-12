@@ -29,7 +29,7 @@ public enum VaiTro {
      */
     public static boolean isManagementRole(PhanQuyen phanQuyen) {
         if (phanQuyen == null) return false;
-        return isManagementRoleCode(phanQuyen.getMa(), phanQuyen.getQuyenHan(), phanQuyen.getTen());
+        return isManagementRoleCode(phanQuyen.getMa());
     }
 
     public static boolean isManagementRole(NhanVien nv) {
@@ -37,25 +37,7 @@ public enum VaiTro {
         return isManagementRole(nv.getPhanQuyen());
     }
 
-    public static boolean isManagementRoleCode(String ma, String quyen, String ten) {
-        if (ma != null) {
-            String upper = ma.toUpperCase();
-            if (upper.equals(ADMIN) || upper.contains("QUAN_LY")) {
-                return true;
-            }
-        }
-        if (quyen != null) {
-            String upper = quyen.toUpperCase();
-            if (upper.contains("MANAGEMENT")) {
-                return true;
-            }
-        }
-        if (ten != null) {
-            String lower = ten.toLowerCase();
-            if (lower.contains("quản lý")) {
-                return true;
-            }
-        }
-        return false;
+    public static boolean isManagementRoleCode(String ma) {
+        return ADMIN.equalsIgnoreCase(ma);
     }
 }
