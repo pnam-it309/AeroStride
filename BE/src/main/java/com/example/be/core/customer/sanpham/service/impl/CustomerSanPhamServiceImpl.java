@@ -50,14 +50,29 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
     // Lấy danh sách sản phẩm (có hỗ trợ lọc theo danh mục, thương hiệu, màu sắc, giới tính...)
     @Override
     public PageResponse<CustomerProductResponse> getProducts(CustomerSearchProductRequest request) {
+        // Ưu tiên mucDichChayIds (multi-select) nếu có, fallback sang mucDichChayId (single)
+        Specification<SanPham> mucDichSpec = null;
+        if (request.getMucDichChayIds() != null && !request.getMucDichChayIds().isEmpty()) {
+            mucDichSpec = CustomerSanPhamSpecification.hasMucDichChayIn(request.getMucDichChayIds());
+        } else {
+            mucDichSpec = CustomerSanPhamSpecification.hasMucDichChay(request.getMucDichChayId());
+        }
+
         Specification<SanPham> spec = Specification.where(CustomerSanPhamSpecification.notDeleted())
                 .and(CustomerSanPhamSpecification.hasKeyword(request.getKeyword()))
                 .and(CustomerSanPhamSpecification.hasTrangThai(request.getTrangThai() != null ? request.getTrangThai() : TrangThai.DANG_HOAT_DONG))
                 .and(CustomerSanPhamSpecification.hasThuongHieu(request.getThuongHieuId()))
                 .and(CustomerSanPhamSpecification.hasGioiTinhKhachHang(request.getGioiTinhKhachHang()))
                 .and(CustomerSanPhamSpecification.hasXuatXu(request.getXuatXuId()))
-                .and(CustomerSanPhamSpecification.hasMucDichChay(request.getMucDichChayId()))
-                .and(CustomerSanPhamSpecification.hasChatLieu(request.getChatLieuId()));
+                .and(mucDichSpec)
+                .and(CustomerSanPhamSpecification.hasChatLieu(request.getChatLieuId()))
+                .and(CustomerSanPhamSpecification.hasMinGia(request.getMinGia()))
+                .and(CustomerSanPhamSpecification.hasMaxGia(request.getMaxGia()))
+                .and(CustomerSanPhamSpecification.hasKichThuoc(request.getKichThuoc()));
+
+        // Detect if price sorting is requested (use raw value before getSortBy() transforms it)
+        String originalSortBy = request.getRawSortBy();
+        boolean isPriceSort = "price_asc".equals(originalSortBy) || "price_desc".equals(originalSortBy);
 
         Page<SanPham> page = SearchUtils.execute(request, pageable -> customerSanPhamRepository.findAll(spec, pageable));
 
@@ -78,7 +93,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
             }
         }
 
-        return PageResponse.from(page.map(sp -> {
+        PageResponse<CustomerProductResponse> result = PageResponse.from(page.map(sp -> {
             CustomerProductVariantStats s = stats.get(sp.getId());
             String varImg = firstVariantImages.get(sp.getId());
             String finalImg = (varImg != null && !varImg.trim().isEmpty()) ? varImg : sp.getHinhAnh();
@@ -114,6 +129,23 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                     .giaBanCaoNhat(s != null ? s.getGiaBanCaoNhat() : null)
                     .build();
         }));
+
+        // Price-based sorting at Java level (giaBanThapNhat is computed from variants, not a DB column)
+        if (isPriceSort && result.getContent() != null && !result.getContent().isEmpty()) {
+            List<CustomerProductResponse> sorted = new java.util.ArrayList<>(result.getContent());
+            if ("price_asc".equals(originalSortBy)) {
+                sorted.sort(Comparator.comparing(
+                        CustomerProductResponse::getGiaBanThapNhat,
+                        Comparator.nullsLast(Comparator.naturalOrder())));
+            } else {
+                sorted.sort(Comparator.comparing(
+                        CustomerProductResponse::getGiaBanThapNhat,
+                        Comparator.nullsLast(Comparator.reverseOrder())));
+            }
+            result.setContent(sorted);
+        }
+
+        return result;
     }
 
     // Lấy danh sách các thuộc tính (danh mục, thương hiệu, màu sắc, size...) để hiển thị lên bộ lọc tìm kiếm
@@ -140,7 +172,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
     // Lấy thông tin chi tiết của một sản phẩm kèm theo danh sách các biến thể của nó
     @Override
     public CustomerProductDetailResponse getProductDetail(String id) {
-        SanPham sp = customerSanPhamRepository.findByIdAndXoaMemFalse(id)
+        SanPham sp = customerSanPhamRepository.findByIdNotDeleted(id)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
 
         List<ChiTietSanPham> variants = customerSanPhamChiTietRepository.findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(id);
@@ -470,7 +502,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
     private List<CustomerProductResponse> calculateRecommendedProducts(Map<String, String> answers) {
         if (answers == null || answers.isEmpty()) {
             CustomerSearchProductRequest defaultReq = new CustomerSearchProductRequest();
-            defaultReq.setPage(1);
+            defaultReq.setPage(0);
             defaultReq.setSize(12);
             defaultReq.setTrangThai(TrangThai.DANG_HOAT_DONG);
             return getProducts(defaultReq).getContent();
@@ -483,7 +515,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
         String khoangGia = answers.get("khoangGia");
 
         CustomerSearchProductRequest searchReq = new CustomerSearchProductRequest();
-        searchReq.setPage(1);
+        searchReq.setPage(0);
         searchReq.setSize(100);
         searchReq.setTrangThai(TrangThai.DANG_HOAT_DONG);
 
@@ -545,7 +577,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
         }
         if (recommended.isEmpty()) {
             CustomerSearchProductRequest fallbackReq = new CustomerSearchProductRequest();
-            fallbackReq.setPage(1);
+            fallbackReq.setPage(0);
             fallbackReq.setSize(12);
             fallbackReq.setTrangThai(TrangThai.DANG_HOAT_DONG);
             recommended = getProducts(fallbackReq).getContent();

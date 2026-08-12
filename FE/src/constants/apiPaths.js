@@ -20,7 +20,8 @@ export const API_ADMIN = {
     GHN: `${API_BASE.ADMIN}/ghn`,
     THUOC_TINH: `${API_BASE.ADMIN}/thuoc-tinh`,
     BAN_HANG: `${API_BASE.ADMIN}/ban-hang`,
-    THONG_KE: `${API_BASE.ADMIN}/thong-ke`
+    THONG_KE: `${API_BASE.ADMIN}/thong-ke`,
+    DANH_GIA: `${API_BASE.ADMIN}/danh-gia`
 };
 
 export const API_AUTH = {

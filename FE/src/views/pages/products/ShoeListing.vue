@@ -43,7 +43,7 @@ const searchParams = ref({
     thuongHieuId: route.query.thuongHieuId || null,
     chatLieuId: route.query.chatLieuId || null,
     xuatXuId: route.query.xuatXuId || null,
-    mucDichChayId: route.query.mucDichChayId || null,
+    mucDichChayIds: [],
     gioiTinhKhachHang: route.query.gioiTinhKhachHang || null,
     sortBy: route.query.sortBy || 'newest',
     minGia: null,
@@ -64,7 +64,7 @@ const priceRangeOptions = [
     { title: '6.000.000đ - 7.000.000đ', value: '6Mto7M' },
     { title: 'Trên 7.000.000đ', value: 'over7M' }
 ];
-const selectedSize = ref(null);
+const selectedSizes = ref([]);
 const sizeList = ['36', '37', '38', '39', '40', '41', '42', '43', '44'];
 
 // Watch price range options to update query parameters
@@ -103,11 +103,11 @@ watch(priceRange, (newRange) => {
     handleFilterChange();
 });
 
-// Watch size selection to update query parameters
-watch(selectedSize, (newSize) => {
-    searchParams.value.kichThuoc = newSize;
+// Watch size selection to update query parameters (multi-select: send first selected for now, backend supports single kichThuoc)
+watch(selectedSizes, (newSizes) => {
+    searchParams.value.kichThuoc = newSizes.length > 0 ? newSizes[0] : null;
     handleFilterChange();
-});
+}, { deep: true });
 
 // Map backend filter categories dynamically
 const brandList = computed(() => {
@@ -143,12 +143,20 @@ const fetchProducts = async () => {
     loading.value = true;
     try {
         const params = {
-            page: currentPage.value,
+            page: currentPage.value - 1,
             size: pageSize.value
         };
 
         Object.keys(searchParams.value).forEach((key) => {
-            const cleanVal = cleanSearchValue(searchParams.value[key]);
+            const val = searchParams.value[key];
+            // Handle arrays (mucDichChayIds)
+            if (Array.isArray(val)) {
+                if (val.length > 0) {
+                    params[key] = val;
+                }
+                return;
+            }
+            const cleanVal = cleanSearchValue(val);
             if (cleanVal !== null) {
                 params[key] = cleanVal;
             }
@@ -180,7 +188,7 @@ const resetFilters = () => {
         thuongHieuId: null,
         chatLieuId: null,
         xuatXuId: null,
-        mucDichChayId: null,
+        mucDichChayIds: [],
         gioiTinhKhachHang: null,
         sortBy: 'newest',
         minGia: null,
@@ -188,7 +196,7 @@ const resetFilters = () => {
         kichThuoc: null
     };
     priceRange.value = null;
-    selectedSize.value = null;
+    selectedSizes.value = [];
     currentPage.value = 1;
     router.replace({ path: route.path, query: {} });
     fetchProducts();
@@ -345,8 +353,8 @@ const activeFilterCount = computed(() => {
     let count = 0;
     if (searchParams.value.thuongHieuId) count++;
     if (priceRange.value) count++;
-    if (searchParams.value.mucDichChayId) count++;
-    if (selectedSize.value) count++;
+    if (searchParams.value.mucDichChayIds && searchParams.value.mucDichChayIds.length > 0) count++;
+    if (selectedSizes.value.length > 0) count++;
     return count;
 });
 
@@ -456,10 +464,17 @@ const closeMobileFilter = () => {
                                 <label v-for="purpose in purposeList" :key="purpose.id" class="checkbox-item-row">
                                     <input
                                         type="checkbox"
-                                        :checked="searchParams.mucDichChayId === purpose.id"
+                                        :checked="searchParams.mucDichChayIds.includes(purpose.id)"
                                         @change="
-                                            searchParams.mucDichChayId = searchParams.mucDichChayId === purpose.id ? null : purpose.id;
-                                            handleFilterChange();
+                                            () => {
+                                                const idx = searchParams.mucDichChayIds.indexOf(purpose.id);
+                                                if (idx >= 0) {
+                                                    searchParams.mucDichChayIds.splice(idx, 1);
+                                                } else {
+                                                    searchParams.mucDichChayIds.push(purpose.id);
+                                                }
+                                                handleFilterChange();
+                                            }
                                         "
                                         class="custom-check-input"
                                     />
@@ -476,8 +491,17 @@ const closeMobileFilter = () => {
                                     v-for="size in sizeList"
                                     :key="size"
                                     class="size-box-cell"
-                                    :class="{ active: selectedSize === size }"
-                                    @click="selectedSize = selectedSize === size ? null : size"
+                                    :class="{ active: selectedSizes.includes(size) }"
+                                    @click="
+                                        () => {
+                                            const idx = selectedSizes.indexOf(size);
+                                            if (idx >= 0) {
+                                                selectedSizes.splice(idx, 1);
+                                            } else {
+                                                selectedSizes.push(size);
+                                            }
+                                        }
+                                    "
                                 >
                                     {{ size }}
                                 </div>

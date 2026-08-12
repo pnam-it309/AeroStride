@@ -833,10 +833,17 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
         List<HoaDon> allOrders = hoaDonRepository.findByKhachHangId(khachHang.getId());
 
-        long total = allOrders.size();
-        long completed = allOrders.stream().filter(o -> o.getTrangThai() != null && o.getTrangThai() == OrderStatus.HOAN_THANH).count();
-        long cancelled = allOrders.stream().filter(o -> o.getTrangThai() != null && o.getTrangThai() == OrderStatus.DA_HUY).count();
-        long delivering = allOrders.stream().filter(o -> o.getTrangThai() != null && o.getTrangThai() == OrderStatus.DANG_GIAO).count();
+        // Chỉ đếm đơn hàng ONLINE (giống logic filter trong getMyOrders)
+        List<HoaDon> onlineOrders = allOrders.stream()
+                .filter(hd -> hd.getOrderType() == OrderType.ONLINE
+                        || (hd.getOrderType() == null && hd.getNhanVien() == null
+                                && "ONLINE".equalsIgnoreCase(hd.getLoaiDon())))
+                .collect(java.util.stream.Collectors.toList());
+
+        long total = onlineOrders.size();
+        long completed = onlineOrders.stream().filter(o -> o.getTrangThai() != null && o.getTrangThai() == OrderStatus.HOAN_THANH).count();
+        long cancelled = onlineOrders.stream().filter(o -> o.getTrangThai() != null && o.getTrangThai() == OrderStatus.DA_HUY).count();
+        long delivering = onlineOrders.stream().filter(o -> o.getTrangThai() != null && o.getTrangThai() == OrderStatus.DANG_GIAO).count();
 
         return com.example.be.core.customer.order.model.response.CustomerOrderStatsResponse.builder()
                 .total(total)

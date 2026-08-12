@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 @Getter
 @Setter
 @ToString(callSuper = true)
@@ -17,13 +20,24 @@ public class CustomerSearchProductRequest extends PageRequest {
     private String gioiTinhKhachHang;
     private String xuatXuId;
     private String mucDichChayId;
+    private List<String> mucDichChayIds;
     private String chatLieuId;
+    private BigDecimal minGia;
+    private BigDecimal maxGia;
+    private String kichThuoc;
 
     public CustomerSearchProductRequest() {
-        setPage(1);
+        setPage(0);
         setSize(12);
         setSortBy("ngayTao");
         setSortDirection("desc");
+    }
+
+    /**
+     * Returns the raw/original sortBy value before transformation (e.g. "price_asc", "newest").
+     */
+    public String getRawSortBy() {
+        return super.getSortBy();
     }
 
     @Override
@@ -33,8 +47,9 @@ public class CustomerSearchProductRequest extends PageRequest {
             super.setSortDirection("desc");
             return "ngayTao";
         } else if ("price_asc".equals(sort) || "price_desc".equals(sort)) {
-            // Spring Data can't sort by computed fields easily here, fallback to ngayTao
-            super.setSortDirection("price_asc".equals(sort) ? "asc" : "desc");
+            // Price sorting is handled at the service layer after query
+            // Use ngayTao as the DB sort to get all products, then re-sort by price in Java
+            super.setSortDirection("desc");
             return "ngayTao"; 
         }
         return sort;
