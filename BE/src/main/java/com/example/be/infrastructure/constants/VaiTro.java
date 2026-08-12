@@ -15,27 +15,17 @@ public enum VaiTro {
     NHAN_VIEN,
     QUAN_LY;
 
-    // String representations of Spring Security roles (without ROLE_ prefix)
+    // String representations of Spring Security roles & DB Role Codes
     public static final String ADMIN = "QUAN_LY";
     public static final String STAFF = "NHAN_VIEN";
     public static final String CUSTOMER = "KHACH_HANG";
-
-    // Standard database role codes & legacy compatibility constants
-    public static final String ROLE_CODE_QUAN_LY = "QUAN_LY";
-    public static final String ROLE_CODE_ADMIN = "ADMIN";
-    public static final String ROLE_CODE_QUAN_TRI_VIEN = "QUAN_TRI_VIEN";
-    public static final String ROLE_CODE_MANAGER = "MANAGER";
-
-    public static final String ACCESS_FULL = "FULL_ACCESS";
-    public static final String ACCESS_MANAGEMENT = "MANAGEMENT_ACCESS";
-    public static final String ACCESS_MANAGER = "MANAGER_ACCESS";
 
     // SpEL expressions for @PreAuthorize annotations
     public static final String PRE_AUTH_ADMIN_ONLY = "hasRole('" + ADMIN + "')";
     public static final String PRE_AUTH_ADMIN_STAFF = "hasAnyRole('" + ADMIN + "', '" + STAFF + "')";
 
     /**
-     * Kiểm tra xem thông tin phân quyền hoặc nhân viên có thuộc nhóm Quản lý / Admin hay không.
+     * Kiểm tra xem thông tin phân quyền hoặc nhân viên có thuộc nhóm Quản lý hay không.
      */
     public static boolean isManagementRole(PhanQuyen phanQuyen) {
         if (phanQuyen == null) return false;
@@ -49,25 +39,20 @@ public enum VaiTro {
 
     public static boolean isManagementRoleCode(String ma, String quyen, String ten) {
         if (ma != null) {
-            String upperMa = ma.toUpperCase();
-            if (upperMa.contains(ROLE_CODE_QUAN_LY)
-                    || upperMa.contains(ROLE_CODE_ADMIN)
-                    || upperMa.contains(ROLE_CODE_QUAN_TRI_VIEN)
-                    || upperMa.contains(ROLE_CODE_MANAGER)) {
+            String upper = ma.toUpperCase();
+            if (upper.equals(ADMIN) || upper.contains("QUAN_LY")) {
                 return true;
             }
         }
         if (quyen != null) {
-            String upperQuyen = quyen.toUpperCase();
-            if (upperQuyen.contains(ACCESS_FULL)
-                    || upperQuyen.contains(ACCESS_MANAGEMENT)
-                    || upperQuyen.contains(ACCESS_MANAGER)) {
+            String upper = quyen.toUpperCase();
+            if (upper.contains("MANAGEMENT")) {
                 return true;
             }
         }
         if (ten != null) {
-            String lowerTen = ten.toLowerCase();
-            if (lowerTen.contains("quản lý") || lowerTen.contains("quản trị") || lowerTen.contains("admin") || lowerTen.contains("manager")) {
+            String lower = ten.toLowerCase();
+            if (lower.contains("quản lý")) {
                 return true;
             }
         }
