@@ -39,22 +39,20 @@ public enum VaiTro {
 
     public static boolean isManagementRoleCode(String ma, String quyen, String ten) {
         if (ma != null) {
-            if (ROLE_CODE_ADMIN.equalsIgnoreCase(ma)
-                    || ROLE_CODE_QUAN_TRI_VIEN.equalsIgnoreCase(ma)
-                    || ROLE_CODE_MANAGER.equalsIgnoreCase(ma)
-                    || ROLE_CODE_QUAN_LY.equalsIgnoreCase(ma)
-                    || ADMIN.equalsIgnoreCase(ma)) {
+            String upperMa = ma.toUpperCase();
+            if (upperMa.contains("QUAN_LY") || upperMa.contains("ADMIN") || upperMa.contains("QUAN_TRI") || upperMa.contains("MANAGER")) {
                 return true;
             }
         }
         if (quyen != null) {
-            if ("FULL_ACCESS".equalsIgnoreCase(quyen) || "MANAGER_ACCESS".equalsIgnoreCase(quyen)) {
+            String upperQuyen = quyen.toUpperCase();
+            if (upperQuyen.contains("FULL") || upperQuyen.contains("MANAGEMENT") || upperQuyen.contains("MANAGER")) {
                 return true;
             }
         }
         if (ten != null) {
             String lowerTen = ten.toLowerCase();
-            if (lowerTen.contains("quản trị") || lowerTen.contains("quản lý") || lowerTen.contains("admin") || lowerTen.contains("manager")) {
+            if (lowerTen.contains("quản lý") || lowerTen.contains("quản trị") || lowerTen.contains("admin") || lowerTen.contains("manager")) {
                 return true;
             }
         }
