@@ -12,9 +12,14 @@ class WebSocketService {
     connect(onMessageCallback) {
         if (this.connected) return;
 
-        const socket = new SockJS(this.baseUrl);
+        let rawUrl = import.meta.env.VITE_WS_URL || '/ws';
+        let httpUrl = rawUrl.replace(/^wss:/i, 'https:').replace(/^ws:/i, 'http:');
+        if (!httpUrl.startsWith('http') && !httpUrl.startsWith('/')) {
+            httpUrl = '/ws';
+        }
+
         this.stompClient = new Client({
-            webSocketFactory: () => socket,
+            webSocketFactory: () => new SockJS(httpUrl),
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000

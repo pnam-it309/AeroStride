@@ -21,7 +21,11 @@ class ChatSocketService {
         }
 
         const wsUrl = import.meta.env.VITE_WS_URL || '/ws-chat';
-        const targetEndpoint = wsUrl.includes('ws-chat') ? wsUrl : '/ws-chat';
+        let targetEndpoint = wsUrl.includes('ws-chat') ? wsUrl : '/ws-chat';
+        targetEndpoint = targetEndpoint.replace(/^wss:/i, 'https:').replace(/^ws:/i, 'http:');
+        if (!targetEndpoint.startsWith('http') && !targetEndpoint.startsWith('/')) {
+            targetEndpoint = '/ws-chat';
+        }
 
         // Tự động xây dựng URL WSS/WS tuyệt đối cho native WebSocket
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
