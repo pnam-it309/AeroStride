@@ -10,9 +10,12 @@ const pwForm = ref({ matKhauCu: '', matKhauMoi: '', xacNhanMatKhau: '' });
 const pwLoading = ref(false);
 const pwMessage = ref({ type: '', text: '' });
 
+import { APP_ROLES } from '@/constants/appConstants';
+
 const roleLabels = {
-    ROLE_QUAN_TRI_VIEN: 'Quản trị viên',
-    ROLE_NHAN_VIEN: 'Nhân viên'
+    [APP_ROLES.ADMIN]: 'Quản lý',
+    [APP_ROLES.STAFF]: 'Nhân viên',
+    [APP_ROLES.CUSTOMER]: 'Khách hàng'
 };
 
 const chucVu = computed(() => {

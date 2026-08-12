@@ -23,6 +23,7 @@ public final class SecurityConstants {
         RoutesConstant.CUSTOMER + "/lien-he/**",
         RoutesConstant.CUSTOMER + "/tin-tuc/**",
         RoutesConstant.CUSTOMER + "/gioi-thieu/**",
+        RoutesConstant.CUSTOMER_SITEMAP + "/**",
         RoutesConstant.CONFIG + "/**",
         RoutesConstant.ADMIN + "/ghn/**",
         RoutesConstant.PAYMENT + "/**",

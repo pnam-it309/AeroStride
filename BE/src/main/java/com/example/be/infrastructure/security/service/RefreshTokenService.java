@@ -46,15 +46,20 @@ public class RefreshTokenService {
                 .token(UUID.randomUUID().toString())
                 .expiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
 
-        // Nếu là ADMIN, QUAN_TRI_VIEN hoặc NHAN_VIEN, chỉ tìm trong bảng NhanVien
-        if (role != null && (role.contains("ADMIN") || role.contains("QUAN_TRI_VIEN") || role.contains("NHAN_VIEN"))) {
+        boolean isCustomer = role != null && (
+                role.contains(VaiTro.KHACH_HANG.name()) ||
+                role.contains(VaiTro.CUSTOMER)
+        );
+
+        // Nếu là nhân viên hoặc quản lý, tìm trong bảng NhanVien
+        if (!isCustomer) {
             NhanVien nhanVien = nhanVienRepository.findByTenTaiKhoan(username)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản nhân viên: " + username));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản nhân viên/quản lý: " + username));
             refreshTokenRepository.deleteByNhanVienId(nhanVien.getId());
             return refreshTokenRepository.save(builder.nhanVien(nhanVien).build());
         }
 
-        // Mặc định hoặc nếu là KHACH_HANG, chỉ tìm trong bảng KhachHang
+        // Mặc định hoặc nếu là khách hàng, tìm trong bảng KhachHang
         KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản khách hàng: " + username));
 
@@ -88,11 +93,7 @@ public class RefreshTokenService {
      */
     public VaiTro getVaiTroFromToken(RefreshToken token) {
         if (token.getNhanVien() != null) {
-            NhanVien nv = token.getNhanVien();
-            if (nv.getPhanQuyen() != null && "ADMIN".equals(nv.getPhanQuyen().getMa())) {
-                return VaiTro.QUAN_TRI_VIEN;
-            }
-            return VaiTro.NHAN_VIEN;
+            return VaiTro.isManagementRole(token.getNhanVien()) ? VaiTro.QUAN_LY : VaiTro.NHAN_VIEN;
         }
         if (token.getKhachHang() != null) {
             return VaiTro.KHACH_HANG;

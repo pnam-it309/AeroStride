@@ -1,36 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Homepage / Landing -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
+  <!-- 1. Trang chủ AeroStride -->
   <url>
     <loc>https://aerostride.me/</loc>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
-  <!-- All Products -->
+  <!-- 2. Danh mục Giày Thể Thao Chính Hãng -->
   <url>
     <loc>https://aerostride.me/shoes</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- Vouchers -->
+  <!-- 3. Tư vấn chọn giày AI -->
+  <url>
+    <loc>https://aerostride.me/ai-recommend</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 4. Mã giảm giá & Vouchers -->
   <url>
     <loc>https://aerostride.me/vouchers</loc>
     <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 5. Giới thiệu AeroStride -->
+  <url>
+    <loc>https://aerostride.me/gioi-thieu</loc>
+    <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
-  <!--
-    NOTE: Product detail pages (/product/:id) are dynamic.
-    For full SEO, generate this sitemap dynamically from the backend API.
-    Example endpoint: GET /api/v1/sitemap/products
-    Each product should have:
-    <url>
-      <loc>https://aerostride.me/product/{id}</loc>
-      <lastmod>{updated_at}</lastmod>
-      <changefreq>weekly</changefreq>
-      <priority>0.8</priority>
-    </url>
-  -->
+  <!-- 6. Tin tức & Bài viết -->
+  <url>
+    <loc>https://aerostride.me/tin-tuc</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 7. Hệ thống cửa hàng -->
+  <url>
+    <loc>https://aerostride.me/he-thong-cua-hang</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- 8. Liên hệ -->
+  <url>
+    <loc>https://aerostride.me/lien-he</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- 9. Trung tâm hỗ trợ -->
+  <url>
+    <loc>https://aerostride.me/ho-tro</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
 </urlset>

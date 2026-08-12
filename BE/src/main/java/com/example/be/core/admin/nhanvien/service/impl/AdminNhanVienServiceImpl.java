@@ -251,17 +251,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     }
 
     private boolean isRoleAdmin(NhanVien nv) {
-        if (nv == null || nv.getPhanQuyen() == null) {
-            return false;
-        }
-        String ma = nv.getPhanQuyen().getMa();
-        String quyenHan = nv.getPhanQuyen().getQuyenHan();
-        String ten = nv.getPhanQuyen().getTen();
-        return "ADMIN".equalsIgnoreCase(ma)
-                || "QUAN_TRI_VIEN".equalsIgnoreCase(ma)
-                || VaiTro.ADMIN.equalsIgnoreCase(ma)
-                || "FULL_ACCESS".equalsIgnoreCase(quyenHan)
-                || (ten != null && ten.toLowerCase().contains("quản trị"));
+        return VaiTro.isManagementRole(nv);
     }
 
     // ── EXPORT EXCEL ──────────────────────────────────────────────────────

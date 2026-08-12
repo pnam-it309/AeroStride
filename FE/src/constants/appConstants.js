@@ -3,9 +3,39 @@
  * Tương ứng với VaiTro.java trong Backend (kèm tiền tố ROLE_ của Spring Security)
  */
 export const APP_ROLES = {
-    ADMIN: 'ROLE_QUAN_TRI_VIEN',
+    ADMIN: 'ROLE_QUAN_LY',
     STAFF: 'ROLE_NHAN_VIEN',
     CUSTOMER: 'ROLE_KHACH_HANG'
+};
+
+/**
+ * ROLE_CODES - Mã phân quyền lưu trữ trong cơ sở dữ liệu (bảng phan_quyen)
+ */
+export const ROLE_CODES = {
+    QUAN_LY: 'QUAN_LY',
+    NHAN_VIEN: 'NHAN_VIEN',
+    KHACH_HANG: 'KHACH_HANG'
+};
+
+/**
+ * Helper dùng chung kiểm tra nhân viên hoặc đối tượng phân quyền thuộc nhóm Quản lý / Admin
+ */
+export const isManagementRole = (item) => {
+    if (!item) return false;
+    const ma = item?.phanQuyen?.ma || item?.maPhanQuyen || item?.ma || '';
+    const ten = item?.phanQuyen?.ten || item?.tenPhanQuyen || item?.ten || '';
+    const quyen = item?.phanQuyen?.quyenHan || item?.quyenHan || item?.quyen || '';
+
+    const upperMa = String(ma).toUpperCase();
+    if (upperMa.includes(ROLE_CODES.QUAN_LY) || upperMa.includes('ADMIN') || upperMa.includes('MANAGER') || upperMa.includes('QUAN_TRI')) {
+        return true;
+    }
+    const upperQuyen = String(quyen).toUpperCase();
+    if (['FULL_ACCESS', 'MANAGEMENT_ACCESS', 'MANAGER_ACCESS'].includes(upperQuyen)) {
+        return true;
+    }
+    const lowerTen = String(ten).toLowerCase();
+    return lowerTen.includes('quản lý') || lowerTen.includes('quản trị') || lowerTen.includes('admin') || lowerTen.includes('manager');
 };
 
 /**

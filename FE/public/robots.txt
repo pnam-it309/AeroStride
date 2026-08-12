@@ -5,21 +5,30 @@ User-agent: *
 Allow: /
 Allow: /shoes
 Allow: /vouchers
+Allow: /ai-recommend
 Allow: /product/
+Allow: /gioi-thieu
+Allow: /tin-tuc
+Allow: /lien-he
+Allow: /he-thong-cua-hang
+Allow: /ho-tro
 
-# Block admin & auth pages
+# Block admin & internal user pages
 Disallow: /admin/
 Disallow: /user/
 Disallow: /auth/
 Disallow: /checkout
 Disallow: /my-orders
-Disallow: /order-success
+Disallow: /order/
+Disallow: /profile
+Disallow: /favorites
 Disallow: /error/
 
-# Block API & WebSocket endpoints
+# Block private API & WebSocket endpoints
 Disallow: /api/
 Disallow: /ws
 Disallow: /ws-chat
 
-# Sitemap location
+# Sitemaps
 Sitemap: https://aerostride.me/sitemap.xml
+Sitemap: https://aerostride.me/api/v1/customer/sitemap/products.xml

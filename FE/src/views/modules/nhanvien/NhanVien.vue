@@ -17,8 +17,7 @@ import { useAdminTable } from '@/composables/useAdminTable';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useRefreshHandler } from '@/composables/useRefreshHandler';
 
-import { useAuthStore } from '@/stores/authStore';
-import { GIOI_TINH_FILTER_OPTIONS } from '@/constants/appConstants';
+import { GIOI_TINH_FILTER_OPTIONS, isManagementRole } from '@/constants/appConstants';
 import { TRANG_THAI_FILTER_OPTIONS, NHAN_VIEN_MESSAGES } from '@/constants/nhanVienConstants';
 
 const {
@@ -112,11 +111,7 @@ const isSelf = (item) => {
 };
 
 const isAdminEmployee = (item) => {
-    if (!item) return false;
-    const ma = item.maPhanQuyen ? String(item.maPhanQuyen).toUpperCase() : '';
-    const ten = item.tenPhanQuyen ? String(item.tenPhanQuyen).toUpperCase() : '';
-    const quyen = item.quyenHan ? String(item.quyenHan).toUpperCase() : '';
-    return ma === 'ADMIN' || ma === 'QUAN_TRI_VIEN' || quyen === 'FULL_ACCESS' || ten.includes('ADMIN') || ten.includes('QUẢN TRỊ');
+    return isManagementRole(item);
 };
 
 const canChangeStatus = (item) => {

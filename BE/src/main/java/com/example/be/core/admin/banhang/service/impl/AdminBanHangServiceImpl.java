@@ -93,10 +93,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         if (nv != null) {
             hoaDon.setNhanVien(nv);
             com.example.be.entity.GiaoCa activeGiaoCa = giaoCaRepository.findGiaoCaHienTai(nv.getId()).orElse(null);
-            boolean isAdmin = nv.getPhanQuyen() != null && com.example.be.infrastructure.constants.VaiTro.ADMIN.equals(nv.getPhanQuyen().getMa());
+            boolean isManagement = com.example.be.infrastructure.constants.VaiTro.isManagementRole(nv);
             if (activeGiaoCa != null) {
                 hoaDon.setGiaoCa(activeGiaoCa);
-            } else if (!isAdmin) {
+            } else if (!isManagement) {
                 throw new BusinessException("Bạn phải Mở Ca làm việc trước khi tạo hóa đơn!");
             }
         }
@@ -108,7 +108,6 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         hoaDonRepository.save(hoaDon);
         return mapToHoaDonResponse(hoaDon);
     }
-
     /** Xác định nhân viên hiện tại để mỗi quầy chỉ khôi phục các tab thuộc phiên làm việc của mình. */
     private java.util.Optional<NhanVien> getCurrentNhanVien() {
         return SecurityUtils.getCurrentUserEmail()

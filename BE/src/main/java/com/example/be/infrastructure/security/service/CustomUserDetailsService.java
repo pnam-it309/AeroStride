@@ -55,10 +55,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                     .orElse(null);
 
             if (nhanVien != null) {
-                VaiTro role = VaiTro.NHAN_VIEN;
-                if (nhanVien.getPhanQuyen() != null && "ADMIN".equals(nhanVien.getPhanQuyen().getMa())) {
-                    role = VaiTro.QUAN_TRI_VIEN;
-                }
+                VaiTro role = VaiTro.isManagementRole(nhanVien) ? VaiTro.QUAN_LY : VaiTro.NHAN_VIEN;
                 return buildUserDetails(nhanVien.getTenTaiKhoan(), nhanVien.getMatKhau(), role);
             }
             

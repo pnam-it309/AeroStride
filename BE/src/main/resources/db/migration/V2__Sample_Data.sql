@@ -1,11 +1,8 @@
 SET FOREIGN_KEY_CHECKS = 0;
 -- 1. Bảng Phân Quyền (phan_quyen)
 INSERT INTO phan_quyen (id, ma_phan_quyen, ten_phan_quyen, quyen_han, mo_ta, trang_thai, ngay_tao) VALUES
-('pq1', 'ADMIN', 'Quản trị viên', 'FULL_ACCESS', 'Quyền cao nhất hệ thống', 0, 1711814400000),
-('pq2', 'STAFF', 'Nhân viên', 'STAFF_ACCESS', 'Quyền nhân viên bán hàng', 0, 1711814400000),
-('pq3', 'MANAGER', 'Quản lý', 'MANAGER_ACCESS', 'Quyền quản lý cửa hàng', 0, 1711814400000),
-('pq4', 'WAREHOUSE', 'Thủ kho', 'WAREHOUSE_ACCESS', 'Quyền quản lý kho hàng', 0, 1711814400000),
-('pq5', 'SHIPPER', 'Giao hàng', 'SHIPPER_ACCESS', 'Quyền nhân viên giao nhận', 0, 1711814400000)
+('pq1', 'QUAN_LY', 'Quản lý', 'MANAGEMENT_ACCESS', 'Quyền quản lý cửa hàng và hệ thống', 0, 1711814400000),
+('pq2', 'NHAN_VIEN', 'Nhân viên', 'STAFF_ACCESS', 'Quyền nhân viên bán hàng', 0, 1711814400000)
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- 2. Bảng Nhân Viên (nhan_vien)
@@ -16,9 +13,8 @@ INSERT INTO nhan_vien (id, id_phan_quyen, ma_nhan_vien, ten_nhan_vien, email, sd
 ('nv4', 'pq1', 'NV004', 'Nguyễn Huy Đức', 'nguyenhuyducbg19062002@gmail.com', '0123456789', '1990-01-01', 1, 'admin3', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'admin.jpg', 'Hồ Chí Minh', 'TP. Thủ Đức', 'Phường Linh Trung', '120 Võ Văn Ngân', 0, 0, 1711814400000),
 ('nv5', 'pq1', 'NV005', 'Bùi Thị Yến', 'yent6969@gmail.com', '0123456789', '1990-01-01', 0, 'admin4', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'admin.jpg', 'Hồ Chí Minh', 'Quận 1', 'Phường Bến Nghé', '88 Nguyễn Huệ', 0, 0, 1711814400000),
 ('nv6', 'pq2', 'NV006', 'Nguyễn Văn Staff', 'staff1@aerostride.com', '0987654321', '1995-05-20', 1, 'staff1', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'staff1.jpg', 'Đà Nẵng', 'Đà Nẵng', 'Phường Hải Châu 1', '56 Bạch Đằng', 0, 0, 1711814400000),
-('nv7', 'pq3', 'NV007', 'Trần Thị Manager', 'manager@aerostride.com', '0912345678', '1988-10-15', 0, 'manager', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'manager.jpg', 'Hải Phòng', 'Hải Phòng', 'Phường Lạch Tray', '102 Lạch Tray', 0, 0, 1711814400000),
-('nv8', 'pq2', 'NV008', 'Lê Văn Bán Hàng', 'staff2@aerostride.com', '0922334455', '1998-02-14', 1, 'staff2', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'staff2.jpg', 'Quảng Ninh', 'Hạ Long', 'Phường Bãi Cháy', '9 Hạ Long', 0, 0, 1711814400000),
-('nv9', 'pq4', 'NV009', 'Phạm Thủ Kho', 'warehouse@aerostride.com', '0933445566', '1992-07-30', 1, 'warehouse', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'warehouse.jpg', 'Bình Dương', 'Thủ Dầu Một', 'Phường Phú Hòa', '77 Đại lộ Bình Dương', 0, 0, 1711814400000)
+('nv7', 'pq2', 'NV007', 'Trần Thị Manager', 'manager@aerostride.com', '0912345678', '1988-10-15', 0, 'manager', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'manager.jpg', 'Hải Phòng', 'Hải Phòng', 'Phường Lạch Tray', '102 Lạch Tray', 0, 0, 1711814400000),
+('nv8', 'pq2', 'NV008', 'Lê Văn Bán Hàng', 'staff2@aerostride.com', '0922334455', '1998-02-14', 1, 'staff2', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'staff2.jpg', 'Quảng Ninh', 'Hạ Long', 'Phường Bãi Cháy', '9 Hạ Long', 0, 0, 1711814400000)
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- 4. Bảng Khách Hàng (khach_hang)

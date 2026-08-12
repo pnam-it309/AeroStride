@@ -288,28 +288,36 @@ const scrollToCategories = () => {
             <section class="section-container py-8">
                 <div class="features-grid-bar">
                     <div class="feature-item">
-                        <span class="feature-icon">✓</span>
+                        <div class="feature-icon">
+                            <v-icon color="#2962ff" size="20">mdi-shield-check-outline</v-icon>
+                        </div>
                         <div class="feature-text">
                             <span class="feature-title">100% chính hãng</span>
                             <span class="feature-desc">Cam kết nguồn gốc</span>
                         </div>
                     </div>
                     <div class="feature-item">
-                        <span class="feature-icon">⚡</span>
+                        <div class="feature-icon">
+                            <v-icon color="#2962ff" size="20">mdi-lightning-bolt-outline</v-icon>
+                        </div>
                         <div class="feature-text">
                             <span class="feature-title">Giao hàng nhanh</span>
                             <span class="feature-desc">Toàn quốc 2–4 ngày</span>
                         </div>
                     </div>
                     <div class="feature-item">
-                        <span class="feature-icon">↻</span>
+                        <div class="feature-icon">
+                            <v-icon color="#2962ff" size="20">mdi-refresh</v-icon>
+                        </div>
                         <div class="feature-text">
                             <span class="feature-title">Đổi trả 30 ngày</span>
                             <span class="feature-desc">Dễ dàng, miễn phí</span>
                         </div>
                     </div>
                     <div class="feature-item">
-                        <span class="feature-icon">♢</span>
+                        <div class="feature-icon">
+                            <v-icon color="#2962ff" size="20">mdi-shield-lock-outline</v-icon>
+                        </div>
                         <div class="feature-text">
                             <span class="feature-title">Thanh toán an toàn</span>
                             <span class="feature-desc">Bảo mật tuyệt đối</span>

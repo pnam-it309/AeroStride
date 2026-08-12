@@ -1,6 +1,7 @@
 package com.example.be.infrastructure.security.router;
 
 import com.example.be.infrastructure.constants.RoutesConstant;
+import com.example.be.infrastructure.constants.VaiTro;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.stereotype.Component;
 
@@ -9,7 +10,7 @@ public class StaffSecurityConfig {
 
     public void configure(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers(RoutesConstant.STAFF + "/**").hasAnyRole("NHAN_VIEN", "QUAN_TRI_VIEN")
+                .requestMatchers(RoutesConstant.STAFF + "/**").hasAnyRole(VaiTro.STAFF, VaiTro.ADMIN)
         );
     }
 }
