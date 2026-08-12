@@ -1,3 +1,10 @@
+## [1.37.2](https://github.com/pnam-it309/AeroStride/compare/v1.37.1...v1.37.2) (2026-08-12)
+
+
+### Bug Fixes
+
+* **websocket:** sanitize SockJS URL scheme to prevent SyntaxError wss is not allowed ([a749cc7](https://github.com/pnam-it309/AeroStride/commit/a749cc70e59f5efa209cddc3fcdc99ab138ad19f))
+
 ## [1.37.1](https://github.com/pnam-it309/AeroStride/compare/v1.37.0...v1.37.1) (2026-08-12)
 
 
