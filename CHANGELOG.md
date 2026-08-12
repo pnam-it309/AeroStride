@@ -1,3 +1,10 @@
+## [1.37.1](https://github.com/pnam-it309/AeroStride/compare/v1.37.0...v1.37.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* **websocket:** update Nginx connection_upgrade proxy and STOMP brokerURL ([0245b7c](https://github.com/pnam-it309/AeroStride/commit/0245b7cc6ee70ddaafa987c73484201fde5e9f52))
+
 # [1.37.0](https://github.com/pnam-it309/AeroStride/compare/v1.36.2...v1.37.0) (2026-08-12)
 
 
