@@ -1,3 +1,10 @@
+# [1.37.0](https://github.com/pnam-it309/AeroStride/compare/v1.36.2...v1.37.0) (2026-08-12)
+
+
+### Features
+
+* **auth/seo:** standardize 3 core roles (QUAN_LY, NHAN_VIEN, KHACH_HANG) and optimize SEO sitemap ([97b571c](https://github.com/pnam-it309/AeroStride/commit/97b571cdeaa86a6f4a2f70bc5bd365c878e79451))
+
 ## [1.36.2](https://github.com/pnam-it309/AeroStride/compare/v1.36.1...v1.36.2) (2026-08-10)
 
 
