@@ -1,3 +1,10 @@
+## [1.37.3](https://github.com/pnam-it309/AeroStride/compare/v1.37.2...v1.37.3) (2026-08-12)
+
+
+### Bug Fixes
+
+* **be:** resolve Java compilation error in VaiTro.java for Docker gradle build ([38151a2](https://github.com/pnam-it309/AeroStride/commit/38151a221907f40deb0bdf67bb229b2ef02f324e))
+
 ## [1.37.2](https://github.com/pnam-it309/AeroStride/compare/v1.37.1...v1.37.2) (2026-08-12)
 
 
