@@ -23,12 +23,19 @@ class ChatSocketService {
         const wsUrl = import.meta.env.VITE_WS_URL || '/ws-chat';
         const targetEndpoint = wsUrl.includes('ws-chat') ? wsUrl : '/ws-chat';
 
+        // Tự động xây dựng URL WSS/WS tuyệt đối cho native WebSocket
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const nativeWsUrl = targetEndpoint.startsWith('http')
+            ? targetEndpoint.replace(/^http/, 'ws') + '/websocket'
+            : `${protocol}//${window.location.host}${targetEndpoint}/websocket`;
+
         this.client = new Client({
+            brokerURL: nativeWsUrl,
             webSocketFactory: () =>
                 new SockJS(targetEndpoint, null, {
                     transports: ['websocket', 'xhr-streaming', 'xhr-polling']
                 }),
-            reconnectDelay: 5000,
+            reconnectDelay: 10000,
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
             onConnect: () => {
