@@ -1,3 +1,10 @@
+## [1.37.5](https://github.com/pnam-it309/AeroStride/compare/v1.37.4...v1.37.5) (2026-08-12)
+
+
+### Bug Fixes
+
+* resolve 6 customer-facing bugs ([d1325b3](https://github.com/pnam-it309/AeroStride/commit/d1325b395b751da296b9eec92a1fb9bdb05365c3))
+
 ## [1.37.4](https://github.com/pnam-it309/AeroStride/compare/v1.37.3...v1.37.4) (2026-08-12)
 
 
