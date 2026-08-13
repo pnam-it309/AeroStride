@@ -73,7 +73,8 @@ export const API_LICH_LAM_VIEC = {
     SCHEDULES: `${API_BASE.ADMIN}/lich-lam-viec/schedules`,
     SHIFTS: `${API_BASE.ADMIN}/lich-lam-viec/shifts`,
     ACTIVITIES: `${API_BASE.ADMIN}/lich-lam-viec/activities`,
-    ATTENDANCE: `${API_BASE.ADMIN}/lich-lam-viec/attendance`
+    ATTENDANCE: `${API_BASE.ADMIN}/lich-lam-viec/attendance`,
+    AUTO_SCHEDULE: `${API_BASE.ADMIN}/lich-lam-viec/auto-schedule`
 };
 
 export const API_CUSTOMER = {

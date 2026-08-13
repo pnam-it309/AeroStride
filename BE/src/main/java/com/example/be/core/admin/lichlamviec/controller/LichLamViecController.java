@@ -1,5 +1,6 @@
 package com.example.be.core.admin.lichlamviec.controller;
 
+import com.example.be.core.admin.lichlamviec.model.request.AutoScheduleRequest;
 import com.example.be.core.admin.lichlamviec.model.request.CaLamRequest;
 import com.example.be.core.admin.lichlamviec.model.request.LichLamViecRequest;
 import com.example.be.core.admin.lichlamviec.service.LichLamViecService;
@@ -80,6 +81,11 @@ public class LichLamViecController {
     @PostMapping(RoutesConstant.SCHEDULES)
     public ResponseEntity<ApiResponse<?>> addSchedule(@RequestBody LichLamViecRequest request) {
         return ResponseEntity.ok(ApiResponse.success(lichLamViecService.addSchedule(request)));
+    }
+
+    @PostMapping("/auto-schedule")
+    public ResponseEntity<ApiResponse<?>> autoSchedule(@RequestBody AutoScheduleRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.autoSchedule(request)));
     }
 
     @PutMapping(RoutesConstant.SCHEDULES + "/{id}")

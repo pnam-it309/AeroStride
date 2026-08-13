@@ -2,6 +2,7 @@ package com.example.be.core.admin.lichlamviec.service;
 
 import com.example.be.core.admin.lichlamviec.model.request.CaLamRequest;
 import com.example.be.core.admin.lichlamviec.model.request.LichLamViecRequest;
+import com.example.be.core.admin.lichlamviec.model.request.AutoScheduleRequest;
 import com.example.be.core.admin.lichlamviec.model.CaLamResponse;
 import com.example.be.core.admin.lichlamviec.model.LichLamViecResponse;
 import com.example.be.core.admin.lichlamviec.model.LichSuHoatDongResponse;
@@ -26,6 +27,8 @@ public interface LichLamViecService {
     String importExcel(MultipartFile file) throws IOException;
 
     String addSchedule(LichLamViecRequest request);
+
+    String autoSchedule(AutoScheduleRequest request);
 
     String updateSchedule(String id, LichLamViecRequest request);
 

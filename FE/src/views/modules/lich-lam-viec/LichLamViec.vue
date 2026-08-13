@@ -72,6 +72,9 @@ const addForm = ref({
 const showImportPreview = ref(false);
 const importPreviewData = ref([]);
 
+// Auto Schedule State
+const showAutoScheduleDialog = ref(false);
+
 const breadcrumbs = [
     { title: 'Quản lý lịch', disabled: false, href: '#' },
     { title: 'Lịch làm việc', disabled: true }
@@ -165,17 +168,20 @@ const loadData = async () => {
             apiService.get('/admin/nhan-vien/hien-thi')
         ]);
 
+        // if (scheduleRes.data.success) {
+        //     items.value = scheduleRes.data.data;
+        //     if (items.value.length > 0) {
+        //         const todayStr = new Date().toISOString().substr(0, 10);
+        //         const hasToday = items.value.some((s) => s.ngay === todayStr);
+        //         if (!hasToday) {
+        //             const sorted = [...items.value].sort((a, b) => b.ngay.localeCompare(a.ngay));
+        //             currentMonth.value = new Date(sorted[0].ngay);
+        //         }
+        //     }
+        // }
         if (scheduleRes.data.success) {
-            items.value = scheduleRes.data.data;
-            if (items.value.length > 0) {
-                const todayStr = new Date().toISOString().substr(0, 10);
-                const hasToday = items.value.some((s) => s.ngay === todayStr);
-                if (!hasToday) {
-                    const sorted = [...items.value].sort((a, b) => b.ngay.localeCompare(a.ngay));
-                    currentMonth.value = new Date(sorted[0].ngay);
-                }
-            }
-        }
+    items.value = scheduleRes.data.data;
+}
 
         if (shiftRes.data.success) {
             rawShifts.value = shiftRes.data.data;
@@ -354,6 +360,65 @@ const confirmImport = async () => {
         }
     } catch (error) {
         console.error('Error confirming import:', error);
+    } finally {
+        loading.value = false;
+    }
+};
+
+const autoSchedulePeriodStr = computed(() => {
+    if (!tableWeekDays.value || tableWeekDays.value.length < 7) return '';
+    const monStr = tableWeekDays.value[MonStrIndex() || 0];
+    const sunStr = tableWeekDays.value[SunStrIndex() || 6];
+    
+    const format = (str) => {
+        if (!str) return '';
+        const parts = str.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return str;
+    };
+    
+    return `${format(monStr)} - ${format(sunStr)}`;
+});
+
+const MonStrIndex = () => 0;
+const SunStrIndex = () => 6;
+
+const openAutoScheduleDialog = () => {
+    showAutoScheduleDialog.value = true;
+};
+
+const executeAutoSchedule = async () => {
+    if (!tableWeekDays.value || tableWeekDays.value.length < 7) {
+        addNotification({ title: 'Lỗi', subtitle: 'Không xác định được khoảng thời gian tuần!', color: 'error' });
+        return;
+    }
+    
+    loading.value = true;
+    showAutoScheduleDialog.value = false;
+    
+    try {
+        const res = await apiService.post(API_LICH_LAM_VIEC.AUTO_SCHEDULE, {
+            startDate: tableWeekDays.value[0],
+            endDate: tableWeekDays.value[6]
+        });
+        
+        if (res.data.success) {
+            addNotification({
+                title: 'Thành công',
+                subtitle: res.data.data || 'Xếp ca tự động thành công!',
+                color: 'success'
+            });
+            await loadData();
+        }
+    } catch (error) {
+        console.error('Auto schedule error:', error);
+        addNotification({
+            title: 'Lỗi',
+            subtitle: error.response?.data?.message || 'Có lỗi xảy ra khi xếp ca tự động!',
+            color: 'error'
+        });
     } finally {
         loading.value = false;
     }
@@ -920,6 +985,9 @@ onMounted(() => {
                 </div>
                 <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions ga-2">
                     <template v-if="canManageSchedule">
+                        <v-btn prepend-icon="mdi-calendar-sync" variant="flat" class="admin-btn-secondary" :disabled="loading" @click="openAutoScheduleDialog">
+                            Xếp ca tự động
+                        </v-btn>
                         <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-export" @click="handleDownloadTemplate">
                             Tải Excel
                         </v-btn>
@@ -1477,6 +1545,29 @@ onMounted(() => {
                     <v-spacer></v-spacer>
                     <v-btn variant="outlined" color="grey" @click="showImportPreview = false" class="rounded-lg">Hủy bỏ</v-btn>
                     <v-btn color="primary" variant="flat" @click="confirmImport" class="px-6 rounded-lg ml-2">Xác nhận lưu</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Auto Schedule Confirm Dialog -->
+        <v-dialog v-model="showAutoScheduleDialog" max-width="500">
+            <v-card class="rounded-xl pa-4">
+                <v-card-title class="text-h6 font-weight-bold d-flex align-center" style="color: #b91c1c;">
+                    <v-icon color="red-darken-2" class="mr-3">mdi-alert-circle-outline</v-icon>
+                    Xác nhận xếp ca tự động
+                </v-card-title>
+                <v-card-text class="py-2">
+                    <p class="text-slate-700 mb-3" style="font-size: 14px;">
+                        Bạn có chắc chắn muốn xếp ca tự động cho tuần: <strong class="text-primary">{{ autoSchedulePeriodStr }}</strong>?
+                    </p>
+                    <v-alert type="warning" variant="tonal" density="compact" class="text-caption rounded-lg">
+                        <strong>Cảnh báo:</strong> Hành động này sẽ <strong>XÓA và GHI ĐÈ</strong> toàn bộ lịch làm việc hiện tại trong tuần này. Dữ liệu cũ sẽ không thể khôi phục.
+                    </v-alert>
+                </v-card-text>
+                <v-card-actions class="pa-4">
+                    <v-spacer></v-spacer>
+                    <v-btn variant="text" color="grey" @click="showAutoScheduleDialog = false" :disabled="loading">Hủy</v-btn>
+                    <v-btn color="error" variant="flat" @click="executeAutoSchedule" :loading="loading" class="px-6 rounded-lg">Đồng ý</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
