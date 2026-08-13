@@ -2,6 +2,8 @@ package com.example.be.core.admin.lichlamviec.service.impl;
 
 import com.example.be.core.admin.lichlamviec.model.request.CaLamRequest;
 import com.example.be.core.admin.lichlamviec.model.request.LichLamViecRequest;
+import com.example.be.core.admin.lichlamviec.model.request.AutoScheduleRequest;
+import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.core.admin.lichlamviec.model.CaLamResponse;
 import com.example.be.core.admin.lichlamviec.model.LichLamViecResponse;
 import com.example.be.core.admin.lichlamviec.model.LichSuHoatDongResponse;
@@ -214,6 +216,94 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         }
 
         return "Đã thêm " + scheduleCount + " lịch làm việc thành công!";
+    }
+
+    @Override
+    @Transactional
+    public String autoSchedule(AutoScheduleRequest request) {
+        if (request.getStartDate() == null || request.getEndDate() == null) {
+            throw new RuntimeException("Khoảng thời gian không được để trống!");
+        }
+
+        LocalDate start;
+        LocalDate end;
+        try {
+            start = LocalDate.parse(request.getStartDate(), dateFormatter);
+            end = LocalDate.parse(request.getEndDate(), dateFormatter);
+        } catch (Exception e) {
+            throw new RuntimeException("Định dạng ngày không hợp lệ!");
+        }
+
+        if (start.isAfter(end)) {
+            throw new RuntimeException("Ngày bắt đầu phải trước ngày kết thúc!");
+        }
+
+        // 1. Xóa lịch cũ trong khoảng thời gian này
+        List<LichLamViec> oldSchedules = lichLamViecRepository.findByNgayLamBetween(start, end);
+        if (!oldSchedules.isEmpty()) {
+            lichLamViecRepository.deleteAll(oldSchedules);
+        }
+
+        // 2. Lấy danh sách nhân viên đang hoạt động
+        List<NhanVien> activeEmployees = nhanVienRepository.findAll().stream()
+                .filter(nv -> (nv.getXoaMem() == null || !nv.getXoaMem()) && nv.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+                .collect(Collectors.toList());
+
+        if (activeEmployees.isEmpty()) {
+            throw new RuntimeException("Không tìm thấy nhân viên đang hoạt động nào trong hệ thống!");
+        }
+
+        // 3. Lấy danh sách ca làm việc chưa bị xóa
+        List<CaLam> shifts = caLamRepository.findByXoaMemFalse();
+        if (shifts.isEmpty()) {
+            throw new RuntimeException("Không tìm thấy ca làm việc nào đang hoạt động!");
+        }
+
+        // 4. Trộn ngẫu nhiên nhân viên
+        List<NhanVien> shuffledEmployees = new ArrayList<>(activeEmployees);
+        java.util.Collections.shuffle(shuffledEmployees);
+
+        // 5. Tạo danh sách các ngày trong tuần
+        List<LocalDate> daysInWeek = new ArrayList<>();
+        LocalDate current = start;
+        while (!current.isAfter(end)) {
+            daysInWeek.add(current);
+            current = current.plusDays(1);
+        }
+
+        int empIndex = 0;
+        int numEmployees = shuffledEmployees.size();
+        List<LichLamViec> newSchedules = new ArrayList<>();
+
+        for (LocalDate day : daysInWeek) {
+            for (CaLam shift : shifts) {
+                NhanVien assignedEmployee = shuffledEmployees.get(empIndex);
+
+                LichLamViec schedule = LichLamViec.builder()
+                        .nhanVien(assignedEmployee)
+                        .caLam(shift)
+                        .ngayLam(day)
+                        .trangThaiLich(LichLamViec.TrangThaiLichLamViec.CHO_XAC_NHAN)
+                        .tangCa(false)
+                        .build();
+
+                newSchedules.add(schedule);
+
+                // Xoay vòng nhân viên
+                empIndex = (empIndex + 1) % numEmployees;
+            }
+        }
+
+        lichLamViecRepository.saveAll(newSchedules);
+
+        // 6. Ghi log hoạt động
+        LichSuHoatDong activity = LichSuHoatDong.builder()
+                .hanhDong("Xếp ca tự động")
+                .doiTuong("Tuần từ " + request.getStartDate() + " đến " + request.getEndDate() + " (" + newSchedules.size() + " ca làm việc)")
+                .build();
+        lichSuHoatDongRepository.save(activity);
+
+        return "Đã xếp ca tự động thành công cho " + newSchedules.size() + " ca làm việc trong tuần!";
     }
 
     @Override
