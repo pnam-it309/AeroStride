@@ -1,3 +1,10 @@
+# [1.38.0](https://github.com/pnam-it309/AeroStride/compare/v1.37.5...v1.38.0) (2026-08-15)
+
+
+### Features
+
+* optimize admin management, unify history views, and enhance customer chat ([9c447ba](https://github.com/pnam-it309/AeroStride/commit/9c447ba83cb4d424852b1dd240d4314750477aa4))
+
 ## [1.37.5](https://github.com/pnam-it309/AeroStride/compare/v1.37.4...v1.37.5) (2026-08-12)
 
 
