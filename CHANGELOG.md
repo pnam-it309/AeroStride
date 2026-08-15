@@ -1,3 +1,10 @@
+# [1.39.0](https://github.com/pnam-it309/AeroStride/compare/v1.38.0...v1.39.0) (2026-08-15)
+
+
+### Features
+
+* Bổ sung tính năng xếp ca tự động ([99b5424](https://github.com/pnam-it309/AeroStride/commit/99b54242b5efc1edf1634a3385f812e35f6761c6))
+
 # [1.38.0](https://github.com/pnam-it309/AeroStride/compare/v1.37.5...v1.38.0) (2026-08-15)
 
 
