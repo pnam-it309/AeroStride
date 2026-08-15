@@ -477,7 +477,7 @@ const renderVariantQrCanvases = async (variants) => {
     }));
 
     await nextTick();
-    await new Promise((resolve) => window.setTimeout(resolve, 80));
+    await new Promise((resolve) => window.setTimeout(resolve, 150));
 
     const canvases = Array.from(qrExportContainer.value?.querySelectorAll('canvas') || []);
     const qrDataUrls = canvases.map((canvas) => canvas.toDataURL('image/png'));
@@ -1085,7 +1085,7 @@ onBeforeUnmount(() => {
                 <div class="px-6 pb-6 bg-slate-50">
                     <div class="pt-6">
                         <div ref="qrCodeWrapper" class="d-flex flex-column align-center pa-6 rounded-xl bg-white border elevation-1">
-                            <QrcodeVue :value="qrDialog.value" :size="240" level="H" render-as="canvas" class="qr-canvas-display" />
+                            <QrcodeVue :value="qrDialog.value" :size="260" :margin="2" level="M" render-as="canvas" class="qr-canvas-display" />
 
                             <div
                                 class="mt-5 px-4 py-2 rounded-lg bg-slate-100 border text-slate-800 font-weight-bold text-body-2 tracking-wide monospace"
@@ -1120,7 +1120,7 @@ onBeforeUnmount(() => {
 
         <div ref="qrExportContainer" class="qr-export-staging" aria-hidden="true">
             <div v-for="item in qrExportItems" :key="item.id" class="qr-export-item">
-                <QrcodeVue :value="item.value" :size="120" level="H" render-as="canvas" />
+                <QrcodeVue :value="item.value" :size="300" :margin="2" level="M" render-as="canvas" />
             </div>
         </div>
     </v-container>

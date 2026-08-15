@@ -674,8 +674,19 @@ const stopScanner = async (closeDialog = true) => {
 
 const onScanSuccess = async (decodedText) => {
     await stopScanner();
-    const keyword = decodedText?.trim();
+    let keyword = decodedText?.trim();
     if (!keyword) return;
+
+    // Phân tích nếu chuỗi quét được là JSON hoặc chứa định dạng đặc biệt
+    try {
+        if (keyword.startsWith('{') && keyword.endsWith('}')) {
+            const parsed = JSON.parse(keyword);
+            keyword = parsed.maChiTietSanPham || parsed.ma || parsed.id || keyword;
+        }
+    } catch (e) {
+        // chuỗi text thông thường
+    }
+
     if (!selectedOrder.value) {
         addNotification({ title: 'Chưa có hóa đơn', subtitle: 'Vui lòng tạo hoặc chọn hóa đơn trước khi quét mã.', color: 'warning' });
         return;
@@ -690,6 +701,12 @@ const onScanSuccess = async (decodedText) => {
                     (v) =>
                         String(v.maChiTietSanPham || '')
                             .trim()
+                            .toLowerCase() === normalizedKeyword ||
+                        String(v.id || '')
+                            .trim()
+                            .toLowerCase() === normalizedKeyword ||
+                        String(v.maSanPham || '')
+                            .trim()
                             .toLowerCase() === normalizedKeyword
                 ) || variants[0];
 
@@ -700,17 +717,42 @@ const onScanSuccess = async (decodedText) => {
                 }
                 const currentStock = Number(exactMatch.soLuongTon ?? exactMatch.soLuong ?? 0);
                 if (currentStock <= 0) {
-                    addNotification({ title: 'Thất bại', subtitle: 'Sản phẩm đã hết hàng', color: 'error' });
+                    addNotification({ title: 'Thất bại', subtitle: 'Sản phẩm đã hết hàng trong kho', color: 'error' });
                     return;
                 }
 
                 await onAddProduct({ ...exactMatch, _soLuongMuonThem: 1 });
             }
         } else {
-            addNotification({ title: 'Không tìm thấy', subtitle: `Không tìm thấy mã sản phẩm ${keyword}`, color: 'warning' });
+            addNotification({ title: 'Không tìm thấy', subtitle: `Không tìm thấy sản phẩm có mã [${keyword}]`, color: 'warning' });
         }
     } catch (e) {
         console.error('Scan error:', e);
+    }
+};
+
+const onScanFile = async (file) => {
+    if (!file) return;
+    try {
+        if (!html5QrcodeScanner) {
+            html5QrcodeScanner = new Html5Qrcode(scannerElementId);
+        }
+        if (html5QrcodeScanner.isScanning) {
+            try {
+                await html5QrcodeScanner.stop();
+            } catch (e) {}
+        }
+        const decodedText = await html5QrcodeScanner.scanFile(file, true);
+        if (decodedText) {
+            onScanSuccess(decodedText);
+        }
+    } catch (err) {
+        console.error('Lỗi quét file ảnh QR:', err);
+        addNotification({
+            title: 'Không nhận diện được QR',
+            subtitle: 'Không thể tìm thấy mã QR trong file ảnh đã chọn. Vui lòng thử ảnh rõ nét hơn.',
+            color: 'warning'
+        });
     }
 };
 
@@ -2139,7 +2181,12 @@ const handleVnPayCallbackFromUrl = async () => {
         />
 
         <!-- Scanner dialog -->
-        <ScannerDialog v-model="showScanner" :scanner-element-id="scannerElementId" @stop="stopScanner" />
+        <ScannerDialog
+            v-model="showScanner"
+            :scanner-element-id="scannerElementId"
+            @stop="stopScanner"
+            @scan-file="onScanFile"
+        />
 
         <!-- Confirmation Dialog -->
         <AdminConfirm

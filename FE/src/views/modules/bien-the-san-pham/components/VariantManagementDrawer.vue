@@ -271,7 +271,7 @@ const setMainImage = async (imgId) => {
                         </v-btn>
                     </div>
                     <div ref="qrCodeRef" class="d-flex flex-column align-center justify-center pa-4 bg-white rounded-lg border elevation-1">
-                        <QrcodeVue :value="qrValue" :size="160" level="H" render-as="canvas" class="qr-canvas-display" />
+                        <QrcodeVue :value="qrValue" :size="220" :margin="2" level="M" render-as="canvas" class="qr-canvas-display" />
                         <div class="mt-3 px-3 py-1 rounded bg-slate-100 border text-slate-800 font-weight-bold text-caption monospace">
                             {{ qrValue }}
                         </div>

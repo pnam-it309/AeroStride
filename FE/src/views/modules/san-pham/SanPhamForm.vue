@@ -933,7 +933,7 @@ const renderVariantQrCanvases = async (variants) => {
     }));
 
     await nextTick();
-    await new Promise((resolve) => window.setTimeout(resolve, 80));
+    await new Promise((resolve) => window.setTimeout(resolve, 150));
 
     const canvases = Array.from(qrExportContainer.value?.querySelectorAll('canvas') || []);
     const qrDataUrls = canvases.map((canvas) => canvas.toDataURL('image/png'));
@@ -3196,7 +3196,7 @@ const handleSave = async () => {
 
         <div ref="qrExportContainer" class="qr-export-staging" aria-hidden="true">
             <div v-for="item in qrExportItems" :key="item.id" class="qr-export-item">
-                <QrcodeVue :value="item.value" :size="120" level="H" render-as="canvas" />
+                <QrcodeVue :value="item.value" :size="300" :margin="2" level="M" render-as="canvas" />
             </div>
         </div>
 

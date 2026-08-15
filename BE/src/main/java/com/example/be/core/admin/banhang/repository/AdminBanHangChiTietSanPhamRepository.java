@@ -40,7 +40,9 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
         AND (ct.sanPham.trangThai IS NULL OR ct.sanPham.trangThai = com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG)
         AND (ct.soLuong IS NOT NULL AND ct.soLuong > 0)
         AND (LOWER(ct.sanPham.ten) LIKE LOWER(CONCAT('%', :keyword, '%'))
-           OR LOWER(ct.maChiTietSanPham) LIKE LOWER(CONCAT('%', :keyword, '%')))
+           OR LOWER(ct.maChiTietSanPham) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR LOWER(ct.sanPham.ma) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR ct.id = :keyword)
         """)
     List<ChiTietSanPham> searchByKeyword(@Param("keyword") String keyword);
 
@@ -69,6 +71,7 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
             LOWER(ct.maChiTietSanPham) LIKE LOWER(CONCAT('%', :keyword, '%'))
             OR LOWER(sp.ten) LIKE LOWER(CONCAT('%', :keyword, '%'))
             OR LOWER(sp.ma) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR ct.id = :keyword
         )
         ORDER BY ct.ngayTao DESC
         """)
