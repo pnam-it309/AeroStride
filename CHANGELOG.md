@@ -1,3 +1,10 @@
+# [1.40.0](https://github.com/pnam-it309/AeroStride/compare/v1.39.0...v1.40.0) (2026-08-15)
+
+
+### Features
+
+* enhance QR scanning and export for product variants in POS sales ([d8a8b78](https://github.com/pnam-it309/AeroStride/commit/d8a8b78430cffc9dea068a93ee71a8fad421e89a))
+
 # [1.39.0](https://github.com/pnam-it309/AeroStride/compare/v1.38.0...v1.39.0) (2026-08-15)
 
 
