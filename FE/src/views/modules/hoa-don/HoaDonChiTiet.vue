@@ -1658,29 +1658,30 @@ onMounted(() => {
         <!-- History Modal (Lịch sử biến động đơn hàng) -->
         <v-dialog v-model="showHistoryModal" max-width="850">
             <v-card class="rounded-xl overflow-hidden shadow-2xl border-0 bg-white d-flex flex-column">
-                <!-- Header gradient đẳng cấp -->
-                <div class="history-dialog-header px-6 py-5 d-flex align-center justify-space-between text-white">
+                <!-- Header gradient màu xanh thương hiệu AeroStride -->
+                <div class="history-dialog-header px-6 py-5 d-flex align-center justify-space-between">
                     <div class="d-flex align-center ga-3">
                         <div class="history-header-icon-wrap">
-                            <v-icon size="24" color="white">mdi-history</v-icon>
+                            <v-icon size="24" color="#ffffff">mdi-history</v-icon>
                         </div>
                         <div>
-                            <h3 class="text-h6 font-weight-bold mb-0 text-white leading-tight">Lịch sử biến động đơn hàng</h3>
-                            <div class="text-caption text-slate-300 opacity-90 mt-1">
-                                Mã đơn: <span class="font-weight-bold text-amber-300">#{{ order.maHoaDon }}</span>
-                                <span class="mx-2">•</span>
+                            <h3 class="history-modal-title mb-0">Lịch sử biến động đơn hàng</h3>
+                            <div class="history-modal-subtitle mt-1">
+                                <span>Mã đơn:</span> <span class="history-order-badge">#{{ order.maHoaDon }}</span>
+                                <span class="mx-2 opacity-60">•</span>
                                 <span>{{ allHistoryLogs.length }} lượt ghi nhận</span>
                             </div>
                         </div>
                     </div>
                     <v-btn
-                        icon="mdi-close"
-                        variant="tonal"
-                        color="white"
+                        icon
+                        variant="text"
                         size="small"
-                        class="rounded-circle"
+                        class="history-close-btn rounded-circle"
                         @click="showHistoryModal = false"
-                    ></v-btn>
+                    >
+                        <v-icon size="20" color="#ffffff">mdi-close</v-icon>
+                    </v-btn>
                 </div>
 
                 <v-card-text class="pa-6 bg-slate-50 history-modal-body">
@@ -2252,21 +2253,70 @@ onMounted(() => {
    ENHANCED ORDER HISTORY TIMELINE STYLES & ANIMATIONS
    ========================================================================== */
 .history-dialog-header {
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #1e257c 100%);
+    background: linear-gradient(135deg, #1e257c 0%, #23318c 50%, #1d4ed8 100%) !important;
     position: relative;
-    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.2);
+    box-shadow: 0 4px 20px rgba(30, 37, 124, 0.25);
+    color: #ffffff !important;
+}
+
+.history-modal-title {
+    color: #ffffff !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    letter-spacing: 0.2px;
+}
+
+.history-modal-subtitle {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 0.825rem !important;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.history-order-badge {
+    color: #fef08a !important;
+    font-weight: 700 !important;
+    background: rgba(255, 255, 255, 0.18);
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-left: 4px;
+    display: inline-block;
 }
 
 .history-header-icon-wrap {
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.2) !important;
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    flex-shrink: 0;
+}
+
+.history-header-icon-wrap .v-icon {
+    color: #ffffff !important;
+}
+
+.history-close-btn {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    transition: all 0.25s ease;
+    width: 36px !important;
+    height: 36px !important;
+}
+
+.history-close-btn:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    transform: rotate(90deg) scale(1.05);
+}
+
+.history-close-btn .v-icon {
+    color: #ffffff !important;
 }
 
 .history-scroll-container {

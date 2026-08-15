@@ -96,33 +96,39 @@ onMounted(() => {
         <MainHeader />
 
         <main class="main-content">
-            <!-- Header Section -->
-            <div class="page-header py-12 bg-grey-lighten-4 border-b">
+            <!-- Header Section: Logo Blue Gradient + Crisp White Text -->
+            <div class="page-header py-14 border-b text-white">
                 <v-container>
-                    <h1 class="text-h3 font-weight-black text-center text-grey-darken-4 mb-4">GỢI Ý CHỌN GIÀY AI</h1>
-                    <p class="text-center text-grey-darken-1 text-subtitle-1 max-w-2xl mx-auto">
-                        Hãy hoàn thành bài trắc nghiệm ngắn dưới đây để AeroStride AI phân tích và tìm ra những đôi giày hoàn hảo nhất cho bạn.
+                    <div class="d-flex justify-center mb-3">
+                        <v-chip color="amber-accent-2" variant="flat" size="small" class="font-weight-black px-4 text-slate-900 shadow-sm">
+                            <v-icon start size="16">mdi-robot-excited-outline</v-icon>
+                            AEROSTRIDE AI ASSISTANT
+                        </v-chip>
+                    </div>
+                    <h1 class="page-header-title text-h3 font-weight-black text-center mb-3">GỢI Ý CHỌN GIÀY AI</h1>
+                    <p class="page-header-subtitle text-center text-subtitle-1 max-w-2xl mx-auto">
+                        Hãy hoàn thành bài trắc nghiệm ngắn dưới đây để AeroStride AI phân tích phong cách, form chân và nhu cầu để tìm ra những đôi giày hoàn hảo nhất cho bạn.
                     </p>
                 </v-container>
             </div>
 
-            <!-- Quiz Layout Container -->
-            <v-container class="py-16">
+            <!-- Quiz Layout Container: Expanded Comfortable Width -->
+            <v-container class="py-12">
                 <v-row justify="center">
-                    <v-col cols="12" md="8" lg="7">
+                    <v-col cols="12" md="10" lg="9" xl="8">
                         <v-card class="quiz-card overflow-hidden border">
                             <!-- Progress Bar -->
-                            <div class="progress-bar-container px-8 pt-6 pb-2">
+                            <div class="progress-bar-container px-6 px-md-10 pt-6 pb-2">
                                 <v-progress-linear
                                     :model-value="progressPercentage"
                                     color="primary"
-                                    height="8"
+                                    height="10"
                                     rounded
                                     striped
                                     class="quiz-progress"
                                 ></v-progress-linear>
                                 <div class="d-flex justify-space-between text-caption text-medium-emphasis mt-2">
-                                    <span class="font-weight-bold text-slate-600">Bước {{ currentStep }} / {{ totalSteps }}</span>
+                                    <span class="font-weight-bold text-slate-700">Bước {{ currentStep }} / {{ totalSteps }}</span>
                                     <span class="font-weight-bold text-primary">{{ Math.round(progressPercentage) }}% Hoàn thành</span>
                                 </div>
                             </div>
@@ -130,11 +136,11 @@ onMounted(() => {
                             <!-- Divider -->
                             <v-divider></v-divider>
 
-                            <v-card-text class="quiz-content px-8 py-8">
+                            <v-card-text class="quiz-content px-6 px-md-10 py-8">
                                 <!-- Loading state -->
                                 <div v-if="loading" class="d-flex flex-column align-center justify-center py-12">
                                     <v-progress-circular indeterminate color="primary" size="64" width="5"></v-progress-circular>
-                                    <div class="mt-6 text-h6 font-weight-medium text-slate-600 animate-pulse">
+                                    <div class="mt-6 text-h6 font-weight-bold text-slate-700 animate-pulse">
                                         AeroStride AI đang phân tích dữ liệu...
                                     </div>
                                 </div>
@@ -146,19 +152,19 @@ onMounted(() => {
                                             <v-icon color="primary" size="32" class="mr-2 animate-bounce">mdi-wizard-hat</v-icon>
                                             <span class="text-overline font-weight-bold text-primary tracking-wider">AEROSTRIDE AI QUIZ</span>
                                         </div>
-                                        <h2 class="text-h5 font-weight-bold mb-8 text-slate-800 text-center question-text">
+                                        <h2 class="text-h5 font-weight-black mb-8 text-slate-900 text-center question-text">
                                             {{ currentQuestion.questionText }}
                                         </h2>
-                                        <v-row class="ga-4 flex-column align-center px-4">
+                                        <v-row class="ga-4 flex-column align-center px-2 px-md-4">
                                             <v-card
                                                 v-for="opt in currentQuestion.options"
                                                 :key="opt.value"
-                                                class="option-card w-100 pa-5 d-flex align-center justify-space-between border cursor-pointer transition elevation-1"
+                                                class="option-card w-100 pa-5 pa-md-6 d-flex align-center justify-space-between border cursor-pointer transition elevation-1"
                                                 variant="outlined"
                                                 @click="selectOption(opt.value)"
                                             >
-                                                <div class="font-weight-bold text-body-1 text-slate-700">{{ opt.label }}</div>
-                                                <v-icon color="primary" class="option-arrow">mdi-chevron-right</v-icon>
+                                                <div class="font-weight-bold text-h6 text-slate-800">{{ opt.label }}</div>
+                                                <v-icon color="primary" size="24" class="option-arrow">mdi-chevron-right</v-icon>
                                             </v-card>
                                         </v-row>
                                     </div>
@@ -167,8 +173,8 @@ onMounted(() => {
                                     <div v-else-if="recommendedProducts.length > 0" class="animate-fade-in">
                                         <div class="text-center mb-8">
                                             <v-icon color="success" size="56" class="mb-3 animate-bounce">mdi-check-circle-outline</v-icon>
-                                            <h2 class="text-h4 font-weight-black text-slate-800">Sản Phẩm Phù Hợp Với Bạn!</h2>
-                                            <p class="text-subtitle-1 text-medium-emphasis mt-2">
+                                            <h2 class="text-h4 font-weight-black text-slate-900">Sản Phẩm Phù Hợp Với Bạn!</h2>
+                                            <p class="text-subtitle-1 text-slate-600 mt-2">
                                                 Dưới đây là danh sách sản phẩm được gợi ý riêng dựa trên các câu trả lời của bạn:
                                             </p>
                                         </div>
@@ -179,7 +185,7 @@ onMounted(() => {
                                                     <div class="product-img-wrapper position-relative">
                                                         <v-img
                                                             :src="prod.hinhAnh || '/assets/images/products/s4.jpg'"
-                                                            height="220"
+                                                            height="240"
                                                             cover
                                                             class="product-img"
                                                         >
@@ -195,19 +201,19 @@ onMounted(() => {
                                                             class="brand-badge position-absolute font-weight-bold"
                                                             style="top: 12px; left: 12px"
                                                         >
-                                                            {{ prod.tenThuongHieu }}
+                                                            {{ prod.tenThuongHieu || 'AeroStride' }}
                                                         </v-chip>
                                                     </div>
-                                                    <div class="pa-4 d-flex flex-column justify-space-between flex-grow-1">
+                                                    <div class="pa-5 d-flex flex-column justify-space-between flex-grow-1">
                                                         <div>
-                                                            <h3 class="font-weight-bold text-body-1 text-slate-800 text-truncate">
+                                                            <h3 class="font-weight-bold text-h6 text-slate-900 text-truncate">
                                                                 {{ prod.tenSanPham }}
                                                             </h3>
-                                                            <div class="text-caption text-medium-emphasis mt-1">
+                                                            <div class="text-caption text-slate-500 font-weight-medium mt-1">
                                                                 {{ prod.tenMucDichChay }} | {{ prod.tenChatLieu }}
                                                             </div>
                                                         </div>
-                                                        <div class="d-flex align-center justify-space-between mt-4 pt-2 border-t">
+                                                        <div class="d-flex align-center justify-space-between mt-4 pt-3 border-t">
                                                             <div class="price-text text-h6 font-weight-black text-primary">
                                                                 {{ formatCurrency(prod.giaBanMin || prod.giaBan) }}
                                                             </div>
@@ -224,8 +230,8 @@ onMounted(() => {
                                     <!-- No matching products -->
                                     <div v-else class="text-center py-12 animate-fade-in">
                                         <v-icon color="warning" size="64" class="mb-4">mdi-alert-circle-outline</v-icon>
-                                        <h2 class="text-h5 font-weight-bold text-slate-800">Không tìm thấy sản phẩm phù hợp</h2>
-                                        <p class="text-body-1 text-medium-emphasis mt-3 px-8 mx-auto" style="max-width: 500px">
+                                        <h2 class="text-h5 font-weight-bold text-slate-900">Không tìm thấy sản phẩm phù hợp</h2>
+                                        <p class="text-body-1 text-slate-600 mt-3 px-8 mx-auto" style="max-width: 500px">
                                             Rất tiếc, hiện tại không có đôi giày nào trong cửa hàng đáp ứng đầy đủ tất cả các lựa chọn của bạn. Bạn hãy thử làm lại khảo sát với các lựa chọn rộng hơn nhé!
                                         </p>
                                         <v-btn
@@ -245,7 +251,7 @@ onMounted(() => {
                             </v-card-text>
 
                             <!-- Footer Navigation -->
-                            <v-card-actions class="quiz-footer px-8 py-5 border-t bg-grey-lighten-4 d-flex justify-space-between">
+                            <v-card-actions class="quiz-footer px-6 px-md-10 py-5 border-t bg-grey-lighten-4 d-flex justify-space-between">
                                 <v-btn
                                     variant="outlined"
                                     color="secondary"
@@ -259,7 +265,7 @@ onMounted(() => {
 
                                 <v-btn
                                     variant="text"
-                                    color="grey-darken-1"
+                                    color="grey-darken-2"
                                     class="text-none font-weight-bold"
                                     @click="
                                         resetQuiz();
@@ -277,7 +283,7 @@ onMounted(() => {
                             <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-2 border-b pb-3">
                                 <div class="d-flex align-center">
                                     <v-icon color="primary" size="24" class="mr-2">mdi-sparkles</v-icon>
-                                    <h3 class="text-h6 font-weight-black text-slate-800">
+                                    <h3 class="text-h6 font-weight-black text-slate-900">
                                         GỢI Ý SẢN PHẨM PHÙ HỢP THỜI GIAN THỰC
                                     </h3>
                                 </div>
@@ -295,7 +301,7 @@ onMounted(() => {
                                         <div class="product-img-wrapper position-relative">
                                             <v-img
                                                 :src="prod.hinhAnh || '/assets/images/products/s4.jpg'"
-                                                height="180"
+                                                height="200"
                                                 cover
                                                 class="product-img"
                                             >
@@ -316,7 +322,7 @@ onMounted(() => {
                                         </div>
                                         <div class="pa-4 d-flex flex-column justify-space-between flex-grow-1">
                                             <div>
-                                                <h4 class="font-weight-bold text-subtitle-2 text-slate-800 text-truncate" :title="prod.tenSanPham">
+                                                <h4 class="font-weight-bold text-subtitle-1 text-slate-900 text-truncate" :title="prod.tenSanPham">
                                                     {{ prod.tenSanPham }}
                                                 </h4>
                                                 <div class="text-caption text-slate-500 mt-1">
@@ -431,10 +437,29 @@ onMounted(() => {
     margin-right: auto;
 }
 
+.page-header {
+    background: linear-gradient(135deg, #1e257c 0%, #23318c 50%, #1d4ed8 100%) !important;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(30, 37, 124, 0.25);
+    color: #ffffff !important;
+}
+
+.page-header-title {
+    color: #ffffff !important;
+    letter-spacing: -0.5px;
+    font-size: 2.25rem !important;
+    line-height: 1.25 !important;
+}
+
+.page-header-subtitle {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500;
+}
+
 .quiz-card {
-    border-radius: 20px !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
-    border-color: #e2e8f0 !important;
+    border-radius: 24px !important;
+    box-shadow: 0 12px 35px rgba(30, 37, 124, 0.08) !important;
+    border: 1.5px solid #e2e8f0 !important;
     background-color: #ffffff;
 }
 
@@ -443,37 +468,38 @@ onMounted(() => {
 }
 
 .quiz-progress {
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
 .quiz-progress :deep(.v-progress-linear__determinate) {
-    background: linear-gradient(90deg, #2962ff 0%, #00e676 100%) !important;
+    background: linear-gradient(90deg, #1e257c 0%, #2563eb 50%, #10b981 100%) !important;
 }
 
 .quiz-content {
-    min-height: 320px;
+    min-height: 340px;
 }
 
 .question-text {
-    line-height: 1.4;
+    line-height: 1.35;
+    letter-spacing: -0.2px;
 }
 
 .option-card {
-    border-radius: 14px;
-    border-color: #e2e8f0 !important;
+    border-radius: 16px !important;
+    border: 2px solid #e2e8f0 !important;
     background-color: #f8fafc;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .option-card:hover {
-    border-color: #2962ff !important;
+    border-color: #1e257c !important;
     background-color: #f0f4ff;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(41, 98, 255, 0.15) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(30, 37, 124, 0.16) !important;
 }
 
 .option-card:hover .option-arrow {
-    transform: translateX(4px);
+    transform: translateX(6px);
 }
 
 .option-arrow {
@@ -481,8 +507,8 @@ onMounted(() => {
 }
 
 .result-product-card {
-    border-radius: 16px !important;
-    border: 1px solid #e2e8f0;
+    border-radius: 18px !important;
+    border: 1.5px solid #e2e8f0;
     overflow: hidden;
     cursor: pointer;
     background-color: #ffffff;
@@ -490,9 +516,9 @@ onMounted(() => {
 }
 
 .result-product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12) !important;
-    border-color: #2962ff;
+    transform: translateY(-6px);
+    box-shadow: 0 16px 36px rgba(30, 37, 124, 0.15) !important;
+    border-color: #1e257c;
 }
 
 .product-img-wrapper {
@@ -508,7 +534,9 @@ onMounted(() => {
 }
 
 .brand-badge {
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    background-color: #1e257c !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(30, 37, 124, 0.3);
 }
 
 .quiz-footer {

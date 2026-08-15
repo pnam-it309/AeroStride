@@ -61,11 +61,8 @@ const {
         const res = await dichVuHoaDon.layHoaDonPhanTrang(params);
         await loadCounts();
 
-        // Trả về đúng cấu trúc kèm tổng số bản ghi để hiển thị các nút phân trang
-        return {
-            content: Array.isArray(res) ? res : res?.data || res?.content || [],
-            totalElements: counts.value.all || 0
-        };
+        // Trả về response để useAdminTable tự động trích xuất content, totalElements và totalPages theo đúng bộ lọc hiện tại
+        return res?.data || res;
     },
     {
         search: '',

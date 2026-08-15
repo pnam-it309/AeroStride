@@ -94,15 +94,20 @@ const progressPercentage = computed(() => {
         </v-btn>
 
         <!-- Dynamic Recommendation Dialog -->
-        <v-dialog v-model="showDialog" max-width="650" class="quiz-recommend-dialog" scrollable>
+        <v-dialog v-model="showDialog" max-width="880" class="quiz-recommend-dialog" scrollable>
             <v-card class="quiz-card overflow-hidden">
-                <v-card-title class="quiz-header d-flex justify-space-between align-center px-6 py-4">
+                <v-card-title class="quiz-header d-flex justify-space-between align-center px-6 py-5">
                     <div class="d-flex align-center">
-                        <v-icon color="primary" size="28" class="mr-2 animate-bounce">mdi-wizard-hat</v-icon>
-                        <span class="font-weight-bold text-h6">Chọn Giày Cùng AeroStride AI</span>
+                        <div class="quiz-header-icon-wrap mr-3">
+                            <v-icon color="#ffffff" size="24" class="animate-bounce">mdi-wizard-hat</v-icon>
+                        </div>
+                        <div>
+                            <div class="font-weight-black text-h6 text-white leading-tight">Chọn Giày Thông Minh Cùng AeroStride AI</div>
+                            <div class="text-caption text-slate-200 mt-1">Trắc nghiệm tư vấn phong cách & công năng</div>
+                        </div>
                     </div>
-                    <v-btn icon variant="text" size="small" @click="showDialog = false">
-                        <v-icon>mdi-close</v-icon>
+                    <v-btn icon variant="text" size="small" class="quiz-close-btn rounded-circle" @click="showDialog = false">
+                        <v-icon color="#ffffff" size="20">mdi-close</v-icon>
                     </v-btn>
                 </v-card-title>
 
@@ -122,29 +127,29 @@ const progressPercentage = computed(() => {
                     </div>
                 </div>
 
-                <v-card-text class="quiz-content px-6 py-4 overflow-y-auto">
+                <v-card-text class="quiz-content px-6 px-md-8 py-6 overflow-y-auto">
                     <!-- Loading state -->
-                    <div v-if="loading" class="d-flex flex-column align-center justify-center py-8">
-                        <v-progress-circular indeterminate color="primary" size="50"></v-progress-circular>
-                        <div class="mt-4 text-body-1 font-weight-medium text-slate-600 animate-pulse">AeroStride AI đang xử lý...</div>
+                    <div v-if="loading" class="d-flex flex-column align-center justify-center py-10">
+                        <v-progress-circular indeterminate color="primary" size="56" width="4"></v-progress-circular>
+                        <div class="mt-4 text-h6 font-weight-bold text-slate-700 animate-pulse">AeroStride AI đang xử lý...</div>
                     </div>
 
                     <div v-else>
                         <!-- Question Step -->
                         <div v-if="currentQuestion" class="animate-fade-in">
-                            <h3 class="text-h6 font-weight-bold mb-6 text-slate-800 text-center">
+                            <h3 class="text-h5 font-weight-black mb-6 text-slate-900 text-center">
                                 {{ currentQuestion.questionText }}
                             </h3>
                             <v-row class="ga-3 flex-column align-center px-2">
                                 <v-card
                                     v-for="opt in currentQuestion.options"
                                     :key="opt.value"
-                                    class="option-card w-100 pa-4 d-flex align-center justify-space-between border cursor-pointer transition"
+                                    class="option-card w-100 pa-5 d-flex align-center justify-space-between border cursor-pointer transition elevation-1"
                                     variant="outlined"
                                     @click="selectOption(opt.value)"
                                 >
-                                    <div class="font-weight-medium text-body-1 text-slate-700">{{ opt.label }}</div>
-                                    <v-icon color="primary" class="option-arrow">mdi-chevron-right</v-icon>
+                                    <div class="font-weight-bold text-h6 text-slate-800">{{ opt.label }}</div>
+                                    <v-icon color="primary" size="24" class="option-arrow">mdi-chevron-right</v-icon>
                                 </v-card>
                             </v-row>
                         </div>
@@ -282,48 +287,72 @@ const progressPercentage = computed(() => {
 }
 
 .quiz-card {
-    border-radius: 16px !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 16px 48px rgba(30, 37, 124, 0.18) !important;
 }
 
 .quiz-header {
-    background-color: #fafafa;
+    background: linear-gradient(135deg, #1e257c 0%, #23318c 50%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(30, 37, 124, 0.2);
+}
+
+.quiz-header-icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.quiz-close-btn {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    transition: all 0.2s ease;
+}
+
+.quiz-close-btn:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    transform: rotate(90deg);
 }
 
 .progress-bar-container {
-    background-color: #fafafa;
-    border-bottom: 1px solid #f0f0f0;
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .quiz-progress {
-    border-radius: 4px;
+    border-radius: 6px;
 }
 
 .quiz-progress :deep(.v-progress-linear__determinate) {
-    background: linear-gradient(90deg, #1890ff 0%, #52c41a 100%) !important;
+    background: linear-gradient(90deg, #1e257c 0%, #2563eb 50%, #10b981 100%) !important;
 }
 
 .quiz-content {
     background-color: #ffffff;
-    min-height: 250px;
+    min-height: 280px;
 }
 
 .option-card {
-    border-radius: 12px;
-    border-color: #e0e0e0 !important;
-    background-color: #fafafa;
+    border-radius: 14px;
+    border: 2px solid #e2e8f0 !important;
+    background-color: #f8fafc;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .option-card:hover {
-    border-color: #1890ff !important;
-    background-color: #f0f5ff;
+    border-color: #1e257c !important;
+    background-color: #f0f4ff;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.1);
+    box-shadow: 0 6px 18px rgba(30, 37, 124, 0.14) !important;
 }
 
 .option-card:hover .option-arrow {
-    transform: translateX(3px);
+    transform: translateX(4px);
 }
 
 .option-arrow {
@@ -331,8 +360,8 @@ const progressPercentage = computed(() => {
 }
 
 .result-product-card {
-    border-radius: 12px !important;
-    border: 1px solid #e0e0e0;
+    border-radius: 14px !important;
+    border: 1.5px solid #e2e8f0;
     overflow: hidden;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -340,8 +369,8 @@ const progressPercentage = computed(() => {
 
 .result-product-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-    border-color: #1890ff;
+    box-shadow: 0 10px 24px rgba(30, 37, 124, 0.14);
+    border-color: #1e257c;
 }
 
 .product-img-wrapper {

@@ -1,10 +1,11 @@
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { chatSocket } from '@/services/chatSocket';
 import apiService from '@/services/apiService';
 import { API_CHAT } from '@/constants/apiPaths';
 import { CHAT_SENDER_TYPE } from '@/constants/appConstants';
 import { useAuthStore } from '@/stores/authStore';
+import { validateChatMessage } from '@/utils/chatModeration';
 import { marked } from 'marked';
 import ProductShowcaseCard from './ProductShowcaseCard.vue';
 import { useRouter } from 'vue-router';
@@ -20,6 +21,75 @@ const isSending = ref(false);
 const lastSendTime = ref(0);
 const COOLDOWN_MS = 3000;
 const typingTimeout = ref(null);
+
+// Inactivity timeout 2 phút (120s) cho khách chưa đăng nhập
+const GUEST_TIMEOUT_SECONDS = 120;
+let guestInactivityTimer = null;
+
+// Kiểm duyệt ngôn từ & Khóa tạm thời nếu vi phạm
+const violationCount = ref(0);
+const isChatLocked = ref(false);
+const lockCountdown = ref(0);
+let lockTimer = null;
+
+const startLockCooldown = () => {
+    isChatLocked.value = true;
+    lockCountdown.value = 30;
+    if (lockTimer) clearInterval(lockTimer);
+    lockTimer = setInterval(() => {
+        if (lockCountdown.value > 1) {
+            lockCountdown.value--;
+        } else {
+            clearInterval(lockTimer);
+            lockTimer = null;
+            isChatLocked.value = false;
+            violationCount.value = 0;
+        }
+    }, 1000);
+};
+
+const clearGuestTimer = () => {
+    if (guestInactivityTimer) {
+        clearTimeout(guestInactivityTimer);
+        guestInactivityTimer = null;
+    }
+};
+
+const resetGuestInactivityTimer = () => {
+    if (authStore.isLoggedIn) {
+        clearGuestTimer();
+        return;
+    }
+
+    clearGuestTimer();
+    guestInactivityTimer = setTimeout(() => {
+        handleGuestSessionExpired();
+    }, GUEST_TIMEOUT_SECONDS * 1000);
+};
+
+const handleGuestSessionExpired = () => {
+    clearGuestTimer();
+    if (!authStore.isLoggedIn) {
+        // Tự động đóng chat khi quá 2 phút không nhắn
+        isOpen.value = false;
+
+        // Reset session guest và dữ liệu lịch sử tạm thời
+        localStorage.removeItem('chat_session_id');
+        localStorage.removeItem('chat_last_activity');
+        const newGuestId = `guest_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('chat_session_id', newGuestId);
+        sessionId.value = newGuestId;
+
+        chatHistory.value = [
+            {
+                id: 'session-timeout',
+                sender: 'bot',
+                text: 'Phiên trò chuyện đã tự động kết thúc do không có hoạt động trong 2 phút.\n\nXin chào! Bạn có thể tiếp tục trò chuyện hoặc **Đăng nhập** để lưu trữ lịch sử tin nhắn lâu dài nhé!',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }
+        ];
+    }
+};
 
 // Hỗ trợ câu hỏi gợi ý và gặp nhân viên
 const showSuggestions = ref(false);
@@ -105,24 +175,37 @@ const sessionId = ref(getSessionId());
 const updateActivity = () => {
     if (!authStore.isLoggedIn) {
         localStorage.setItem('chat_last_activity', Date.now().toString());
+        resetGuestInactivityTimer();
     }
 };
 
 watch(
     () => authStore.isLoggedIn,
     () => {
+        clearGuestTimer();
         chatHistory.value = [];
         sessionId.value = getSessionId();
         fetchHistory();
         fetchWelcomeSuggestions();
+        if (!authStore.isLoggedIn && isOpen.value) {
+            resetGuestInactivityTimer();
+        }
     }
 );
 
 watch(isOpen, (newVal) => {
     if (newVal) {
         updateActivity();
+        resetGuestInactivityTimer();
         scrollToBottom();
+    } else {
+        clearGuestTimer();
     }
+});
+
+onUnmounted(() => {
+    clearGuestTimer();
+    if (lockTimer) clearInterval(lockTimer);
 });
 
 const scrollToBottom = async () => {
@@ -175,6 +258,7 @@ const clearImage = () => {
 };
 
 const sendMessage = () => {
+    if (isChatLocked.value) return;
     if ((!message.value.trim() && !imagePreview.value) || isSending.value) return;
 
     const now = Date.now();
@@ -182,6 +266,42 @@ const sendMessage = () => {
 
     let userMsg = message.value;
     const lowerMsg = userMsg.toLowerCase().trim();
+
+    // 1. KIỂM DUYỆT NỘI DUNG TIN NHẮN (Nếu có nhập text)
+    if (userMsg.trim()) {
+        const modResult = validateChatMessage(userMsg);
+        if (!modResult.isValid) {
+            violationCount.value++;
+            message.value = '';
+
+            // Thêm tin nhắn cảnh báo hệ thống vào khung chat
+            chatHistory.value.push({
+                id: Date.now(),
+                sender: 'system',
+                isWarning: true,
+                text: `⚠️ **Cảnh báo:** ${modResult.reason}`
+            });
+            scrollToBottom();
+
+            // Nếu vi phạm liên tục 3 lần: Tạm khóa gửi 30 giây
+            if (violationCount.value >= 3) {
+                startLockCooldown();
+                chatHistory.value.push({
+                    id: Date.now() + 1,
+                    sender: 'system',
+                    isWarning: true,
+                    text: '⛔ Bạn đã gửi nội dung không phù hợp quá 3 lần. Khung chat tạm khóa gửi tin nhắn trong 30 giây.'
+                });
+                scrollToBottom();
+            }
+            return;
+        }
+    }
+
+    // Tin nhắn hợp lệ: Reset violation count
+    if (violationCount.value > 0) {
+        violationCount.value = 0;
+    }
 
     // Kiểm tra nếu tin nhắn là yêu cầu kết nối nhân viên
     const isHandoff =
@@ -241,6 +361,7 @@ const sendMessage = () => {
 
     scrollToBottom();
     updateActivity();
+    resetGuestInactivityTimer();
 
     // Tạo data base64 thuần túy (bỏ header "data:image/jpeg;base64,") nếu cần
     let base64Image = null;
@@ -527,6 +648,13 @@ const openChatImage = (url) => {
                     <v-btn icon="mdi-minus" variant="text" size="small" color="white" @click="isOpen = false"></v-btn>
                 </div>
 
+                <!-- Guest notice banner (2 min timeout) -->
+                <div v-if="!authStore.isLoggedIn" class="guest-banner-notice">
+                    <v-icon size="13" color="amber-darken-3" class="mr-1">mdi-clock-outline</v-icon>
+                    <span>Khách: Tự đóng & reset sau 2p không gửi tin.</span>
+                    <button class="guest-login-btn ml-1 font-weight-bold" @click="router.push('/user/login')">Đăng nhập</button>
+                </div>
+
                 <!-- Body -->
                 <div ref="chatBody" class="chat-body">
                     <div class="welcome-banner">
@@ -542,8 +670,8 @@ const openChatImage = (url) => {
                     >
                         <!-- System Message -->
                         <template v-if="msg.sender === 'system'">
-                            <div class="system-msg-wrap">
-                                <span class="system-msg">{{ msg.text }}</span>
+                            <div class="system-msg-wrap" :class="{ 'is-warning': msg.isWarning }">
+                                <span class="system-msg" v-html="marked(msg.text)"></span>
                             </div>
                         </template>
 
@@ -623,7 +751,13 @@ const openChatImage = (url) => {
                         </div>
                     </transition>
 
-                    <div class="input-container-wrapper">
+                    <!-- Lock Notice if Spamming -->
+                    <div v-if="isChatLocked" class="locked-chat-notice">
+                        <v-icon size="15" color="error" class="mr-1">mdi-lock-clock</v-icon>
+                        Tạm khóa gửi tin do vi phạm ngôn từ. Thử lại sau {{ lockCountdown }}s
+                    </div>
+
+                    <div class="input-container-wrapper" :class="{ 'is-disabled': isChatLocked }">
                         <!-- Image Preview Area -->
                         <div v-if="imagePreview" class="image-preview-container">
                             <img :src="imagePreview" alt="Preview" class="image-preview" />
@@ -637,6 +771,7 @@ const openChatImage = (url) => {
                                 size="small"
                                 :color="showSuggestions ? 'amber-darken-2' : 'grey-darken-1'"
                                 class="mr-2"
+                                :disabled="isChatLocked"
                                 @click="showSuggestions = !showSuggestions"
                             ></v-btn>
 
@@ -647,22 +782,24 @@ const openChatImage = (url) => {
                                 size="small"
                                 color="grey-darken-1"
                                 class="mr-2"
+                                :disabled="isChatLocked"
                                 @click="triggerImageUpload"
                             ></v-btn>
                             <input type="file" ref="fileInput" accept="image/*" style="display: none" @change="handleImageUpload" />
 
                             <textarea
                                 v-model="message"
-                                placeholder="Nhập câu hỏi của bạn..."
+                                :placeholder="isChatLocked ? `Đang tạm khóa (${lockCountdown}s)...` : 'Nhập câu hỏi của bạn...'"
                                 rows="1"
+                                :disabled="isChatLocked"
                                 @keydown.enter.prevent="sendMessage"
                                 @input="updateActivity"
                             ></textarea>
                             <v-btn
                                 icon="mdi-send"
                                 variant="text"
-                                :disabled="(!message.trim() && !imagePreview) || isSending"
-                                :color="(message.trim() || imagePreview) && !isSending ? 'black' : 'grey-lighten-1'"
+                                :disabled="(!message.trim() && !imagePreview) || isSending || isChatLocked"
+                                :color="(message.trim() || imagePreview) && !isSending && !isChatLocked ? 'black' : 'grey-lighten-1'"
                                 @click="sendMessage"
                             ></v-btn>
                         </div>
@@ -757,12 +894,13 @@ const openChatImage = (url) => {
 
 /* Header */
 .chat-header {
-    background: #000;
+    background: linear-gradient(135deg, #1e257c 0%, #23318c 50%, #1d4ed8 100%) !important;
     padding: 16px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: #fff;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(30, 37, 124, 0.2);
 
     .header-content {
         display: flex;
@@ -846,10 +984,11 @@ const openChatImage = (url) => {
             margin-left: 8px;
         }
         .message-bubble {
-            background: #000;
-            color: #fff;
+            background: linear-gradient(135deg, #1e257c 0%, #2563eb 100%) !important;
+            color: #ffffff !important;
             border-radius: 18px 18px 0 18px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 14px rgba(30, 37, 124, 0.2);
+            border: none;
         }
         .message-time {
             text-align: right;
@@ -903,13 +1042,75 @@ const openChatImage = (url) => {
     }
 }
 
+/* Guest notice banner */
+.guest-banner-notice {
+    background: #fefce8;
+    border-bottom: 1px solid #fef08a;
+    color: #854d0e;
+    font-size: 0.72rem;
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+
+    .guest-login-btn {
+        background: none;
+        border: none;
+        color: #1e257c;
+        text-decoration: underline;
+        cursor: pointer;
+        font-size: 0.72rem;
+        padding: 0;
+        &:hover {
+            color: #2563eb;
+        }
+    }
+}
+
+/* Locked Chat Notice */
+.locked-chat-notice {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* System Message */
 .is-system {
     align-self: center;
-    max-width: 90%;
+    max-width: 95%;
     .system-msg-wrap {
         text-align: center;
         width: 100%;
+
+        &.is-warning {
+            .system-msg {
+                background: #fff7ed !important;
+                border: 1px solid #fdba74 !important;
+                color: #c2410c !important;
+                font-size: 0.8rem !important;
+                font-weight: 500 !important;
+                padding: 10px 14px !important;
+                border-radius: 12px !important;
+                box-shadow: 0 2px 8px rgba(249, 115, 22, 0.12);
+                text-align: left;
+                display: block;
+                line-height: 1.45;
+
+                :deep(p) {
+                    margin-bottom: 0;
+                }
+            }
+        }
     }
     .system-msg {
         background: #f1f2f6;
@@ -1078,12 +1279,12 @@ const openChatImage = (url) => {
 .handoff-btn {
     width: 100%;
     background: #f8f9fa;
-    color: #2d3436;
-    border: 1px solid #dfe6e9;
+    color: #1e257c;
+    border: 1.5px solid #cbd5e1;
     padding: 10px;
     border-radius: 12px;
     font-size: 0.88rem;
-    font-weight: 600;
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1092,10 +1293,11 @@ const openChatImage = (url) => {
     transition: all 0.2s ease;
 
     &:hover {
-        background: #000;
-        color: #fff;
-        border-color: #000;
+        background: #1e257c;
+        color: #ffffff;
+        border-color: #1e257c;
         transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(30, 37, 124, 0.25);
     }
 
     &:active {
@@ -1115,10 +1317,10 @@ const openChatImage = (url) => {
 }
 
 .suggestions-title {
-    font-size: 0.8rem;
-    color: #636e72;
-    font-weight: 600;
-    margin-bottom: 8px;
+    font-size: 0.825rem;
+    color: #1e257c;
+    font-weight: 700;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
 }
@@ -1141,33 +1343,34 @@ const openChatImage = (url) => {
 }
 
 .suggestion-pill {
-    background: #fff;
-    color: #e84393;
-    border: 1px solid #ff7875;
-    padding: 6px 14px;
+    background: #f0f4ff;
+    color: #1e257c;
+    border: 1.5px solid #c7d2fe;
+    padding: 7px 14px;
     border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: 0.825rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover {
-        background: #fff0f6;
-        color: #c41d7f;
-        border-color: #ff4d4f;
-        transform: scale(1.02);
+        background: #1e257c;
+        color: #ffffff;
+        border-color: #1e257c;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(30, 37, 124, 0.25);
     }
 
     &.collapse-pill {
         border-style: dashed;
         background: transparent;
-        color: #999;
-        border-color: #ccc;
+        color: #64748b;
+        border-color: #cbd5e1;
 
         &:hover {
-            background: #fafafa;
-            color: #333;
-            border-color: #888;
+            background: #f1f5f9;
+            color: #1e257c;
+            border-color: #94a3b8;
         }
     }
 }

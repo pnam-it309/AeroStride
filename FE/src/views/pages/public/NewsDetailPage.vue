@@ -149,15 +149,15 @@ onMounted(() => {
 
             <!-- Article Content View -->
             <div v-else>
-                <!-- Breadcrumbs & Category Bar -->
-                <div class="bg-white border-b py-4">
+                <!-- Breadcrumbs & Category Bar: Brand Blue Gradient + White Text -->
+                <div class="bg-gradient-detail py-4 text-white">
                     <v-container>
-                        <div class="d-flex align-center flex-wrap ga-2 text-caption text-slate-500">
-                            <span class="cursor-pointer hover-text-blue" @click="router.push('/')">Trang chủ</span>
-                            <v-icon size="14">mdi-chevron-right</v-icon>
-                            <span class="cursor-pointer hover-text-blue" @click="router.push('/tin-tuc')">Tin tức</span>
-                            <v-icon size="14">mdi-chevron-right</v-icon>
-                            <span class="text-slate-800 font-weight-bold text-truncate" style="max-width: 300px">{{ article.title }}</span>
+                        <div class="d-flex align-center flex-wrap ga-2 text-caption text-slate-200">
+                            <span class="cursor-pointer hover-text-amber" @click="router.push('/')">Trang chủ</span>
+                            <v-icon size="14" color="white">mdi-chevron-right</v-icon>
+                            <span class="cursor-pointer hover-text-amber" @click="router.push('/tin-tuc')">Tin tức</span>
+                            <v-icon size="14" color="white">mdi-chevron-right</v-icon>
+                            <span class="text-white font-weight-bold text-truncate" style="max-width: 450px">{{ article.title }}</span>
                         </div>
                     </v-container>
                 </div>
@@ -166,7 +166,7 @@ onMounted(() => {
                     <v-card class="rounded-2xl pa-6 pa-md-10 bg-white elevation-2">
                         <!-- Header Metadata -->
                         <div class="d-flex align-center ga-3 mb-4">
-                            <v-chip color="primary" font-weight-bold size="small" class="font-weight-bold px-3">
+                            <v-chip color="primary" size="small" class="font-weight-bold px-3 text-white">
                                 {{ article.category }}
                             </v-chip>
                             <span class="text-caption text-slate-400 d-flex align-center">
@@ -350,6 +350,18 @@ onMounted(() => {
     padding-top: 60px;
 }
 
+.bg-gradient-detail {
+    background: linear-gradient(135deg, #1e257c 0%, #23318c 50%, #1d4ed8 100%) !important;
+    box-shadow: 0 4px 16px rgba(30, 37, 124, 0.2);
+}
+
+.hover-text-amber {
+    transition: color 0.2s ease;
+    &:hover {
+        color: #fef08a !important;
+    }
+}
+
 .max-w-900 {
     max-width: 900px;
 }
@@ -357,7 +369,7 @@ onMounted(() => {
 .hover-text-blue {
     transition: color 0.2s ease;
     &:hover {
-        color: #2563eb !important;
+        color: #1e257c !important;
     }
 }
 

@@ -12,6 +12,8 @@ import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumb
 import { downloadFile } from '@/utils/fileUtils';
 
 import { useNotifications } from '@/services/notificationService';
+import { useAuthStore } from '@/stores/authStore';
+import { EditIcon } from 'vue-tabler-icons';
 
 import { useAdminTable } from '@/composables/useAdminTable';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
@@ -328,8 +330,8 @@ onMounted(() => {
 
                     <td class="data-cell action-cell">
                         <div class="d-flex align-center justify-center action-controls">
-                            <v-btn variant="text" class="action-icon-btn" @click.stop="goToEdit(item.id)">
-                                <EditIcon size="15" />
+                            <v-btn variant="text" class="action-icon-btn" color="primary" @click.stop="goToEdit(item.id)">
+                                <EditIcon size="16" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">

@@ -107,12 +107,18 @@ onMounted(() => {
         <MainHeader />
 
         <main class="main-content pb-16">
-            <!-- Header Section -->
-            <div class="page-header py-12 bg-white mb-8 border-b">
+            <!-- Header Section: Logo Blue Gradient + Crisp White Text -->
+            <div class="page-header py-14 mb-10 text-white">
                 <v-container>
-                    <h1 class="text-h3 font-weight-black text-center text-slate-900 mb-3">TIN TỨC & XU HƯỚNG AEROSTRIDE</h1>
-                    <p class="text-center text-slate-600 text-subtitle-1 max-w-600 mx-auto">
-                        Cập nhật các bài viết đánh giá giày, mẹo chăm sóc sản phẩm và sự kiện ưu đãi mới nhất.
+                    <div class="d-flex justify-center mb-3">
+                        <v-chip color="amber-accent-2" variant="flat" size="small" class="font-weight-black px-4 text-slate-900 shadow-sm">
+                            <v-icon start size="16">mdi-newspaper-variant-outline</v-icon>
+                            AEROSTRIDE MAGAZINE
+                        </v-chip>
+                    </div>
+                    <h1 class="page-header-title text-h3 font-weight-black text-center mb-3">TIN TỨC & XU HƯỚNG AEROSTRIDE</h1>
+                    <p class="page-header-subtitle text-center text-subtitle-1 max-w-600 mx-auto">
+                        Cập nhật các bài viết đánh giá giày thể thao, mẹo chăm sóc sản phẩm và các sự kiện ưu đãi độc quyền mới nhất.
                     </p>
 
                     <!-- Search Bar -->
@@ -121,12 +127,13 @@ onMounted(() => {
                             v-model="searchKeyword"
                             placeholder="Tìm kiếm bài viết, tin tức..."
                             prepend-inner-icon="mdi-magnify"
-                            variant="outlined"
+                            variant="solo"
                             bg-color="white"
                             density="comfortable"
                             rounded="pill"
                             hide-details
                             clearable
+                            class="news-search-field"
                         ></v-text-field>
                     </div>
                 </v-container>
@@ -141,7 +148,8 @@ onMounted(() => {
                         :variant="activeCategory === cat ? 'flat' : 'outlined'"
                         :color="activeCategory === cat ? 'primary' : 'grey-darken-2'"
                         rounded="pill"
-                        class="text-none font-weight-bold px-6"
+                        class="text-none font-weight-bold px-6 category-btn"
+                        :class="{ 'category-active-btn': activeCategory === cat }"
                         @click="activeCategory = cat"
                     >
                         {{ cat }}
@@ -170,7 +178,7 @@ onMounted(() => {
                         </v-col>
                         <v-col cols="12" md="5" class="d-flex flex-column justify-center pa-8 pa-md-10 bg-white">
                             <div class="d-flex align-center ga-2 mb-3">
-                                <v-chip color="error" size="small" class="font-weight-bold">{{ filteredNews[0].category }}</v-chip>
+                                <v-chip color="primary" size="small" class="font-weight-bold text-white">{{ filteredNews[0].category }}</v-chip>
                                 <span class="text-caption text-slate-500">&bull; {{ filteredNews[0].date }}</span>
                             </div>
                             <h2 class="text-h4 font-weight-black text-slate-900 mb-4 line-clamp-2 title-hover">{{ filteredNews[0].title }}</h2>
@@ -200,7 +208,7 @@ onMounted(() => {
                         >
                             <div class="image-wrapper">
                                 <v-img :src="news.image" height="220" cover class="news-img"></v-img>
-                                <v-chip color="primary" size="small" class="category-chip shadow-sm">{{ news.category }}</v-chip>
+                                <v-chip color="primary" size="small" class="category-chip shadow-sm text-white font-weight-bold">{{ news.category }}</v-chip>
                             </div>
                             <v-card-text class="d-flex flex-column flex-grow-1 pa-5">
                                 <div class="text-caption text-slate-400 mb-2 d-flex align-center justify-space-between">
@@ -228,12 +236,14 @@ onMounted(() => {
         <!-- Article Detail Modal -->
         <v-dialog v-model="showDetailModal" max-width="850" scrollable>
             <v-card v-if="selectedArticle" class="rounded-xl overflow-hidden">
-                <v-card-title class="d-flex align-center justify-space-between pa-4 bg-white border-b">
+                <v-card-title class="modal-news-header d-flex align-center justify-space-between px-6 py-4">
                     <div class="d-flex align-center ga-2">
-                        <v-chip color="primary" size="small" class="font-weight-bold">{{ selectedArticle.category }}</v-chip>
-                        <span class="text-caption text-slate-500">{{ selectedArticle.date }}</span>
+                        <v-chip color="amber-accent-2" size="small" class="font-weight-black text-slate-900">{{ selectedArticle.category }}</v-chip>
+                        <span class="text-caption text-slate-200">{{ selectedArticle.date }}</span>
                     </div>
-                    <v-btn icon="mdi-close" variant="text" density="comfortable" @click="showDetailModal = false"></v-btn>
+                    <v-btn icon variant="text" size="small" class="modal-close-btn rounded-circle" @click="showDetailModal = false">
+                        <v-icon color="#ffffff" size="20">mdi-close</v-icon>
+                    </v-btn>
                 </v-card-title>
 
                 <v-card-text class="pa-6 pa-md-8 bg-white">
@@ -339,6 +349,59 @@ onMounted(() => {
     padding-top: 60px;
 }
 
+.page-header {
+    background: linear-gradient(135deg, #1e257c 0%, #23318c 50%, #1d4ed8 100%) !important;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(30, 37, 124, 0.25);
+    color: #ffffff !important;
+}
+
+.page-header-title {
+    color: #ffffff !important;
+    letter-spacing: -0.5px;
+    font-size: 2.25rem !important;
+    line-height: 1.25 !important;
+}
+
+.page-header-subtitle {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500;
+}
+
+.news-search-field :deep(.v-field) {
+    border-radius: 9999px !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+.category-btn {
+    border: 1.5px solid #cbd5e1 !important;
+    background: #ffffff;
+    transition: all 0.25s ease;
+}
+
+.category-active-btn {
+    background: #1e257c !important;
+    color: #ffffff !important;
+    border-color: #1e257c !important;
+    box-shadow: 0 4px 14px rgba(30, 37, 124, 0.3) !important;
+}
+
+.modal-news-header {
+    background: linear-gradient(135deg, #1e257c 0%, #23318c 50%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+}
+
+.modal-close-btn {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    transform: rotate(90deg);
+}
+
 .max-w-600 {
     max-width: 600px;
 }
@@ -366,7 +429,7 @@ onMounted(() => {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     &:hover {
         transform: translateY(-6px);
-        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 14px 28px rgba(30, 37, 124, 0.12) !important;
     }
 }
 
@@ -388,6 +451,8 @@ onMounted(() => {
     top: 12px;
     left: 12px;
     font-weight: 700;
+    background: #1e257c !important;
+    color: #ffffff !important;
 }
 
 .title-hover {
@@ -395,7 +460,7 @@ onMounted(() => {
 }
 
 .news-card:hover .title-hover {
-    color: #2563eb !important;
+    color: #1e257c !important;
 }
 
 .article-body :deep(h3) {

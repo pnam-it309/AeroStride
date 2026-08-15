@@ -77,36 +77,25 @@ const breadcrumbs = [
     { title: 'Lịch làm việc', disabled: true }
 ];
 
-const tableHeaders = [
-    { text: 'STT', width: '60px', align: 'center' },
-    { text: 'Mã nhân viên', width: '140px', align: 'center' },
-    { text: 'Nhân viên', width: '150px', align: 'center' },
-    { text: 'Ca làm', width: '150px', align: 'center' },
-    { text: 'Thời gian', width: '150px', align: 'center' },
-    { text: 'Ngày làm', width: '150px', align: 'center' },
-    { text: 'Thao tác', width: '100px', align: 'center' }
-];
+const tableHeaders = computed(() => {
+    const headers = [
+        { text: 'STT', width: '60px', align: 'center' },
+        { text: 'Mã nhân viên', width: '140px', align: 'center' },
+        { text: 'Nhân viên', width: '150px', align: 'center' },
+        { text: 'Ca làm', width: '150px', align: 'center' },
+        { text: 'Thời gian', width: '150px', align: 'center' },
+        { text: 'Ngày làm', width: '150px', align: 'center' }
+    ];
+    if (canManageSchedule.value) {
+        headers.push({ text: 'Thao tác', width: '100px', align: 'center' });
+    }
+    return headers;
+});
 
 // Computed property for filtering schedules
 const filteredItems = computed(() => {
     if (!items.value) return [];
     let list = [...items.value];
-
-    // NẾU LÀ NHÂN VIÊN (STAFF): CHỈ GIỮ LẠI LỊCH LÀM VIỆC CỦA CHÍNH NHÂN VIÊN ĐÓ
-    if (isStaff.value && currentUser.value) {
-        const uName = currentUser.value.username;
-        const staff = currentStaffInfo.value;
-        list = list.filter((item) => {
-            if (staff) {
-                return item.nhanVienId === staff.id || item.maNhanVien === staff.ma || item.nhanVien === staff.ten;
-            }
-            return (
-                (item.tenTaiKhoan && item.tenTaiKhoan === uName) ||
-                (item.maNhanVien && item.maNhanVien === uName) ||
-                (item.nhanVien && item.nhanVien.toLowerCase().includes(uName.toLowerCase()))
-            );
-        });
-    }
 
     return list.sort((a, b) => {
         // Sort by date ascending (from 1st of month onwards)
@@ -215,6 +204,7 @@ const loadData = async () => {
 };
 
 const handleAdd = () => {
+    if (!canManageSchedule.value) return;
     isEditSchedule.value = false;
     editScheduleId.value = null;
     addForm.value.nhanVien = [];
@@ -224,6 +214,7 @@ const handleAdd = () => {
 };
 
 const handleDayClick = (dayObj) => {
+    if (!canManageSchedule.value) return;
     if (dayObj && dayObj.date) {
         isEditSchedule.value = false;
         editScheduleId.value = null;
@@ -515,6 +506,7 @@ const tableRows = computed(() => {
 
 // Edit & Delete actions for schedule entries
 const handleEditSchedule = (s) => {
+    if (!canManageSchedule.value) return;
     isEditSchedule.value = true;
     editScheduleId.value = s.id;
     addForm.value.nhanVien = [s.nhanVienId];
@@ -734,6 +726,7 @@ const openCellEmployeesDialog = (dateStr, shiftName, schedules) => {
 };
 
 const handleAddForCellAndShift = (dateStr, shiftName) => {
+    if (!canManageSchedule.value) return;
     isEditSchedule.value = false;
     editScheduleId.value = null;
     addForm.value.nhanVien = [];
@@ -993,8 +986,8 @@ onMounted(() => {
                             <td class="data-cell text-center">
                                 <span class="text-slate-600">{{ formatDate(item.ngay) }}</span>
                             </td>
-                            <!-- Thao tác -->
-                            <td class="data-cell action-cell">
+                            <!-- Thao tác (Chỉ hiển thị cho Quản trị viên/Admin) -->
+                            <td v-if="canManageSchedule" class="data-cell action-cell">
                                 <div class="action-controls">
                                     <v-btn
                                         variant="text"
@@ -1003,11 +996,10 @@ onMounted(() => {
                                         size="small"
                                         @click="handleEditSchedule(item)"
                                     >
-                                        <v-icon size="18">{{ canManageSchedule ? 'mdi-pencil-outline' : 'mdi-eye-outline' }}</v-icon>
-                                        <v-tooltip activator="parent" location="top">{{ canManageSchedule ? 'Sửa lịch' : 'Xem chi tiết' }}</v-tooltip>
+                                        <v-icon size="18">mdi-pencil-outline</v-icon>
+                                        <v-tooltip activator="parent" location="top">Sửa lịch</v-tooltip>
                                     </v-btn>
                                     <v-btn
-                                        v-if="canManageSchedule"
                                         variant="text"
                                         color="primary"
                                         class="action-icon-btn"
@@ -1154,10 +1146,11 @@ onMounted(() => {
                                             <div
                                                 v-else
                                                 class="cal-grid-cell-empty"
-                                                @click="handleAddForCellAndShift(dayObj.date, shift.tenCa)"
+                                                :class="{ 'cursor-pointer': canManageSchedule }"
+                                                @click="canManageSchedule ? handleAddForCellAndShift(dayObj.date, shift.tenCa) : null"
                                             >
-                                                <v-icon size="18" color="grey-lighten-1">mdi-plus</v-icon>
-                                                <div class="text-caption text-grey-lighten-1 mt-1">Trống</div>
+                                                <v-icon v-if="canManageSchedule" size="18" color="grey-lighten-1">mdi-plus</v-icon>
+                                                <div class="text-caption text-grey-lighten-1" :class="{ 'mt-1': canManageSchedule }">Trống</div>
                                             </div>
                                         </td>
                                     </tr>
@@ -1200,7 +1193,7 @@ onMounted(() => {
                                         :key="s.id"
                                         class="schedule-item-card py-1 px-2"
                                         style="font-size: 11px; padding: 4px 6px !important"
-                                        @click.stop="handleEditSchedule(s)"
+                                        @click.stop="canManageSchedule ? handleEditSchedule(s) : null"
                                     >
                                         <div class="d-flex align-center justify-space-between w-100 text-truncate" style="gap: 4px">
                                             <span class="font-weight-bold" style="color: #475569; font-size: 9px">
@@ -1238,6 +1231,7 @@ onMounted(() => {
                             </div>
                         </div>
                         <v-btn
+                            v-if="canManageSchedule"
                             prepend-icon="mdi-plus"
                             color="primary"
                             size="small"
@@ -1257,7 +1251,7 @@ onMounted(() => {
                                     <th class="header-cell text-center" style="width: 70px; white-space: nowrap">STT</th>
                                     <th class="header-cell text-center" style="width: 140px; white-space: nowrap">Mã NV</th>
                                     <th class="header-cell">Họ tên</th>
-                                    <th class="header-cell text-center" style="width: 110px; white-space: nowrap">Thao tác</th>
+                                    <th v-if="canManageSchedule" class="header-cell text-center" style="width: 110px; white-space: nowrap">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1265,7 +1259,7 @@ onMounted(() => {
                                     <td class="data-cell text-center">{{ idx + 1 }}</td>
                                     <td class="data-cell text-center font-weight-bold">{{ s.maNhanVien || getEmployeeCode(s) }}</td>
                                     <td class="data-cell">{{ s.nhanVien }}</td>
-                                    <td class="data-cell action-cell text-center">
+                                    <td v-if="canManageSchedule" class="data-cell action-cell text-center">
                                         <div class="action-controls justify-center">
                                             <v-btn
                                                 variant="text"

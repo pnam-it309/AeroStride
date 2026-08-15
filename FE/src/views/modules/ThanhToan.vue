@@ -27,7 +27,7 @@ const loadTransactions = async () => {
     loading.value = true;
     try {
         const params = {
-            page: pagination.value.page,
+            page: Math.max(pagination.value.page - 1, 0),
             size: pagination.value.itemsPerPage,
             search: searchQuery.value
         };

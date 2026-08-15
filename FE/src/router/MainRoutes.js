@@ -154,9 +154,8 @@ const MainRoutes = {
             component: () => import('@/views/modules/lich-lam-viec/BanGiaoCa.vue')
         },
         {
-            name: 'LichSuGiaoCa',
             path: PATH.LICH_SU_GIAO_CA,
-            component: () => import('@/views/modules/lich-lam-viec/LichSuGiaoCa.vue')
+            redirect: { path: PATH.LICH_SU_HOAT_DONG, query: { tab: 'giao-ca' } }
         }
     ]
 };

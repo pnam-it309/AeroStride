@@ -258,6 +258,28 @@ const loadItems = async () => {
     }
 };
 
+let searchDebounceTimer = null;
+
+const handleSearch = () => {
+    pagination.value.page = 1;
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+        loadItems();
+    }, 300);
+};
+
+const handleStatusFilterChange = (newStatus) => {
+    statusFilter.value = newStatus;
+    pagination.value.page = 1;
+    loadItems();
+};
+
+const handlePageSizeChange = (newSize) => {
+    pagination.value.size = newSize;
+    pagination.value.page = 1;
+    loadItems();
+};
+
 const confirmSaveItem = () => {
     if (selectedTab.value !== 'sizes') {
         const rawName = itemForm.value.ten;
@@ -552,6 +574,7 @@ watch(
     (n) => {
         if (n && routeMap[n]) {
             selectedTab.value = routeMap[n];
+            pagination.value.page = 1;
             loadItems();
         }
     },
@@ -582,8 +605,9 @@ watch(selectedTab, (n) => {
             :loading="loading"
             :isRefreshing="isRefreshing"
             @refresh="handleRefresh"
-            @search="loadItems"
-            @update:statusFilter="loadItems"
+            @search="handleSearch"
+            @update:searchQuery="handleSearch"
+            @update:statusFilter="handleStatusFilterChange"
         />
 
         <!-- 2. TABLE -->
@@ -600,7 +624,7 @@ watch(selectedTab, (n) => {
             @edit="editItem"
             @change-status="confirmChangeStatus"
             @load-items="loadItems"
-            @update:size="pagination.size = $event"
+            @update:size="handlePageSizeChange"
             class="flex-grow-1 min-h-0"
         />
 

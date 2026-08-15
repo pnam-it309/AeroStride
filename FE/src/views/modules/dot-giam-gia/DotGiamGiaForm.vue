@@ -15,6 +15,7 @@ import TableEmptyState from '@/components/common/TableEmptyState.vue';
 import { CalendarIcon, GiftIcon, InfoCircleIcon, TagIcon, BoxIcon, SearchIcon, TrashIcon } from 'vue-tabler-icons';
 import { PATH } from '@/router/routePaths';
 import { getNameRules } from '@/utils/validators';
+import { SYSTEM_STATUS } from '@/constants/statusConstants';
 
 const route = useRoute();
 const router = useRouter();
@@ -104,7 +105,7 @@ const form = ref({
     mucUuTien: 0,
     ngayBatDau: '',
     ngayKetThuc: '',
-    trangThai: STATUS.ACTIVE
+    trangThai: SYSTEM_STATUS.ACTIVE
 });
 
 const expandedProductIds = ref([]);
@@ -343,10 +344,10 @@ const init = async () => {
         await loadMaxPrice();
         // Load attributes for filters
         const [brandData, colorData, sizeData, materialData] = await Promise.all([
-            dichVuThuongHieu.layThuongHieu({ trangThai: STATUS.ACTIVE }),
-            dichVuMauSac.layMauSac({ trangThai: STATUS.ACTIVE }),
-            dichVuKichThuoc.layKichThuoc({ trangThai: STATUS.ACTIVE }),
-            dichVuChatLieu.layChatLieu({ trangThai: STATUS.ACTIVE })
+            dichVuThuongHieu.layThuongHieu({ trangThai: SYSTEM_STATUS.ACTIVE }),
+            dichVuMauSac.layMauSac({ trangThai: SYSTEM_STATUS.ACTIVE }),
+            dichVuKichThuoc.layKichThuoc({ trangThai: SYSTEM_STATUS.ACTIVE }),
+            dichVuChatLieu.layChatLieu({ trangThai: SYSTEM_STATUS.ACTIVE })
         ]);
 
         brands.value = (brandData?.content || brandData || []).map((b) => b.ten);
