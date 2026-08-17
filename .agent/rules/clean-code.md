@@ -6,12 +6,14 @@ Tài liệu này quy định các tiêu chuẩn viết code để đảm bảo d
 **Vấn đề:** Hardcode khiến code khó thay đổi, dễ gây lỗi khi cần cập nhật ở nhiều nơi và làm giảm tính rõ ràng.
 
 ### Quy tắc:
+- **Bắt buộc tra cứu Constants trước khi code:** Tham khảo chi tiết tại `constants-rule.md`. Tuyệt đối không tự ý viết các chuỗi hay số ma thuật mà chưa kiểm tra file constants.
 - **API Paths:** Tuyệt đối không viết trực tiếp URL string trong Controller hoặc Service.
     - BE: Sử dụng `infrastructure/constants/RoutesConstant.java`.
-    - FE: Sử dụng `constants/RouteConstants.js`.
+    - FE: Sử dụng `constants/apiPaths.js` và `constants/routePaths.js`.
+- **Roles & Permissions:** Sử dụng `APP_ROLES`, `ROLE_CODES` và các hàm helper `isRoleAdmin`, `isRoleStaff`, `isRoleCustomer` trong `appConstants.js` (FE) hoặc `VaiTro.java` (BE).
 - **Magic Numbers/Strings:** Không sử dụng các con số hoặc chuỗi ký tự có ý nghĩa đặc biệt (ví dụ: `status == 1`, `role == "ADMIN"`) trực tiếp trong logic.
-    - BE: Sử dụng Enum hoặc `public static final` constants.
-    - FE: Sử dụng file trong `constants/` hoặc Enums.
+    - BE: Sử dụng Enum (`TrangThai`, `VaiTro`) hoặc `public static final` constants.
+    - FE: Sử dụng file trong `constants/` (`statusConstants.js`, `appConstants.js`...) hoặc Enums.
 - **Messages/Labels:** Các thông báo lỗi, nhãn giao diện nên được quản lý tập trung (I18n hoặc Constants) thay vì viết cứng trong template/logic.
 
 ## 2. Không Lặp Code (DRY - Don't Repeat Yourself)

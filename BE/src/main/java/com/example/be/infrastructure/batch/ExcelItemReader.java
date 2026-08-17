@@ -2,69 +2,99 @@ package com.example.be.infrastructure.batch;
 
 import lombok.Setter;
 import org.apache.poi.ss.usermodel.*;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemStreamException;
+import org.springframework.batch.item.ItemStreamReader;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Iterator;
 
-@Component
-public class ExcelItemReader<T> implements ItemReader<T> {
+public class ExcelItemReader<T> implements ItemStreamReader<T> {
 
     private final String filePath;
     private Workbook workbook;
+    private FileInputStream fis;
     private Iterator<Row> rowIterator;
-    
+
     @Setter
     private ExcelRowMapper<T> rowMapper;
 
-    public ExcelItemReader(@Value("${batch.excel.file-path}") String filePath) {
+    public ExcelItemReader(String filePath, ExcelRowMapper<T> rowMapper) {
         this.filePath = filePath;
+        this.rowMapper = rowMapper;
+    }
+
+    public ExcelItemReader(String filePath) {
+        this(filePath, null);
+    }
+
+    @Override
+    public void open(ExecutionContext executionContext) throws ItemStreamException {
+        if (filePath == null || filePath.trim().isEmpty()) {
+            return;
+        }
+
+        File file = new File(filePath);
+        if (!file.exists()) {
+            throw new ItemStreamException("Excel file not found: " + filePath);
+        }
+
+        try {
+            this.fis = new FileInputStream(file);
+            this.workbook = WorkbookFactory.create(fis);
+            Sheet sheet = workbook.getSheetAt(0);
+            this.rowIterator = sheet.rowIterator();
+
+            // Skip header row
+            if (this.rowIterator != null && this.rowIterator.hasNext()) {
+                this.rowIterator.next();
+            }
+        } catch (Exception e) {
+            close();
+            throw new ItemStreamException("Failed to open and initialize Excel file: " + filePath, e);
+        }
     }
 
     @Override
     public T read() throws Exception {
         if (rowIterator == null) {
-            initReader();
+            return null;
         }
 
-        if (rowIterator != null && rowIterator.hasNext()) {
+        while (rowIterator.hasNext()) {
             Row row = rowIterator.next();
             if (rowMapper != null) {
-                return rowMapper.mapRow(row);
+                T item = rowMapper.mapRow(row);
+                if (item != null) {
+                    return item;
+                }
             }
         }
 
-        close();
         return null;
     }
 
-    private void initReader() throws IOException {
-        if (filePath == null || filePath.isEmpty()) return;
-        
-        File file = new File(filePath);
-        if (!file.exists()) return;
-
-        try (FileInputStream fis = new FileInputStream(file)) {
-            this.workbook = WorkbookFactory.create(fis);
-            Sheet sheet = workbook.getSheetAt(0);
-            this.rowIterator = sheet.rowIterator();
-            
-            // Skip header row
-            if (this.rowIterator.hasNext()) {
-                this.rowIterator.next();
-            }
-        }
+    @Override
+    public void update(ExecutionContext executionContext) throws ItemStreamException {
+        // No-op for read-only stream
     }
 
-    private void close() throws IOException {
-        if (workbook != null) {
-            workbook.close();
-            workbook = null;
+    @Override
+    public void close() throws ItemStreamException {
+        try {
+            if (workbook != null) {
+                workbook.close();
+                workbook = null;
+            }
+            if (fis != null) {
+                fis.close();
+                fis = null;
+            }
             rowIterator = null;
+        } catch (IOException e) {
+            throw new ItemStreamException("Error closing Excel resources", e);
         }
     }
 }

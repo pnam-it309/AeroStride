@@ -18,6 +18,27 @@ export const ROLE_CODES = {
 };
 
 /**
+ * Helpers kiểm tra vai trò người dùng chuẩn hóa theo APP_ROLES và ROLE_CODES
+ */
+export const isRoleAdmin = (role) => {
+    if (!role) return false;
+    const r = String(role).trim().toUpperCase();
+    return r === APP_ROLES.ADMIN || r === ROLE_CODES.QUAN_LY || r === 'ROLE_ADMIN' || r === 'ADMIN';
+};
+
+export const isRoleStaff = (role) => {
+    if (!role) return false;
+    const r = String(role).trim().toUpperCase();
+    return (r === APP_ROLES.STAFF || r === ROLE_CODES.NHAN_VIEN || r === 'ROLE_STAFF' || r === 'STAFF') && !isRoleAdmin(role);
+};
+
+export const isRoleCustomer = (role) => {
+    if (!role) return false;
+    const r = String(role).trim().toUpperCase();
+    return r === APP_ROLES.CUSTOMER || r === ROLE_CODES.KHACH_HANG || r === 'ROLE_CUSTOMER' || r === 'CUSTOMER';
+};
+
+/**
  * Helper dùng chung kiểm tra nhân viên hoặc đối tượng phân quyền thuộc nhóm Quản lý / Admin
  */
 export const isManagementRole = (item) => {

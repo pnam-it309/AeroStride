@@ -118,6 +118,17 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
       AND (:trangThai IS NULL OR nv.trangThai = :trangThai)
       AND (:gioiTinh IS NULL OR nv.gioiTinh = :gioiTinh)
     ORDER BY nv.ngayTao DESC
+""",
+    countQuery = """
+    SELECT COUNT(nv) FROM NhanVien nv
+    WHERE (:keyword IS NULL OR
+           LOWER(nv.ten)   LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+           LOWER(nv.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+           nv.sdt          LIKE CONCAT('%', :keyword, '%') OR
+           LOWER(nv.ma)    LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+           LOWER(nv.tenTaiKhoan) LIKE LOWER(CONCAT('%', :keyword, '%')))
+      AND (:trangThai IS NULL OR nv.trangThai = :trangThai)
+      AND (:gioiTinh IS NULL OR nv.gioiTinh = :gioiTinh)
 """)
     Page<AdminNhanVienResponse> filterAll(
         @Param("keyword") String keyword,

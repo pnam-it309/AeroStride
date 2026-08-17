@@ -62,19 +62,31 @@ public class ReviewConfigService {
     }
 
     public AdminDanhGiaConfigResponse getConfigAndStats() {
-        long total = danhGiaSanPhamRepository.count();
-        long pending = danhGiaSanPhamRepository.countByTrangThai(DanhGiaSanPham.TrangThaiDanhGia.PENDING);
-        long approved = danhGiaSanPhamRepository.countByTrangThai(DanhGiaSanPham.TrangThaiDanhGia.APPROVED);
-        long rejected = danhGiaSanPhamRepository.countByTrangThai(DanhGiaSanPham.TrangThaiDanhGia.REJECTED);
-        long spam = danhGiaSanPhamRepository.countByTrangThai(DanhGiaSanPham.TrangThaiDanhGia.SPAM);
+        try {
+            long total = danhGiaSanPhamRepository.count();
+            long pending = danhGiaSanPhamRepository.countByTrangThai(DanhGiaSanPham.TrangThaiDanhGia.PENDING);
+            long approved = danhGiaSanPhamRepository.countByTrangThai(DanhGiaSanPham.TrangThaiDanhGia.APPROVED);
+            long rejected = danhGiaSanPhamRepository.countByTrangThai(DanhGiaSanPham.TrangThaiDanhGia.REJECTED);
+            long spam = danhGiaSanPhamRepository.countByTrangThai(DanhGiaSanPham.TrangThaiDanhGia.SPAM);
 
-        return AdminDanhGiaConfigResponse.builder()
-                .autoApprove(autoApproveEnabled.get())
-                .total(total)
-                .pending(pending)
-                .approved(approved)
-                .rejected(rejected)
-                .spam(spam)
-                .build();
+            return AdminDanhGiaConfigResponse.builder()
+                    .autoApprove(autoApproveEnabled.get())
+                    .total(total)
+                    .pending(pending)
+                    .approved(approved)
+                    .rejected(rejected)
+                    .spam(spam)
+                    .build();
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy thông tin cấu hình và thống kê đánh giá: {}", e.getMessage(), e);
+            return AdminDanhGiaConfigResponse.builder()
+                    .autoApprove(autoApproveEnabled.get())
+                    .total(0)
+                    .pending(0)
+                    .approved(0)
+                    .rejected(0)
+                    .spam(0)
+                    .build();
+        }
     }
 }

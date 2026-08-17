@@ -17,7 +17,13 @@ public class DatabaseItemWriter<T> implements ItemWriter<T> {
     @Transactional
     public void write(Chunk<? extends T> items) throws Exception {
         for (T item : items) {
-            entityManager.persist(item);
+            if (item != null) {
+                if (entityManager.contains(item)) {
+                    entityManager.merge(item);
+                } else {
+                    entityManager.persist(item);
+                }
+            }
         }
         entityManager.flush();
     }

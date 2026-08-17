@@ -2,6 +2,7 @@ package com.example.be.core.admin.phieugiamgia.service.impl;
 
 import com.example.be.core.admin.phieugiamgia.model.request.AdminPhieuGiamGiaRequest;
 import com.example.be.core.admin.phieugiamgia.model.response.AdminPhieuGiamGiaResponse;
+import com.example.be.core.admin.phieugiamgia.repository.AdminPhieuGiamGiaCaNhanRepository;
 import com.example.be.core.admin.phieugiamgia.repository.AdminPhieuGiamGiaRepository;
 import com.example.be.core.admin.phieugiamgia.repository.AdminPhieuGiamGiaSpecification;
 import com.example.be.core.admin.phieugiamgia.service.AdminPhieuGiamGiaService;
@@ -10,17 +11,19 @@ import com.example.be.core.notification.dto.EmailRequest;
 import com.example.be.entity.KhachHang;
 import com.example.be.entity.PhieuGiamGia;
 import com.example.be.entity.PhieuGiamGiaCaNhan;
-import com.example.be.infrastructure.constants.MessageConstants;
+import com.example.be.infrastructure.batch.service.ExcelBatchResult;
+import com.example.be.infrastructure.batch.service.ExcelBatchService;
 import com.example.be.infrastructure.constants.HinhThucPhieuGiamGia;
 import com.example.be.infrastructure.constants.LoaiPhieuGiamGia;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.infrastructure.exceptions.SystemException;
 import com.example.be.repository.KhachHangRepository;
-import com.example.be.core.admin.phieugiamgia.repository.AdminPhieuGiamGiaCaNhanRepository;
 import com.example.be.utils.ExcelUtils;
 import com.example.be.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -35,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
@@ -43,6 +47,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     private final KhachHangRepository khachHangRepository;
     private final AdminPhieuGiamGiaCaNhanRepository phieuGiamGiaCaNhanRepository;
     private final EmailService emailService;
+    private final ExcelBatchService excelBatchService;
 
     @Override
     public List<AdminPhieuGiamGiaResponse> hienThi() {
@@ -163,14 +168,13 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         variables.put("name", kh.getTen());
         variables.put("voucherCode", p.getMa());
         variables.put("voucherName", p.getTen());
-        variables.put("loaiPhieu", p.getLoaiPhieu()); // "PHAN_TRAM" hoặc "TIEN_MAT"
+        variables.put("loaiPhieu", p.getLoaiPhieu());
         variables.put("isPhanTram", LoaiPhieuGiamGia.isPhanTram(p.getLoaiPhieu()));
         variables.put("discountPercent", p.getPhanTramGiamGia() != null ? p.getPhanTramGiamGia() : 0);
         variables.put("giamToiDa", p.getGiamToiDa() != null ? formatVnd(p.getGiamToiDa()) : null);
         variables.put("soTienGiam", p.getSoTienGiam() != null ? formatVnd(p.getSoTienGiam()) : "0");
         variables.put("minOrder", p.getDonHangToiThieu() != null ? formatVnd(p.getDonHangToiThieu()) : "0");
 
-        // Better date formatting
         java.time.Instant expiryInstant = java.time.Instant.ofEpochMilli(p.getNgayKetThuc() != null ? p.getNgayKetThuc() : System.currentTimeMillis());
         java.time.LocalDateTime expiryDate = java.time.LocalDateTime.ofInstant(expiryInstant, java.time.ZoneId.systemDefault());
         variables.put("expiryDate", expiryDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
@@ -192,10 +196,10 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         TrangThai oldStatus = p.getTrangThai();
         
         BeanUtils.copyProperties(req, p, "trangThai", "ma");
-        p.setId(id); // Ensure ID is preserved
+        p.setId(id);
         repo.save(p);
 
-        if (HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc()) && oldStatus != p.getTrangThai()) {
+        if (HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc())) {
             String statusDesc = p.getTrangThai() == TrangThai.DANG_HOAT_DONG ? "được kích hoạt hoạt động" : "đã kết thúc";
             sendVoucherStatusEmail(p, statusDesc);
         }
@@ -257,48 +261,10 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     }
 
     @Override
-    @Transactional
     public void importExcel(MultipartFile file) {
-        try (org.apache.poi.ss.usermodel.Workbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook(file.getInputStream())) {
-            org.apache.poi.ss.usermodel.Sheet sheet = workbook.getSheetAt(0);
-            java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                org.apache.poi.ss.usermodel.Row row = sheet.getRow(i);
-                if (row == null) continue;
-
-                PhieuGiamGia p = new PhieuGiamGia();
-                p.setMa(ExcelUtils.getCellValueAsString(row.getCell(0)));
-                p.setTen(ExcelUtils.getCellValueAsString(row.getCell(1)));
-                p.setLoaiPhieu(ExcelUtils.getCellValueAsString(row.getCell(2)));
-
-                String valStr = ExcelUtils.getCellValueAsString(row.getCell(3));
-                if (LoaiPhieuGiamGia.isPhanTram(p.getLoaiPhieu())) {
-                    p.setPhanTramGiamGia(Integer.parseInt(valStr));
-                } else {
-                    p.setSoTienGiam(new java.math.BigDecimal(valStr));
-                }
-
-                p.setDonHangToiThieu(new java.math.BigDecimal(ExcelUtils.getCellValueAsString(row.getCell(4))));
-                p.setSoLuong(Integer.parseInt(ExcelUtils.getCellValueAsString(row.getCell(5))));
-                p.setHinhThuc(ExcelUtils.getCellValueAsString(row.getCell(6)));
-
-                p.setNgayBatDau(java.time.LocalDate.parse(ExcelUtils.getCellValueAsString(row.getCell(7)), dtf)
-                        .atStartOfDay(java.time.ZoneId.systemDefault())
-                        .toInstant()
-                        .toEpochMilli());
-                p.setNgayKetThuc(java.time.LocalDate.parse(ExcelUtils.getCellValueAsString(row.getCell(8)), dtf)
-                        .plusDays(1)
-                        .atStartOfDay(java.time.ZoneId.systemDefault())
-                        .toInstant()
-                        .toEpochMilli() - 1L);
-
-                p.setTrangThai(TrangThai.DANG_HOAT_DONG);
-                repo.save(p);
-            }
-        } catch (Exception e) {
-            throw new SystemException(MessageConstants.EXCEL_IMPORT_ERROR + e.getMessage());
-        }
+        log.info("Starting voucher import using Spring Batch...");
+        ExcelBatchResult result = excelBatchService.runVoucherImportJob(file);
+        log.info("Voucher import completed: {}", result.getMessage());
     }
 
     private AdminPhieuGiamGiaResponse toResponse(PhieuGiamGia p) {

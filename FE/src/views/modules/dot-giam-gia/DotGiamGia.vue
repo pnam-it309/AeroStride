@@ -277,14 +277,14 @@ onMounted(() => loadCampaigns());
             @add="router.push(PATH.DOT_GIAM_GIA_FORM)"
         >
             <template #extra-actions>
-                <v-btn
+                <!-- <v-btn
                     prepend-icon="mdi-flash"
                     variant="flat"
                     class="admin-btn-orange-pastel mr-2"
                     @click="showFlashSaleModal = true"
                 >
                     Tạo sale giờ vàng
-                </v-btn>
+                </v-btn> -->
                 <v-btn
                     prepend-icon="mdi-download"
                     variant="flat"

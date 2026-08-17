@@ -10,6 +10,7 @@ import com.example.be.core.admin.danhgia.service.ReviewConfigService;
 import com.example.be.entity.DanhGiaSanPham;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdminDanhGiaServiceImpl implements AdminDanhGiaService {
 
     private final AdminDanhGiaRepository repository;
@@ -25,8 +27,13 @@ public class AdminDanhGiaServiceImpl implements AdminDanhGiaService {
     @Override
     @Transactional(readOnly = true)
     public Page<AdminDanhGiaResponse> getPageDanhGia(AdminDanhGiaFilterRequest request, Pageable pageable) {
-        Page<DanhGiaSanPham> page = repository.findAll(AdminDanhGiaSpecification.filter(request), pageable);
-        return page.map(AdminDanhGiaResponse::new);
+        try {
+            Page<DanhGiaSanPham> page = repository.findAll(AdminDanhGiaSpecification.filter(request), pageable);
+            return page.map(AdminDanhGiaResponse::new);
+        } catch (Exception e) {
+            log.error("Lỗi khi truy vấn danh sách đánh giá: {}", e.getMessage(), e);
+            return Page.empty(pageable);
+        }
     }
 
     @Override

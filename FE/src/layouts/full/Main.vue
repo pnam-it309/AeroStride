@@ -17,6 +17,7 @@ import { Menu2Icon } from 'vue-tabler-icons';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { computed, onMounted } from 'vue';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
+import { isRoleAdmin, isRoleStaff, isRoleCustomer } from '@/constants/appConstants';
 
 const uiStore = useUIStore();
 const notificationStore = useNotificationStore();
@@ -48,16 +49,28 @@ const handleGiaoCaClick = async () => {
     }
 };
 
+const checkRoleMatch = (itemRoles, userRole) => {
+    if (!itemRoles || itemRoles.length === 0) return true;
+    if (!userRole) return false;
+    return itemRoles.some((r) => {
+        if (r === userRole) return true;
+        if (isRoleAdmin(r) && isRoleAdmin(userRole)) return true;
+        if (isRoleStaff(r) && isRoleStaff(userRole)) return true;
+        if (isRoleCustomer(r) && isRoleCustomer(userRole)) return true;
+        return false;
+    });
+};
+
 const sidebarMenu = computed(() => {
     const userRole = dichVuXacThuc.layUserHienTai()?.role;
 
     return sidebarItems
-        .filter((item) => !item.roles || item.roles.includes(userRole))
+        .filter((item) => checkRoleMatch(item.roles, userRole))
         .map((item) => {
             let filteredItem = { ...item };
 
             if (filteredItem.children) {
-                filteredItem.children = filteredItem.children.filter((child) => !child.roles || child.roles.includes(userRole));
+                filteredItem.children = filteredItem.children.filter((child) => checkRoleMatch(child.roles, userRole));
             }
 
             if (filteredItem.title === 'Quản lý tin nhắn' && unreadChatCount.value > 0) {
