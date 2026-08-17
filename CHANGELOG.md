@@ -1,3 +1,10 @@
+## [1.42.1](https://github.com/pnam-it309/AeroStride/compare/v1.42.0...v1.42.1) (2026-08-17)
+
+
+### Bug Fixes
+
+* **auth:** assign QUAN_LY role to 5 admin accounts and ensure manager redirect on login ([c632c90](https://github.com/pnam-it309/AeroStride/commit/c632c90fae3c6b3631d37433074f83efd9494376))
+
 # [1.42.0](https://github.com/pnam-it309/AeroStride/compare/v1.41.0...v1.42.0) (2026-08-17)
 
 
