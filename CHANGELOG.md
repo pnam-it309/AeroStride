@@ -1,3 +1,10 @@
+# [1.41.0](https://github.com/pnam-it309/AeroStride/compare/v1.40.0...v1.41.0) (2026-08-17)
+
+
+### Features
+
+* enhance customer chat draggable FAB and fix staff schedule view ([c68f85a](https://github.com/pnam-it309/AeroStride/commit/c68f85a80ed8449f37f621bec96192ca6b5e491a))
+
 # [1.40.0](https://github.com/pnam-it309/AeroStride/compare/v1.39.0...v1.40.0) (2026-08-15)
 
 
