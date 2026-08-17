@@ -4,6 +4,7 @@ import com.example.be.core.admin.lichlamviec.model.request.CaLamRequest;
 import com.example.be.core.admin.lichlamviec.model.request.LichLamViecRequest;
 import com.example.be.core.admin.lichlamviec.model.request.AutoScheduleRequest;
 import com.example.be.infrastructure.constants.TrangThai;
+import com.example.be.infrastructure.constants.VaiTro;
 import com.example.be.core.admin.lichlamviec.model.CaLamResponse;
 import com.example.be.core.admin.lichlamviec.model.LichLamViecResponse;
 import com.example.be.core.admin.lichlamviec.model.LichSuHoatDongResponse;
@@ -24,6 +25,8 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -65,7 +69,28 @@ public class LichLamViecServiceImpl implements LichLamViecService {
             } catch (Exception ignored) {}
         }
 
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isStaff = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + VaiTro.STAFF) || a.getAuthority().equals(VaiTro.STAFF));
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + VaiTro.ADMIN) || a.getAuthority().equals(VaiTro.ADMIN));
+
+        String staffId = null;
+        if (isStaff && !isAdmin && auth != null) {
+            String identifier = auth.getName();
+            if (identifier != null && identifier.contains(":")) {
+                identifier = identifier.substring(identifier.indexOf(":") + 1);
+            }
+            Optional<NhanVien> currentNv = nhanVienRepository.findCurrentProfileByIdentifier(identifier);
+            if (currentNv.isPresent()) {
+                staffId = currentNv.get().getId();
+            }
+        }
+
+        final String finalStaffId = staffId;
+
         return lichLamViecRepository.searchSchedules(cleanSearch, cleanCa, cleanNgay).stream()
+                .filter(l -> finalStaffId == null || (l.getNhanVien() != null && finalStaffId.equals(l.getNhanVien().getId())))
                 .map(l -> LichLamViecResponse.builder()
                         .id(l.getId())
                         .nhanVien(l.getNhanVien() != null ? l.getNhanVien().getTen() : "N/A")

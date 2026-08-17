@@ -20,6 +20,7 @@ import { useLocation } from '@/composables/useLocation';
 import { useAddressMapping } from '@/composables/useAddressMapping';
 import { useHoaDonPrinter } from '@/composables/useHoaDonPrinter';
 import { formatNumberWithDots, parseNumberFromDots, formatDateTime } from '@/utils/formatters';
+import { getBackendErrorMessage } from '@/utils/errorUtils';
 import { useCustomerSelect } from './composables/useCustomerSelect';
 
 // Import Components
@@ -1968,7 +1969,7 @@ const updateOrderInList = (updated) => {
 };
 
 const getErrorMessage = (error, fallback) => {
-    return error?.response?.data?.message || error?.response?.data?.error || error?.message || fallback;
+    return getBackendErrorMessage(error, fallback, 'BanHang');
 };
 
 const getStoredVnPayOrder = () => {

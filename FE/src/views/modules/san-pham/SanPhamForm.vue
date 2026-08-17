@@ -13,6 +13,7 @@ import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { dichVuBienThe } from '@/services/product/dichVuBienThe';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import { useNotifications } from '@/services/notificationService';
+import { getBackendErrorMessage } from '@/utils/errorUtils';
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import FormattedNumberField from './components/FormattedNumberField.vue';
 import SafeProductImage from './components/SafeProductImage.vue';
@@ -568,8 +569,6 @@ const getAttributeFetchMethodName = (type) =>
         .split('_')
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join('')}`;
-
-const getBackendErrorMessage = (error, fallbackMessage) => error?.response?.data?.message || error?.message || fallbackMessage;
 
 const getVariantColorHex = (idMauSac) => {
     const color = colors.value.find((c) => String(c.id) === String(idMauSac));

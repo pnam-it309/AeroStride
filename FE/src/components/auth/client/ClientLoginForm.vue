@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/authStore';
 import { PATH } from '@/router/routePaths';
+import SocialAuthButtons from './SocialAuthButtons.vue';
+import { getBackendErrorMessage } from '@/utils/errorUtils';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -37,9 +39,10 @@ const handleLogin = async () => {
         // Redirect to home/client dashboard instead of main, but since client dashboard isn't built yet, we can push to a client route or just root
         router.push('/');
     } catch (error) {
-        errorMessage.value = error.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
+        errorMessage.value = getBackendErrorMessage(error, 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.', 'ClientLoginForm');
     } finally {
         loading.value = false;
+        uiStore.hideLoading();
     }
 };
 </script>
@@ -68,8 +71,8 @@ const handleLogin = async () => {
                             class="modern-input"
                             hide-details
                             color="blue-darken-3"
-                            placeholder="Nhập số điện thoại"
-                            prepend-inner-icon="mdi-email-outline"
+                            placeholder="Nhập số điện thoại hoặc email"
+                            prepend-inner-icon="mdi-account-outline"
                             :disabled="loading"
                         ></v-text-field>
                     </div>
@@ -122,21 +125,9 @@ const handleLogin = async () => {
                     </div>
                 </v-col>
 
-                <v-col cols="12" class="text-center mt-6">
-                    <div class="divider-text d-flex align-center">
-                        <v-divider></v-divider>
-                        <span class="px-4 text-caption text-grey">Hoặc đăng nhập với</span>
-                        <v-divider></v-divider>
-                    </div>
-                </v-col>
-
-                <v-col cols="12" class="d-flex justify-center ga-4 mt-2">
-                    <v-btn icon variant="outlined" color="grey-lighten-1" class="social-btn" :disabled="loading">
-                        <v-icon color="red">mdi-google</v-icon>
-                    </v-btn>
-                    <v-btn icon variant="outlined" color="grey-lighten-1" class="social-btn" :disabled="loading">
-                        <v-icon color="blue-darken-2">mdi-facebook</v-icon>
-                    </v-btn>
+                <!-- Social Login Buttons with Official Brand Icons -->
+                <v-col cols="12" class="mt-2">
+                    <SocialAuthButtons :disabled="loading" label="Hoặc đăng nhập với" />
                 </v-col>
             </v-row>
         </div>

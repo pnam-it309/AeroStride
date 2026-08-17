@@ -23,11 +23,15 @@ const shiftOptions = ref(['Tất cả']);
 const employeeOptions = ref([]);
 const rawShifts = ref([]);
 
+const staffProfile = ref(null);
+
 const currentStaffInfo = computed(() => {
+    if (staffProfile.value) return staffProfile.value;
     if (!currentUser.value) return null;
     return (
         employeeOptions.value.find(
             (emp) =>
+                (emp.id && emp.id === currentUser.value.id) ||
                 (emp.tenTaiKhoan && emp.tenTaiKhoan === currentUser.value.username) ||
                 (emp.ma && emp.ma === currentUser.value.username) ||
                 (emp.ten && emp.ten === currentUser.value.username)
@@ -100,6 +104,25 @@ const filteredItems = computed(() => {
     if (!items.value) return [];
     let list = [...items.value];
 
+    // If logged in user is Staff (ROLE_NHAN_VIEN), ONLY show their own schedule
+    if (isStaff.value) {
+        const staff = currentStaffInfo.value;
+        const username = currentUser.value?.username;
+        list = list.filter((item) => {
+            if (staff) {
+                if (staff.id && item.nhanVienId === staff.id) return true;
+                if (staff.ma && item.maNhanVien && item.maNhanVien.toLowerCase() === staff.ma.toLowerCase()) return true;
+                if (staff.ten && item.nhanVien && item.nhanVien.toLowerCase() === staff.ten.toLowerCase()) return true;
+                if (staff.tenTaiKhoan && item.nhanVien && item.nhanVien.toLowerCase() === staff.tenTaiKhoan.toLowerCase()) return true;
+            }
+            if (username) {
+                if (item.maNhanVien && item.maNhanVien.toLowerCase() === username.toLowerCase()) return true;
+                if (item.nhanVien && item.nhanVien.toLowerCase() === username.toLowerCase()) return true;
+            }
+            return false;
+        });
+    }
+
     return list.sort((a, b) => {
         // Sort by date ascending (from 1st of month onwards)
         const dateCompare = a.ngay.localeCompare(b.ngay);
@@ -156,6 +179,15 @@ watch(
 const loadData = async () => {
     loading.value = true;
     try {
+        if (isStaff.value && !staffProfile.value) {
+            try {
+                const profile = await dichVuXacThuc.layThongTinCaNhan();
+                if (profile) staffProfile.value = profile;
+            } catch (e) {
+                console.error('Lỗi tải hồ sơ cá nhân:', e);
+            }
+        }
+
         const [scheduleRes, shiftRes, empRes] = await Promise.all([
             apiService.get(API_LICH_LAM_VIEC.SCHEDULES, {
                 params: {
@@ -544,6 +576,16 @@ const tableRows = computed(() => {
     // Fill in existing schedules
     weekSchedules.forEach((item) => {
         if (!employeeMap[item.nhanVien]) {
+            if (isStaff.value) {
+                const staff = currentStaffInfo.value;
+                const isCurrentStaff = staff && (
+                    item.nhanVienId === staff.id ||
+                    (staff.ma && item.maNhanVien && item.maNhanVien.toLowerCase() === staff.ma.toLowerCase()) ||
+                    (staff.ten && item.nhanVien && item.nhanVien.toLowerCase() === staff.ten.toLowerCase())
+                );
+                if (!isCurrentStaff) return;
+            }
+
             const matchesSearch =
                 !searchFilter ||
                 item.nhanVien.toLowerCase().includes(searchFilter) ||
@@ -561,7 +603,7 @@ const tableRows = computed(() => {
                 employeeMap[item.nhanVien].schedules[date] = [];
             });
         }
-        if (employeeMap[item.nhanVien].schedules[item.ngay]) {
+        if (employeeMap[item.nhanVien]?.schedules[item.ngay]) {
             employeeMap[item.nhanVien].schedules[item.ngay].push(item);
         }
     });
@@ -931,6 +973,7 @@ onMounted(() => {
             <v-col cols="12" md="4" class="px-2">
                 <div class="filter-field-label">Nhân viên</div>
                 <v-text-field
+                    v-if="canManageSchedule"
                     v-model="filters.search"
                     placeholder="Tìm kiếm nhân viên..."
                     variant="outlined"
@@ -938,7 +981,19 @@ onMounted(() => {
                     hide-details
                     prepend-inner-icon="mdi-magnify"
                     class="compact-input"
+                    clearable
                     @input="handleFilter"
+                />
+                <v-text-field
+                    v-else
+                    :model-value="currentStaffInfo ? `${currentStaffInfo.ten} (${currentStaffInfo.ma})` : (currentUser?.username || 'Nhân viên')"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    readonly
+                    bg-color="slate-50"
+                    prepend-inner-icon="mdi-account"
+                    class="compact-input"
                 />
             </v-col>
             <v-col cols="12" md="3" class="px-2">

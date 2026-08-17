@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useUIStore } from '@/stores/ui';
 import { API_DEFAULTS } from '@/constants/apiPaths';
+import { logDevError, getBackendErrorMessage } from '@/utils/errorUtils';
 
 let API_BASE_URL = import.meta.env.VITE_API_URL || API_DEFAULTS.PREFIX;
 
@@ -78,9 +79,15 @@ api.interceptors.response.use(
             }
         } catch (e) {}
 
+        // Ghi log chi tiết cho Developer kiểm tra
+        logDevError('API Service', error);
+
+        // Gắn thông điệp tiếng Việt thân thiện với người dùng vào object error
+        error.userMessage = getBackendErrorMessage(error);
+
         if (error.response) {
             const status = error.response.status;
-            const isLoginRequest = error.config.url.includes('/auth/login');
+            const isLoginRequest = error.config?.url?.includes('/auth/login');
 
             if (status === 401 && !isLoginRequest) {
                 sessionStorage.clear(); // Xóa sạch để đảm bảo an toàn
@@ -93,14 +100,6 @@ api.interceptors.response.use(
                     window.location.href = '/admin/login';
                 } else if (isCustomerAuthPath) {
                     window.location.href = '/user/login';
-                }
-            } else if (status === 403) {
-                if (import.meta.env.DEV) {
-                    console.error('Bạn không có quyền thực hiện hành động này');
-                }
-            } else if (status === 500) {
-                if (import.meta.env.DEV) {
-                    console.error('Lỗi máy chủ (500). Vui lòng liên hệ Admin.');
                 }
             }
         }

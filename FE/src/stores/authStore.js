@@ -37,6 +37,25 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
+        async socialLogin(socialData) {
+            this.loading = true;
+            this.error = null;
+            try {
+                const response = await dichVuXacThuc.dangNhapSocial(socialData);
+                if (response.success && response.data) {
+                    const { accessToken, refreshToken, username, role } = response.data;
+                    this.user = { username, role };
+                    this.accessToken = accessToken;
+                }
+                return response;
+            } catch (err) {
+                this.error = err.message || 'Đăng nhập mạng xã hội không thành công';
+                throw err;
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async logout() {
             await dichVuXacThuc.dangXuat();
             this.user = null;

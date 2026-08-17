@@ -29,6 +29,7 @@ export const API_PATHS = {
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
+    SOCIAL_LOGIN: '/auth/social-login',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh-token',
   },

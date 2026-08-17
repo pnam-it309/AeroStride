@@ -55,7 +55,7 @@ public final class MessageConstants {
     public static final String NHAN_VIEN_MA_EXISTS = "Mã nhân viên này đã tồn tại.";
     public static final String NHAN_VIEN_EMAIL_EXISTS = "Email này đã được sử dụng bởi một nhân viên khác.";
     public static final String CANNOT_CHANGE_OWN_STATUS = "Bạn không thể chuyển đổi trạng thái của chính mình!";
-    public static final String CANNOT_CHANGE_OTHER_ADMIN_STATUS = "Admin không thể chuyển đổi trạng thái của Admin khác!";
+    public static final String CANNOT_CHANGE_OTHER_ADMIN_STATUS = "Admin không thể chuyển đổi trạng thái của quản lý khác!";
 
     // ============ Phiếu giảm giá ============
     public static final String PHIEU_GIAM_GIA_ADD_SUCCESS = "Thêm phiếu giảm giá thành công!";

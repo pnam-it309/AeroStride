@@ -6,6 +6,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { PATH } from '@/router/routePaths';
 import api from '@/services/apiService';
 import { API_AUTH } from '@/constants/apiPaths';
+import SocialAuthButtons from './SocialAuthButtons.vue';
+import { getBackendErrorMessage } from '@/utils/errorUtils';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -80,7 +82,7 @@ const handleRegister = async () => {
         uiStore.hideLoading();
         router.push('/');
     } catch (error) {
-        errorMessage.value = error?.response?.data?.message || error.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+        errorMessage.value = getBackendErrorMessage(error, 'Đăng ký thất bại. Vui lòng thử lại.', 'ClientRegisterForm');
     } finally {
         loading.value = false;
         uiStore.hideLoading();
@@ -237,6 +239,11 @@ const handleRegister = async () => {
                             Tiếp tục với tư cách khách
                         </v-btn>
                     </div>
+                </v-col>
+
+                <!-- Quick Register / Social Auth with Official Icons -->
+                <v-col cols="12" class="mt-2">
+                    <SocialAuthButtons :disabled="loading" label="Hoặc đăng ký nhanh với" />
                 </v-col>
             </v-row>
         </div>

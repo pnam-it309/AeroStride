@@ -18,6 +18,21 @@ export const dichVuXacThuc = {
         return response.data;
     },
 
+    // Đăng nhập qua mạng xã hội (Google, Facebook)
+    async dangNhapSocial(socialData) {
+        const response = await api.post(API_AUTH.SOCIAL_LOGIN, socialData, {
+            bigOp: true,
+            loadingMessage: `Đang đăng nhập bằng ${socialData.provider || 'mạng xã hội'}...`
+        });
+        if (response.data.data) {
+            const { accessToken, refreshToken, username, role } = response.data.data;
+            sessionStorage.setItem('accessToken', accessToken);
+            sessionStorage.setItem('refreshToken', refreshToken);
+            sessionStorage.setItem('user', JSON.stringify({ username, role }));
+        }
+        return response.data;
+    },
+
     // Làm mới token
     async lamMoiToken() {
         const refreshToken = sessionStorage.getItem('refreshToken');

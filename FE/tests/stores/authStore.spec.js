@@ -1,8 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 
-// Mock global sessionStorage
+// Mock global sessionStorage and localStorage
 global.sessionStorage = {
+    getItem: vi.fn(() => null),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+    clear: vi.fn(),
+};
+
+global.localStorage = {
     getItem: vi.fn(() => null),
     setItem: vi.fn(),
     removeItem: vi.fn(),
@@ -44,7 +51,7 @@ describe('authStore', () => {
 
         // Simulated admin login
         store.accessToken = 'jwt-token-xyz';
-        store.user = { username: 'admin', role: 'ROLE_QUAN_TRI_VIEN' };
+        store.user = { username: 'admin', role: 'ROLE_QUAN_LY' };
 
         expect(store.isLoggedIn).toBe(true);
         expect(store.isAdmin).toBe(true);
@@ -64,7 +71,7 @@ describe('authStore', () => {
                 accessToken: 'access-123',
                 refreshToken: 'refresh-123',
                 username: 'adminUser',
-                role: 'ROLE_QUAN_TRI_VIEN'
+                role: 'ROLE_QUAN_LY'
             }
         };
 
@@ -75,7 +82,7 @@ describe('authStore', () => {
         expect(store.loading).toBe(false);
         expect(store.error).toBeNull();
         expect(store.accessToken).toBe('access-123');
-        expect(store.user).toEqual({ username: 'adminUser', role: 'ROLE_QUAN_TRI_VIEN' });
+        expect(store.user).toEqual({ username: 'adminUser', role: 'ROLE_QUAN_LY' });
         expect(result).toEqual(mockResponse);
     });
 

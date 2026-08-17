@@ -28,6 +28,7 @@ export const API_AUTH = {
     BASE: API_BASE.AUTH,
     LOGIN: `${API_BASE.AUTH}/login`,
     REGISTER: `${API_BASE.AUTH}/register`,
+    SOCIAL_LOGIN: `${API_BASE.AUTH}/social-login`,
     LOGOUT: `${API_BASE.AUTH}/logout`,
     REFRESH: `${API_BASE.AUTH}/refresh-token`,
     ME: `${API_BASE.AUTH}/me`,

@@ -28,6 +28,7 @@ import SafeProductImage from '../san-pham/components/SafeProductImage.vue';
 import QrcodeVue from 'qrcode.vue';
 import { exportQrImageZip } from '@/utils/qrExcelWorkbook';
 import { formatCurrency, formatNumber, toNumber } from '@/utils/formatters';
+import { getBackendErrorMessage } from '@/utils/errorUtils';
 import { getStatusLabel, isActiveStatus } from '@/utils/statusUtils';
 
 const MIN_VARIANT_PRICE = 0;
@@ -97,10 +98,6 @@ const confirmDialog = ref({
     action: null,
     loading: false
 });
-
-// Trích xuất nội dung lỗi từ backend để hiển thị thông báo
-const getBackendErrorMessage = (error, fallbackMessage) =>
-    error?.response?.data?.message || error?.response?.data?.errors?.[0]?.defaultMessage || error?.message || fallbackMessage;
 
 const selectedProductSummary = computed(() => {
     if (!selectedProductId.value || selectedProductId.value === 'ALL') {

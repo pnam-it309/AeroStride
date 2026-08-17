@@ -25,12 +25,13 @@ import { useAuth } from '@/context/AuthContext';
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, socialLogin } = useAuth();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<'GOOGLE' | 'FACEBOOK' | null>(null);
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
@@ -52,6 +53,28 @@ export default function LoginScreen() {
       Alert.alert('Đăng nhập thất bại', message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSocialLogin = async (provider: 'GOOGLE' | 'FACEBOOK') => {
+    setSocialLoading(provider);
+    try {
+      await socialLogin({
+        provider,
+        email: provider === 'GOOGLE' ? 'mobile.google.user@aerostride.vn' : 'mobile.fb.user@aerostride.vn',
+        name: provider === 'GOOGLE' ? 'Khách Hàng Google' : 'Khách Hàng Facebook',
+        avatarUrl: provider === 'GOOGLE' 
+          ? 'https://lh3.googleusercontent.com/a/default-user=s96-c'
+          : 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg',
+        providerId: (provider === 'GOOGLE' ? 'm_gg_' : 'm_fb_') + Date.now(),
+      });
+      router.back();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || `Đăng nhập qua ${provider} thất bại`;
+      Alert.alert('Đăng nhập thất bại', message);
+    } finally {
+      setSocialLoading(null);
     }
   };
 
@@ -131,7 +154,7 @@ export default function LoginScreen() {
                 { opacity: loading || pressed ? 0.8 : 1 },
               ]}
               onPress={handleLogin}
-              disabled={loading}
+              disabled={loading || !!socialLoading}
             >
               <LinearGradient
                 colors={[Brand.primary, Brand.primaryDark]}
@@ -149,6 +172,42 @@ export default function LoginScreen() {
                 )}
               </LinearGradient>
             </Pressable>
+
+            {/* Social Divider */}
+            <View style={styles.socialDivider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>Hoặc đăng nhập với</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Social Buttons with Official Colors */}
+            <View style={styles.socialRow}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.socialBtn,
+                  styles.googleBtn,
+                  { opacity: pressed || socialLoading === 'GOOGLE' ? 0.75 : 1 },
+                ]}
+                onPress={() => handleSocialLogin('GOOGLE')}
+                disabled={loading || !!socialLoading}
+              >
+                <Ionicons name="logo-google" size={20} color="#EA4335" />
+                <Text style={styles.socialBtnText}>Google</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.socialBtn,
+                  styles.facebookBtn,
+                  { opacity: pressed || socialLoading === 'FACEBOOK' ? 0.75 : 1 },
+                ]}
+                onPress={() => handleSocialLogin('FACEBOOK')}
+                disabled={loading || !!socialLoading}
+              >
+                <Ionicons name="logo-facebook" size={20} color="#1877F2" />
+                <Text style={styles.socialBtnText}>Facebook</Text>
+              </Pressable>
+            </View>
           </Animated.View>
 
           {/* Register link */}
@@ -255,6 +314,51 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: FontSizes.md,
     fontWeight: FontWeights.bold,
+  },
+  socialDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing.two,
+    gap: Spacing.three,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  dividerText: {
+    color: '#94A3B8',
+    fontSize: FontSizes.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  socialRow: {
+    flexDirection: 'row',
+    gap: Spacing.three,
+  },
+  socialBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  googleBtn: {
+    borderColor: 'rgba(234, 67, 53, 0.3)',
+    backgroundColor: 'rgba(234, 67, 53, 0.06)',
+  },
+  facebookBtn: {
+    borderColor: 'rgba(24, 119, 242, 0.3)',
+    backgroundColor: 'rgba(24, 119, 242, 0.06)',
+  },
+  socialBtnText: {
+    color: '#FFFFFF',
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.semibold,
   },
   registerRow: {
     flexDirection: 'row',

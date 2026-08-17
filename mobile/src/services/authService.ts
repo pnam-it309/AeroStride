@@ -27,6 +27,15 @@ export interface RegisterRequest {
   matKhau: string;
 }
 
+export interface SocialLoginRequest {
+  provider: 'GOOGLE' | 'FACEBOOK';
+  token?: string;
+  email?: string;
+  name?: string;
+  avatarUrl?: string;
+  providerId?: string;
+}
+
 const persistAuth = async (authData: AuthResponse) => {
   await storage.setAccessToken(authData.accessToken);
   await storage.setRefreshToken(authData.refreshToken);
@@ -40,6 +49,16 @@ export const authService = {
   async login(data: LoginRequest): Promise<AuthResponse> {
     const response = await apiClient.post<ApiResponse<AuthResponse>>(
       API_PATHS.AUTH.LOGIN,
+      data
+    );
+    const authData = response.data.data;
+    await persistAuth(authData);
+    return authData;
+  },
+
+  async socialLogin(data: SocialLoginRequest): Promise<AuthResponse> {
+    const response = await apiClient.post<ApiResponse<AuthResponse>>(
+      API_PATHS.AUTH.SOCIAL_LOGIN,
       data
     );
     const authData = response.data.data;

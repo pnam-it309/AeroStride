@@ -3,7 +3,7 @@
  */
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { authService, AuthResponse, LoginRequest, RegisterRequest } from '@/services/authService';
+import { authService, AuthResponse, LoginRequest, RegisterRequest, SocialLoginRequest } from '@/services/authService';
 import { storage } from '@/utils/storage';
 
 interface AuthState {
@@ -14,6 +14,7 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (data: LoginRequest) => Promise<AuthResponse>;
+  socialLogin: (data: SocialLoginRequest) => Promise<AuthResponse>;
   register: (data: RegisterRequest) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
@@ -58,6 +59,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return authData;
   }, []);
 
+  const socialLogin = useCallback(async (data: SocialLoginRequest): Promise<AuthResponse> => {
+    const authData = await authService.socialLogin(data);
+    setState({
+      user: { username: authData.username, role: authData.role },
+      isAuthenticated: true,
+      isLoading: false,
+    });
+    return authData;
+  }, []);
+
   const register = useCallback(async (data: RegisterRequest): Promise<AuthResponse> => {
     const authData = await authService.register(data);
     setState({
@@ -78,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout, checkAuth }}>
+    <AuthContext.Provider value={{ ...state, login, socialLogin, register, logout, checkAuth }}>
       {children}
     </AuthContext.Provider>
   );

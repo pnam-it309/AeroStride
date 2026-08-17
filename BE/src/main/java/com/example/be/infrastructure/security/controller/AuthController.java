@@ -11,6 +11,8 @@ import com.example.be.infrastructure.security.dto.CurrentUserResponse;
 import com.example.be.infrastructure.security.dto.LoginRequest;
 import com.example.be.infrastructure.security.dto.RegisterRequest;
 import com.example.be.infrastructure.security.dto.TokenRefreshRequest;
+import com.example.be.infrastructure.security.dto.SocialLoginRequest;
+import com.example.be.infrastructure.security.service.SocialAuthService;
 import com.example.be.infrastructure.security.service.RefreshTokenService;
 import com.example.be.infrastructure.config.ratelimit.RateLimit;
 import com.example.be.infrastructure.exceptions.BusinessException;
@@ -42,6 +44,15 @@ public class AuthController {
     private final KhachHangRepository khachHangRepository;
     private final NhanVienRepository nhanVienRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SocialAuthService socialAuthService;
+
+    @PostMapping("/social-login")
+    @RateLimit(limit = 10, windowSeconds = 60)
+    public ResponseEntity<ApiResponse<AuthResponse>> socialLogin(@Valid @RequestBody SocialLoginRequest request) {
+        log.info("SOCIAL LOGIN ATTEMPT: Provider [{}] Email [{}]", request.getProvider(), request.getEmail());
+        AuthResponse authResponse = socialAuthService.processSocialLogin(request);
+        return ResponseEntity.ok(ApiResponse.success(authResponse, "Đăng nhập bằng " + request.getProvider() + " thành công"));
+    }
 
     @PostMapping("/login")
     @RateLimit(limit = 5, windowSeconds = 60)

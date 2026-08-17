@@ -373,6 +373,7 @@ onMounted(() => loadOrders());
                     bg-color="transparent"
                     color="primary"
                     show-arrows
+                    grow
                     class="admin-tabs invoice-status-tabs"
                     @update:model-value="handleTabChange"
                     height="54"

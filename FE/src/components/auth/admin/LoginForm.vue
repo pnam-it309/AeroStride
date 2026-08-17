@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/ui';
 import { PATH } from '@/router/routePaths';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
+import { getBackendErrorMessage } from '@/utils/errorUtils';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -40,7 +41,7 @@ const handleLogin = async () => {
             router.push(PATH.DASHBOARD);
         }
     } catch (error) {
-        errorMessage.value = error.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+        errorMessage.value = getBackendErrorMessage(error, 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.', 'AdminLoginForm');
     } finally {
         loading.value = false;
     }

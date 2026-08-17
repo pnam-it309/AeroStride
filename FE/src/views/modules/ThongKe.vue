@@ -690,8 +690,10 @@ const getDateRange = () => {
 
 const productTotalElements = ref(0);
 const productTotalPages = ref(1);
+const productLoading = ref(false);
 
 const fetchProductStats = async () => {
+    productLoading.value = true;
     try {
         const { tuNgay, denNgay } = getDateRange();
         const response = await dichVuThongKe.layThongKeSanPham({
@@ -711,6 +713,8 @@ const fetchProductStats = async () => {
         productStats.value = [];
         productTotalElements.value = 0;
         productTotalPages.value = 1;
+    } finally {
+        productLoading.value = false;
     }
 };
 
@@ -1079,12 +1083,29 @@ const donutChartOptions = ref({
     }
 });
 
+let searchDebounceTimer = null;
+const onSearchInput = () => {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+        productPage.value = 1;
+        fetchProductStats();
+    }, 350);
+};
+
+const onSearchClear = () => {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    productSearchKeyword.value = '';
+    productPage.value = 1;
+    fetchProductStats();
+};
+
 const refreshProductFilters = () => {
     productPage.value = 1;
     fetchProductStats();
 };
 
 const resetProductFilters = () => {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
     productSearchKeyword.value = '';
     productSortBy.value = 'bestSelling';
     productPage.value = 1;
@@ -1529,11 +1550,8 @@ onMounted(() => {
                     </div>
                     <span class="product-count-chip">{{ formatNumber(productTotalElements) }} sản phẩm</span>
                 </div>
-                <div v-if="loading" class="panel-loader">
+                <div v-if="loading && productStats.length === 0" class="panel-loader">
                     <v-progress-circular indeterminate color="primary" />
-                </div>
-                <div v-else-if="productTotalElements === 0 && !productSearchKeyword" class="empty-state product-empty-state">
-                    Không có dữ liệu trong thời gian này
                 </div>
                 <div v-else class="product-table-section">
                     <AdminFilter title="" @refresh="resetProductFilters">
@@ -1548,7 +1566,8 @@ onMounted(() => {
                                 clearable
                                 prepend-inner-icon="mdi-magnify"
                                 bg-color="white"
-                                @input="refreshProductFilters"
+                                @input="onSearchInput"
+                                @click:clear="onSearchClear"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="12" sm="6" md="4" class="pb-1">
@@ -1568,6 +1587,7 @@ onMounted(() => {
                     </AdminFilter>
                     <AdminTable
                         hide-toolbar
+                        :loading="productLoading"
                         :headers="[
                             { text: 'STT', align: 'center', width: '80px' },
                             { text: 'Mã sản phẩm', align: 'center' },

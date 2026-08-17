@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { useToastStore } from '@/stores/toastStore';
+import { formatUserErrorMessage, getBackendErrorMessage } from '@/utils/errorUtils';
 
 const notifications = ref([]);
 
@@ -7,11 +8,18 @@ export const useNotifications = () => {
     const addNotification = (notif) => {
         const toast = useToastStore();
 
+        const rawSubtitle = notif.subtitle || notif.message || '';
+        const userSubtitle = typeof rawSubtitle === 'object' && rawSubtitle !== null
+            ? getBackendErrorMessage(rawSubtitle, 'Thao tác không thành công', 'Notification')
+            : formatUserErrorMessage(rawSubtitle, 'Thao tác không thành công');
+
+        const userTitle = formatUserErrorMessage(notif.title || 'Thông báo hệ thống');
+
         // Add to notification list (for the bell icon)
         notifications.value.unshift({
             id: Date.now(),
-            title: notif.title || 'Thông báo hệ thống',
-            subtitle: notif.subtitle || '',
+            title: userTitle,
+            subtitle: userSubtitle,
             time: 'Vừa xong',
             icon: notif.icon || 'CircleCheckIcon',
             color: notif.color || 'success',
@@ -24,7 +32,7 @@ export const useNotifications = () => {
 
         // Show toast (snackbar) with default timeout
         toast.showToast(
-            notif.subtitle || notif.title || 'Thông báo mới',
+            userSubtitle || userTitle || 'Thông báo mới',
             displayColor,
             notif.icon || (displayColor === 'error' ? 'mdi-alert-circle' : displayColor === 'warning' ? 'mdi-alert' : 'mdi-check-circle'),
             notif.timeout || defaultTimeout

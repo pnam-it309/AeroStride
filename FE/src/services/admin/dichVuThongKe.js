@@ -23,8 +23,11 @@ export const dichVuThongKe = {
     },
 
     // Lấy thống kê sản phẩm có phân trang, tìm kiếm, sắp xếp
-    async layThongKeSanPham(params) {
-        const response = await api.get(`${API_ADMIN.THONG_KE}/san-pham`, { params });
+    async layThongKeSanPham(params, options = {}) {
+        const response = await api.get(`${API_ADMIN.THONG_KE}/san-pham`, {
+            params,
+            silent: options.silent !== undefined ? options.silent : true
+        });
         return response.data.data;
     }
 };
