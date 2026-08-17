@@ -3,7 +3,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 INSERT INTO phan_quyen (id, ma_phan_quyen, ten_phan_quyen, quyen_han, mo_ta, trang_thai, ngay_tao) VALUES
 ('pq1', 'QUAN_LY', 'Quản lý', 'MANAGEMENT_ACCESS', 'Quyền quản lý cửa hàng và hệ thống', 0, 1711814400000),
 ('pq2', 'NHAN_VIEN', 'Nhân viên', 'STAFF_ACCESS', 'Quyền nhân viên bán hàng', 0, 1711814400000)
-ON DUPLICATE KEY UPDATE id = VALUES(id);
+ON DUPLICATE KEY UPDATE ma_phan_quyen = VALUES(ma_phan_quyen), ten_phan_quyen = VALUES(ten_phan_quyen), quyen_han = VALUES(quyen_han);
 
 -- 2. Bảng Nhân Viên (nhan_vien)
 INSERT INTO nhan_vien (id, id_phan_quyen, ma_nhan_vien, ten_nhan_vien, email, sdt, ngay_sinh, gioi_tinh, ten_tai_khoan, mat_khau, hinh_anh,tinh,thanh_pho,phuong_xa,dia_chi_chi_tiet, xoa_mem, trang_thai, ngay_tao) VALUES
@@ -15,7 +15,7 @@ INSERT INTO nhan_vien (id, id_phan_quyen, ma_nhan_vien, ten_nhan_vien, email, sd
 ('nv6', 'pq2', 'NV006', 'Nguyễn Văn Staff', 'staff1@aerostride.com', '0987654321', '1995-05-20', 1, 'staff1', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'staff1.jpg', 'Đà Nẵng', 'Đà Nẵng', 'Phường Hải Châu 1', '56 Bạch Đằng', 0, 0, 1711814400000),
 ('nv7', 'pq2', 'NV007', 'Trần Thị Manager', 'manager@aerostride.com', '0912345678', '1988-10-15', 0, 'manager', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'manager.jpg', 'Hải Phòng', 'Hải Phòng', 'Phường Lạch Tray', '102 Lạch Tray', 0, 0, 1711814400000),
 ('nv8', 'pq2', 'NV008', 'Lê Văn Bán Hàng', 'staff2@aerostride.com', '0922334455', '1998-02-14', 1, 'staff2', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'staff2.jpg', 'Quảng Ninh', 'Hạ Long', 'Phường Bãi Cháy', '9 Hạ Long', 0, 0, 1711814400000)
-ON DUPLICATE KEY UPDATE id = VALUES(id);
+ON DUPLICATE KEY UPDATE id_phan_quyen = VALUES(id_phan_quyen), ma_nhan_vien = VALUES(ma_nhan_vien), ten_nhan_vien = VALUES(ten_nhan_vien), email = VALUES(email), sdt = VALUES(sdt), ten_tai_khoan = VALUES(ten_tai_khoan), mat_khau = VALUES(mat_khau);
 
 -- 4. Bảng Khách Hàng (khach_hang)
 INSERT INTO khach_hang (id, id_dia_chi, ma_nguoi_dung, ten_nguoi_dung, email, ten_tai_khoan, mat_khau, gioi_tinh, sdt, ngay_sinh, hinh_anh, ghi_chu, trang_thai, ngay_tao) VALUES

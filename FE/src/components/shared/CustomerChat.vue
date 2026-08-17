@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { chatSocket } from '@/services/chatSocket';
 import apiService from '@/services/apiService';
 import { API_CHAT } from '@/constants/apiPaths';

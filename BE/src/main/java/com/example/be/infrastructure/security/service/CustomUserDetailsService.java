@@ -51,7 +51,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         // Luồng đăng nhập cho ADMIN/STAFF
         if (loginType == null || "ADMIN".equals(loginType) || "STAFF".equals(loginType)) {
-            NhanVien nhanVien = nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(realIdentifier, realIdentifier, realIdentifier, realIdentifier)
+            NhanVien nhanVien = nhanVienRepository.findCurrentProfileByIdentifier(realIdentifier)
                     .orElse(null);
 
             if (nhanVien != null) {
