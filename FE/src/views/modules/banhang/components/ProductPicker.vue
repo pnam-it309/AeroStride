@@ -135,9 +135,74 @@ const onFilterChange = () => {
     store.showProductAutocomplete = true;
 };
 
+// Lưu trữ filter state độc lập cho từng hóa đơn
+const orderFiltersMap = ref({});
+
+const getDefaultFilter = () => ({
+    keyword: '',
+    thuongHieu: 'ALL',
+    mucDich: 'ALL',
+    khoangGia: 'ALL',
+    mauSac: 'ALL',
+    kichCo: 'ALL'
+});
+
+let isRestoringOrderFilter = false;
+
+// Watch khi chuyển tab hóa đơn hoặc tạo hóa đơn mới
+watch(
+    () => props.activeOrder?.id,
+    (newOrderId, oldOrderId) => {
+        if (oldOrderId) {
+            orderFiltersMap.value[oldOrderId] = {
+                keyword: store.productSearchKeyword,
+                thuongHieu: store.filterThuongHieu,
+                mucDich: store.filterMucDich,
+                khoangGia: store.filterKhoangGia,
+                mauSac: store.filterMauSac,
+                kichCo: store.filterKichCo
+            };
+        }
+
+        isRestoringOrderFilter = true;
+        const current = (newOrderId && orderFiltersMap.value[newOrderId]) ? orderFiltersMap.value[newOrderId] : getDefaultFilter();
+
+        store.filterThuongHieu = current.thuongHieu || 'ALL';
+        store.filterMucDich = current.mucDich || 'ALL';
+        store.filterKhoangGia = current.khoangGia || 'ALL';
+        store.filterMauSac = current.mauSac || 'ALL';
+        store.filterKichCo = current.kichCo || 'ALL';
+        store.productSearchKeyword = current.keyword || '';
+        store.showProductAutocomplete = false;
+        lastSearchParamsKey = '';
+
+        setTimeout(() => {
+            isRestoringOrderFilter = false;
+            const hasActive =
+                (store.productSearchKeyword && store.productSearchKeyword.trim() !== '') ||
+                store.filterThuongHieu !== 'ALL' ||
+                store.filterMucDich !== 'ALL' ||
+                store.filterKhoangGia !== 'ALL' ||
+                store.filterMauSac !== 'ALL' ||
+                store.filterKichCo !== 'ALL';
+
+            if (hasActive) {
+                fetchProductSearchResults(store.productSearchKeyword, true);
+            } else {
+                store.productSearchResults = [];
+            }
+        }, 50);
+    },
+    { immediate: true }
+);
+
 const resetFilters = () => {
     store.resetFilters();
+    if (props.activeOrder?.id) {
+        orderFiltersMap.value[props.activeOrder.id] = getDefaultFilter();
+    }
     lastSearchParamsKey = '';
+    store.productSearchResults = [];
 };
 
 let searchDebounce = null;
@@ -151,6 +216,19 @@ watch(
         () => store.filterKichCo
     ],
     () => {
+        if (isRestoringOrderFilter) return;
+
+        if (props.activeOrder?.id) {
+            orderFiltersMap.value[props.activeOrder.id] = {
+                keyword: store.productSearchKeyword,
+                thuongHieu: store.filterThuongHieu,
+                mucDich: store.filterMucDich,
+                khoangGia: store.filterKhoangGia,
+                mauSac: store.filterMauSac,
+                kichCo: store.filterKichCo
+            };
+        }
+
         if (searchDebounce) clearTimeout(searchDebounce);
         searchDebounce = setTimeout(() => {
             fetchProductSearchResults(store.productSearchKeyword, true);
@@ -173,6 +251,9 @@ const selectProductFromSearch = (variant) => {
     emit('add-product', { ...variant, _soLuongMuonThem: 1 });
     store.productSearchKeyword = '';
     store.showProductAutocomplete = false;
+    if (props.activeOrder?.id && orderFiltersMap.value[props.activeOrder.id]) {
+        orderFiltersMap.value[props.activeOrder.id].keyword = '';
+    }
 };
 
 // Scanner Logic
