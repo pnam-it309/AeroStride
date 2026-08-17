@@ -24,9 +24,8 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
     public List<CustomerVoucherResponse> getPublicVouchers() {
         long now = System.currentTimeMillis();
         
-        List<PhieuGiamGia> vouchers = voucherRepository.findAll().stream()
+        List<PhieuGiamGia> vouchers = voucherRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG).stream()
                 .filter(v -> HinhThucPhieuGiamGia.isCongKhai(v.getHinhThuc()) 
-                        && v.getTrangThai() == TrangThai.DANG_HOAT_DONG 
                         && (v.getNgayBatDau() == null || v.getNgayBatDau() <= now) 
                         && (v.getNgayKetThuc() == null || v.getNgayKetThuc() >= now)
                         && (v.getSoLuong() == null || v.getSoLuong() != 0))
@@ -42,9 +41,8 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
         }
 
         long now = System.currentTimeMillis();
-        List<PhieuGiamGia> validVouchers = voucherRepository.findAll().stream()
+        List<PhieuGiamGia> validVouchers = voucherRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG).stream()
                 .filter(v -> HinhThucPhieuGiamGia.isCongKhai(v.getHinhThuc()) 
-                        && v.getTrangThai() == TrangThai.DANG_HOAT_DONG 
                         && (v.getNgayBatDau() == null || v.getNgayBatDau() <= now) 
                         && (v.getNgayKetThuc() == null || v.getNgayKetThuc() >= now)
                         && (v.getSoLuong() == null || v.getSoLuong() != 0)

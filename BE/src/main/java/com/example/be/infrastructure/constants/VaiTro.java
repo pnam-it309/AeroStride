@@ -23,6 +23,7 @@ public enum VaiTro {
     // SpEL expressions for @PreAuthorize annotations
     public static final String PRE_AUTH_ADMIN_ONLY = "hasRole('" + ADMIN + "')";
     public static final String PRE_AUTH_ADMIN_STAFF = "hasAnyRole('" + ADMIN + "', '" + STAFF + "')";
+    public static final String PRE_AUTH_CUSTOMER = "hasRole('" + CUSTOMER + "')";
 
     /**
      * Kiểm tra xem thông tin phân quyền hoặc nhân viên có thuộc nhóm Quản lý hay không.

@@ -19,7 +19,7 @@ public enum OrderStatus {
             case XAC_NHAN -> nextStatus == CHO_GIAO || nextStatus == DA_HUY;
             case CHO_GIAO -> nextStatus == DANG_GIAO || nextStatus == DA_HUY;
             case DANG_GIAO -> nextStatus == HOAN_THANH || nextStatus == GIAO_THAT_BAI || nextStatus == KHACH_KHONG_NHAN || nextStatus == HOAN_DON;
-            case GIAO_THAT_BAI, KHACH_KHONG_NHAN -> nextStatus == HOAN_DON || nextStatus == HOAN_THANH;
+            case GIAO_THAT_BAI, KHACH_KHONG_NHAN -> nextStatus == HOAN_DON || nextStatus == HOAN_THANH || nextStatus == DANG_GIAO;
             case HOAN_THANH -> nextStatus == HOAN_DON;
             case DA_HUY, HOAN_DON -> false;
         };

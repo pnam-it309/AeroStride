@@ -28,9 +28,7 @@ public class OrderAutoCompleteJob {
         log.info("Starting OrderAutoCompleteJob to check for DANG_GIAO orders...");
         long sevenDaysAgo = System.currentTimeMillis() - (7L * 24 * 60 * 60 * 1000);
         
-        List<HoaDon> orders = hoaDonRepository.findAll().stream()
-                .filter(hd -> hd.getTrangThai() == OrderStatus.DANG_GIAO)
-                .toList();
+        List<HoaDon> orders = hoaDonRepository.findByTrangThai(OrderStatus.DANG_GIAO);
 
         for (HoaDon order : orders) {
             // Find when it was updated to DANG_GIAO

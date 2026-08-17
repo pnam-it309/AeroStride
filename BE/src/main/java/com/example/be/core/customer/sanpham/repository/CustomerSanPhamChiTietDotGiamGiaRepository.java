@@ -12,5 +12,8 @@ public interface CustomerSanPhamChiTietDotGiamGiaRepository extends ChiTietDotGi
 
     @EntityGraph(attributePaths = {"dotGiamGia", "chiTietSanPham"})
     List<ChiTietDotGiamGia> findAllByChiTietSanPhamIdIn(List<String> chiTietSanPhamIds);
+
+    @EntityGraph(attributePaths = {"dotGiamGia", "chiTietSanPham", "chiTietSanPham.sanPham", "chiTietSanPham.sanPham.thuongHieu", "chiTietSanPham.mauSac", "chiTietSanPham.kichThuoc"})
+    List<ChiTietDotGiamGia> findByDotGiamGiaId(String dotGiamGiaId);
 }
 

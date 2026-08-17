@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{email/base-template :: layout(~{::#main-content})}">
+<head>
+    <title>Chúc Mừng Sinh Nhật Quý Khách</title>
+</head>
+<body style="margin:0;padding:0;background:#fdf2f8;font-family:Arial,sans-serif;">
+
+<div id="main-content">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding: 10px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:white;border-radius:16px;overflow:hidden;border:1px solid #fbcfe8;max-width:600px;box-shadow:0 10px 25px -5px rgba(244,114,182,0.15);">
+          <tr>
+            <td style="background:linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);padding:36px 20px;text-align:center;">
+              <div style="font-size:40px;margin-bottom:8px;">🎂 🎉 🎁</div>
+              <h1 style="color:white;margin:0;font-size:24px;letter-spacing:1px;font-weight:bold;">HAPPY BIRTHDAY!</h1>
+              <p style="color:#fce7f3;margin:8px 0 0;font-size:15px;">
+                Chúc mừng sinh nhật <span th:text="${tenKhachHang ?: 'bạn'}">bạn</span>!
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 36px;text-align:center;">
+              <p style="font-size:16px;color:#1e293b;line-height:1.6;margin:0 0 16px;">
+                Nhân dịp ngày sinh nhật đặc biệt của bạn, <strong>AeroStride</strong> xin gửi lời chúc sức khỏe, hạnh phúc và tràn đầy năng lượng trên mọi cung đường chạy bộ!
+              </p>
+              <p style="color:#64748b;font-size:14px;line-height:1.6;margin:0 0 24px;">
+                Để ngày sinh nhật thêm trọn vẹn, chúng tôi xin gửi tặng bạn một món quà tri ân độc quyền:
+              </p>
+
+              <!-- Voucher Gift Box -->
+              <div style="background:linear-gradient(135deg, #fff1f2 0%, #fdf4ff 100%);border:2px dashed #f43f5e;border-radius:14px;padding:24px;margin-bottom:24px;">
+                <div style="font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#e11d48;font-weight:bold;margin-bottom:8px;">
+                  VOUCHER QUÀ TẶNG SINH NHẬT
+                </div>
+                <div style="font-size:28px;font-weight:bold;color:#be123c;margin-bottom:10px;">
+                  <span th:if="${loaiGiam == 'PERCENTAGE' or loaiGiam == 'PHAN_TRAM'}" th:text="${'GIẢM ' + (giaTriGiam != null ? giaTriGiam : '15') + '%'}">GIẢM 15%</span>
+                  <span th:unless="${loaiGiam == 'PERCENTAGE' or loaiGiam == 'PHAN_TRAM'}" th:text="${'GIẢM ' + #numbers.formatDecimal(giaTriGiam ?: 100000, 0, 'COMMA', 0, 'POINT') + ' ₫'}">GIẢM 100.000 ₫</span>
+                </div>
+                
+                <div style="display:inline-block;background:white;border:1px solid #fecdd3;border-radius:8px;padding:10px 24px;margin-bottom:12px;">
+                  <span style="font-family:monospace;font-size:20px;font-weight:bold;color:#0f172a;letter-spacing:2px;"
+                        th:text="${maVoucher}">BDAY2026-HAPPY</span>
+                </div>
+                
+                <p style="margin:0;font-size:12px;color:#9f1239;" th:if="${ngayHetHan != null}">
+                  ⏳ Hạn sử dụng: Đến hết ngày <strong th:text="${#dates.format(new java.util.Date(ngayHetHan), 'dd/MM/yyyy')}">25/08/2026</strong> (7 ngày kể từ hôm nay)
+                </p>
+              </div>
+
+              <!-- Button CTA -->
+              <div style="margin-top:28px;">
+                <a th:href="${baseUrl + '/products'}"
+                   style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg, #e11d48 0%, #db2777 100%);color:#ffffff;text-decoration:none;border-radius:9999px;font-size:15px;font-weight:bold;box-shadow:0 4px 10px rgba(225,29,72,0.3);">
+                  🛍️ Sử dụng Voucher ngay
+                </a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>
+
+</body>
+</html>

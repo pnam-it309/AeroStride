@@ -6,6 +6,10 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.util.List;
+
 @Repository
 public interface KhachHangRepository extends JpaRepository<KhachHang, String> {
 
@@ -18,4 +22,7 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, String> {
     Optional<KhachHang> findByTenTaiKhoanOrEmailOrSdtOrMa(String tenTaiKhoan, String email, String sdt, String ma);
 
     boolean existsByEmail(String email);
+
+    @Query("SELECT k FROM KhachHang k WHERE k.ngaySinh IS NOT NULL AND MONTH(k.ngaySinh) = :month AND DAY(k.ngaySinh) = :day AND (k.xoaMem IS NULL OR k.xoaMem = false)")
+    List<KhachHang> findCustomersWithBirthdayToday(@Param("month") int month, @Param("day") int day);
 }

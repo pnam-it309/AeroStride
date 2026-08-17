@@ -82,12 +82,15 @@ const sortOptions = [
 const isRefreshing = ref(false);
 const counts = ref({
     all: 0,
-    pendingPayment: 0,
-    processing: 0,
-    shipped: 0,
-    delivered: 0,
+    pendingConfirmation: 0,
+    confirmed: 0,
+    waitingDelivery: 0,
+    delivering: 0,
+    completed: 0,
     cancelled: 0,
-    refunded: 0
+    returned: 0,
+    failed: 0,
+    refused: 0
 });
 const showOrderDetailDialog = ref(false);
 const selectedOrder = ref(null);
@@ -120,7 +123,9 @@ const loadCounts = async () => {
             delivering: data['3'] || 0,
             completed: data['4'] || 0,
             cancelled: data['5'] || 0,
-            returned: data['6'] || 0
+            returned: data['6'] || 0,
+            failed: data['7'] || 0,
+            refused: data['8'] || 0
         };
     } catch (e) {
         console.error('Error counts:', e);
@@ -369,42 +374,50 @@ onMounted(() => loadOrders());
                     v-model="filters.trangThai"
                     bg-color="transparent"
                     color="primary"
-                    grow
-                    class="equal-tabs admin-tabs"
+                    show-arrows
+                    class="admin-tabs invoice-status-tabs"
                     @update:model-value="handleTabChange"
                     height="54"
                 >
-                    <v-tab :value="TAB_ALL" class="text-none px-2 tab-item">
+                    <v-tab :value="TAB_ALL" class="text-none px-3 tab-item">
                         <v-icon start size="16">mdi-view-grid-outline</v-icon>
                         Tất cả
                     </v-tab>
-                    <v-tab :value="0" class="text-none px-2 tab-item">
+                    <v-tab :value="0" class="text-none px-3 tab-item">
                         <v-icon start size="16">mdi-progress-clock</v-icon>
                         Chờ xác nhận
                     </v-tab>
-                    <v-tab :value="1" class="text-none px-2 tab-item">
+                    <v-tab :value="1" class="text-none px-3 tab-item">
                         <v-icon start size="16">mdi-check-circle-outline</v-icon>
                         Đã xác nhận
                     </v-tab>
-                    <v-tab :value="2" class="text-none px-2 tab-item">
+                    <v-tab :value="2" class="text-none px-3 tab-item">
                         <v-icon start size="16">mdi-package-variant-closed</v-icon>
                         Chờ giao
                     </v-tab>
-                    <v-tab :value="3" class="text-none px-2 tab-item">
+                    <v-tab :value="3" class="text-none px-3 tab-item">
                         <v-icon start size="16">mdi-truck-fast-outline</v-icon>
                         Đang giao
                     </v-tab>
-                    <v-tab :value="4" class="text-none px-2 tab-item">
+                    <v-tab :value="4" class="text-none px-3 tab-item">
                         <v-icon start size="16">mdi-checkbox-marked-circle-outline</v-icon>
                         Hoàn thành
                     </v-tab>
-                    <v-tab :value="5" class="text-none px-2 tab-item">
-                        <v-icon start size="16">mdi-close-circle-outline</v-icon>
-                        Hủy
+                    <v-tab :value="7" class="text-none px-3 tab-item">
+                        <v-icon start size="16">mdi-truck-alert-outline</v-icon>
+                        Giao thất bại
                     </v-tab>
-                    <v-tab v-if="false" :value="6" class="text-none px-2 tab-item">
+                    <v-tab :value="8" class="text-none px-3 tab-item">
+                        <v-icon start size="16">mdi-account-cancel-outline</v-icon>
+                        Khách không nhận
+                    </v-tab>
+                    <v-tab :value="6" class="text-none px-3 tab-item">
                         <v-icon start size="16">mdi-cash-refund</v-icon>
                         Hoàn đơn
+                    </v-tab>
+                    <v-tab :value="5" class="text-none px-3 tab-item">
+                        <v-icon start size="16">mdi-close-circle-outline</v-icon>
+                        Đã hủy
                     </v-tab>
                 </v-tabs>
             </template>

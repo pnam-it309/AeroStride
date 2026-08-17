@@ -917,10 +917,6 @@ const monthDays = computed(() => {
 });
 
 onMounted(() => {
-    if (isStaff.value) {
-        router.push(PATH.BAN_HANG);
-        return;
-    }
     loadData();
 });
 </script>

@@ -47,10 +47,6 @@
                         class="suggestion-popover overflow-y-auto"
                         v-click-outside="() => (showCustomerSuggestions = false)"
                     >
-                        <div class="popover-header px-4 py-2 font-weight-bold">
-                            Gợi ý tìm kiếm khách hàng
-                        </div>
-
                         <div v-if="customerResults.length > 0" class="d-flex flex-column">
                             <div
                                 v-for="c in customerResults"
@@ -148,23 +144,28 @@
                     </div>
                     <div class="d-flex flex-column ga-3">
                         <!-- Toggle / Link cho trường hợp người nhận khác người mua -->
-                        <div class="d-flex align-center justify-space-between text-caption px-1">
-                            <span class="text-slate-800 text-truncate mr-2">
-                                Người nhận:
-                                <strong class="text-black font-weight-bold">
+                        <div class="d-flex align-center justify-space-between text-caption px-1 ga-2">
+                            <div class="d-flex align-center text-slate-800 text-truncate mr-1">
+                                <span class="mr-1 flex-shrink-0">Người nhận:</span>
+                                <strong class="text-black font-weight-bold text-truncate">
                                     {{ isDifferentRecipient ? (recipientName || 'Người nhận khác') : (customerForm.ten || 'Giống người mua') }}
                                 </strong>
-                                <template v-if="!isDifferentRecipient && customerForm.sdt"> ({{ customerForm.sdt }})</template>
-                            </span>
+                                <span v-if="!isDifferentRecipient && customerForm.sdt" class="text-slate-500 ml-1 flex-shrink-0">
+                                    ({{ customerForm.sdt }})
+                                </span>
+                            </div>
                             <v-btn
-                                variant="text"
-                                color="#1e3a8a"
-                                density="compact"
+                                variant="tonal"
+                                color="primary"
                                 size="x-small"
-                                class="text-none font-weight-bold pa-0 flex-shrink-0"
+                                class="text-none font-weight-bold rounded-lg px-2.5 flex-shrink-0"
+                                style="height: 26px !important; min-height: 26px"
                                 @click="isDifferentRecipient = !isDifferentRecipient"
                             >
-                                {{ isDifferentRecipient ? 'Giống người mua' : '+ Thay đổi người nhận' }}
+                                <v-icon size="13" class="mr-1">
+                                    {{ isDifferentRecipient ? 'mdi-account-check-outline' : 'mdi-account-switch-outline' }}
+                                </v-icon>
+                                {{ isDifferentRecipient ? 'Giống người mua' : 'Thay đổi người nhận' }}
                             </v-btn>
                         </div>
 
@@ -685,43 +686,53 @@ watch(
 /* Popover Danh sách Tìm kiếm Khách hàng Mềm mại, Thoáng đãng */
 .suggestion-popover {
     position: absolute;
-    top: calc(100% + 8px);
+    top: calc(100% + 6px);
     right: 0;
-    width: 350px !important;
-    max-height: 320px;
+    width: 360px !important;
+    max-height: 280px;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 16px !important;
-    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.04) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(15, 23, 42, 0.06) !important;
     z-index: 9999 !important;
-    overflow: hidden;
+    overflow-y: auto !important;
+    padding: 4px 0;
 }
 
-.popover-header {
-    background-color: #fafafa;
-    border-bottom: 1px solid #f1f5f9;
-    font-size: 11px !important;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #64748b;
+.suggestion-popover::-webkit-scrollbar {
+    width: 5px;
+}
+.suggestion-popover::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+.suggestion-popover::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .suggestion-item {
-    border-bottom: 1px solid #f8fafc;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    border-bottom: 1px solid #f1f5f9;
+    transition: all 0.15s ease;
+    padding: 10px 16px !important;
+    min-height: 52px;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
 }
 
 .suggestion-item:hover {
     background-color: #f8fafc !important;
-    border-left: 4px solid #2563eb !important;
-    padding-left: 20px !important;
+    border-left: 3px solid #2563eb !important;
+    padding-left: 17px !important;
 }
 
 .customer-name-text {
     font-size: 14px !important;
     font-weight: 600 !important;
     color: #0f172a !important;
-    line-height: 1.35 !important;
+    line-height: 1.4 !important;
+    display: block;
 }
 
 .customer-email-text {
@@ -729,6 +740,7 @@ watch(
     color: #64748b !important;
     font-weight: 400 !important;
     line-height: 1.3 !important;
+    display: block;
 }
 
 .customer-phone-badge {

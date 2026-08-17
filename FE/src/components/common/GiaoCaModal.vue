@@ -76,7 +76,13 @@ const submit = async () => {
         if (props.mode === 'open') {
             const currentEmpRes = await dichVuNhanVien.layTatCaNhanVien();
             const employees = currentEmpRes?.data?.content || currentEmpRes?.data || currentEmpRes || [];
-            const me = employees.find((e) => e.tenTaiKhoan === authStore.user?.username);
+            const me = employees.find(
+                (e) =>
+                    e.tenTaiKhoan === authStore.user?.username ||
+                    e.id === authStore.user?.id ||
+                    e.email === authStore.user?.email ||
+                    e.ma === authStore.user?.username
+            );
 
             if (!me) throw new Error('Không tìm thấy thông tin nhân viên đăng nhập');
 
@@ -84,7 +90,7 @@ const submit = async () => {
                 nhanVienId: me.id,
                 tienBanDau: tienBanDau.value || 0
             });
-            addNotification({ title: 'Thành công', subtitle: 'Đã mở ca làm việc', color: 'success' });
+            addNotification({ title: 'Thành công', subtitle: 'Đã mở ca làm việc thành công', color: 'success' });
             emit('success');
             show.value = false;
         } else {
@@ -106,17 +112,31 @@ const submit = async () => {
 </script>
 
 <template>
-    <v-dialog v-model="show" max-width="500" persistent>
-        <v-card class="rounded-xl">
-            <v-card-title class="font-weight-bold d-flex align-center pa-4 bg-primary text-white">
-                <v-icon class="mr-2">{{ mode === 'open' ? 'mdi-store-clock' : 'mdi-store-remove' }}</v-icon>
-                {{ mode === 'open' ? 'Mở Ca Làm Việc' : 'Chốt Ca / Giao Ca' }}
+    <v-dialog v-model="show" max-width="500">
+        <v-card class="rounded-xl overflow-hidden">
+            <v-card-title class="font-weight-bold d-flex align-center justify-space-between pa-4 bg-primary text-white">
+                <div class="d-flex align-center">
+                    <v-icon class="mr-2">{{ mode === 'open' ? 'mdi-store-clock' : 'mdi-store-remove' }}</v-icon>
+                    {{ mode === 'open' ? 'Mở Ca Làm Việc' : 'Chốt Ca / Giao Ca' }}
+                </div>
+                <v-btn icon size="small" variant="text" color="white" @click="show = false">
+                    <v-icon>mdi-close</v-icon>
+                </v-btn>
             </v-card-title>
             <v-card-text class="pa-4">
                 <template v-if="mode === 'open'">
-                    <p class="mb-4 text-slate-600">Bạn cần nhập số tiền lẻ ban đầu trong két trước khi bắt đầu bán hàng.</p>
+                    <p class="mb-4 text-slate-600">
+                        Chào bạn! Vui lòng nhập số tiền lẻ ban đầu trong két trước khi bắt đầu tạo hóa đơn bán hàng.
+                    </p>
                     <div class="filter-field-label">Tiền mặt đầu ca (VNĐ)</div>
-                    <v-text-field v-model="tienBanDauFormatted" type="text" variant="outlined" density="compact" />
+                    <v-text-field
+                        v-model="tienBanDauFormatted"
+                        type="text"
+                        variant="outlined"
+                        density="compact"
+                        placeholder="0"
+                        prepend-inner-icon="mdi-cash"
+                    />
                 </template>
                 <template v-else>
                     <v-row dense class="mb-4">
@@ -167,8 +187,10 @@ const submit = async () => {
             </v-card-text>
             <v-card-actions class="pa-4 pt-0">
                 <v-spacer />
-                <v-btn v-if="mode === 'close'" variant="text" @click="show = false">Hủy bỏ</v-btn>
-                <v-btn color="primary" variant="flat" :loading="loading" @click="submit" class="px-6 rounded-lg">
+                <v-btn variant="text" color="grey-darken-1" @click="show = false">
+                    {{ mode === 'open' ? 'Để sau' : 'Hủy bỏ' }}
+                </v-btn>
+                <v-btn color="primary" variant="flat" :loading="loading" @click="submit" class="px-6 rounded-lg font-weight-bold">
                     {{ mode === 'open' ? 'Bắt Đầu Bán Hàng' : 'Xác Nhận Chốt Ca' }}
                 </v-btn>
             </v-card-actions>

@@ -5,6 +5,7 @@ import com.example.be.core.customer.profile.model.response.CustomerProfileRespon
 import com.example.be.entity.DiaChi;
 import com.example.be.entity.KhachHang;
 import com.example.be.infrastructure.constants.RoutesConstant;
+import com.example.be.infrastructure.constants.VaiTro;
 import com.example.be.repository.DiaChiRepository;
 import com.example.be.repository.KhachHangRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ public class CustomerProfileController {
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('KHACH_HANG')")
+    @PreAuthorize(VaiTro.PRE_AUTH_CUSTOMER)
     @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> getMyProfile(Authentication authentication) {
         String username = authentication.getName();
@@ -78,7 +79,7 @@ public class CustomerProfileController {
     }
 
     @PutMapping("/update")
-    @PreAuthorize("hasRole('KHACH_HANG')")
+    @PreAuthorize(VaiTro.PRE_AUTH_CUSTOMER)
     @Transactional
     public ResponseEntity<ApiResponse<String>> updateProfile(
             @jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody com.example.be.core.customer.profile.model.request.CustomerUpdateProfileRequest request,
@@ -98,7 +99,7 @@ public class CustomerProfileController {
     }
 
     @PutMapping("/change-password")
-    @PreAuthorize("hasRole('KHACH_HANG')")
+    @PreAuthorize(VaiTro.PRE_AUTH_CUSTOMER)
     @Transactional
     public ResponseEntity<ApiResponse<String>> changePassword(
             @jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody com.example.be.core.customer.profile.model.request.CustomerChangePasswordRequest request,
@@ -121,7 +122,7 @@ public class CustomerProfileController {
     }
 
     @GetMapping("/addresses")
-    @PreAuthorize("hasRole('KHACH_HANG')")
+    @PreAuthorize(VaiTro.PRE_AUTH_CUSTOMER)
     @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<java.util.List<DiaChi>>> getMyAddresses(Authentication authentication) {
         String username = authentication.getName();
@@ -133,7 +134,7 @@ public class CustomerProfileController {
     }
 
     @PostMapping("/addresses")
-    @PreAuthorize("hasRole('KHACH_HANG')")
+    @PreAuthorize(VaiTro.PRE_AUTH_CUSTOMER)
     @Transactional
     public ResponseEntity<ApiResponse<DiaChi>> addAddress(
             @RequestBody com.example.be.core.customer.profile.model.request.CustomerAddressRequest request,

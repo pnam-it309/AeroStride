@@ -521,23 +521,21 @@
 /* Suggestion Popover - Right Aligned under SĐT */
 .suggestion-popover {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 4px);
     right: 0;
     left: auto;
-    width: 170px;
+    min-width: 320px;
     z-index: 9999;
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
     box-shadow:
-        0 10px 15px -3px rgba(0, 0, 0, 0.05),
+        0 10px 25px -3px rgba(0, 0, 0, 0.1),
         0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    border-radius: 20px !important;
-    margin-top: 4px;
+    border-radius: 14px !important;
 }
 
 .suggestion-item {
-    border-radius: 16px;
-    height: 32px;
+    transition: all 0.2s ease;
 }
 
 .suggestion-item:hover {

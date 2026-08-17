@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface ReviewService {
-    void submitReview(ReviewRequest request);
+    CustomerReviewResponse submitReview(ReviewRequest request);
     Page<CustomerReviewResponse> getReviewsByProduct(String idSanPham, Pageable pageable);
     boolean checkEligibility(String idHoaDon, String idSanPham, String idKhachHang);
 }

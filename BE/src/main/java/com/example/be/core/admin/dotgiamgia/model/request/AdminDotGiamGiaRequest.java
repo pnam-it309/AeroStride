@@ -37,6 +37,7 @@ public class AdminDotGiamGiaRequest {
     private Long ngayKetThuc;
 
     @Min(value = 0, message = "Mức ưu tiên không được âm")
+
     @Max(value = 999, message = "Mức ưu tiên không được vượt quá 999")
     private Integer mucUuTien;
 
@@ -45,6 +46,10 @@ public class AdminDotGiamGiaRequest {
 
     private TrangThai trangThai;
  
+    private Boolean isFlashSale;
+
+    private String khungGio;
+
     @NotEmpty(message = "Vui lòng chọn ít nhất 1 sản phẩm áp dụng")
     private List<String> listIdChiTietSanPham;
 }

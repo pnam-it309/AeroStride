@@ -46,4 +46,9 @@ public class DotGiamGia extends BaseCodeNameEntity {
     @Column(name = "mo_ta", length = 1000)
     private String moTa;
 
+    @Column(name = "is_flash_sale")
+    private Boolean isFlashSale;
+
+    @Column(name = "khung_gio")
+    private String khungGio;
 }

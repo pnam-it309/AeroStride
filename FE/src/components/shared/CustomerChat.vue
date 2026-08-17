@@ -203,9 +203,174 @@ watch(isOpen, (newVal) => {
     }
 });
 
+// --- Drag & Drop FAB Button Logic ---
+const BUTTON_SIZE = 58;
+const MARGIN = 15;
+const pos = ref({ x: 0, y: 0 });
+const isDragging = ref(false);
+const isInitialized = ref(false);
+let isPointerDown = false;
+let startX = 0;
+let startY = 0;
+let initialPosX = 0;
+let initialPosY = 0;
+let hasDragged = false;
+
+const initPosition = () => {
+    const saved = localStorage.getItem('customer_chat_btn_position');
+    const winW = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+                const clampedX = Math.max(MARGIN, Math.min(winW - BUTTON_SIZE - MARGIN, parsed.x));
+                const clampedY = Math.max(MARGIN, Math.min(winH - BUTTON_SIZE - MARGIN, parsed.y));
+                pos.value = { x: clampedX, y: clampedY };
+                isInitialized.value = true;
+                return;
+            }
+        } catch (e) {
+            console.warn('Failed to parse saved chat button position', e);
+        }
+    }
+
+    // Default: bottom-right
+    pos.value = {
+        x: Math.max(MARGIN, winW - BUTTON_SIZE - 30),
+        y: Math.max(MARGIN, winH - BUTTON_SIZE - 30)
+    };
+    isInitialized.value = true;
+};
+
+const handleWindowResize = () => {
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+    pos.value = {
+        x: Math.max(MARGIN, Math.min(winW - BUTTON_SIZE - MARGIN, pos.value.x)),
+        y: Math.max(MARGIN, Math.min(winH - BUTTON_SIZE - MARGIN, pos.value.y))
+    };
+};
+
+const onPointerDown = (e) => {
+    if (e.button && e.button !== 0) return;
+    isPointerDown = true;
+    hasDragged = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    initialPosX = pos.value.x;
+    initialPosY = pos.value.y;
+
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+};
+
+const onPointerMove = (e) => {
+    if (!isPointerDown) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    if (!hasDragged && Math.hypot(dx, dy) > 5) {
+        hasDragged = true;
+        isDragging.value = true;
+    }
+
+    if (hasDragged) {
+        if (e.cancelable) e.preventDefault();
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+        const newX = Math.max(MARGIN, Math.min(winW - BUTTON_SIZE - MARGIN, initialPosX + dx));
+        const newY = Math.max(MARGIN, Math.min(winH - BUTTON_SIZE - MARGIN, initialPosY + dy));
+        pos.value = { x: newX, y: newY };
+    }
+};
+
+const onPointerUp = () => {
+    if (!isPointerDown) return;
+    isPointerDown = false;
+
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
+
+    if (hasDragged) {
+        localStorage.setItem('customer_chat_btn_position', JSON.stringify(pos.value));
+        setTimeout(() => {
+            isDragging.value = false;
+            hasDragged = false;
+        }, 80);
+    } else {
+        isDragging.value = false;
+    }
+};
+
+const handleFabClick = (e) => {
+    if (hasDragged || isDragging.value) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+    }
+    isOpen.value = true;
+};
+
+const chatWindowStyle = computed(() => {
+    if (typeof window === 'undefined') return {};
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+    const isMobile = winW <= 480;
+
+    if (isMobile) {
+        return {
+            position: 'fixed',
+            left: '10px',
+            right: '10px',
+            bottom: '10px',
+            top: 'auto',
+            width: `${winW - 20}px`,
+            height: `${Math.min(580, winH - 20)}px`,
+            maxHeight: `${winH - 20}px`,
+            zIndex: 5000
+        };
+    }
+
+    const winWidth = Math.min(380, winW - 30);
+    const winHeight = Math.min(600, winH - 60);
+
+    let left = pos.value.x;
+    let top = pos.value.y - winHeight - 15;
+
+    if (pos.value.x > winW / 2) {
+        left = pos.value.x + BUTTON_SIZE - winWidth;
+    }
+
+    if (top < 15) {
+        top = pos.value.y + BUTTON_SIZE + 15;
+    }
+
+    left = Math.max(15, Math.min(winW - winWidth - 15, left));
+    top = Math.max(15, Math.min(winH - winHeight - 15, top));
+
+    return {
+        position: 'fixed',
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${winWidth}px`,
+        height: `${winHeight}px`,
+        bottom: 'auto',
+        right: 'auto',
+        zIndex: 5000
+    };
+});
+
 onUnmounted(() => {
     clearGuestTimer();
     if (lockTimer) clearInterval(lockTimer);
+    window.removeEventListener('resize', handleWindowResize);
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
 });
 
 const scrollToBottom = async () => {
@@ -483,6 +648,8 @@ const fetchHistory = async () => {
 };
 
 onMounted(() => {
+    initPosition();
+    window.addEventListener('resize', handleWindowResize);
     fetchHistory();
     fetchWelcomeSuggestions();
 
@@ -616,8 +783,15 @@ const openChatImage = (url) => {
                 </v-card-actions>
             </v-card>
         </v-dialog>
-        <!-- Floating Chat Icon -->
-        <div v-if="!isOpen" class="chat-fab-container" @click="isOpen = true">
+        <!-- Floating Chat Icon (Draggable) -->
+        <div
+            v-if="!isOpen && isInitialized"
+            class="chat-fab-container"
+            :class="{ 'is-dragging': isDragging, 'tooltip-right': pos.x < 180 }"
+            :style="{ left: `${pos.x}px`, top: `${pos.y}px`, bottom: 'auto', right: 'auto' }"
+            @pointerdown="onPointerDown"
+            @click="handleFabClick"
+        >
             <v-btn icon color="primary" size="large" elevation="8" class="chat-fab">
                 <v-icon size="26" color="white">mdi-message-text-outline</v-icon>
             </v-btn>
@@ -626,7 +800,7 @@ const openChatImage = (url) => {
 
         <!-- Chat Window -->
         <transition name="chat-slide">
-            <div v-if="isOpen" class="chat-window elevation-8">
+            <div v-if="isOpen" class="chat-window elevation-8" :style="chatWindowStyle">
                 <!-- Header -->
                 <div class="chat-header">
                     <div class="header-content">
@@ -699,7 +873,20 @@ const openChatImage = (url) => {
 
                                 <!-- Product Showcase in Chat -->
                                 <div v-if="msg.products && msg.products.length" class="product-showcase-list mt-3">
-                                    <ProductShowcaseCard v-for="p in msg.products" :key="p.id" :product="p" @view-detail="goToDetail" />
+                                    <ProductShowcaseCard v-for="(p, pIdx) in msg.products" :key="p.idSanPham || p.id || pIdx" :product="p" @view-detail="goToDetail" />
+                                </div>
+
+                                <!-- Inline Quick Suggestions -->
+                                <div v-if="msg.sender !== 'user' && msg.suggestions && msg.suggestions.length" class="inline-suggestions-list mt-2">
+                                    <button
+                                        v-for="s in msg.suggestions"
+                                        :key="s"
+                                        class="inline-sugg-pill"
+                                        @click="sendSuggestion(s)"
+                                    >
+                                        <v-icon size="12" class="mr-1 text-primary">mdi-lightning-bolt</v-icon>
+                                        {{ s }}
+                                    </button>
                                 </div>
 
                                 <div class="message-time">{{ msg.time }}</div>
@@ -819,21 +1006,43 @@ const openChatImage = (url) => {
 /* Floating FAB */
 .chat-fab-container {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
     z-index: 5000;
-    cursor: pointer;
+    cursor: grab;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+    user-select: none;
+    touch-action: none;
 
-    &:hover {
+    &.is-dragging {
+        cursor: grabbing !important;
+        opacity: 0.95;
+        transform: scale(1.06);
+        transition: none !important;
+
+        .chat-fab {
+            box-shadow: 0 16px 32px rgba(37, 99, 235, 0.5) !important;
+            transform: scale(1.05);
+        }
+
+        .chat-tooltip {
+            display: none !important;
+        }
+    }
+
+    &:not(.is-dragging):hover {
         .chat-fab {
             transform: scale(1.1);
         }
         .chat-tooltip {
             opacity: 1;
             transform: translateX(-10px);
+        }
+    }
+
+    &.tooltip-right:not(.is-dragging):hover {
+        .chat-tooltip {
+            transform: translateX(10px);
         }
     }
 }
@@ -845,6 +1054,8 @@ const openChatImage = (url) => {
     background: linear-gradient(135deg, #1e257c 0%, #2563eb 100%) !important;
     box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4) !important;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    user-select: none;
+    pointer-events: none;
 }
 
 .chat-tooltip {
@@ -862,6 +1073,8 @@ const openChatImage = (url) => {
     transform: translateX(0);
     transition: all 0.3s ease;
     pointer-events: none;
+    user-select: none;
+
     &::after {
         content: '';
         position: absolute;
@@ -871,6 +1084,18 @@ const openChatImage = (url) => {
         border-top: 5px solid transparent;
         border-bottom: 5px solid transparent;
         border-left: 5px solid #000;
+    }
+}
+
+.tooltip-right .chat-tooltip {
+    right: auto;
+    left: 70px;
+
+    &::after {
+        right: auto;
+        left: -5px;
+        border-left: none;
+        border-right: 5px solid #000;
     }
 }
 
@@ -1028,17 +1253,63 @@ const openChatImage = (url) => {
     font-weight: 500;
 }
 
-/* Product Showcase List */
+/* Product Showcase List: Carousel cuộn ngang siêu mượt */
 .product-showcase-list {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding-bottom: 10px;
+    flex-direction: row;
+    gap: 12px;
+    padding: 6px 2px 10px 2px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-width: 310px;
+
+    &::-webkit-scrollbar {
+        height: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
 
     :deep(.product-showcase-card) {
-        width: 100%;
-        max-width: 100%;
-        flex-shrink: 0;
+        scroll-snap-align: start;
+    }
+}
+
+/* Inline Quick Suggestions */
+.inline-suggestions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+
+    .inline-sugg-pill {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #1e293b;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 20px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.2s ease;
+        text-align: left;
+        line-height: 1.2;
+
+        &:hover {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.15);
+        }
     }
 }
 

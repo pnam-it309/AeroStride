@@ -2,6 +2,7 @@ package com.example.be.core.admin.hoadon.repository;
 
 import com.example.be.core.admin.hoadon.model.request.AdminHoaDonRequest;
 import com.example.be.core.admin.hoadon.model.response.AdminHoaDonResponse;
+import com.example.be.infrastructure.constants.DeliveryMethod;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.entity.QHoaDon;
@@ -142,8 +143,8 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                 .leftJoin(hd.nhanVien, nv)
                 .where(conditions)
                 .orderBy(
-                        "asc".equalsIgnoreCase(req.getSortDirection()) ? hd.ngayTao.asc() : hd.ngayTao.desc(),
-                        "asc".equalsIgnoreCase(req.getSortDirection()) ? hd.id.asc() : hd.id.desc()
+                        "desc".equalsIgnoreCase(req.getSortDirection()) ? hd.ngayTao.desc() : hd.ngayTao.asc(),
+                        "desc".equalsIgnoreCase(req.getSortDirection()) ? hd.id.desc() : hd.id.asc()
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -219,14 +220,14 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                     .tenNhanVien(finalTenNv)
                     .orderType(t.get(hd.orderType) != null
                             ? t.get(hd.orderType)
-                            : (t.get(nv.ma) != null || !"ONLINE".equalsIgnoreCase(t.get(hd.loaiDon))
+                            : (t.get(nv.ma) != null || !OrderType.ONLINE.name().equalsIgnoreCase(t.get(hd.loaiDon))
                                     ? OrderType.IN_STORE : OrderType.ONLINE))
                     .deliveryMethod(t.get(hd.deliveryMethod) != null
                             ? t.get(hd.deliveryMethod)
-                            : (java.util.Set.of("ONLINE", "GIAO_HANG").contains(
+                            : (java.util.Set.of(OrderType.ONLINE.name(), "GIAO_HANG").contains(
                                     String.valueOf(t.get(hd.loaiDon)).toUpperCase())
-                                    ? com.example.be.infrastructure.constants.DeliveryMethod.SHIPPING
-                                    : com.example.be.infrastructure.constants.DeliveryMethod.TAKEAWAY))
+                                    ? DeliveryMethod.SHIPPING
+                                    : DeliveryMethod.TAKEAWAY))
                     .loaiDon(t.get(hd.loaiDon))
                     .phiVanChuyen(t.get(hd.phiVanChuyen))
                     .phiHoanHang(t.get(hd.phiHoanHang))
@@ -246,7 +247,7 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
             QKichThuoc kt = QKichThuoc.kichThuoc;
 
             List<Tuple> items = queryFactory
-                    .select(hdct.hoaDon.id, sp.ten, ms.ten, kt.ten, hdct.soLuong)
+                    .select(hdct.hoaDon.id, sp.ten, ms.ten, kt.ten, hdct.soLuong, hdct.donGia)
                     .from(hdct)
                     .join(hdct.chiTietSanPham, ctsp)
                     .join(ctsp.sanPham, sp)

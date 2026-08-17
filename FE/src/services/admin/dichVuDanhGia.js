@@ -7,6 +7,16 @@ export const dichVuDanhGia = {
         return response.data;
     },
 
+    getConfig: async () => {
+        const response = await apiService.get(`${API_ADMIN.DANH_GIA}/config`);
+        return response.data;
+    },
+
+    updateConfig: async (autoApprove) => {
+        const response = await apiService.put(`${API_ADMIN.DANH_GIA}/config`, { autoApprove });
+        return response.data;
+    },
+
     updateStatus: async (id, trangThai) => {
         const response = await apiService.put(`${API_ADMIN.DANH_GIA}/${id}/status`, null, {
             params: { trangThai }

@@ -1,5 +1,6 @@
 package com.example.be.core.customer.review.service.impl;
 
+import com.example.be.core.admin.danhgia.service.ReviewConfigService;
 import com.example.be.core.customer.review.model.request.ReviewRequest;
 import com.example.be.core.customer.review.model.response.CustomerReviewResponse;
 import com.example.be.core.customer.review.service.ReviewService;
@@ -35,10 +36,11 @@ public class ReviewServiceImpl implements ReviewService {
     private final SanPhamRepository sanPhamRepository;
     private final ChiTietSanPhamRepository chiTietSanPhamRepository;
     private final KhachHangRepository khachHangRepository;
+    private final ReviewConfigService reviewConfigService;
 
     @Override
     @Transactional
-    public void submitReview(ReviewRequest request) {
+    public CustomerReviewResponse submitReview(ReviewRequest request) {
         HoaDon hoaDon = null;
         if (request.getIdHoaDon() != null && !request.getIdHoaDon().isBlank()) {
             hoaDon = hoaDonRepository.findById(request.getIdHoaDon()).orElse(null);
@@ -88,8 +90,21 @@ public class ReviewServiceImpl implements ReviewService {
             khachHang = hoaDon.getKhachHang();
         }
 
-        // Đánh giá mới tạo có trạng thái PENDING (Chờ duyệt) để Admin hiển thị và duyệt trong Quản lý đánh giá
-        DanhGiaSanPham.TrangThaiDanhGia status = DanhGiaSanPham.TrangThaiDanhGia.PENDING;
+        // Kiểm tra tính hợp lệ của đánh giá và trạng thái tự động duyệt
+        boolean isAppropriate = reviewConfigService.isReviewContentAppropriate(request.getNoiDung(), request.getDiemDanhGia());
+        DanhGiaSanPham.TrangThaiDanhGia status;
+
+        if (reviewConfigService.isAutoApproveEnabled()) {
+            if (isAppropriate) {
+                status = DanhGiaSanPham.TrangThaiDanhGia.APPROVED;
+            } else {
+                // Chứa từ ngữ nhạy cảm / spam -> Từ chối tự động
+                status = DanhGiaSanPham.TrangThaiDanhGia.REJECTED;
+            }
+        } else {
+            // Khi tắt tự động duyệt: nếu hợp lệ thì chờ duyệt (PENDING), không hợp lệ thì REJECTED
+            status = isAppropriate ? DanhGiaSanPham.TrangThaiDanhGia.PENDING : DanhGiaSanPham.TrangThaiDanhGia.REJECTED;
+        }
 
         DanhGiaSanPham review = DanhGiaSanPham.builder()
                 .hoaDon(hoaDon)
@@ -101,8 +116,11 @@ public class ReviewServiceImpl implements ReviewService {
                 .video(request.getVideo())
                 .trangThai(status)
                 .build();
+        review.setNgayTao(System.currentTimeMillis());
 
-        danhGiaSanPhamRepository.save(review);
+        DanhGiaSanPham saved = danhGiaSanPhamRepository.save(review);
+        log.info("Saved review id={}, product={}, status={}", saved.getId(), sanPham.getTen(), status);
+        return new CustomerReviewResponse(saved);
     }
 
     @Override

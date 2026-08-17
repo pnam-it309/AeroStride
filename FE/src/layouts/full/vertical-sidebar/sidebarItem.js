@@ -129,7 +129,7 @@ const sidebarItem = [
             },
             { title: 'Bàn giao ca', icon: ClockIcon, to: PATH.BAN_GIAO_CA, BgColor: 'teal', roles: [APP_ROLES.STAFF] },
             { title: 'Lịch ca làm', icon: ClockIcon, to: PATH.LICH_CA_LAM, BgColor: 'teal', roles: [APP_ROLES.ADMIN] },
-            { title: 'Lịch sử giao ca & Hoạt động', icon: HistoryIcon, to: PATH.LICH_SU_HOAT_DONG, BgColor: 'teal', roles: [APP_ROLES.ADMIN] }
+            { title: 'Lịch sử hoạt động', icon: HistoryIcon, to: PATH.LICH_SU_HOAT_DONG, BgColor: 'teal', roles: [APP_ROLES.ADMIN] }
         ]
     }
 ];

@@ -155,7 +155,7 @@ const MainRoutes = {
         },
         {
             path: PATH.LICH_SU_GIAO_CA,
-            redirect: { path: PATH.LICH_SU_HOAT_DONG, query: { tab: 'giao-ca' } }
+            redirect: PATH.LICH_SU_HOAT_DONG
         }
     ]
 };

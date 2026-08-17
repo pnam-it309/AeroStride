@@ -15,6 +15,7 @@ import java.util.Optional;
 
 import com.example.be.core.admin.sanpham.mapper.AdminSanPhamMapper;
 import com.example.be.core.admin.sanpham.repository.AdminChiTietSanPhamRepository;
+import com.example.be.core.admin.sanpham.repository.AdminAnhChiTietSanPhamRepository;
 import com.example.be.core.admin.dotgiamgia.repository.AdminChiTietDotGiamGiaRepository;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,6 +30,9 @@ class AdminDotGiamGiaServiceImplTest {
 
     @Mock
     private AdminChiTietSanPhamRepository chiTietSanPhamRepo;
+
+    @Mock
+    private AdminAnhChiTietSanPhamRepository anhChiTietSanPhamRepo;
 
     @Mock
     private AdminSanPhamMapper mapper;

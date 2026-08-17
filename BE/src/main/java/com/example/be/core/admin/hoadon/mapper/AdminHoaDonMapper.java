@@ -2,6 +2,10 @@ package com.example.be.core.admin.hoadon.mapper;
 
 import com.example.be.core.admin.hoadon.model.response.*;
 import com.example.be.entity.*;
+import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.infrastructure.constants.OrderType;
+import com.example.be.infrastructure.constants.PaymentConstants;
+import com.example.be.infrastructure.constants.TrangThai;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -64,32 +68,34 @@ public interface AdminHoaDonMapper {
     }
 
     @Named("mapTrangThai")
-    default Integer mapTrangThai(com.example.be.infrastructure.constants.TrangThai status) {
+    default Integer mapTrangThai(TrangThai status) {
         if (status == null) {
             return null;
         }
         return status.ordinal();
     }
 
-    // Đơn cần xác nhận hoàn phí: đã hủy + trả trước (không phải COD/tiền mặt) + chưa hoàn phí
+    default boolean isOnlineOrder(HoaDon hoaDon) {
+        if (hoaDon.getOrderType() != null) {
+            return hoaDon.getOrderType() == OrderType.ONLINE;
+        }
+        return hoaDon.getNhanVien() == null && OrderType.ONLINE.name().equalsIgnoreCase(hoaDon.getLoaiDon());
+    }
+
+    // Đơn cần xác nhận hoàn phí: đã hủy + (đơn online hoặc trả trước không phải COD) + chưa hoàn phí
     default boolean canHoanPhi(HoaDon hoaDon) {
-        if (hoaDon.getTrangThai() != com.example.be.infrastructure.constants.OrderStatus.DA_HUY) {
+        if (hoaDon.getTrangThai() != OrderStatus.DA_HUY || Boolean.TRUE.equals(hoaDon.getDaHoanPhi())) {
             return false;
         }
-        if (Boolean.TRUE.equals(hoaDon.getDaHoanPhi())) {
-            return false;
+        if (isOnlineOrder(hoaDon)) {
+            return true;
         }
-        if (hoaDon.getListsGiaoDichThanhToan() == null) {
-            return false;
-        }
-        for (GiaoDichThanhToan gd : hoaDon.getListsGiaoDichThanhToan()) {
-            String loai = gd.getLoaiGiaoDich();
-            boolean isCod = loai != null && loai.equalsIgnoreCase("COD");
-            String tenPt = gd.getPhuongThucThanhToan() != null ? gd.getPhuongThucThanhToan().getTen() : null;
-            boolean tenIsCod = tenPt != null && (tenPt.toUpperCase().contains("COD") || tenPt.toUpperCase().contains("TIEN_MAT"));
-            // Có ít nhất 1 giao dịch trả trước (không phải COD/tiền mặt) => cần hoàn tiền
-            if (!isCod && !tenIsCod) {
-                return true;
+        if (hoaDon.getListsGiaoDichThanhToan() != null) {
+            for (GiaoDichThanhToan gd : hoaDon.getListsGiaoDichThanhToan()) {
+                // Có ít nhất 1 giao dịch trả trước (không phải COD/tiền mặt) => cần hoàn tiền
+                if (!PaymentConstants.isCashOrCod(gd)) {
+                    return true;
+                }
             }
         }
         return false;

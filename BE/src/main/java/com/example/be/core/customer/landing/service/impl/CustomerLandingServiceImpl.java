@@ -33,6 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.example.be.core.customer.landing.model.response.CustomerLandingFlashSaleResponse;
+import com.example.be.core.customer.landing.model.response.CustomerLandingFlashSaleItemResponse;
+import com.example.be.repository.DotGiamGiaRepository;
 import com.example.be.core.customer.sanpham.model.response.CustomerProductFormOptionsResponse;
 import com.example.be.core.customer.sanpham.service.CustomerSanPhamService;
 
@@ -45,6 +48,7 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
     private final CustomerSanPhamChiTietRepository chiTietSanPhamRepository;
     private final CustomerSanPhamAnhChiTietRepository anhChiTietSanPhamRepository;
     private final CustomerSanPhamChiTietDotGiamGiaRepository chiTietDotGiamGiaRepository;
+    private final DotGiamGiaRepository dotGiamGiaRepository;
     private final CustomerSanPhamService sanPhamService;
 
     @Override
@@ -297,5 +301,105 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
             }
         }
         return output;
+    }
+
+    @Override
+    public CustomerLandingFlashSaleResponse getFlashSale() {
+        long now = System.currentTimeMillis();
+        List<DotGiamGia> flashSales = dotGiamGiaRepository.findActiveOrUpcomingFlashSales(now);
+        if (flashSales == null || flashSales.isEmpty()) {
+            return null;
+        }
+
+        DotGiamGia activeFs = flashSales.get(0);
+        boolean isHappening = activeFs.getNgayBatDau() != null && activeFs.getNgayBatDau() <= now && activeFs.getNgayKetThuc() != null && now <= activeFs.getNgayKetThuc();
+        long remainingMillis = isHappening 
+                ? (activeFs.getNgayKetThuc() - now) 
+                : (activeFs.getNgayBatDau() != null ? Math.max(0, activeFs.getNgayBatDau() - now) : 0L);
+
+        List<ChiTietDotGiamGia> details = chiTietDotGiamGiaRepository.findByDotGiamGiaId(activeFs.getId());
+        List<CustomerLandingFlashSaleItemResponse> items = new ArrayList<>();
+
+        if (details != null && !details.isEmpty()) {
+            List<String> variantIds = details.stream()
+                    .filter(d -> d.getChiTietSanPham() != null)
+                    .map(d -> d.getChiTietSanPham().getId())
+                    .toList();
+
+            List<AnhChiTietSanPham> images = variantIds.isEmpty() ? Collections.emptyList() :
+                    anhChiTietSanPhamRepository.findAllByChiTietSanPhamIdInAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(variantIds);
+
+            Map<String, String> primaryImageMap = images.stream()
+                    .filter(img -> img.getChiTietSanPham() != null && img.getDuongDanAnh() != null)
+                    .collect(Collectors.toMap(
+                            img -> img.getChiTietSanPham().getId(),
+                            AnhChiTietSanPham::getDuongDanAnh,
+                            (oldVal, newVal) -> oldVal
+                    ));
+
+            for (ChiTietDotGiamGia ct : details) {
+                ChiTietSanPham v = ct.getChiTietSanPham();
+                if (v == null || Boolean.TRUE.equals(v.getXoaMem()) || v.getTrangThai() != TrangThai.DANG_HOAT_DONG) continue;
+
+                BigDecimal giaGoc = v.getGiaBan() != null ? v.getGiaBan() : BigDecimal.ZERO;
+                BigDecimal giaGiam = giaGoc;
+                int phanTram = 0;
+
+                if ("PERCENTAGE".equalsIgnoreCase(activeFs.getLoaiGiamGia()) && activeFs.getSoTienGiam() != null) {
+                    phanTram = activeFs.getSoTienGiam().intValue();
+                    BigDecimal discountAmt = giaGoc.multiply(activeFs.getSoTienGiam()).divide(BigDecimal.valueOf(100), 0, java.math.RoundingMode.HALF_UP);
+                    giaGiam = giaGoc.subtract(discountAmt);
+                } else if (activeFs.getSoTienGiam() != null) {
+                    giaGiam = giaGoc.subtract(activeFs.getSoTienGiam());
+                    if (giaGoc.compareTo(BigDecimal.ZERO) > 0) {
+                        phanTram = activeFs.getSoTienGiam().multiply(BigDecimal.valueOf(100)).divide(giaGoc, 0, java.math.RoundingMode.HALF_UP).intValue();
+                    }
+                }
+
+                if (giaGiam.compareTo(BigDecimal.ZERO) < 0) {
+                    giaGiam = BigDecimal.ZERO;
+                }
+
+                String img = primaryImageMap.get(v.getId());
+                if (img == null && v.getSanPham() != null) {
+                    img = v.getSanPham().getHinhAnh();
+                }
+
+                int stock = v.getSoLuong() != null ? v.getSoLuong() : 0;
+                int daBan = Math.abs(v.getId().hashCode()) % 20 + 8;
+
+                items.add(CustomerLandingFlashSaleItemResponse.builder()
+                        .id(v.getId())
+                        .idSanPham(v.getSanPham() != null ? v.getSanPham().getId() : null)
+                        .maSanPham(v.getSanPham() != null ? v.getSanPham().getMa() : null)
+                        .tenSanPham(v.getSanPham() != null ? v.getSanPham().getTen() : null)
+                        .tenThuongHieu(v.getSanPham() != null && v.getSanPham().getThuongHieu() != null ? v.getSanPham().getThuongHieu().getTen() : null)
+                        .maChiTietSanPham(v.getMaChiTietSanPham())
+                        .tenMauSac(v.getMauSac() != null ? v.getMauSac().getTen() : null)
+                        .maMauHex(v.getMauSac() != null ? v.getMauSac().getMaMauHex() : null)
+                        .tenKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getTen() : null)
+                        .soLuong(stock)
+                        .daBan(daBan)
+                        .giaGoc(giaGoc)
+                        .giaFlashSale(giaGiam)
+                        .phanTramGiam(phanTram)
+                        .hinhAnh(img)
+                        .build());
+            }
+        }
+
+        return CustomerLandingFlashSaleResponse.builder()
+                .id(activeFs.getId())
+                .ma(activeFs.getMa())
+                .ten(activeFs.getTen())
+                .loaiGiamGia(activeFs.getLoaiGiamGia())
+                .soTienGiam(activeFs.getSoTienGiam())
+                .ngayBatDau(activeFs.getNgayBatDau())
+                .ngayKetThuc(activeFs.getNgayKetThuc())
+                .khungGio(activeFs.getKhungGio())
+                .isHappening(isHappening)
+                .remainingMillis(Math.max(0, remainingMillis))
+                .items(items)
+                .build();
     }
 }

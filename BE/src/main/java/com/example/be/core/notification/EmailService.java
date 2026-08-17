@@ -48,4 +48,16 @@ public interface EmailService {
      */
     void guiEmailCapNhatTrangThaiHoaDon(String to, String tenKhachHang, String maHoaDon,
                                         String trangThaiLabel, String ghiChu);
+
+    void guiEmailXacNhanDatHang(String to, String tenNguoiNhan, String maHoaDon, 
+                                String soDienThoai, String diaChi, String phuongThuc,
+                                java.math.BigDecimal tamTinh, java.math.BigDecimal phiVanChuyen,
+                                java.math.BigDecimal tienGiam, java.math.BigDecimal tongTien,
+                                java.util.List<java.util.Map<String, Object>> items);
+
+    void guiEmailVanChuyen(String to, String tenKhachHang, String maHoaDon,
+                           String maVanDon, String donViVanChuyen, Long ngayGiaoDuKien, String linkTraCuu);
+
+    void guiEmailChucMungSinhNhat(String to, String tenKhachHang, String maVoucher,
+                                 String tenVoucher, java.math.BigDecimal giaTriGiam, String loaiGiam, Long ngayHetHan);
 }

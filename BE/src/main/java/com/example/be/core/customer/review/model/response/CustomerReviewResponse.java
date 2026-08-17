@@ -48,6 +48,10 @@ public class CustomerReviewResponse {
                     .ten(entity.getKhachHang().getTen())
                     .anhDaiDien(entity.getKhachHang().getHinhAnh())
                     .build();
+        } else if (entity.getHoaDon() != null && entity.getHoaDon().getTenNguoiNhan() != null) {
+            this.tenKhachHang = entity.getHoaDon().getTenNguoiNhan();
+            this.avatarKhachHang = null;
+            this.khachHang = null;
         } else {
             this.tenKhachHang = "Khách hàng AeroStride";
             this.avatarKhachHang = null;

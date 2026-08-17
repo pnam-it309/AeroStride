@@ -89,7 +89,8 @@ const submitDirectReview = async () => {
 
         const response = await api.post('/customer/review/submit', payload);
         if (response.data?.success || response.status === 200) {
-            toastStore.showToast('Cảm ơn bạn đã đánh giá sản phẩm!', 'success');
+            const serverMsg = response.data?.message || 'Cảm ơn bạn đã gửi đánh giá sản phẩm!';
+            toastStore.showToast(serverMsg, 'success');
             showReviewModal.value = false;
             newReview.value.comment = '';
             newReview.value.rating = 5;

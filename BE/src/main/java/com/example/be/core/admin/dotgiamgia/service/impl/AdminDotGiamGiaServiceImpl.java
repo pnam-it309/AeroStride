@@ -18,7 +18,6 @@ import com.example.be.infrastructure.exceptions.SystemException;
 import com.example.be.core.admin.dotgiamgia.repository.AdminChiTietDotGiamGiaRepository;
 import com.example.be.utils.AccountUtils;
 import com.example.be.utils.ExcelUtils;
-import com.example.be.utils.PaginationUtils;
 import com.example.be.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -30,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.be.core.admin.dotgiamgia.repository.AdminDotGiamGiaSpecification;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Sort;
+import com.example.be.core.admin.sanpham.repository.AdminAnhChiTietSanPhamRepository;
+import com.example.be.entity.AnhChiTietSanPham;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,6 +41,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
 
     private final AdminDotGiamGiaRepository repo;
     private final AdminChiTietSanPhamRepository chiTietSanPhamRepo;
+    private final AdminAnhChiTietSanPhamRepository anhChiTietSanPhamRepo;
     private final AdminSanPhamMapper mapper;
     private final AdminChiTietDotGiamGiaRepository chiTietDotGiamGiaRepo;
 
@@ -188,40 +190,59 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductVariantResponse> getAvailableVariants() {
-        return chiTietSanPhamRepo.findAllByXoaMemFalse()
-                .stream()
-                .map(v -> {
-                    List<com.example.be.core.admin.sanpham.model.response.ProductVariantImageResponse> images =
-                        v.getAnhChiTietSanPhams() == null ? List.of() :
-                        v.getAnhChiTietSanPhams().stream()
-                            .map(mapper::toVariantImageResponse)
-                            .collect(Collectors.toList());
-                    return mapper.toVariantResponse(v, images);
-                })
-                .collect(Collectors.toList());
+        List<ChiTietSanPham> variants = chiTietSanPhamRepo.findAllByXoaMemFalse();
+        return mapVariants(variants);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ProductVariantResponse> getAppliedVariants(String campaignId) {
-        return chiTietDotGiamGiaRepo.findByDotGiamGiaId(campaignId)
+        List<ChiTietSanPham> variants = chiTietDotGiamGiaRepo.findByDotGiamGiaId(campaignId)
                 .stream()
                 .map(ChiTietDotGiamGia::getChiTietSanPham)
-                .filter(v -> !Boolean.TRUE.equals(v.getXoaMem()))
-                .map(v -> {
-                    List<com.example.be.core.admin.sanpham.model.response.ProductVariantImageResponse> images =
-                        v.getAnhChiTietSanPhams() == null ? List.of() :
-                        v.getAnhChiTietSanPhams().stream()
-                            .map(mapper::toVariantImageResponse)
-                            .collect(Collectors.toList());
-                    return mapper.toVariantResponse(v, images);
-                })
-                .collect(Collectors.toList());
+                .filter(v -> v != null && !Boolean.TRUE.equals(v.getXoaMem()))
+                .toList();
+        return mapVariants(variants);
+    }
+
+    private List<ProductVariantResponse> mapVariants(List<ChiTietSanPham> variants) {
+        if (variants == null || variants.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> ids = variants.stream().map(ChiTietSanPham::getId).toList();
+
+        // 1. Bulk-fetch images trong 1 query duy nhất
+        List<AnhChiTietSanPham> images = anhChiTietSanPhamRepo
+                .findAllByChiTietSanPhamIdInAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(ids);
+
+        java.util.Map<String, List<com.example.be.core.admin.sanpham.model.response.ProductVariantImageResponse>> imageMap = images.stream()
+                .filter(img -> img.getChiTietSanPham() != null)
+                .collect(Collectors.groupingBy(
+                        img -> img.getChiTietSanPham().getId(),
+                        Collectors.mapping(mapper::toVariantImageResponse, Collectors.toList())
+                ));
+
+        // 2. Bulk-fetch quan hệ đợt giảm giá trong 1 query duy nhất
+        List<ChiTietDotGiamGia> relations = chiTietDotGiamGiaRepo.findAllByChiTietSanPhamIdIn(ids);
+
+        java.util.Map<String, List<ChiTietDotGiamGia>> relationMap = relations.stream()
+                .filter(rel -> rel.getChiTietSanPham() != null)
+                .collect(Collectors.groupingBy(
+                        rel -> rel.getChiTietSanPham().getId()
+                ));
+
+        // 3. Map sang response trong memory (0 query phát sinh)
+        return variants.stream().map(v -> {
+            v.setChiTietDotGiamGias(new java.util.LinkedHashSet<>(relationMap.getOrDefault(v.getId(), java.util.Collections.emptyList())));
+            List<com.example.be.core.admin.sanpham.model.response.ProductVariantImageResponse> imgs = imageMap.getOrDefault(v.getId(), java.util.Collections.emptyList());
+            return mapper.toVariantResponse(v, imgs);
+        }).toList();
     }
 
     private AdminDotGiamGiaResponse toResponse(DotGiamGia d) {
         if (d == null) return null;
-        return new AdminDotGiamGiaResponse(
+        AdminDotGiamGiaResponse res = new AdminDotGiamGiaResponse(
                 d.getId(),
                 d.getMa(),
                 d.getTen(),
@@ -234,5 +255,8 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
                 d.getTrangThai() != null ? d.getTrangThai().name() : null,
                 d.getMoTa()
         );
+        res.setIsFlashSale(d.getIsFlashSale());
+        res.setKhungGio(d.getKhungGio());
+        return res;
     }
 }

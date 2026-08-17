@@ -393,32 +393,6 @@ const variantsByColor = computed(() => {
 
 const activeColorTab = ref('ALL');
 
-// Form ap dung nhanh gia ban/ton kho cho nhom bien the dang hien.
-const quickApplyValues = reactive({
-    giaBan: '',
-    soLuong: ''
-});
-
-const handleQuickApply = () => {
-    const { giaBan, soLuong } = quickApplyValues;
-    if (giaBan === '' && soLuong === '') return;
-
-    variantItems.value = variantItems.value.map((item) => {
-        if (activeColorTab.value === 'ALL' || String(item.idMauSac) === String(activeColorTab.value)) {
-            return {
-                ...item,
-                giaBan: giaBan !== '' ? Number(giaBan) : item.giaBan,
-                soLuong: soLuong !== '' ? Number(soLuong) : item.soLuong
-            };
-        }
-        return item;
-    });
-
-    quickApplyValues.giaBan = '';
-    quickApplyValues.soLuong = '';
-    addNotification({ title: 'Thành công', subtitle: 'Đã áp dụng nhanh giá trị', color: 'success' });
-};
-
 const visibleVariantItems = computed(() => {
     if (activeColorTab.value === 'ALL') {
         return variantItems.value;
@@ -441,25 +415,122 @@ watch(createVariantPageSize, () => {
     createVariantPage.value = 1;
 });
 
+// Modal Thêm Nhanh Giá Bán & Số Lượng Tập Trung Thông Minh
 const bulkEditModal = reactive({
     show: false,
-    targetColorId: null,
+    scope: 'ALL', // 'ALL' | 'BY_COLOR' | 'BY_VARIANT'
+    targetColorIds: [],
+    targetVariantKeys: [],
     form: {
         soLuong: '',
         giaBan: ''
     }
 });
 
-const openBulkEdit = (colorId = null) => {
-    bulkEditModal.targetColorId = colorId;
+const openBulkEdit = () => {
+    bulkEditModal.scope = activeColorTab.value !== 'ALL' ? 'BY_COLOR' : 'ALL';
+    bulkEditModal.targetColorIds =
+        activeColorTab.value !== 'ALL'
+            ? [String(activeColorTab.value)]
+            : Object.keys(variantsByColor.value).map(String);
+    bulkEditModal.targetVariantKeys = variantItems.value.map((v) => v.clientKey || v.idMauSac + '-' + v.idKichThuoc);
     bulkEditModal.form = { soLuong: '', giaBan: '' };
     bulkEditModal.show = true;
 };
 
+const isColorSelectedForBulk = (colorId) => {
+    return bulkEditModal.targetColorIds.map(String).includes(String(colorId));
+};
+
+const toggleColorForBulk = (colorId) => {
+    const sId = String(colorId);
+    const idx = bulkEditModal.targetColorIds.indexOf(sId);
+    if (idx >= 0) {
+        bulkEditModal.targetColorIds.splice(idx, 1);
+    } else {
+        bulkEditModal.targetColorIds.push(sId);
+    }
+};
+
+const selectAllBulkColors = (selectAll = true) => {
+    if (selectAll) {
+        bulkEditModal.targetColorIds = Object.keys(variantsByColor.value).map(String);
+    } else {
+        bulkEditModal.targetColorIds = [];
+    }
+};
+
+const isVariantSelectedForBulk = (key) => {
+    return bulkEditModal.targetVariantKeys.includes(key);
+};
+
+const toggleVariantForBulk = (key) => {
+    const idx = bulkEditModal.targetVariantKeys.indexOf(key);
+    if (idx >= 0) {
+        bulkEditModal.targetVariantKeys.splice(idx, 1);
+    } else {
+        bulkEditModal.targetVariantKeys.push(key);
+    }
+};
+
+const selectAllBulkVariants = (selectAll = true) => {
+    if (selectAll) {
+        bulkEditModal.targetVariantKeys = variantItems.value.map((v) => v.clientKey || v.idMauSac + '-' + v.idKichThuoc);
+    } else {
+        bulkEditModal.targetVariantKeys = [];
+    }
+};
+
+const bulkEditTargetCount = computed(() => {
+    if (bulkEditModal.scope === 'ALL') {
+        return variantItems.value.length;
+    }
+    if (bulkEditModal.scope === 'BY_COLOR') {
+        return variantItems.value.filter((item) =>
+            bulkEditModal.targetColorIds.map(String).includes(String(item.idMauSac))
+        ).length;
+    }
+    if (bulkEditModal.scope === 'BY_VARIANT') {
+        return bulkEditModal.targetVariantKeys.length;
+    }
+    return 0;
+});
+
 const applyBulkEdit = () => {
     const { soLuong, giaBan } = bulkEditModal.form;
+    if (soLuong === '' && giaBan === '') {
+        addNotification({
+            title: 'Cảnh báo',
+            subtitle: 'Vui lòng nhập giá bán hoặc số lượng để thiết lập',
+            color: 'warning'
+        });
+        return;
+    }
+
+    if (bulkEditTargetCount.value === 0) {
+        addNotification({
+            title: 'Cảnh báo',
+            subtitle: 'Vui lòng chọn ít nhất một màu hoặc biến thể để áp dụng',
+            color: 'warning'
+        });
+        return;
+    }
+
+    let affectedCount = 0;
     variantItems.value = variantItems.value.map((item) => {
-        if (bulkEditModal.targetColorId === null || String(item.idMauSac) === String(bulkEditModal.targetColorId)) {
+        const itemKey = item.clientKey || item.idMauSac + '-' + item.idKichThuoc;
+        let match = false;
+
+        if (bulkEditModal.scope === 'ALL') {
+            match = true;
+        } else if (bulkEditModal.scope === 'BY_COLOR') {
+            match = bulkEditModal.targetColorIds.map(String).includes(String(item.idMauSac));
+        } else if (bulkEditModal.scope === 'BY_VARIANT') {
+            match = bulkEditModal.targetVariantKeys.includes(itemKey);
+        }
+
+        if (match) {
+            affectedCount++;
             return {
                 ...item,
                 soLuong: soLuong !== '' ? Number(soLuong) : item.soLuong,
@@ -468,10 +539,11 @@ const applyBulkEdit = () => {
         }
         return item;
     });
+
     bulkEditModal.show = false;
     addNotification({
         title: 'Thành công',
-        subtitle: `Đã cập nhật hàng loạt cho ${bulkEditModal.targetColorId ? 'màu sắc này' : 'tất cả biến thể'}`,
+        subtitle: `Đã thiết lập nhanh giá & số lượng cho ${affectedCount} biến thể`,
         color: 'success'
     });
 };
@@ -2535,10 +2607,10 @@ const handleSave = async () => {
                                             variant="flat"
                                             class="text-none font-weight-bold rounded-lg px-4"
                                             style="color: white !important"
-                                            @click="openBulkEdit(null)"
+                                            @click="openBulkEdit"
                                         >
                                             <v-icon icon="mdi-flash-outline" size="18" class="mr-2" />
-                                            Thêm nhanh toàn bộ
+                                            Thêm nhanh giá & số lượng
                                         </v-btn>
                                         <v-btn
                                             v-if="variantItems.length > 0"
@@ -2649,39 +2721,8 @@ const handleSave = async () => {
                                                         : 'Đang xem màu: ' + getVariantColorLabel(activeColorTab)
                                                 }}
                                             </div>
-                                            <div class="d-flex align-center ga-2" v-if="activeColorTab !== 'ALL'">
-                                                <span class="text-caption font-weight-bold text-slate-500 mr-2 d-none d-sm-block">
-                                                    áp dụng nhanh:</span
-                                                >
-                                                <FormattedNumberField
-                                                    v-model="quickApplyValues.giaBan"
-                                                    placeholder="Giá bán"
-                                                    variant="outlined"
-                                                    density="compact"
-                                                    hide-details
-                                                    class="custom-input-dense"
-                                                    style="width: 120px"
-                                                />
-                                                <FormattedNumberField
-                                                    v-model="quickApplyValues.soLuong"
-                                                    placeholder="Số lượng"
-                                                    variant="outlined"
-                                                    density="compact"
-                                                    hide-details
-                                                    class="custom-input-dense"
-                                                    style="width: 120px"
-                                                />
-                                                <v-btn
-                                                    color="primary"
-                                                    variant="flat"
-                                                    size="small"
-                                                    class="text-none rounded font-weight-bold"
-                                                    style="color: white !important"
-                                                    height="40"
-                                                    @click="handleQuickApply"
-                                                >
-                                                    <v-icon icon="mdi-flash" size="16" class="mr-1" /> Cập nhật
-                                                </v-btn>
+                                            <div class="text-caption text-slate-500 font-weight-medium">
+                                                Tổng số: <strong class="text-primary">{{ visibleVariantItems.length }}</strong> biến thể
                                             </div>
                                         </div>
 
@@ -3142,54 +3183,246 @@ const handleSave = async () => {
             @options-refreshed="fetchFormOptions"
         />
 
-        <!-- Modal Thiết lập nhanh hàng loạt -->
-        <v-dialog v-model="bulkEditModal.show" max-width="500">
-            <v-card class="premium-card rounded-xl">
-                <v-card-title class="pa-6 border-b d-flex align-center">
-                    <v-icon icon="mdi-flash-circle" color="primary" class="mr-3" />
-                    <span class="font-weight-bold text-slate-800">
-                        {{
-                            bulkEditModal.targetColorId
-                                ? `Thiết lập cho màu
-                        ${getVariantColorLabel(bulkEditModal.targetColorId)}`
-                                : 'Thiết lập cho tất cả biến thể'
-                        }}
-                    </span>
+        <!-- Modal Thiết lập nhanh giá bán & số lượng tập trung thông minh -->
+        <v-dialog v-model="bulkEditModal.show" max-width="650">
+            <v-card class="premium-card rounded-xl overflow-hidden">
+                <v-card-title class="pa-5 bg-gradient-primary text-white d-flex align-center justify-space-between">
+                    <div class="d-flex align-center">
+                        <v-icon icon="mdi-flash-circle" color="white" class="mr-2" size="24" />
+                        <div>
+                            <div class="font-weight-bold text-subtitle-1">Thiết Lập Nhanh Giá Bán & Số Lượng</div>
+                            <div class="text-caption opacity-90">Áp dụng giá và tồn kho đồng loạt cho toàn bộ hoặc từng biến thể tùy chọn</div>
+                        </div>
+                    </div>
+                    <v-btn icon size="small" variant="text" color="white" @click="bulkEditModal.show = false">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
                 </v-card-title>
-                <v-card-text class="pa-8">
-                    <v-row>
-                        <v-col cols="12">
-                            <div class="field-label">Số lượng <span class="text-error">*</span></div>
-                            <FormattedNumberField
-                                v-model="bulkEditModal.form.soLuong"
-                                placeholder="Nhập số lượng..."
-                                variant="outlined"
-                                density="comfortable"
-                                hide-details
-                                class="custom-input"
-                            />
-                        </v-col>
-                        <v-col cols="12">
-                            <div class="field-label">Giá bán (VNĐ) <span class="text-error">*</span></div>
-                            <FormattedNumberField
-                                v-model="bulkEditModal.form.giaBan"
-                                placeholder="Nhập giá bán..."
-                                variant="outlined"
-                                density="comfortable"
-                                hide-details
-                                class="custom-input"
-                            />
-                        </v-col>
-                    </v-row>
+
+                <v-card-text class="pa-6">
+                    <!-- KHỐI 1: NHẬP GIÁ TRỊ CẦN THIẾT LẬP -->
+                    <div class="pa-4 rounded-xl bg-slate-50 border mb-5">
+                        <div class="text-caption font-weight-bold text-slate-700 mb-3 text-uppercase">
+                            1. Nhập giá trị muốn áp dụng
+                        </div>
+                        <v-row dense>
+                            <v-col cols="12" sm="6">
+                                <div class="field-label mb-1">Số lượng tồn kho (SP)</div>
+                                <FormattedNumberField
+                                    v-model="bulkEditModal.form.soLuong"
+                                    placeholder="Nhập số lượng..."
+                                    variant="outlined"
+                                    density="comfortable"
+                                    hide-details
+                                    prepend-inner-icon="mdi-package-variant-closed"
+                                    class="custom-input bg-white"
+                                />
+                            </v-col>
+                            <v-col cols="12" sm="6">
+                                <div class="field-label mb-1">Giá bán niêm yết (VNĐ)</div>
+                                <FormattedNumberField
+                                    v-model="bulkEditModal.form.giaBan"
+                                    placeholder="Nhập giá bán..."
+                                    variant="outlined"
+                                    density="comfortable"
+                                    hide-details
+                                    prepend-inner-icon="mdi-currency-usd"
+                                    class="custom-input bg-white"
+                                />
+                            </v-col>
+                        </v-row>
+                        <div class="text-caption text-slate-500 mt-2 d-flex align-center">
+                            <v-icon icon="mdi-information-outline" size="14" class="mr-1 text-primary" />
+                            <span>Có thể chỉ nhập Giá bán hoặc chỉ nhập Số lượng (ô để trống sẽ giữ nguyên).</span>
+                        </div>
+                    </div>
+
+                    <!-- KHỐI 2: CHỌN PHẠM VI ÁP DỤNG -->
+                    <div class="mb-4">
+                        <div class="text-caption font-weight-bold text-slate-700 mb-2 text-uppercase">
+                            2. Chọn phạm vi áp dụng
+                        </div>
+                        <v-btn-toggle
+                            v-model="bulkEditModal.scope"
+                            color="primary"
+                            mandatory
+                            density="comfortable"
+                            class="w-100 border rounded-lg overflow-hidden d-flex"
+                        >
+                            <v-btn value="ALL" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-select-all">
+                                Tất cả ({{ variantItems.length }})
+                            </v-btn>
+                            <v-btn value="BY_COLOR" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-palette-outline">
+                                Theo màu sắc ({{ Object.keys(variantsByColor).length }})
+                            </v-btn>
+                            <v-btn value="BY_VARIANT" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-checkbox-multiple-marked-outline">
+                                Tùy chọn biến thể
+                            </v-btn>
+                        </v-btn-toggle>
+                    </div>
+
+                    <!-- KHỐI 3: NỘI DUNG CHI TIẾT THEO PHẠM VI -->
+                    <!-- Case 1: ALL -->
+                    <div v-if="bulkEditModal.scope === 'ALL'" class="pa-4 rounded-lg bg-blue-50 border border-blue-200">
+                        <div class="d-flex align-center">
+                            <v-icon icon="mdi-check-circle-outline" color="primary" class="mr-2" size="20" />
+                            <span class="text-body-2 text-slate-800">
+                                Sẽ áp dụng đồng loạt cho <strong>toàn bộ {{ variantItems.length }} biến thể</strong> hiện có của sản phẩm.
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Case 2: BY_COLOR -->
+                    <div v-else-if="bulkEditModal.scope === 'BY_COLOR'" class="pa-4 rounded-lg bg-slate-50 border">
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <span class="text-caption font-weight-bold text-slate-600">Chọn các màu muốn áp dụng:</span>
+                            <div class="ga-2 d-flex">
+                                <v-btn size="x-small" variant="tonal" color="primary" class="text-none rounded-pill" @click="selectAllBulkColors(true)">
+                                    Chọn tất cả
+                                </v-btn>
+                                <v-btn size="x-small" variant="text" color="slate-600" class="text-none rounded-pill" @click="selectAllBulkColors(false)">
+                                    Bỏ chọn
+                                </v-btn>
+                            </div>
+                        </div>
+
+                        <v-row dense>
+                            <v-col
+                                v-for="(items, colorId) in variantsByColor"
+                                :key="colorId"
+                                cols="12"
+                                sm="6"
+                            >
+                                <div
+                                    :class="[
+                                        'pa-3 rounded-lg border cursor-pointer d-flex align-center justify-space-between transition-all',
+                                        isColorSelectedForBulk(colorId)
+                                            ? 'bg-primary-lighten-5 border-primary elevation-1'
+                                            : 'bg-white hover-bg-slate-100'
+                                    ]"
+                                    @click="toggleColorForBulk(colorId)"
+                                >
+                                    <div class="d-flex align-center">
+                                        <v-checkbox-btn
+                                            :model-value="isColorSelectedForBulk(colorId)"
+                                            density="compact"
+                                            color="primary"
+                                            class="mr-2"
+                                            hide-details
+                                        />
+                                        <div
+                                            class="mr-2"
+                                            :style="{
+                                                backgroundColor: getVariantColorHex(colorId),
+                                                width: '16px',
+                                                height: '16px',
+                                                borderRadius: '50%',
+                                                border: '1px solid #94a3b8'
+                                            }"
+                                        ></div>
+                                        <span class="text-body-2 font-weight-bold text-slate-800">
+                                            {{ getVariantColorLabel(colorId) }}
+                                        </span>
+                                    </div>
+                                    <v-chip size="x-small" :color="isColorSelectedForBulk(colorId) ? 'primary' : 'grey'" variant="tonal">
+                                        {{ items.length }} size
+                                    </v-chip>
+                                </div>
+                            </v-col>
+                        </v-row>
+                    </div>
+
+                    <!-- Case 3: BY_VARIANT -->
+                    <div v-else-if="bulkEditModal.scope === 'BY_VARIANT'" class="pa-3 rounded-lg bg-slate-50 border">
+                        <div class="d-flex align-center justify-space-between mb-2">
+                            <span class="text-caption font-weight-bold text-slate-600">Tích chọn từng biến thể cụ thể:</span>
+                            <div class="ga-2 d-flex">
+                                <v-btn size="x-small" variant="tonal" color="primary" class="text-none rounded-pill" @click="selectAllBulkVariants(true)">
+                                    Chọn tất cả ({{ variantItems.length }})
+                                </v-btn>
+                                <v-btn size="x-small" variant="text" color="slate-600" class="text-none rounded-pill" @click="selectAllBulkVariants(false)">
+                                    Bỏ chọn
+                                </v-btn>
+                            </div>
+                        </div>
+
+                        <div class="overflow-y-auto rounded border bg-white" style="max-height: 220px">
+                            <v-table density="compact">
+                                <thead>
+                                    <tr class="bg-slate-50">
+                                        <th style="width: 40px" class="text-center">#</th>
+                                        <th class="text-left font-weight-bold text-caption">Màu sắc & Size</th>
+                                        <th class="text-right font-weight-bold text-caption">Giá hiện tại</th>
+                                        <th class="text-right font-weight-bold text-caption">Tồn kho</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr
+                                        v-for="variant in variantItems"
+                                        :key="variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc"
+                                        :class="{ 'bg-primary-lighten-5': isVariantSelectedForBulk(variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc) }"
+                                        class="cursor-pointer"
+                                        @click="toggleVariantForBulk(variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc)"
+                                    >
+                                        <td class="text-center pa-1">
+                                            <v-checkbox-btn
+                                                :model-value="isVariantSelectedForBulk(variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc)"
+                                                density="compact"
+                                                color="primary"
+                                                hide-details
+                                            />
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-center">
+                                                <div
+                                                    class="mr-2"
+                                                    :style="{
+                                                        backgroundColor: getVariantColorHex(variant.idMauSac),
+                                                        width: '12px',
+                                                        height: '12px',
+                                                        borderRadius: '50%',
+                                                        border: '1px solid #94a3b8'
+                                                    }"
+                                                ></div>
+                                                <span class="font-weight-bold text-body-2 mr-1">
+                                                    {{ getVariantSizeLabel(variant.idKichThuoc) }}
+                                                </span>
+                                                <span class="text-caption text-slate-500">
+                                                    ({{ getVariantColorLabel(variant.idMauSac) }})
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="text-right text-caption font-weight-bold text-slate-700">
+                                            {{ variant.giaBan ? Number(variant.giaBan).toLocaleString() + ' đ' : '0 đ' }}
+                                        </td>
+                                        <td class="text-right text-caption font-weight-bold text-slate-700">
+                                            {{ variant.soLuong || 0 }} SP
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </v-table>
+                        </div>
+                    </div>
                 </v-card-text>
-                <v-card-actions class="pa-6 border-t bg-slate-50">
-                    <v-spacer />
-                    <v-btn variant="text" color="slate-500" class="text-none font-weight-bold" @click="bulkEditModal.show = false"
-                        >Hủy</v-btn
-                    >
-                    <v-btn color="primary" variant="flat" class="text-none font-weight-bold px-6 rounded-lg" @click="applyBulkEdit"
-                        >Áp dụng</v-btn
-                    >
+
+                <v-card-actions class="pa-5 border-t bg-slate-50 d-flex justify-space-between align-center">
+                    <div class="text-caption text-slate-600">
+                        Đang chọn: <strong class="text-primary">{{ bulkEditTargetCount }}</strong> biến thể
+                    </div>
+                    <div class="d-flex ga-2">
+                        <v-btn variant="text" color="slate-600" class="text-none font-weight-bold" @click="bulkEditModal.show = false">
+                            Hủy bỏ
+                        </v-btn>
+                        <v-btn
+                            color="primary"
+                            variant="flat"
+                            class="text-none font-weight-bold px-6 rounded-lg shadow-sm"
+                            :disabled="bulkEditTargetCount === 0"
+                            @click="applyBulkEdit"
+                        >
+                            Áp Dụng Cho {{ bulkEditTargetCount }} Biến Thể
+                        </v-btn>
+                    </div>
                 </v-card-actions>
             </v-card>
         </v-dialog>

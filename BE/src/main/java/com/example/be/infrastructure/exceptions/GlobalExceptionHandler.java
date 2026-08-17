@@ -89,9 +89,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Object>> handleHttpMessageNotReadableException(org.springframework.http.converter.HttpMessageNotReadableException e, HttpServletRequest request) {
         log.warn("JSON Parse error at {}: {}", request.getRequestURI(), e.getMessage());
-        try {
-            java.nio.file.Files.writeString(java.nio.file.Paths.get("json_error.txt"), e.getMessage());
-        } catch (Exception ex) {}
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "ERR_JSON_PARSE", e.getMessage(), request.getRequestURI(), ErrorSeverity.SYNTAX);
     }
 
@@ -105,20 +102,12 @@ public class GlobalExceptionHandler {
             message = "Validation failed";
         }
         log.warn("Validation error at {}: {}", request.getRequestURI(), message);
-        try {
-            java.nio.file.Files.writeString(java.nio.file.Paths.get("validation_error.txt"), message);
-        } catch (Exception ex) {}
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "ERR_VAL_INVALID_PARAMS", message, request.getRequestURI(), ErrorSeverity.SYNTAX);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGeneralException(Exception e, HttpServletRequest request) {
         log.error("UNHANDLED CRITICAL at {}: ", request.getRequestURI(), e);
-        try {
-            java.io.StringWriter sw = new java.io.StringWriter();
-            e.printStackTrace(new java.io.PrintWriter(sw));
-            java.nio.file.Files.writeString(java.nio.file.Paths.get("error_stacktrace.txt"), request.getRequestURI() + "\n" + sw.toString(), java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
-        } catch (Exception ex) {}
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "ERR_INTERNAL_SERVER", 
                 "An unexpected server error occurred. Our engineers have been notified.", request.getRequestURI(), ErrorSeverity.RUNTIME);
     }

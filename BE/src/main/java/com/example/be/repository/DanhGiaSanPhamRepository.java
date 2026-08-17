@@ -18,6 +18,8 @@ public interface DanhGiaSanPhamRepository extends JpaRepository<DanhGiaSanPham, 
     List<DanhGiaSanPham> findByKhachHang_Id(String idKhachHang);
     
     boolean existsByHoaDon_IdAndSanPham_Id(String idHoaDon, String idSanPham);
-    
+
     Page<DanhGiaSanPham> findAll(Pageable pageable);
+
+    long countByTrangThai(DanhGiaSanPham.TrangThaiDanhGia trangThai);
 }

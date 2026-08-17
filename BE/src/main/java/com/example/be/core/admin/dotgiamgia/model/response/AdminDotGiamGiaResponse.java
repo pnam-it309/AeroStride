@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AdminDotGiamGiaResponse {
 
     private String id;
@@ -20,6 +22,8 @@ public class AdminDotGiamGiaResponse {
     private Integer mucUuTien;
     private String trangThai;
     private String moTa;
+    private Boolean isFlashSale;
+    private String khungGio;
 
     public AdminDotGiamGiaResponse(String id, String ma, String ten, String loaiGiamGia, BigDecimal soTienGiam, BigDecimal dieuKienGiamGia, Long ngayBatDau, Long ngayKetThuc, Integer mucUuTien, String trangThai, String moTa) {
         this.id = id;

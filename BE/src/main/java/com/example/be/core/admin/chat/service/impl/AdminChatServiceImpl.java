@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -131,7 +132,7 @@ public class AdminChatServiceImpl implements AdminChatService {
     public List<AdminChatResponse> getAllConversations(String type, String status, String keyword) {
         String currentUsername = getCurrentUsername();
         
-        List<AdminChatResponse> allConvs = conversationRepository.findAll().stream()
+        List<AdminChatResponse> allConvs = conversationRepository.findAllWithDetails().stream()
                 .filter(c -> {
                     // Logic lọc hội thoại:
                     // 1. Nếu là PENDING: Mọi nhân viên đều thấy để có thể tiếp nhận.
@@ -156,7 +157,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                 .map(c -> AdminChatResponse.builder()
                         .id(c.getId())
                         .ten(getConversationName(c, currentUsername))
-                        .tinNhanCuoi(c.getDanhSachTinNhan().isEmpty() ? "" : c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1).getNoiDung())
+                        .tinNhanCuoi((c.getDanhSachTinNhan() == null || c.getDanhSachTinNhan().isEmpty()) ? "" : c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1).getNoiDung())
                         .anhDaiDien(getAvatarUrl(c, currentUsername))
                         .thoiGian(formatTime(c.getNgayCapNhat()))
                         .chuaDoc(0)
@@ -167,9 +168,14 @@ public class AdminChatServiceImpl implements AdminChatService {
                 .collect(Collectors.toCollection(ArrayList::new));
 
         // For INTERNAL chat, we want to see ALL staff except current user (as potential new chats)
+        Set<String> existingInternalNames = allConvs.stream()
+                .filter(c -> CuocHoiThoai.LoaiHoiThoai.INTERNAL.name().equals(c.getLoaiHoiThoai()))
+                .map(AdminChatResponse::getTen)
+                .collect(Collectors.toSet());
+
         List<AdminChatResponse> allStaff = nhanVienRepository.findAll().stream()
-                .filter(nv -> !nv.getTenTaiKhoan().equals(currentUsername))
-                .filter(nv -> allConvs.stream().noneMatch(c -> CuocHoiThoai.LoaiHoiThoai.INTERNAL.name().equals(c.getLoaiHoiThoai()) && c.getTen().equals(nv.getTen())))
+                .filter(nv -> nv.getTenTaiKhoan() != null && !nv.getTenTaiKhoan().equals(currentUsername))
+                .filter(nv -> !existingInternalNames.contains(nv.getTen()))
                 .map(nv -> AdminChatResponse.builder()
                         .id("NEW_INTERNAL_" + nv.getId())
                         .ten(nv.getTen())

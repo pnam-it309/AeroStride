@@ -25,4 +25,6 @@ public interface CuocHoiThoaiRepository extends JpaRepository<CuocHoiThoai, Stri
     @Modifying
     @Query("DELETE FROM CuocHoiThoai c WHERE c.id IN :ids")
     void deleteByIdIn(@Param("ids") List<String> ids);
+
+    List<CuocHoiThoai> findByTrangThaiHoiThoaiAndNgayCapNhatLessThan(CuocHoiThoai.TrangThaiHoiThoai trangThaiHoiThoai, Long ngayCapNhat);
 }

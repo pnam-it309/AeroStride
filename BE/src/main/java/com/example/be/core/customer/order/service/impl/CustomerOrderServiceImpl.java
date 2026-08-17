@@ -12,6 +12,7 @@ import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.infrastructure.constants.DeliveryMethod;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.constants.HinhThucPhieuGiamGia;
+import com.example.be.infrastructure.constants.PaymentConstants;
 import com.example.be.utils.CodeUtils;
 import com.example.be.utils.DiscountPriceUtils;
 import lombok.RequiredArgsConstructor;
@@ -226,7 +227,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .maHoaDon(CodeUtils.generateRandom(HoaDon.class))
                 .trangThai(OrderStatus.CHO_XAC_NHAN)
                 .khachHang(khachHang)
-                .loaiDon("ONLINE")
+                .loaiDon(OrderType.ONLINE.name())
                 .orderType(OrderType.ONLINE)
                 .deliveryMethod(DeliveryMethod.SHIPPING)
                 .tongTien(tongTien)
@@ -285,12 +286,12 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .hoaDon(hoaDon)
                 .phuongThucThanhToan(pttt)
                 .soTien(tongTienSauGiam)
-                .loaiGiaoDich("COD".equalsIgnoreCase(payMethod) ? "COD" : "ONLINE")
+                .loaiGiaoDich(PaymentConstants.METHOD_COD.equalsIgnoreCase(payMethod) ? PaymentConstants.METHOD_COD : PaymentConstants.METHOD_ONLINE)
                 .ghiChu("Thanh toán đơn hàng online - " + payMethod)
                 .build();
         giaoDichRepository.save(giaoDich);
 
-        if (!"VNPAY".equalsIgnoreCase(payMethod) && recipientEmail != null && !recipientEmail.isBlank()) {
+        if (!PaymentConstants.METHOD_VNPAY.equalsIgnoreCase(payMethod) && recipientEmail != null && !recipientEmail.isBlank()) {
             eventPublisher.publishEvent(new com.example.be.core.common.events.OrderPlacedEvent(
                     this, hoaDon.getId(), recipientEmail, tongTienSauGiam));
             log.info("Published OrderPlacedEvent for order {} to email {}", hoaDon.getId(), recipientEmail);
@@ -308,11 +309,10 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin khách hàng"));
 
-        List<HoaDon> hoaDons = hoaDonRepository.findAll().stream()
-                .filter(hd -> hd.getKhachHang() != null && hd.getKhachHang().getId().equals(khachHang.getId()))
+        List<HoaDon> hoaDons = hoaDonRepository.findByKhachHangIdOrderByNgayTaoDesc(khachHang.getId()).stream()
                 .filter(hd -> hd.getOrderType() == OrderType.ONLINE
                         || (hd.getOrderType() == null && hd.getNhanVien() == null
-                                && "ONLINE".equalsIgnoreCase(hd.getLoaiDon())))
+                                && OrderType.ONLINE.name().equalsIgnoreCase(hd.getLoaiDon())))
                 .filter(hd -> {
                     if (trangThai == null || trangThai.isBlank()) return true;
                     return hd.getTrangThai() != null && hd.getTrangThai().name().equals(trangThai);
@@ -334,7 +334,6 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                     }
                     return false;
                 })
-                .sorted(Comparator.comparing(HoaDon::getNgayTao, Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
 
         return hoaDons.stream().map(hd -> mapToResponse(hd, null)).collect(Collectors.toList());
@@ -596,7 +595,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         Map<String, PhieuGiamGia> result = new LinkedHashMap<>();
 
         // 1. Phiếu công khai
-        phieuGiamGiaRepository.findAll().stream()
+        phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG).stream()
                 .filter(v -> HinhThucPhieuGiamGia.isCongKhai(v.getHinhThuc()))
                 .filter(hopLeCongKhai)
                 .forEach(v -> result.put(v.getId(), v));
@@ -639,23 +638,8 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     }
 
     // Xác định đơn có phải thanh toán tiền mặt (COD) hay không.
-    // COD = tiền mặt; còn lại (VNPAY/chuyển khoản/ONLINE) = không phải tiền mặt.
     private boolean isCashOrder(HoaDon hoaDon) {
-        if (hoaDon.getListsGiaoDichThanhToan() != null) {
-            for (GiaoDichThanhToan gd : hoaDon.getListsGiaoDichThanhToan()) {
-                String loai = gd.getLoaiGiaoDich();
-                if (loai != null && loai.equalsIgnoreCase("COD")) {
-                    return true;
-                }
-                if (gd.getPhuongThucThanhToan() != null && gd.getPhuongThucThanhToan().getTen() != null) {
-                    String ten = gd.getPhuongThucThanhToan().getTen().toUpperCase();
-                    if (ten.contains("COD") || ten.contains("TIEN_MAT")) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+        return PaymentConstants.isCashOrder(hoaDon);
     }
 
     // Tính lại tổng tiền của đơn dựa trên các dòng sản phẩm hiện tại.
@@ -837,7 +821,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         List<HoaDon> onlineOrders = allOrders.stream()
                 .filter(hd -> hd.getOrderType() == OrderType.ONLINE
                         || (hd.getOrderType() == null && hd.getNhanVien() == null
-                                && "ONLINE".equalsIgnoreCase(hd.getLoaiDon())))
+                                && OrderType.ONLINE.name().equalsIgnoreCase(hd.getLoaiDon())))
                 .collect(java.util.stream.Collectors.toList());
 
         long total = onlineOrders.size();

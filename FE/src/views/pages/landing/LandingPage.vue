@@ -5,6 +5,7 @@ import { PATH } from '@/router/routePaths';
 import Preloader from '@/components/common/Preloader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import FlashSaleSection from './sections/FlashSaleSection.vue';
 import { useLandingPage } from '@/composables/useLandingPage';
 import { useLandingCatalog } from '@/composables/useLandingCatalog';
 import { useSeoMeta } from '@/composables/useSeoMeta';
@@ -325,6 +326,9 @@ const scrollToCategories = () => {
                     </div>
                 </div>
             </section>
+
+            <!-- FLASH SALE GIỜ VÀNG COUNTDOWN -->
+            <FlashSaleSection />
 
             <!-- 3. Categories Section ("Mua sắm theo nhu cầu") -->
             <section id="categories-section" class="section-container py-12">

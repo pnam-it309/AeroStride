@@ -56,19 +56,16 @@ public class LichLamViecServiceImpl implements LichLamViecService {
     @Override
     @Transactional(readOnly = true)
     public List<LichLamViecResponse> getAllSchedules(String search, String ca, String ngay) {
-        return lichLamViecRepository.findAll().stream()
-                .filter(l -> {
-                    boolean matchSearch = search == null || search.isEmpty() ||
-                            (l.getNhanVien() != null && (
-                                l.getNhanVien().getTen().toLowerCase().contains(search.toLowerCase()) ||
-                                l.getNhanVien().getMa().toLowerCase().contains(search.toLowerCase())
-                            ));
-                    boolean matchCa = ca == null || ca.isEmpty() || ca.equals("Tất cả") ||
-                            (l.getCaLam() != null && l.getCaLam().getTenCa().equals(ca));
-                    boolean matchNgay = ngay == null || ngay.isEmpty() ||
-                            l.getNgayLam().format(dateFormatter).equals(ngay);
-                    return matchSearch && matchCa && matchNgay;
-                })
+        String cleanSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        String cleanCa = (ca != null && !ca.trim().isEmpty() && !"Tất cả".equalsIgnoreCase(ca.trim())) ? ca.trim() : null;
+        LocalDate cleanNgay = null;
+        if (ngay != null && !ngay.trim().isEmpty()) {
+            try {
+                cleanNgay = LocalDate.parse(ngay.trim(), dateFormatter);
+            } catch (Exception ignored) {}
+        }
+
+        return lichLamViecRepository.searchSchedules(cleanSearch, cleanCa, cleanNgay).stream()
                 .map(l -> LichLamViecResponse.builder()
                         .id(l.getId())
                         .nhanVien(l.getNhanVien() != null ? l.getNhanVien().getTen() : "N/A")
@@ -76,7 +73,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                         .maNhanVien(l.getNhanVien() != null ? l.getNhanVien().getMa() : "N/A")
                         .ca(l.getCaLam() != null ? l.getCaLam().getTenCa() : "N/A")
                         .caId(l.getCaLam() != null ? l.getCaLam().getId() : null)
-                        .ngay(l.getNgayLam().format(dateFormatter))
+                        .ngay(l.getNgayLam() != null ? l.getNgayLam().format(dateFormatter) : "")
                         .trangThai(l.getTrangThaiLich() != null ? l.getTrangThaiLich().name() : "N/A")
                         .tangCa(l.getTangCa() != null ? l.getTangCa() : false)
                         .gioBatDauTangCa(l.getGioBatDauTangCa() != null ? l.getGioBatDauTangCa().format(timeFormatter) : null)
@@ -527,12 +524,8 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         final NhanVien finalMatchedEmployee = matchedEmployee;
         
         // Find if this employee already has an open attendance today
-        LichLamViec activeShift = lichLamViecRepository.findAll().stream()
-                .filter(l -> l.getNhanVien() != null && l.getNhanVien().getId().equals(finalMatchedEmployee.getId()) 
-                          && today.equals(l.getNgayLam())
-                          && l.getGioVao() != null 
-                          && l.getGioRa() == null)
-                .findFirst()
+        LichLamViec activeShift = lichLamViecRepository
+                .findFirstByNhanVienIdAndNgayLamAndGioVaoIsNotNullAndGioRaIsNull(finalMatchedEmployee.getId(), today)
                 .orElse(null);
                 
         if (activeShift != null) {

@@ -7,6 +7,7 @@ import com.example.be.entity.HoaDon;
 import com.example.be.entity.HoaDonChiTiet;
 import com.example.be.repository.HoaDonChiTietRepository;
 import com.example.be.repository.HoaDonRepository;
+import com.example.be.infrastructure.constants.PaymentConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -72,7 +73,7 @@ public class NotificationEventListener {
                 }
                 variables.put("tienGiam", tienGiam);
 
-                String phuongThuc = "COD";
+                String phuongThuc = PaymentConstants.METHOD_COD;
                 if (hoaDon.getListsGiaoDichThanhToan() != null && !hoaDon.getListsGiaoDichThanhToan().isEmpty()) {
                     var gd = hoaDon.getListsGiaoDichThanhToan().iterator().next();
                     if (gd.getPhuongThucThanhToan() != null && gd.getPhuongThucThanhToan().getTen() != null) {

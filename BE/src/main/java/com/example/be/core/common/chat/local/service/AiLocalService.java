@@ -1,32 +1,35 @@
 package com.example.be.core.common.chat.local.service;
 
+import com.example.be.core.admin.sanpham.model.response.ProductVariantResponse;
+import com.example.be.core.admin.sanpham.service.AdminSanPhamService;
 import com.example.be.entity.KienThucAi;
-import com.example.be.entity.SanPham;
+import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.repository.KienThucAiRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Pattern;
-import java.util.Map;
-import java.util.Queue;
-import java.util.LinkedList;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AiLocalService {
+
     private final KienThucAiRepository aiKnowledgeRepository;
     private final AiWordLibrary wordLibrary;
     private final DataRetrievalLibrary dataLibrary;
+    private final AdminSanPhamService sanPhamService;
     private final ObjectMapper objectMapper;
 
     private final Map<String, ChatState> sessionStates = new ConcurrentHashMap<>();
-
     private final Map<String, Pattern> compiledPatterns = new ConcurrentHashMap<>();
     private volatile List<KienThucAi> cachedKnowledgeList = null;
     private volatile long lastKnowledgeLoad = 0;
@@ -42,22 +45,29 @@ public class AiLocalService {
                 }
             }
         }
-        return cachedKnowledgeList;
+        return cachedKnowledgeList != null ? cachedKnowledgeList : List.of();
     }
 
     private static class ChatState {
         String currentState = "NORMAL";
         Queue<String> messageQueue = new LinkedList<>();
-        Queue<String> alternativeProducts = new LinkedList<>();
         Map<String, Object> conversationData = new ConcurrentHashMap<>();
         long lastActionTime = System.currentTimeMillis();
-        int consecutiveFallbacks = 0;
 
         void addMessage(String msg) {
             if (messageQueue.size() >= 10) {
                 messageQueue.poll();
             }
             messageQueue.add(msg);
+        }
+    }
+
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 600000)
+    public void cleanupExpiredSessions() {
+        long expireThreshold = System.currentTimeMillis() - (30 * 60 * 1000);
+        sessionStates.entrySet().removeIf(entry -> entry.getValue().lastActionTime < expireThreshold);
+        if (compiledPatterns.size() > 500) {
+            compiledPatterns.clear();
         }
     }
 
@@ -69,571 +79,466 @@ public class AiLocalService {
         String cid = (conversationId != null && !conversationId.isBlank()) ? conversationId : "default-session";
         ChatState state = sessionStates.computeIfAbsent(cid, k -> new ChatState());
 
-        // Invalidate state if inactive for more than 10 minutes
         long now = System.currentTimeMillis();
         if (now - state.lastActionTime > 10 * 60 * 1000) {
             state.currentState = "NORMAL";
-            state.alternativeProducts.clear();
             state.conversationData.clear();
         }
         state.lastActionTime = now;
         state.addMessage(userMessage);
 
         String normalizedInput = wordLibrary.normalize(userMessage);
-        log.info("Processing stateful local AI message (State: {}): '{}' -> '{}'", state.currentState, userMessage, normalizedInput);
+        log.info("Processing Local AI chat: '{}' -> '{}'", userMessage, normalizedInput);
 
-        // State Machine Router
-        String response;
-        switch (state.currentState) {
-            case "APOLOGIZING":
-                response = handleApologizingState(state, normalizedInput);
-                break;
-            case "SATISFACTION_CHECK":
-                response = handleSatisfactionCheckState(state, normalizedInput);
-                break;
-            case "COLLECTING_PREFERENCES":
-                response = handleCollectingPreferencesState(state, normalizedInput);
-                break;
-            case "SIZING_CONSULTATION":
-                response = handleSizingConsultationState(state, normalizedInput);
-                break;
-            case "NORMAL":
-            default:
-                response = handleNormalState(state, normalizedInput, userMessage);
-                break;
-        }
-
-        // Tự động phát hiện vòng lặp tin nhắn chào mặc định khi bot không hiểu nhiều lần liên tiếp
-        if (response.contains("AeroStride trợ lý ảo xin nghe")) {
-            state.consecutiveFallbacks++;
-
-            if (state.consecutiveFallbacks >= 2) {
-                // Tự động kết nối với nhân viên (Handoff) để bảo vệ trải nghiệm khách hàng
-                state.currentState = "NORMAL";
-                state.alternativeProducts.clear();
-                state.conversationData.clear();
-                state.consecutiveFallbacks = 0; // reset counter after handoff
-
-                String handoffText = "Tôi đã kết nối bạn với nhân viên hỗ trợ. Vui lòng chờ trong giây lát...";
-                try {
-                    List<String> waitingSuggs = List.of(
-                        "Xem giờ mở cửa của showroom",
-                        "Chính sách bảo hành và đổi trả",
-                        "Xem địa chỉ showroom AeroStride"
-                    );
-                    handoffText += "\n\n[[SUGGESTIONS:" + objectMapper.writeValueAsString(waitingSuggs) + "]]";
-                } catch (Exception e) {
-                    log.error("Lỗi serialize suggestions cho handoff: {}", e.getMessage());
-                }
-                return handoffText;
-            }
-        } else {
-            // Reset bộ đếm nếu khách nhận được câu trả lời đúng gu/hữu ích
-            state.consecutiveFallbacks = 0;
-        }
-
-        return response;
+        return processUserQuery(state, normalizedInput, userMessage);
     }
 
-    private String handleNormalState(ChatState state, String normalizedInput, String rawInput) {
-        String lowerInput = normalizedInput.toLowerCase();
+    /**
+     * Bộ xử lý truy vấn thông minh của Local AI:
+     * - Trích xuất ý định, khoảng giá, thương hiệu, màu sắc, size, phong cách.
+     * - Tìm kiếm sản phẩm thật từ Database và sinh câu trả lời giàu thông tin.
+     * - LUÔN LUÔN đính kèm [[PRODUCT_JSON:...]] và [[SUGGESTIONS:...]] để UI hiển thị trực quan.
+     */
+    private String processUserQuery(ChatState state, String normalizedInput, String rawInput) {
+        String lower = normalizedInput.toLowerCase().trim();
 
-        // 1. Phát hiện cảm xúc tiêu cực / khiếu nại của khách hàng để kích hoạt quy trình xin lỗi
-        if (lowerInput.contains("lỗi") || lowerInput.contains("hỏng") || lowerInput.contains("rách") ||
-            lowerInput.contains("bong keo") || lowerInput.contains("bung keo") || lowerInput.contains("tệ") ||
-            lowerInput.contains("chán") || lowerInput.contains("kém") || lowerInput.contains("thất vọng") ||
-            lowerInput.contains("bực mình") || lowerInput.contains("khiếu nại") || lowerInput.contains("giao chậm") ||
-            lowerInput.contains("chậm trễ") || lowerInput.contains("đợi lâu") || lowerInput.contains("thiếu hàng") ||
-            lowerInput.contains("nhầm size") || lowerInput.contains("nhầm màu") || lowerInput.contains("không hài lòng")) {
-
-            String complaintReason = "trải nghiệm chưa được trọn vẹn";
-            if (lowerInput.contains("keo") || lowerInput.contains("hỏng") || lowerInput.contains("rách") || lowerInput.contains("lỗi")) {
-                complaintReason = "sự cố về chất lượng sản phẩm (lỗi keo/đế/chất liệu)";
-            } else if (lowerInput.contains("giao") || lowerInput.contains("ship") || lowerInput.contains("chậm") || lowerInput.contains("lâu")) {
-                complaintReason = "sự cố giao hàng bị chậm trễ ngoài dự kiến";
-            } else if (lowerInput.contains("nhầm") || lowerInput.contains("sai") || lowerInput.contains("thiếu")) {
-                complaintReason = "sự cố đóng gói nhầm lẫn mẫu mã/size giày";
-            }
-
-            state.currentState = "APOLOGIZING";
-            state.conversationData.put("complaintReason", complaintReason);
-
-            // Xếp các sản phẩm mới nhất vào Queue thay thế
-            state.alternativeProducts.clear();
-            List<SanPham> topProducts = dataLibrary.getTopProducts(4);
-            if (topProducts != null && !topProducts.isEmpty()) {
-                for (SanPham p : topProducts) {
-                    state.alternativeProducts.add(p.getTen() + " (Mã: " + p.getMa() + ")");
-                }
-            } else {
-                state.alternativeProducts.add("Giày Sneaker AeroStride Runner Pro");
-                state.alternativeProducts.add("Giày Cổ Cao AeroStride Streetwear Luxe");
-                state.alternativeProducts.add("Giày Da Bò AeroStride Classic Vintage");
-            }
-
-            return "Dạ, AeroStride vô cùng xin lỗi anh/chị vì " + complaintReason + " đã làm ảnh hưởng tới tâm trạng của mình ạ! 🥺 Cửa hàng luôn đặt sự hài lòng của quý khách lên vị trí cao nhất.\n\n" +
-                   "Để tạ lỗi và mong muốn bù đắp trải nghiệm này, shop rất hy vọng được phép gửi tặng riêng mình một voucher giảm giá đặc biệt kèm đề xuất một số dòng giày siêu êm chân khác đang cực kỳ hot được không ạ? Anh/chị có sẵn lòng cho shop cơ hội được giới thiệu sản phẩm mới và xem mình có hài lòng không ạ? 💕";
+        // 1. Kiểm tra nếu khách phàn nàn / khiếu nại chất lượng / hoàn tiền
+        if (isComplaint(lower)) {
+            return handleComplaint(state, lower);
         }
 
-        // 2. Tra cứu Knowledge Base trong DB
+        // 2. Kiểm tra nếu khách yêu cầu tư vấn Size giày
+        if (lower.contains("size") || lower.contains("kích cỡ") || lower.contains("kích thước") || lower.contains("đo chân") || lower.contains("chân dài")) {
+            return handleSizingConsultation(lower);
+        }
+
+        // 3. Tra cứu Knowledge Base được cấu hình trong DB
         List<KienThucAi> knowledges = getKnowledgeCached();
         for (KienThucAi k : knowledges) {
             if (isMatch(normalizedInput, k.getTuKhoa())) {
-                if ("PRODUCT_SEARCH".equals(k.getMucDich())) {
-                    String searchTerm = extractSearchTerm(normalizedInput, k.getTuKhoa());
-                    List<SanPham> searchResult = dataLibrary.searchProducts(searchTerm);
-                    if (searchResult.isEmpty() || searchTerm.isEmpty()) {
-                        return "Dạ, bạn muốn tìm loại gì hoặc là muốn tìm dòng sản phẩm nào ạ? 🥰";
+                String baseResponse = formatKnowledgeResponse(k, normalizedInput);
+                List<ProductVariantResponse> matchedProducts = searchSmartVariants(lower);
+                return enrichResponse(baseResponse, matchedProducts, buildContextualSuggestions(lower));
+            }
+        }
+
+        // 4. Kiểm tra các câu hỏi chính sách cửa hàng
+        if (lower.contains("địa chỉ") || lower.contains("ở đâu") || lower.contains("showroom") || lower.contains("chi nhánh") || lower.contains("cửa hàng")) {
+            String policy = "Dạ, quý khách có thể ghé showroom chính thức của **AeroStride** tại: **123 Đường Cầu Giấy, Quận Cầu Giấy, Hà Nội**.\n" +
+                    "- 🕒 Giờ mở cửa: **08:30 – 22:00** hàng ngày (kể cả Thứ 7, Chủ Nhật và ngày lễ).\n" +
+                    "- 📞 Hotline hỗ trợ: **1900 88xx**.\n\n" +
+                    "Shop xin giới thiệu một số mẫu giày bán chạy nhất đang có sẵn tại showroom để anh/chị tham khảo trước ạ:";
+            return enrichResponse(policy, getTopSellingVariants(3), List.of("Chính sách bảo hành và đổi trả thế nào?", "Có giao hàng tận nhà không shop?", "Có voucher giảm giá hôm nay không?"));
+        }
+
+        if (lower.contains("ship") || lower.contains("giao hàng") || lower.contains("vận chuyển") || lower.contains("phí ship") || lower.contains("bao lâu")) {
+            String policy = "Chính sách giao hàng của **AeroStride**:\n" +
+                    "- 🚚 **MIỄN PHÍ VẬN CHUYỂN** toàn quốc cho đơn hàng từ **1.000.000 VNĐ** (đơn dưới 1M phí ship đồng giá 30.000 VNĐ).\n" +
+                    "- ⚡ Thời gian nhận hàng: Nội thành Hà Nội / TP.HCM từ **1-2 ngày**; các tỉnh khác từ **3-5 ngày**.\n" +
+                    "- 📦 Hỗ trợ **kiểm tra hàng trước khi thanh toán (COD)**.\n\n" +
+                    "Dưới đây là các mẫu giày đang được freeship nhiều nhất tại shop:";
+            return enrichResponse(policy, getTopSellingVariants(3), List.of("Chính sách đổi trả trong vòng 7 ngày?", "Cách đo size giày chuẩn?", "Mẫu giày Nike nào đang sale?"));
+        }
+
+        if (lower.contains("đổi trả") || lower.contains("bảo hành") || lower.contains("trả hàng") || lower.contains("hỏng") || lower.contains("chật") || lower.contains("rộng")) {
+            String policy = "Chính sách bảo hành & đổi trả tại **AeroStride**:\n" +
+                    "- 🔄 **Đổi hàng miễn phí trong 7 ngày** nếu không vừa size hoặc muốn đổi sang mẫu khác (sản phẩm còn nguyên tem mác, chưa qua sử dụng).\n" +
+                    "- 🛡️ **Bảo hành 6 tháng** hoàn toàn miễn phí cho lỗi keo, chỉ, đế.\n" +
+                    "- 💯 **Hoàn tiền 100%** nếu sản phẩm bị lỗi do nhà sản xuất.\n\n" +
+                    "Bạn có thể yên tâm chọn mẫu giày yêu thích dưới đây nhé:";
+            return enrichResponse(policy, getTopSellingVariants(3), List.of("Làm thế nào để đặt hàng?", "Tư vấn size giày cho tôi", "Có voucher giảm giá cho khách mới?"));
+        }
+
+        if (lower.contains("thanh toán") || lower.contains("chuyển khoản") || lower.contains("banking") || lower.contains("cod") || lower.contains("momo") || lower.contains("vnpay")) {
+            String policy = "AeroStride hỗ trợ các hình thức thanh toán linh hoạt:\n" +
+                    "1. 💵 **Thanh toán tiền mặt khi nhận hàng (COD)** sau khi kiểm tra giày.\n" +
+                    "2. 💳 **Chuyển khoản ngân hàng (Vietcombank - VCB)**:\n" +
+                    "   - Số tài khoản: `123456789`\n" +
+                    "   - Tên tài khoản: `CONG TY TNHH AEROSTRIDE`\n" +
+                    "3. 📲 Quét mã **VNPay-QR** / Thẻ ngân hàng tại quầy showroom.\n\n" +
+                    "Mời bạn tham khảo các mẫu giày nổi bật để lựa chọn nhé:";
+            return enrichResponse(policy, getTopSellingVariants(3), List.of("Có được kiểm tra hàng trước không?", "Phí vận chuyển bao nhiêu?", "Mẫu giày bán chạy nhất tuần này?"));
+        }
+
+        // 5. Kiểm tra khuyến mãi / Voucher / Giảm giá
+        if (lower.contains("khuyến mãi") || lower.contains("giảm giá") || lower.contains("voucher") || lower.contains("sale") || lower.contains("ưu đãi") || lower.contains("mã giảm")) {
+            String discounts = dataLibrary.getActiveDiscountsInfo();
+            String coupons = dataLibrary.getActiveCouponsInfo();
+            String response = "Dạ, **AeroStride** đang áp dụng rất nhiều chương trình ưu đãi và khuyến mãi hấp dẫn dành cho bạn:\n\n" +
+                    discounts + "\n\n" + coupons + "\n\n" +
+                    "Dưới đây là những mẫu giày đang được áp dụng **giá ưu đãi cực sốc** hôm nay:";
+            List<ProductVariantResponse> promoVariants = searchPromoVariants();
+            return enrichResponse(response, promoVariants, List.of("Mã voucher 'AERO10' áp dụng thế nào?", "Giày Nike đang có giảm giá không?", "Phí ship đơn hàng bao nhiêu?"));
+        }
+
+        // 6. Xử lý tìm kiếm sản phẩm theo Thương hiệu / Giá / Màu sắc / Từ khóa
+        List<ProductVariantResponse> matchedVariants = searchSmartVariants(lower);
+        String recommendationText = buildRecommendationText(lower, matchedVariants);
+        List<String> suggestions = buildContextualSuggestions(lower);
+
+        return enrichResponse(recommendationText, matchedVariants, suggestions);
+    }
+
+    /**
+     * Tìm kiếm và chấm điểm sản phẩm thông minh dựa trên toàn bộ thuộc tính
+     */
+    private List<ProductVariantResponse> searchSmartVariants(String queryLower) {
+        List<ProductVariantResponse> allVariants = sanPhamService.getAllVariants().stream()
+                .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+                .collect(Collectors.toList());
+
+        if (allVariants.isEmpty()) {
+            return List.of();
+        }
+
+        // Nhận diện thương hiệu
+        String targetBrand = null;
+        List<String> brands = List.of("nike", "adidas", "puma", "vans", "converse", "jordan", "mlb");
+        for (String b : brands) {
+            if (queryLower.contains(b)) {
+                targetBrand = b;
+                break;
+            }
+        }
+
+        // Nhận diện mức giá
+        BigDecimal targetPrice = extractPrice(queryLower);
+        boolean isUnder1M = queryLower.contains("dưới 1 triệu") || queryLower.contains("dưới 1tr") || queryLower.contains("< 1tr") || queryLower.contains("giá rẻ") || queryLower.contains("bình dân");
+        boolean isOver2M = queryLower.contains("trên 2 triệu") || queryLower.contains("cao cấp") || queryLower.contains("sang chảnh");
+
+        // Nhận diện sắp xếp giá
+        boolean sortByPriceAsc = queryLower.contains("thấp đến cao") || queryLower.contains("rẻ nhất") || queryLower.contains("tăng dần");
+        boolean sortByPriceDesc = queryLower.contains("cao đến thấp") || queryLower.contains("đắt nhất") || queryLower.contains("giảm dần");
+
+        // Tách các từ trong câu hỏi
+        String[] words = queryLower.split("\\s+");
+
+        Map<ProductVariantResponse, Integer> scoreMap = new HashMap<>();
+        for (ProductVariantResponse v : allVariants) {
+            int score = 0;
+
+            // Khớp thương hiệu
+            if (targetBrand != null && v.getTenThuongHieu() != null && v.getTenThuongHieu().toLowerCase().contains(targetBrand)) {
+                score += 80;
+            }
+
+            // Khớp tên sản phẩm
+            if (v.getTenSanPham() != null && queryLower.contains(v.getTenSanPham().toLowerCase())) {
+                score += 70;
+            }
+
+            // Khớp màu sắc
+            if (v.getTenMauSac() != null && queryLower.contains(v.getTenMauSac().toLowerCase())) {
+                score += 40;
+            }
+
+            // Khớp chất liệu
+            if (v.getTenChatLieu() != null && queryLower.contains(v.getTenChatLieu().toLowerCase())) {
+                score += 30;
+            }
+
+            // Khớp size
+            if (v.getGiaTriKichThuoc() != null && queryLower.contains(v.getGiaTriKichThuoc().toLowerCase())) {
+                score += 40;
+            }
+
+            // Khớp giá
+            if (v.getGiaBan() != null) {
+                if (isUnder1M && v.getGiaBan().compareTo(new BigDecimal("1000000")) <= 0) {
+                    score += 50;
+                } else if (isOver2M && v.getGiaBan().compareTo(new BigDecimal("2000000")) >= 0) {
+                    score += 50;
+                } else if (targetPrice != null) {
+                    BigDecimal diff = v.getGiaBan().subtract(targetPrice).abs();
+                    if (diff.compareTo(new BigDecimal("200000")) <= 0) {
+                        score += 60;
+                    } else if (diff.compareTo(new BigDecimal("500000")) <= 0) {
+                        score += 30;
                     }
                 }
-                String response = formatResponse(k, normalizedInput);
-                if ("PRODUCT_LIST".equals(k.getMucDich()) || "PRODUCT_SEARCH".equals(k.getMucDich())) {
-                    // Nạp hàng đợi để hỏi độ hài lòng
-                    state.alternativeProducts.clear();
-                    List<SanPham> list = dataLibrary.getTopProducts(5);
-                    for (SanPham p : list) {
-                        state.alternativeProducts.add(p.getTen() + " (Mã: " + p.getMa() + ")");
-                    }
-                    if (!state.alternativeProducts.isEmpty()) {
-                        String current = state.alternativeProducts.poll();
-                        state.conversationData.put("currentProduct", current);
-                        state.currentState = "SATISFACTION_CHECK";
-                        return response + "\n\nĐể bắt đầu tư vấn, shop xin gợi ý mẫu giày đầu tiên cực kỳ xuất sắc: **" + current + "**.\n" +
-                               "Không biết mẫu giày này có làm anh/chị hài lòng hay ưng ý không ạ? 🥰";
-                    }
+            }
+
+            // Khớp từ khóa từng từ
+            for (String w : words) {
+                if (w.length() >= 2) {
+                    if (v.getTenSanPham() != null && v.getTenSanPham().toLowerCase().contains(w)) score += 15;
+                    if (v.getTenThuongHieu() != null && v.getTenThuongHieu().toLowerCase().contains(w)) score += 10;
+                    if (v.getTenMauSac() != null && v.getTenMauSac().toLowerCase().contains(w)) score += 10;
                 }
-                return response;
+            }
+
+            if (score > 0 || sortByPriceAsc || sortByPriceDesc) {
+                scoreMap.put(v, score);
             }
         }
 
-        // 3. Xử lý Trạng thái chốt size giày
-        if (lowerInput.contains("size") || lowerInput.contains("kích thước") || lowerInput.contains("kích cỡ") || lowerInput.contains("đo chân")) {
-            state.currentState = "SIZING_CONSULTATION";
-            return "Dạ, để shop tư vấn size giày chính xác nhất, anh/chị vui lòng cho shop biết chiều dài bàn chân đo bằng cm (ví dụ: '25cm') hoặc size giày bình thường mình hay mang nhé! 👟\n\n" +
-                   dataLibrary.getSizesInfo();
-        }
+        List<ProductVariantResponse> result = new ArrayList<>(scoreMap.keySet());
 
-        // 4. Xử lý Logic Java Rule-based dự phòng
-        return generateRuleBasedResponse(state, lowerInput);
-    }
-
-    private String generateRuleBasedResponse(ChatState state, String lowerInput) {
-        if (lowerInput.contains("đề xuất") || lowerInput.contains("gợi ý") || lowerInput.contains("tư vấn giày") ||
-            lowerInput.contains("tìm giày") || lowerInput.contains("tìm sản phẩm") || lowerInput.contains("giới thiệu") ||
-            lowerInput.contains("không biết") || lowerInput.contains("chưa biết") || lowerInput.contains("chọn loại nào") ||
-            lowerInput.contains("tư vấn cho t") || lowerInput.contains("tu van") || lowerInput.contains("de xuat") ||
-            lowerInput.contains("goi y") || lowerInput.contains("bán chạy") || lowerInput.contains("ban chay")) {
-
-            state.alternativeProducts.clear();
-            List<SanPham> list = dataLibrary.getTopProducts(5);
-            for (SanPham p : list) {
-                state.alternativeProducts.add(p.getTen() + " (Mã: " + p.getMa() + ")");
-            }
-            if (!state.alternativeProducts.isEmpty()) {
-                String current = state.alternativeProducts.poll();
-                state.conversationData.put("currentProduct", current);
-                state.currentState = "SATISFACTION_CHECK";
-                return "Dạ, nếu bạn đang phân vân, shop xin phép được gợi ý các mẫu giày hot nhất hiện nay nhé! 🥰\n\nĐể bắt đầu, shop xin giới thiệu mẫu giày cực kỳ được yêu thích: **" + current + "**.\n\nKhông biết mẫu giày này có đúng gu của bạn không ạ?";
-            }
-        }
-
-        if (lowerInput.contains("chào") || lowerInput.contains("hello") || lowerInput.contains("hi ") || lowerInput.equals("hi") || lowerInput.contains("alo")) {
-            return "Dạ, AeroStride xin kính chào quý khách! Tôi là trợ lý ảo hỗ trợ chăm sóc khách hàng tự động. Tôi có thể giúp bạn tìm kiếm giày, tư vấn size, chính sách giao hàng, bảo hành đổi trả hoặc khuyến mãi. Bạn đang quan tâm đến sản phẩm hoặc chính sách nào ạ?";
-        }
-
-        if (lowerInput.contains("địa chỉ") || lowerInput.contains("ở đâu") || lowerInput.contains("chi nhánh") || lowerInput.contains("cửa hàng") || lowerInput.contains("showroom")) {
-            return "Quý khách có thể ghé showroom chính thức của AeroStride tại: 123 Đường Cầu Giấy, Quận Cầu Giấy, Hà Nội. Giờ mở cửa từ 08:30 đến 22:00 hàng ngày (kể cả Thứ 7, Chủ Nhật và ngày lễ) ạ.";
-        }
-
-        if (lowerInput.contains("ship") || lowerInput.contains("giao hàng") || lowerInput.contains("phí vận chuyển") || lowerInput.contains("nhận hàng") || lowerInput.contains("vận chuyển") || lowerInput.contains("bao lâu")) {
-            return "Chính sách giao hàng của AeroStride:\n- MIỄN PHÍ giao hàng toàn quốc cho đơn hàng từ 1.000.000 VNĐ (đơn dưới 1M phí ship đồng giá 30k).\n- Thời gian giao hàng: Nội thành Hà Nội/HCM: 1-2 ngày; các tỉnh khác: 3-5 ngày.\n- Hỗ trợ thanh toán COD khi nhận hàng.";
-        }
-
-        if (lowerInput.contains("đổi trả") || lowerInput.contains("bảo hành") || lowerInput.contains("lỗi") || lowerInput.contains("hoàn tiền") || lowerInput.contains("trả hàng") || lowerInput.contains("chật") || lowerInput.contains("rộng")) {
-            return "Chính sách đổi trả & bảo hành tại AeroStride:\n- Đổi trả miễn phí trong vòng 7 ngày kể từ khi nhận hàng cho trường hợp không vừa size hoặc muốn đổi mẫu mới (giày chưa qua sử dụng, còn nguyên tem mác và hộp).\n- Bảo hành bong keo, hở đế, sứt chỉ hoàn toàn miễn phí trong vòng 6 tháng.\n- Hoàn tiền 100% nếu phát hiện lỗi từ nhà sản xuất.";
-        }
-
-        if (lowerInput.contains("liên hệ") || lowerInput.contains("số điện thoại") || lowerInput.contains("hotline") || lowerInput.contains("sđt") || lowerInput.contains("tổng đài")) {
-            return "Bạn có thể liên hệ trực tiếp với AeroStride qua hotline khẩn cấp: 1900 88xx (hoạt động từ 08:30 - 21:00) hoặc nhắn tin trực tiếp fanpage/Zalo để được hỗ trợ tốt nhất nhé!";
-        }
-
-        // Tích hợp từ khóa động cho khuyến mãi, đợt giảm giá, phiếu giảm giá và sản phẩm khuyến mãi
-        if (lowerInput.contains("sản phẩm khuyến mãi") || lowerInput.contains("sản phẩm giảm giá") ||
-            lowerInput.contains("sản phẩm đang sale") || lowerInput.contains("giày sale") ||
-            lowerInput.contains("đang khuyến mãi") || lowerInput.contains("san pham khuyen mai") ||
-            (lowerInput.contains("sản phẩm") && lowerInput.contains("khuyến mãi")) ||
-            (lowerInput.contains("giày") && lowerInput.contains("khuyến mãi")) ||
-            (lowerInput.contains("sản phẩm") && lowerInput.contains("giảm giá"))) {
-            return dataLibrary.getPromoProductsInfo();
-        }
-
-        if (lowerInput.contains("đợt giảm giá") || lowerInput.contains("chương trình giảm giá") ||
-            lowerInput.contains("sự kiện sale") || lowerInput.contains("dot giam gia") ||
-            lowerInput.contains("chương trình khuyến mãi")) {
-            return dataLibrary.getActiveDiscountsInfo();
-        }
-
-        if (lowerInput.contains("phiếu giảm giá") || lowerInput.contains("mã giảm giá") ||
-            lowerInput.contains("voucher") || lowerInput.contains("coupon") ||
-            lowerInput.contains("mã giảm") || lowerInput.contains("phieu giam gia")) {
-            return dataLibrary.getActiveCouponsInfo();
-        }
-
-        if (lowerInput.contains("khuyến mãi") || lowerInput.contains("giảm giá") || lowerInput.contains("voucher") || lowerInput.contains("sale") || lowerInput.contains("mã giảm") || lowerInput.contains("ưu đãi")) {
-            return "Dạ, AeroStride đang áp dụng rất nhiều chương trình ưu đãi vô cùng lớn dành cho anh/chị:\n\n" +
-                   dataLibrary.getActiveDiscountsInfo() + "\n\n" +
-                   dataLibrary.getActiveCouponsInfo();
-        }
-
-        // Tích hợp các từ khóa thuộc tính sản phẩm giày
-        if (lowerInput.contains("đế giày") || lowerInput.contains("de giay") || lowerInput.contains("loại đế") || lowerInput.contains("công nghệ đế")) {
-            return dataLibrary.getShoeSolesInfo();
-        }
-
-        if (lowerInput.contains("chất liệu") || lowerInput.contains("chat lieu") || lowerInput.contains("làm bằng gì") || lowerInput.contains("vải gì") || lowerInput.contains("da gì")) {
-            return dataLibrary.getMaterialsInfo();
-        }
-
-        if (lowerInput.contains("cổ giày") || lowerInput.contains("co giay") || lowerInput.contains("cổ cao") || lowerInput.contains("cổ thấp") || lowerInput.contains("cổ lửng")) {
-            return dataLibrary.getCollarsInfo();
-        }
-
-        if (lowerInput.contains("thương hiệu") || lowerInput.contains("thuong hieu") || lowerInput.contains("hãng giày") || lowerInput.contains("nhãn hiệu")) {
-            return dataLibrary.getBrandsInfo();
-        }
-
-        if (lowerInput.contains("xuất xứ") || lowerInput.contains("xuat xu") || lowerInput.contains("sản xuất ở đâu") || lowerInput.contains("nguồn gốc") || lowerInput.contains("made in")) {
-            return dataLibrary.getOriginsInfo();
-        }
-
-        if (lowerInput.contains("màu sắc") || lowerInput.contains("mau sac") || lowerInput.contains("phối màu") || lowerInput.contains("màu nào") || lowerInput.contains("có những màu")) {
-            return dataLibrary.getColorsInfo();
-        }
-
-        if (lowerInput.contains("đơn hàng") || lowerInput.contains("tra cứu đơn") || lowerInput.contains("check đơn") || lowerInput.contains("kiểm tra đơn")) {
-            return "Dạ, để kiểm tra trạng thái đơn hàng nhanh nhất, bạn vui lòng cung cấp Số điện thoại đặt hàng hoặc Mã đơn hàng của bạn tại đây, hệ thống sẽ lập tức tra cứu thông tin vận chuyển cho bạn nhé!";
-        }
-
-        if (lowerInput.contains("nhân viên") || lowerInput.contains("nhan vien") ||
-            lowerInput.contains("người thật") || lowerInput.contains("nguoi that") ||
-            lowerInput.contains("admin") || lowerInput.contains("gặp nhân viên") ||
-            lowerInput.contains("gặp hỗ trợ") || lowerInput.contains("gap ho tro") ||
-            lowerInput.contains("gọi hỗ trợ") || lowerInput.contains("goi ho tro") ||
-            lowerInput.contains("liên hệ hỗ trợ") || lowerInput.contains("lien he ho tro") ||
-            lowerInput.contains("kết nối hỗ trợ") || lowerInput.contains("ket noi ho tro") ||
-            lowerInput.contains("nói chuyện với hỗ trợ") || lowerInput.contains("noi chuyen voi ho tro") ||
-            lowerInput.contains("gọi admin") || lowerInput.contains("goi admin")) {
-            return "Tôi đã kết nối bạn với nhân viên hỗ trợ. Vui lòng chờ trong giây lát...";
-        }
-
-        if (lowerInput.contains("thanh toán") || lowerInput.contains("chuyển khoản") || lowerInput.contains("tài khoản") || lowerInput.contains("banking") || lowerInput.contains("momo") || lowerInput.contains("ngân hàng")) {
-            return "AeroStride hỗ trợ thanh toán qua:\n1. Thanh toán tiền mặt khi nhận hàng (COD).\n2. Chuyển khoản ngân hàng Vietcombank (VCB):\n   - Chủ tài khoản: CONG TY TNHH AEROSTRIDE\n   - Số tài khoản: 123456789\n   - Nội dung CK: [Số điện thoại] hoặc [Mã đơn hàng]";
-        }
-
-        return "Dạ, AeroStride trợ lý ảo xin nghe! Bạn có muốn tôi giới thiệu các mẫu giày bán chạy hay tư vấn thêm về size giày, phí vận chuyển và chế độ đổi trả không ạ? Hãy cứ nhắn để tôi hỗ trợ nhé!";
-    }
-
-
-    private String handleApologizingState(ChatState state, String normalizedInput) {
-        String lowerInput = normalizedInput.toLowerCase();
-
-        // Khách hàng bao dung đồng ý nghe giới thiệu sản phẩm thay thế
-        if (isAffirmativeResponse(normalizedInput)) {
-            state.currentState = "SATISFACTION_CHECK";
-            state.conversationData.put("rejectionCount", 0);
-
-            if (!state.alternativeProducts.isEmpty()) {
-                String current = state.alternativeProducts.poll();
-                state.conversationData.put("currentProduct", current);
-                return "Dạ tuyệt vời quá ạ! Em vô cùng cảm ơn anh/chị đã bao dung và cho shop cơ hội được phục vụ tốt hơn. 🥰\n\n" +
-                       "Shop xin gửi tặng mình mã voucher **SORRY15** (giảm 15% cho mọi sản phẩm) để bù đắp trải nghiệm không vui vừa rồi.\n\n" +
-                       "Đầu tiên, em xin giới thiệu mẫu giày siêu êm ái bán chạy nhất: **" + current + "**.\n" +
-                       "Dòng này có lớp lót kháng khuẩn đàn hồi cao, thiết kế thông minh nâng đỡ lòng bàn chân cực tốt.\n\n" +
-                       "Không biết mẫu giày này có làm anh/chị cảm thấy ưng ý hay hài lòng chưa ạ? 💕";
-            } else {
-                state.currentState = "COLLECTING_PREFERENCES";
-                return "Dạ tuyệt vời quá ạ! Em vô cùng cảm ơn anh/chị đã mở lòng. 🥰 Shop gửi tặng mình mã giảm giá **SORRY15** bồi thường 15% nha.\n\n" +
-                       "Để shop chọn được mẫu giày chuẩn gu nhất cho mình, anh/chị có thể cho shop biết mình thích dòng giày đi **chạy bộ, tập luyện** hay đi **chơi phố, đi làm**? Tông **màu sáng** hay **màu tối** ạ?";
-            }
-        }
-
-        // Khách từ chối, yêu cầu gặp người thật hoặc hoàn tiền
-        if (isNegativeResponse(normalizedInput) ||
-            lowerInput.contains("hoàn tiền") || lowerInput.contains("người thật") || lowerInput.contains("nguoi that") ||
-            lowerInput.contains("nhân viên") || lowerInput.contains("nhan vien") ||
-            lowerInput.contains("gặp hỗ trợ") || lowerInput.contains("gap ho tro") ||
-            lowerInput.contains("gặp nhân viên") || lowerInput.contains("admin")) {
-
-            state.currentState = "NORMAL";
-            state.alternativeProducts.clear();
-            state.conversationData.clear();
-            return "Dạ, shop hoàn toàn thấu hiểu và vô cùng lấy làm tiếc vì sự cố vừa rồi đã làm anh/chị bực mình đến vậy. 🥺\n\n" +
-                   "Để bảo vệ quyền lợi tối đa và giải quyết nhanh nhất (đổi trả sản phẩm mới miễn phí hoặc hoàn tiền 100%), em đã chuyển tiếp trực tiếp hội thoại này sang **Trưởng bộ phận Chăm sóc khách hàng (Người thật)** trực tổng đài.\n\n" +
-                   "Bạn ấy sẽ chủ động gọi điện hoặc nhắn tin hỗ trợ anh/chị giải quyết thoả đáng trong 3 phút tới ạ. Cảm ơn anh/chị đã phản ánh để shop nâng cấp dịch vụ!";
-        }
-
-        // Phản hồi khác
-        return "Dạ, AeroStride rất mong muốn khắc phục lỗi lầm vừa rồi để đem lại sự hài lòng tối đa cho anh/chị. Anh/chị có sẵn lòng nhận voucher bồi thường **SORRY15** và xem đề cử mẫu giày thay thế cực tốt bên em không ạ? (Anh/chị có thể nhắn 'Đồng ý' hoặc 'Không' nha).";
-    }
-
-    private String handleSatisfactionCheckState(ChatState state, String normalizedInput) {
-        String lowerInput = normalizedInput.toLowerCase();
-        String currentProduct = (String) state.conversationData.getOrDefault("currentProduct", "Giày AeroStride cao cấp");
-        int rejectionCount = (int) state.conversationData.getOrDefault("rejectionCount", 0);
-
-        // Khách hàng đồng ý/ưng ý mẫu hiện tại
-        if (isAffirmativeResponse(normalizedInput)) {
-            state.currentState = "SIZING_CONSULTATION";
-            return "Dạ tuyệt vời ông mặt trời luôn ạ! 😍 Nghe anh/chị ưng ý mẫu giày **" + currentProduct + "** là em hạnh phúc vô cùng!\n\n" +
-                   "Mẫu này lên chân sang chảnh mà lại cực bền bỉ nữa. Bây giờ shop hỗ trợ tư vấn size giày nhé.\n" +
-                   "Anh/chị thường đi size bao nhiêu, hoặc có thể cho shop xin chiều dài bàn chân đo bằng cm (ví dụ: '25cm' hoặc 'size 41') để shop giữ đúng size chuẩn nhất cho mình ạ? 🥰";
-        }
-
-        // Khách hàng chê/không ưng/muốn mẫu khác
-        if (isNegativeResponse(normalizedInput)) {
-            rejectionCount++;
-            state.conversationData.put("rejectionCount", rejectionCount);
-
-            if (!state.alternativeProducts.isEmpty()) {
-                String nextProduct = state.alternativeProducts.poll();
-                state.conversationData.put("currentProduct", nextProduct);
-
-                String transitionPhrase = "Dạ shop hiểu ạ! Gu thẩm mỹ của mỗi người đều có nét riêng biệt độc đáo. Đừng lo lắng, em lập tức lấy ra một mẫu giày mang phong cách khác biệt hoàn toàn từ bộ sưu tập mới đây ạ:\n\n";
-                if (rejectionCount >= 2) {
-                    transitionPhrase = "Dạ vâng, shop quyết không bỏ cuộc đến khi tìm được đôi giày hoàn hảo nhất cho mình! Em đã lọc kỹ trong kho ra một siêu phẩm tiếp theo:\n\n";
-                }
-
-                return transitionPhrase + "👟 Gợi ý tiếp theo là: **" + nextProduct + "**.\n" +
-                       "Dòng này có phối màu cực kỳ thời thượng, phong cách năng động thể thao trẻ trung.\n\n" +
-                       "Anh/chị có thấy mẫu này ưng mắt và làm mình hài lòng hơn chưa ạ? 💕";
-            } else {
-                // Queue rỗng, chuyển qua thu thập sở thích chi tiết để dệt tiếp cuộc trò chuyện
-                state.currentState = "COLLECTING_PREFERENCES";
-                return "Dạ tiếc quá, những mẫu đề xuất sẵn trong hàng đợi hôm nay của shop vẫn chưa làm anh/chị thật sự ưng ý. 🥺 Nhưng không sao đâu ạ, kho hàng AeroStride phong phú lắm!\n\n" +
-                       "Để em 'dệt' nên danh sách sản phẩm chuẩn gu nhất cho riêng mình, anh/chị có thể chia sẻ thêm sở thích được không ạ?\n" +
-                       "- Mình thích giày đi **chạy bộ, tập thể thao** hay đi **chơi phố, đi làm**?\n" +
-                       "- Mình chuộng tông **màu sáng nổi bật** hay tông **màu tối giản thanh lịch** ạ? 💖";
-            }
-        }
-
-        // Phản hồi thông thường
-        state.currentState = "NORMAL";
-        state.alternativeProducts.clear();
-        state.conversationData.clear();
-        return "Dạ shop đã ghi nhận phản hồi của mình ạ. " + generateRuleBasedResponse(state, normalizedInput);
-    }
-
-    private String handleCollectingPreferencesState(ChatState state, String normalizedInput) {
-        String lowerInput = normalizedInput.toLowerCase();
-
-        String style = "thể thao";
-        if (lowerInput.contains("chạy") || lowerInput.contains("tập") || lowerInput.contains("gym") || lowerInput.contains("thể thao")) {
-            style = "giày chạy bộ/thể thao năng động";
-        } else if (lowerInput.contains("chơi") || lowerInput.contains("đi làm") || lowerInput.contains("phố") || lowerInput.contains("casual") || lowerInput.contains("sneaker")) {
-            style = "giày đi chơi/streetwear thời thượng";
-        }
-
-        String color = "đa dạng màu sắc";
-        if (lowerInput.contains("sáng") || lowerInput.contains("trắng") || lowerInput.contains("đỏ") || lowerInput.contains("vàng")) {
-            color = "tông màu sáng nổi bật tinh tế";
-        } else if (lowerInput.contains("tối") || lowerInput.contains("đen") || lowerInput.contains("xám") || lowerInput.contains("nâu")) {
-            color = "tông màu tối thanh lịch sạch sẽ";
-        }
-
-        state.conversationData.put("preferredStyle", style + " + " + color);
-
-        // Tìm kiếm thực tế trong cơ sở dữ liệu dựa trên từ khóa tìm được hoặc nạp lại top products
-        List<SanPham> searchResults = dataLibrary.searchProducts(lowerInput.contains("chạy") ? "Runner" : "Aero");
-        if (searchResults.isEmpty()) {
-            searchResults = dataLibrary.getTopProducts(4);
-        }
-
-        state.alternativeProducts.clear();
-        for (SanPham p : searchResults) {
-            state.alternativeProducts.add(p.getTen() + " (Mã: " + p.getMa() + ")");
-        }
-
-        if (!state.alternativeProducts.isEmpty()) {
-            String current = state.alternativeProducts.poll();
-            state.conversationData.put("currentProduct", current);
-            state.currentState = "SATISFACTION_CHECK";
-            state.conversationData.put("rejectionCount", 0);
-
-            return "Dạ em đã ghi nhận chính xác gu của mình rồi ạ: thuộc dòng **" + style + "** và ưa thích **" + color + "**. Quả là sự lựa chọn đầy cá tính! 😎\n\n" +
-                   "Em đã tức tốc rà soát kho hàng và tìm ra mẫu giày hoàn hảo nhất cho mình đây:\n\n" +
-                   "👟 Mẫu đề xuất: **" + current + "**.\n" +
-                   "Thiết kế này hội tụ đầy đủ tiêu chí của anh/chị, mang lại sự tự tin và thoải mái nhất khi đi.\n\n" +
-                   "Không biết mẫu giày chuẩn gu này đã làm anh/chị hài lòng chưa ạ? 🥰";
+        if (sortByPriceAsc) {
+            result.sort(Comparator.comparing(v -> v.getGiaBan() != null ? v.getGiaBan() : BigDecimal.ZERO));
+        } else if (sortByPriceDesc) {
+            result.sort((a, b) -> {
+                BigDecimal pA = a.getGiaBan() != null ? a.getGiaBan() : BigDecimal.ZERO;
+                BigDecimal pB = b.getGiaBan() != null ? b.getGiaBan() : BigDecimal.ZERO;
+                return pB.compareTo(pA);
+            });
         } else {
-            state.currentState = "NORMAL";
-            return "Dạ tiếc quá, hiện tại các sản phẩm đúng tiêu chí phong cách của anh/chị đang tạm cháy hàng tại hệ thống. 🥺 Anh/chị có muốn shop liên hệ trực tiếp khi hàng về, hoặc xem thử chính sách khuyến mãi đặc biệt 50% đang áp dụng không ạ?";
+            result.sort((a, b) -> Integer.compare(scoreMap.getOrDefault(b, 0), scoreMap.getOrDefault(a, 0)));
         }
+
+        // Lọc lấy sản phẩm đại diện (mỗi idSanPham lấy 1 variant)
+        List<ProductVariantResponse> distinctList = new ArrayList<>();
+        Set<String> seenProductIds = new HashSet<>();
+        for (ProductVariantResponse v : result) {
+            String pId = v.getIdSanPham() != null ? v.getIdSanPham() : v.getId();
+            if (!seenProductIds.contains(pId)) {
+                seenProductIds.add(pId);
+                distinctList.add(v);
+            }
+            if (distinctList.size() >= 4) break;
+        }
+
+        if (distinctList.isEmpty()) {
+            return getTopSellingVariants(4);
+        }
+
+        return distinctList;
     }
 
-    private String handleSizingConsultationState(ChatState state, String normalizedInput) {
-        String lowerInput = normalizedInput.toLowerCase();
-        String currentProduct = (String) state.conversationData.getOrDefault("currentProduct", "Giày AeroStride cao cấp");
+    private List<ProductVariantResponse> getTopSellingVariants(int limit) {
+        List<ProductVariantResponse> all = sanPhamService.getAllVariants().stream()
+                .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+                .collect(Collectors.toList());
 
-        // 1. Kiểm tra nếu khách nhập size trực tiếp (ví dụ: size 41, 42, 43, hoặc chỉ nhắn số 41)
-        java.util.regex.Pattern sizePattern = java.util.regex.Pattern.compile("(?:size|cỡ)?\\s*(3[89]|4[012345])");
-        java.util.regex.Matcher sizeMatcher = sizePattern.matcher(lowerInput);
-        if (sizeMatcher.find()) {
-            String sizeVal = sizeMatcher.group(1);
-            state.conversationData.put("shoeSize", sizeVal);
+        List<ProductVariantResponse> distinctList = new ArrayList<>();
+        Set<String> seenProductIds = new HashSet<>();
+        for (ProductVariantResponse v : all) {
+            String pId = v.getIdSanPham() != null ? v.getIdSanPham() : v.getId();
+            if (!seenProductIds.contains(pId)) {
+                seenProductIds.add(pId);
+                distinctList.add(v);
+            }
+            if (distinctList.size() >= limit) break;
+        }
+        return distinctList;
+    }
 
-            state.currentState = "NORMAL"; // Kết thúc chu kỳ chốt size thành công
-            return "Dạ tuyệt vời quá ạ! Em đã ghi nhận và chính thức **khóa giữ hàng 1 đôi " + currentProduct + " size " + sizeVal + "** cho mình trên hệ thống showroom rồi nhé! 🥳\n\n" +
-                   "Để shop gửi tặng kèm mã voucher giảm giá (nếu có) và giao tận nhà nhanh chóng trong 1-2 ngày tới, anh/chị có thể vui lòng cung cấp **Số điện thoại nhận hàng + Địa chỉ cụ thể** tại đây được không ạ? Nhân viên chốt đơn sẽ liên hệ xác nhận ngay lập tức cho mình ạ! 🚚💨";
+    private List<ProductVariantResponse> searchPromoVariants() {
+        return sanPhamService.getAllVariants().stream()
+                .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+                .filter(v -> v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(BigDecimal.ZERO) > 0)
+                .sorted((a, b) -> b.getPhanTramGiam().compareTo(a.getPhanTramGiam()))
+                .limit(4)
+                .collect(Collectors.toList());
+    }
+
+    private BigDecimal extractPrice(String text) {
+        try {
+            Matcher m = Pattern.compile("(\\d+)\\s*(?:k|nghìn|ngàn|000|tr|triệu)").matcher(text);
+            if (m.find()) {
+                String num = m.group(1);
+                if (text.contains("tr") || text.contains("triệu")) {
+                    return new BigDecimal(num).multiply(new BigDecimal("1000000"));
+                }
+                return new BigDecimal(num).multiply(new BigDecimal("1000"));
+            }
+        } catch (Exception e) {
+            log.warn("Lỗi trích xuất giá: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Tạo văn bản phản hồi tự nhiên, chi tiết và hấp dẫn
+     */
+    private String buildRecommendationText(String queryLower, List<ProductVariantResponse> variants) {
+        StringBuilder sb = new StringBuilder();
+        NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+
+        boolean isGreeting = queryLower.contains("chào") || queryLower.contains("hello") || queryLower.contains("hi") || queryLower.equals("alo");
+
+        if (isGreeting) {
+            sb.append("Dạ, **AeroStride** xin kính chào quý khách! Em là trợ lý tư vấn sản phẩm thông minh của shop. 🥰\n\n");
+            sb.append("Dưới đây là top những mẫu giày sneaker thời thượng và bán chạy nhất tại cửa hàng hôm nay:\n\n");
+        } else if (queryLower.contains("nike")) {
+            sb.append("Dạ, AeroStride đang có sẵn các mẫu giày **Nike chính hãng** cực kỳ hot và êm chân dưới đây ạ:\n\n");
+        } else if (queryLower.contains("adidas")) {
+            sb.append("Dạ, bộ sưu tập giày **Adidas** phong cách thể thao, thời trang đang sẵn hàng tại AeroStride nè bạn:\n\n");
+        } else if (queryLower.contains("puma") || queryLower.contains("vans") || queryLower.contains("converse")) {
+            sb.append("Dạ, shop xin gửi bạn các mẫu giày phong cách trẻ trung năng động được ưa chuộng nhất:\n\n");
+        } else if (queryLower.contains("chạy") || queryLower.contains("thể thao") || queryLower.contains("gym")) {
+            sb.append("Dạ, để chạy bộ và tập luyện thể thao thoải mái nhất, shop gợi ý cho bạn các mẫu giày đệm êm, bám đường cực tốt sau:\n\n");
+        } else if (queryLower.contains("giá") || queryLower.contains("tiền") || queryLower.contains("bao nhiêu")) {
+            sb.append("Dạ, shop xin gửi bạn bảng giá ưu đãi của các mẫu giày nổi bật hiện có sẵn tại kho:\n\n");
+        } else {
+            sb.append("Dạ, AeroStride xin giới thiệu đến bạn những đôi giày chuẩn gu, siêu êm và thời trang nhất hiện nay:\n\n");
         }
 
-        // 2. Kiểm tra nếu khách nhập chiều dài bàn chân để tự động tính size (ví dụ: 25cm, 25.5 cm, 26 cm, 25.3)
-        java.util.regex.Pattern cmPattern = java.util.regex.Pattern.compile("(\\d{2}(?:\\.\\d+)?)\\s*(?:cm|centimet|chiều dài)?");
-        java.util.regex.Matcher cmMatcher = cmPattern.matcher(lowerInput);
-        if (cmMatcher.find()) {
+        for (ProductVariantResponse v : variants) {
+            String name = v.getTenSanPham() != null ? v.getTenSanPham() : v.getTenSanPhamDayDu();
+            String brand = v.getTenThuongHieu() != null ? v.getTenThuongHieu() : "AeroStride";
+            BigDecimal price = v.getGiaBan() != null ? v.getGiaBan() : v.getGiaGoc();
+            String priceStr = price != null ? currencyFormat.format(price) : "Liên hệ";
+
+            sb.append("👟 **").append(name).append("** (Hãng: ").append(brand).append(")\n");
+            sb.append("   - 💵 *Giá ưu đãi:* **").append(priceStr).append("**");
+            if (v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(BigDecimal.ZERO) > 0) {
+                sb.append(" 🔥 *(Giảm ").append(v.getPhanTramGiam().stripTrailingZeros().toPlainString()).append("%!)*");
+            }
+            sb.append("\n");
+            if (v.getTenChatLieu() != null) {
+                sb.append("   - 🌱 *Chất liệu:* ").append(v.getTenChatLieu()).append("\n");
+            }
+            sb.append("\n");
+        }
+
+        sb.append("Bạn có thể bấm **Xem chi tiết** ở thẻ sản phẩm bên dưới để chọn size và đặt mua, hoặc nhắn cho shop để được tư vấn size vừa vặn nhất nhé! 💕");
+        return sb.toString();
+    }
+
+    /**
+     * Đính kèm dữ liệu JSON sản phẩm và Gợi ý câu hỏi vào phản hồi
+     */
+    private String enrichResponse(String messageText, List<ProductVariantResponse> variants, List<String> suggestions) {
+        StringBuilder sb = new StringBuilder(messageText);
+
+        // 1. Đính kèm PRODUCT_JSON
+        if (variants != null && !variants.isEmpty()) {
             try {
-                double length = Double.parseDouble(cmMatcher.group(1));
-                String determinedSize = "40";
-                if (length <= 24.5) {
-                    determinedSize = "39";
-                } else if (length <= 25.0) {
-                    determinedSize = "40";
-                } else if (length <= 25.5) {
-                    determinedSize = "41";
-                } else if (length <= 26.0) {
-                    determinedSize = "42";
-                } else if (length <= 26.5) {
-                    determinedSize = "43";
-                } else {
-                    determinedSize = "44";
+                List<Map<String, Object>> jsonList = new ArrayList<>();
+                Set<String> seenProductIds = new HashSet<>();
+
+                for (ProductVariantResponse v : variants) {
+                    String pId = v.getIdSanPham() != null ? v.getIdSanPham() : v.getId();
+                    if (seenProductIds.contains(pId)) continue;
+                    seenProductIds.add(pId);
+
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("idSanPham", pId);
+                    map.put("tenSanPham", v.getTenSanPham() != null ? v.getTenSanPham() : v.getTenSanPhamDayDu());
+                    map.put("giaBan", v.getGiaBan() != null ? v.getGiaBan() : v.getGiaGoc());
+                    map.put("tenThuongHieu", v.getTenThuongHieu() != null ? v.getTenThuongHieu() : "AeroStride");
+
+                    String imgUrl = v.getHinhAnh();
+                    if ((imgUrl == null || imgUrl.isBlank()) && v.getImages() != null && !v.getImages().isEmpty()) {
+                        imgUrl = v.getImages().get(0).getDuongDanAnh();
+                    }
+                    if (imgUrl == null || imgUrl.isBlank()) {
+                        imgUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600";
+                    }
+                    map.put("hinhAnh", imgUrl);
+                    map.put("phanTramGiam", v.getPhanTramGiam() != null ? v.getPhanTramGiam() : 0);
+                    map.put("soLuong", v.getSoLuong() != null ? v.getSoLuong() : 10);
+                    map.put("chatLieu", v.getTenChatLieu() != null ? v.getTenChatLieu() : "Da cao cấp");
+                    map.put("mauSac", v.getTenMauSac() != null ? v.getTenMauSac() : "Đa dạng");
+                    map.put("kichThuoc", v.getGiaTriKichThuoc() != null ? v.getGiaTriKichThuoc() : "38-43");
+
+                    jsonList.add(map);
+                    if (jsonList.size() >= 4) break;
                 }
 
-                state.conversationData.put("shoeSize", determinedSize);
-                state.conversationData.put("footLength", length);
-
-                state.currentState = "NORMAL"; // Hoàn tất chọn size
-                return "Dạ, áp dụng thuật toán đo giày AeroStride chuẩn: với chiều dài bàn chân **" + length + " cm**, size giày khuyên dùng ôm chân êm nhất của anh/chị là **size " + determinedSize + "** ạ! Form giày dòng **" + currentProduct + "** cực kỳ thoải mái và co giãn tốt.\n\n" +
-                       "Em đã lập tức lập đơn nháp và **giữ hàng size " + determinedSize + "** cho mình rồi ạ. Anh/chị có muốn shop gửi giao hàng ngay hôm nay không ạ? Mình chỉ cần cho shop xin **Số điện thoại + Địa chỉ nhận hàng** thôi nhé! Shop xin tặng kèm voucher ưu đãi đặc biệt ạ! 🥰";
+                sb.append("\n\n[[PRODUCT_JSON:").append(objectMapper.writeValueAsString(jsonList)).append("]]");
             } catch (Exception e) {
-                log.error("Lỗi parse centimet chân khách hàng: ", e);
+                log.error("Lỗi serialize PRODUCT_JSON: {}", e.getMessage());
             }
         }
 
-        // Nếu không nhận diện được
-        return "Dạ shop chưa nhận diện được số đo size chân của mình. Anh/chị có thể cung cấp chiều dài bàn chân cụ thể bằng cm (ví dụ: '25.5cm') hoặc ghi rõ size giày mình thường mang (ví dụ: 'size 41') để shop lập đơn giữ hàng chuẩn xác nhất nha! 👟";
+        // 2. Đính kèm SUGGESTIONS
+        if (suggestions != null && !suggestions.isEmpty()) {
+            try {
+                sb.append("\n\n[[SUGGESTIONS:").append(objectMapper.writeValueAsString(suggestions)).append("]]");
+            } catch (Exception e) {
+                log.error("Lỗi serialize SUGGESTIONS: {}", e.getMessage());
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private List<String> buildContextualSuggestions(String queryLower) {
+        if (queryLower.contains("nike")) {
+            return List.of("Nike có sẵn size 41 không shop?", "Có voucher giảm giá cho giày Nike không?", "Chính sách bảo hành và đổi trả thế nào?");
+        }
+        if (queryLower.contains("adidas")) {
+            return List.of("Mẫu Adidas nào đang giảm giá nhiều nhất?", "Bên mình có ship COD toàn quốc không?", "Cách đo chiều dài chân chọn size chuẩn?");
+        }
+        if (queryLower.contains("giá") || queryLower.contains("tiền")) {
+            return List.of("Có mã giảm giá 'AERO10' hôm nay không?", "Đơn hàng từ bao nhiêu thì được miễn phí ship?", "Tư vấn mẫu giày sneaker dưới 1 triệu");
+        }
+        if (queryLower.contains("size")) {
+            return List.of("Chân dài 25.5cm thì đi size bao nhiêu?", "Nếu nhận hàng không vừa có được đổi size không?", "Có sẵn size 42 các mẫu này không shop?");
+        }
+        return List.of("Mẫu giày nào đang bán chạy nhất tuần này?", "Shop có những chương trình khuyến mãi gì?", "Chính sách bảo hành và đổi trả trong 7 ngày");
+    }
+
+    private boolean isComplaint(String lowerInput) {
+        return lowerInput.contains("lỗi") || lowerInput.contains("hỏng") || lowerInput.contains("rách") ||
+                lowerInput.contains("bong keo") || lowerInput.contains("bung keo") || lowerInput.contains("tệ") ||
+                lowerInput.contains("chán") || lowerInput.contains("kém") || lowerInput.contains("thất vọng") ||
+                lowerInput.contains("bực mình") || lowerInput.contains("khiếu nại") || lowerInput.contains("giao chậm") ||
+                lowerInput.contains("chậm trễ") || lowerInput.contains("đợi lâu") || lowerInput.contains("thiếu hàng") ||
+                lowerInput.contains("nhầm size") || lowerInput.contains("nhầm màu") || lowerInput.contains("không hài lòng");
+    }
+
+    private String handleComplaint(ChatState state, String lowerInput) {
+        String apology = "Dạ, **AeroStride** vô cùng xin lỗi anh/chị vì sự cố vừa rồi đã làm ảnh hưởng tới tâm trạng của mình ạ! 🥺 Cửa hàng luôn đặt sự hài lòng của quý khách lên vị trí cao nhất.\n\n" +
+                "- 🎁 Shop xin gửi tặng mình mã voucher **SORRY15** (giảm ngay 15% cho mọi sản phẩm) để bù đắp trải nghiệm chưa được trọn vẹn này.\n" +
+                "- 🔄 Shop hỗ trợ **đổi mới sản phẩm miễn phí 100%** hoặc hỗ trợ hoàn tiền nhanh chóng.\n\n" +
+                "Anh/chị có thể nhắn *'Gặp nhân viên'* để quản lý cửa hàng hỗ trợ xử lý tức thì, hoặc tham khảo các mẫu giày chất lượng cao khác của shop dưới đây nhé:";
+
+        return enrichResponse(apology, getTopSellingVariants(3), List.of("Tôi muốn nói chuyện với nhân viên hỗ trợ.", "Mã voucher 'SORRY15' dùng thế nào?", "Quy trình đổi trả sản phẩm lỗi"));
+    }
+
+    private String handleSizingConsultation(String lowerInput) {
+        // Kiểm tra cm
+        Matcher cmMatcher = Pattern.compile("(\\d{2}(?:\\.\\d+)?)\\s*(?:cm|centimet)").matcher(lowerInput);
+        if (cmMatcher.find()) {
+            double length = Double.parseDouble(cmMatcher.group(1));
+            String size = "40";
+            if (length <= 24.5) size = "39";
+            else if (length <= 25.0) size = "40";
+            else if (length <= 25.5) size = "41";
+            else if (length <= 26.0) size = "42";
+            else if (length <= 26.5) size = "43";
+            else size = "44";
+
+            String text = String.format("Dạ, với chiều dài bàn chân **%.1f cm**, size giày chuẩn và êm chân nhất của bạn là **Size %s** ạ! 🎉\n\n" +
+                    "Dưới đây là các mẫu giày cực đẹp đang có sẵn **Size %s** tại kho của AeroStride:", length, size, size);
+            return enrichResponse(text, getTopSellingVariants(3), List.of("Giữ hàng size " + size + " cho tôi", "Chính sách đổi size nếu không vừa?", "Có voucher giảm giá hôm nay không?"));
+        }
+
+        String guide = "Dạ, bảng hướng dẫn đo size giày chuẩn tại **AeroStride**:\n" +
+                "- 📏 **24.5 cm** ➔ Size **39**\n" +
+                "- 📏 **25.0 cm** ➔ Size **40**\n" +
+                "- 📏 **25.5 cm** ➔ Size **41**\n" +
+                "- 📏 **26.0 cm** ➔ Size **42**\n" +
+                "- 📏 **26.5 cm** ➔ Size **43**\n\n" +
+                "*(Nếu chân bạn hơi bè ngang hoặc mu bàn chân dày, shop khuyên bạn nên chọn tăng thêm 1 size để đi êm và thoải mái nhất nha!)* 👟\n\n" +
+                "Dưới đây là các mẫu giày bán chạy nhất có đủ mọi size để bạn lựa chọn:";
+        return enrichResponse(guide, getTopSellingVariants(3), List.of("Chân dài 25.5cm đi size mấy?", "Tôi muốn mua size 42", "Đổi size có mất phí không?"));
     }
 
     private boolean isMatch(String input, String keywordString) {
         if (keywordString == null || keywordString.isEmpty()) return false;
-
         Pattern pattern = compiledPatterns.computeIfAbsent(keywordString, kws -> {
             String[] keywords = kws.split(",");
             StringBuilder regex = new StringBuilder(".*\\b(?:");
             for (int i = 0; i < keywords.length; i++) {
-                if (i > 0) {
-                    regex.append("|");
-                }
+                if (i > 0) regex.append("|");
                 regex.append(Pattern.quote(keywords[i].trim().toLowerCase()));
             }
             regex.append(")\\b.*");
             return Pattern.compile(regex.toString(), Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CHARACTER_CLASS);
         });
-
         return pattern.matcher(input.toLowerCase()).matches();
     }
 
-    private String formatResponse(KienThucAi knowledge, String input) {
+    private String formatKnowledgeResponse(KienThucAi knowledge, String input) {
         String template = knowledge.getMauCauTraLoi();
-
-        switch (knowledge.getMucDich()) {
-            case "PRODUCT_LIST":
-                String productsInfo = dataLibrary.getTopProductsInfo(5);
-                return template.replace("{products}", productsInfo);
-
-            case "PRODUCT_SEARCH":
-                String searchTerm = extractSearchTerm(input, knowledge.getTuKhoa());
-                List<SanPham> searchResult = dataLibrary.searchProducts(searchTerm);
-                if (searchResult.isEmpty() || searchTerm.isEmpty()) {
-                    return "Dạ, bạn muốn tìm loại gì hoặc là muốn tìm dòng sản phẩm nào ạ? 🥰";
-                }
-
-                try {
-                    String json = objectMapper.writeValueAsString(searchResult);
-                    return template.replace("{search_term}", searchTerm) + " [[PRODUCT_JSON:" + json + "]]";
-                } catch (Exception e) {
-                    return template.replace("{search_term}", searchTerm);
-                }
-
-            default:
-                return template;
+        if ("PRODUCT_LIST".equals(knowledge.getMucDich())) {
+            String productsInfo = dataLibrary.getTopProductsInfo(4);
+            return template.replace("{products}", productsInfo);
         }
-    }
-
-    private String extractSearchTerm(String input, String keywords) {
-        String result = input;
-        for (String kw : keywords.split(",")) {
-            result = result.replace(kw.trim().toLowerCase(), "");
-        }
-        return result.trim();
-    }
-
-    private boolean isNegativeResponse(String input) {
-        if (input == null) return false;
-        String lower = input.toLowerCase().trim();
-        lower = lower.replaceAll("[.,!?#]", "").trim();
-
-        if (lower.equals("không") || lower.equals("khong") || lower.equals("ko") || lower.equals("k") || lower.equals("no")) {
-            return true;
-        }
-
-        return lower.contains("không thích") || lower.contains("khong thich") ||
-               lower.contains("không ưng") || lower.contains("khong ung") ||
-               lower.contains("xấu") || lower.contains("xau") ||
-               lower.contains("tệ") || lower.contains("te") ||
-               lower.contains("chê") || lower.contains("che") ||
-               lower.contains("chán") || lower.contains("chan") ||
-               lower.contains("không được") || lower.contains("khong duoc") ||
-               lower.contains("không hài lòng") || lower.contains("khong hai long") ||
-               lower.contains("khác") || lower.contains("khac") ||
-               lower.contains("đổi") || lower.contains("doi") ||
-               lower.contains("chuyển") || lower.contains("chuyen") ||
-               lower.contains("loại nào") || lower.contains("loai nao") ||
-               lower.contains("mẫu nào") || lower.contains("mau nao") ||
-               lower.contains("sao mãi") || lower.contains("sao mai") ||
-               lower.contains("một kiểu") || lower.contains("mot kieu") ||
-               lower.contains("1 kiểu") || lower.contains("1 kieu") ||
-               lower.contains("mãi") || lower.contains("mai") ||
-               lower.contains("đoàng hoàng") || lower.contains("doang hoang") ||
-               lower.contains("đàng hoàng") || lower.contains("dang hoang") ||
-               lower.contains("không còn") || lower.contains("khong con") ||
-               lower.contains("còn ko") || lower.contains("con ko") ||
-               lower.contains("còn k") || lower.contains("con k");
-    }
-
-    private boolean isAffirmativeResponse(String input) {
-        if (input == null) return false;
-        String lower = input.toLowerCase().trim();
-        lower = lower.replaceAll("[.,!?#]", "").trim();
-
-        if (lower.equals("có") || lower.equals("co") || lower.equals("dạ") || lower.equals("da") ||
-            lower.equals("được") || lower.equals("duoc") || lower.equals("ok") || lower.equals("yes") ||
-            lower.equals("ừ") || lower.equals("uha") || lower.equals("uh") || lower.equals("yep") ||
-            lower.equals("hài lòng") || lower.equals("hai long") || lower.equals("ưng") || lower.equals("ung") ||
-            lower.equals("đẹp") || lower.equals("dep") || lower.equals("thích") || lower.equals("thich")) {
-            return true;
-        }
-
-        return lower.contains("ưng ý") || lower.contains("ung y") ||
-               lower.contains("rất ưng") || lower.contains("rat ung") ||
-               lower.contains("hài lòng") || lower.contains("hai long") ||
-               lower.contains("đẹp") || lower.contains("dep") ||
-               lower.contains("thích") || lower.contains("thich") ||
-               lower.contains("lấy mẫu này") || lower.contains("lay mau nay") ||
-               lower.contains("chốt") || lower.contains("chot") ||
-               lower.contains("đồng ý") || lower.contains("dong y") ||
-               lower.contains("xem thử") || lower.contains("xem thu") ||
-               lower.contains("gửi đi") || lower.contains("gui di") ||
-               lower.contains("lấy luôn") || lower.contains("lay luon") ||
-               lower.contains("duyệt") || lower.contains("duyet");
+        return template;
     }
 }
-

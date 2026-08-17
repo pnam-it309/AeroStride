@@ -118,14 +118,16 @@ public class AdminKhachHangRepositoryCustomImpl implements AdminKhachHangReposit
             String condition = " AND (SELECT MAX(hd.ngayTao) FROM HoaDon hd WHERE hd.khachHang = kh) >= :minNgayDonHang";
             where.append(condition);
             countJpql.append(condition);
-            params.put("minNgayDonHang", request.getMinNgayDonHang().atStartOfDay());
+            long minMillis = request.getMinNgayDonHang().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+            params.put("minNgayDonHang", minMillis);
         }
         
         if (request.getMaxNgayDonHang() != null) {
             String condition = " AND (SELECT MAX(hd.ngayTao) FROM HoaDon hd WHERE hd.khachHang = kh) <= :maxNgayDonHang";
             where.append(condition);
             countJpql.append(condition);
-            params.put("maxNgayDonHang", request.getMaxNgayDonHang().plusDays(1).atStartOfDay().minusNanos(1));
+            long maxMillis = request.getMaxNgayDonHang().plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() - 1L;
+            params.put("maxNgayDonHang", maxMillis);
         }
 
         // Build main query from shared fragments

@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
+import { dichVuBienThe } from '@/services/product/dichVuBienThe';
 import { generateRandomCode } from '@/utils/codeGenerator';
 import { dichVuThuongHieu, dichVuMauSac, dichVuKichThuoc, dichVuChatLieu } from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
@@ -16,6 +17,7 @@ import { CalendarIcon, GiftIcon, InfoCircleIcon, TagIcon, BoxIcon, SearchIcon, T
 import { PATH } from '@/router/routePaths';
 import { getNameRules } from '@/utils/validators';
 import { SYSTEM_STATUS } from '@/constants/statusConstants';
+import { MESSAGES } from '@/constants/messages';
 
 const route = useRoute();
 const router = useRouter();
@@ -35,8 +37,6 @@ const toLocalDatetimeString = (timestamp) => {
 
 const loading = ref(false);
 const saving = ref(false);
-const products = ref([]);
-const searchQuery = ref('');
 
 // Attribute Options
 const brands = ref([]);
@@ -44,23 +44,238 @@ const colors = ref([]);
 const sizes = ref([]);
 const materials = ref([]);
 
-// Pagination for Selection Table
+// --- PHẦN 1: QUẢN LÝ DANH SÁCH SẢN PHẨM Ở BẢNG CHỌN (LAZY LOAD / ON-DEMAND) ---
+const selectionLoading = ref(false);
+const productsList = ref([]); // Danh sách sản phẩm trên trang hiện tại
 const selectionPage = ref(1);
 const selectionPageSize = ref(5);
+const selectionTotalElements = ref(0);
+const selectionTotalPages = ref(1);
+const searchQuery = ref('');
 
-// --- PHẦN THÊM MỚI: Khởi tạo các biến lọc cho bảng dưới ---
-const dynamicMaxPrice = ref(6500000); // Mặc định 6.5 triệu, sẽ cập nhật sau khi load data
-const loadMaxPrice = async () => {
+// Cache biến thể theo từng sản phẩm: productId -> Array<Variant>
+const variantsCache = ref(new Map());
+// Trạng thái đang tải biến thể cho từng sản phẩm: { [productId]: boolean }
+const loadingProductVariants = ref({});
+const expandedProductIds = ref([]);
+
+// Map các biến thể thực sự đã được chọn: variantId -> variantObject
+const selectedVariantsMap = ref(new Map());
+const selectedVariantsIds = computed(() => Array.from(selectedVariantsMap.value.keys()));
+
+// Hàm chuẩn hóa dữ liệu biến thể
+const normalizeVariant = (v, fallbackProduct = {}) => {
+    const maSp = fallbackProduct.maSanPham || fallbackProduct.ma || v.maSanPham || v.sanPhamMa || v.maSp || '';
+    const tenSp = fallbackProduct.tenSanPham || fallbackProduct.ten || v.tenSanPham || v.tenSanPhamDayDu || v.ten || '';
+    const variantMa = v.maChiTietSanPham || v.ma || (maSp ? `${maSp}-${v.id?.substring(0, 4)}` : '');
+    const color = v.tenMauSac || v.color || (v.mauSac ? v.mauSac.ten : '') || '--';
+    const kichCo = v.tenKichThuoc || v.kichCo || (v.kichThuoc ? v.kichThuoc.ten : '') || '--';
+    const thuongHieu = v.tenThuongHieu || v.thuongHieu || fallbackProduct.tenThuongHieu || fallbackProduct.thuongHieu || '--';
+    const chatLieu = v.tenChatLieu || v.chatLieu || fallbackProduct.tenChatLieu || fallbackProduct.chatLieu || '--';
+    const loaiSan = v.loaiSan || fallbackProduct.loaiSan || '--';
+    const giaGoc = v.giaGoc !== null && v.giaGoc !== undefined ? Number(v.giaGoc) : (v.giaBan !== null && v.giaBan !== undefined ? Number(v.giaBan) : 0);
+    const anhMauc =
+        v.hinhAnh ||
+        v.urlAnh ||
+        v.anhMauc ||
+        (v.images?.length > 0 ? v.images[0].duongDanAnh : null) ||
+        fallbackProduct.hinhAnh ||
+        'https://via.placeholder.com/40';
+
+    return {
+        ...v,
+        id: v.id,
+        idSanPham: v.idSanPham || fallbackProduct.id,
+        ma: variantMa,
+        maChiTietSanPham: variantMa,
+        maSanPham: maSp,
+        tenSanPham: tenSp,
+        tenSanPhamDayDu: v.tenSanPhamDayDu || `${tenSp} [${color} - ${kichCo}]`,
+        color,
+        kichCo,
+        thuongHieu,
+        chatLieu,
+        loaiSan,
+        giaGoc,
+        anhMauc
+    };
+};
+
+// Tải danh sách sản phẩm theo trang (nhẹ, nhanh, phân trang server-side)
+const loadProductsToSelect = async (page = 1) => {
+    selectionLoading.value = true;
     try {
-        const maxPrice = await dichVuSanPham.layGiaLonNhat();
-        if (maxPrice !== undefined && maxPrice !== null) {
-            dynamicMaxPrice.value = Math.max(maxPrice, 50000);
-            detailFilters.value.khoangGia = [0, dynamicMaxPrice.value];
-        }
-    } catch (error) {
-        console.error('Error loading max price:', error);
+        selectionPage.value = page;
+        const res = await dichVuSanPham.layDanhSachSanPham({
+            page: page,
+            size: selectionPageSize.value,
+            keyword: searchQuery.value?.trim() || undefined,
+            trangThai: SYSTEM_STATUS.ACTIVE
+        });
+
+        const items = res?.content || res?.data || (Array.isArray(res) ? res : []);
+        selectionTotalElements.value = res?.totalElements ?? items.length;
+        selectionTotalPages.value = res?.totalPages ?? 1;
+
+        productsList.value = items.map((p) => {
+            const cached = variantsCache.value.get(p.id);
+            return {
+                id: p.id,
+                ma: p.maSanPham || p.ma,
+                ten: p.tenSanPham || p.ten,
+                hinhAnh: p.hinhAnh,
+                thuongHieu: p.tenThuongHieu || p.thuongHieu,
+                chatLieu: p.tenChatLieu || p.chatLieu,
+                variants: cached || []
+            };
+        });
+    } catch (e) {
+        console.error('Lỗi khi tải danh sách sản phẩm:', e);
+        productsList.value = [];
+    } finally {
+        selectionLoading.value = false;
     }
 };
+
+// Tải biến thể theo yêu cầu (Lazy Load / On-Demand) cho 1 sản phẩm cụ thể
+const loadProductVariants = async (product) => {
+    if (variantsCache.value.has(product.id)) {
+        return variantsCache.value.get(product.id);
+    }
+    loadingProductVariants.value[product.id] = true;
+    try {
+        const rawVariants = await dichVuBienThe.layBienTheTheoSanPham(product.id);
+        const normalized = (rawVariants || []).map((v) => normalizeVariant(v, product));
+        variantsCache.value.set(product.id, normalized);
+        product.variants = normalized;
+        return normalized;
+    } catch (e) {
+        console.error(`Lỗi khi tải biến thể sản phẩm ${product.id}:`, e);
+        variantsCache.value.set(product.id, []);
+        product.variants = [];
+        return [];
+    } finally {
+        loadingProductVariants.value[product.id] = false;
+    }
+};
+
+// Đóng / mở danh sách biến thể của sản phẩm
+const toggleExpand = async (productId) => {
+    const index = expandedProductIds.value.indexOf(productId);
+    if (index > -1) {
+        expandedProductIds.value.splice(index, 1);
+    } else {
+        expandedProductIds.value.push(productId);
+        const product = productsList.value.find((p) => p.id === productId);
+        if (product && !variantsCache.value.has(productId)) {
+            await loadProductVariants(product);
+        }
+    }
+};
+
+// Kiểm tra trạng thái chọn của sản phẩm
+const isProductSelected = (product) => {
+    const variants = variantsCache.value.get(product.id);
+    if (!variants || variants.length === 0) return false;
+    return variants.every((v) => selectedVariantsMap.value.has(v.id));
+};
+
+const isProductIndeterminate = (product) => {
+    const variants = variantsCache.value.get(product.id);
+    if (!variants || variants.length === 0) return false;
+    const selectedCount = variants.filter((v) => selectedVariantsMap.value.has(v.id)).length;
+    return selectedCount > 0 && selectedCount < variants.length;
+};
+
+// Chọn / Bỏ chọn toàn bộ biến thể của 1 sản phẩm
+const toggleProductSelection = async (product) => {
+    let variants = variantsCache.value.get(product.id);
+    if (!variants) {
+        variants = await loadProductVariants(product);
+    }
+    if (!variants || variants.length === 0) return;
+
+    const allSelected = variants.every((v) => selectedVariantsMap.value.has(v.id));
+    const newMap = new Map(selectedVariantsMap.value);
+
+    if (allSelected) {
+        variants.forEach((v) => newMap.delete(v.id));
+    } else {
+        variants.forEach((v) => newMap.set(v.id, v));
+    }
+    selectedVariantsMap.value = newMap;
+};
+
+// Chọn / Bỏ chọn 1 biến thể lẻ
+const toggleVariantSelection = (variant) => {
+    const newMap = new Map(selectedVariantsMap.value);
+    if (newMap.has(variant.id)) {
+        newMap.delete(variant.id);
+    } else {
+        newMap.set(variant.id, normalizeVariant(variant));
+    }
+    selectedVariantsMap.value = newMap;
+};
+
+const isVariantSelected = (id) => {
+    return selectedVariantsMap.value.has(id);
+};
+
+// Checkbox chọn tất cả trên trang hiện tại
+const isAllCurrentPageSelected = computed(() => {
+    if (productsList.value.length === 0) return false;
+    return productsList.value.every((p) => isProductSelected(p));
+});
+
+const toggleAllProductsSelection = async () => {
+    const allSelected = isAllCurrentPageSelected.value;
+    const newMap = new Map(selectedVariantsMap.value);
+
+    for (const product of productsList.value) {
+        let variants = variantsCache.value.get(product.id);
+        if (!variants) {
+            variants = await loadProductVariants(product);
+        }
+        if (variants && variants.length > 0) {
+            if (allSelected) {
+                variants.forEach((v) => newMap.delete(v.id));
+            } else {
+                variants.forEach((v) => newMap.set(v.id, v));
+            }
+        }
+    }
+    selectedVariantsMap.value = newMap;
+};
+
+// Tìm kiếm sản phẩm
+let searchTimer = null;
+watch(searchQuery, () => {
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        loadProductsToSelect(1);
+    }, 300);
+});
+
+const handleRefreshSearch = () => {
+    searchQuery.value = '';
+    loadProductsToSelect(1);
+};
+
+const updateSelectionPage = (page) => {
+    loadProductsToSelect(page);
+};
+
+const updateSelectionPageSize = (size) => {
+    selectionPageSize.value = size;
+    loadProductsToSelect(1);
+};
+
+const getExpandIcon = (id) => {
+    return expandedProductIds.value.includes(id) ? 'mdi-minus' : 'mdi-plus';
+};
+
+// --- PHẦN 2: QUẢN LÝ BẢNG CHI TIẾT SẢN PHẨM ĐÃ CHỌN (BẢNG DƯỚI) ---
+const dynamicMaxPrice = ref(6500000);
 
 const detailFilters = ref({
     timKiem: '',
@@ -72,9 +287,9 @@ const detailFilters = ref({
     khoangGia: [0, dynamicMaxPrice.value]
 });
 
-// Pagination for Bottom Table (Selected Details)
 const bottomPage = ref(1);
 const bottomPageSize = ref(5);
+const bottomTableSelection = ref([]); // Bulk action xóa ở bảng dưới
 
 const resetDetailFilters = () => {
     detailFilters.value = {
@@ -88,145 +303,18 @@ const resetDetailFilters = () => {
     };
 };
 
-const isEditMode = computed(() => !!route.params.id && !route.path.includes('/detail'));
-const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật đợt giảm giá' : 'Thêm đợt giảm giá'));
-const isDetailView = computed(() => route.path.includes('/detail'));
-const primaryColor = '#2E4E8E';
-
-const tenDotGiamGiaRules = getNameRules('Tên đợt giảm giá');
-
-const form = ref({
-    ma: '',
-    ten: '',
-    moTa: '',
-    loaiGiamGia: 'PHAN_TRAM',
-    soTienGiam: 0,
-    dieuKienGiamGia: 0,
-    mucUuTien: 0,
-    ngayBatDau: '',
-    ngayKetThuc: '',
-    trangThai: SYSTEM_STATUS.ACTIVE
-});
-
-const expandedProductIds = ref([]);
-const selectedVariantsIds = ref([]); // Các biến thể thực sự được chọn để giảm giá
-
-const baseProducts = computed(() => {
-    const map = new Map();
-    products.value.forEach((p) => {
-        const prodId = p.idSanPham || p.id;
-        const prodMa = p.maSanPham || p.sanPhamMa || p.maSp || p.maChiTietSanPham || p.ma;
-        if (!map.has(prodId)) {
-            map.set(prodId, {
-                id: prodId,
-                ma: prodMa,
-                ten: p.tenSanPham || p.tenSanPhamDayDu,
-                variants: []
-            });
-        }
-        map.get(prodId).variants.push(p);
-    });
-    return Array.from(map.values());
-});
-
-const filteredProductsToSelect = computed(() => {
-    let result = baseProducts.value;
-    if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        result = result.filter((p) => (p.ten && p.ten.toLowerCase().includes(query)) || (p.ma && p.ma.toLowerCase().includes(query)));
-    }
-    return result;
-});
-
-const paginatedProductsToSelect = computed(() => {
-    const start = (selectionPage.value - 1) * selectionPageSize.value;
-    const end = start + selectionPageSize.value;
-    return filteredProductsToSelect.value.slice(start, end);
-});
-
-const totalSelectionPages = computed(() => {
-    return Math.ceil(filteredProductsToSelect.value.length / selectionPageSize.value) || 1;
-});
-
-// Reset page when search changes
-watch(searchQuery, () => {
-    selectionPage.value = 1;
-});
-
-const isProductSelected = (productId) => {
-    const product = baseProducts.value.find((p) => p.id === productId);
-    if (!product || product.variants.length === 0) return false;
-    return product.variants.every((v) => selectedVariantsIds.value.includes(v.id));
+const handleRefreshDetailSearch = () => {
+    resetDetailFilters();
 };
 
-const isProductIndeterminate = (productId) => {
-    const product = baseProducts.value.find((p) => p.id === productId);
-    if (!product || product.variants.length === 0) return false;
-    const selectedCount = product.variants.filter((v) => selectedVariantsIds.value.includes(v.id)).length;
-    return selectedCount > 0 && selectedCount < product.variants.length;
-};
-
-const toggleProductSelection = (productId) => {
-    const product = baseProducts.value.find((p) => p.id === productId);
-    if (!product) return;
-
-    const allSelected = isProductSelected(productId);
-    const variantIds = product.variants.map((v) => v.id);
-
-    if (allSelected) {
-        // Unselect all variants
-        selectedVariantsIds.value = selectedVariantsIds.value.filter((vid) => !variantIds.includes(vid));
-    } else {
-        // Select all variants
-        variantIds.forEach((vid) => {
-            if (!selectedVariantsIds.value.includes(vid)) {
-                selectedVariantsIds.value.push(vid);
-            }
-        });
-    }
-};
-
-const isAllProductsSelected = computed(() => {
-    return filteredProductsToSelect.value.length > 0 && filteredProductsToSelect.value.every((p) => isProductSelected(p.id));
-});
-
-const toggleAllProductsSelection = () => {
-    if (isAllProductsSelected.value) {
-        filteredProductsToSelect.value.forEach((p) => {
-            const variantIds = p.variants.map((v) => v.id);
-            selectedVariantsIds.value = selectedVariantsIds.value.filter((vid) => !variantIds.includes(vid));
-        });
-    } else {
-        filteredProductsToSelect.value.forEach((p) => {
-            p.variants.forEach((v) => {
-                if (!selectedVariantsIds.value.includes(v.id)) {
-                    selectedVariantsIds.value.push(v.id);
-                }
-            });
-        });
-    }
-};
-
-const toggleExpand = (productId) => {
-    const index = expandedProductIds.value.indexOf(productId);
-    if (index > -1) {
-        expandedProductIds.value.splice(index, 1);
-    } else {
-        expandedProductIds.value.push(productId);
-    }
-};
-
-// Biến thể hiển thị ở bảng dưới = (Các biến thể đã được chọn) + (Các biến thể của sản phẩm đang 'mở')
 const bottomTableVariants = computed(() => {
-    return products.value.filter((p) => selectedVariantsIds.value.includes(p.id));
+    return Array.from(selectedVariantsMap.value.values());
 });
 
 const filteredSelectedDetails = computed(() => {
-    let result = [...bottomTableVariants.value];
-
+    let result = bottomTableVariants.value;
     const filters = detailFilters.value;
 
-    // Áp dụng bộ lọc an toàn và linh hoạt
     if (filters.timKiem) {
         const query = filters.timKiem.toLowerCase();
         result = result.filter(
@@ -244,7 +332,6 @@ const filteredSelectedDetails = computed(() => {
     if (filters.mauSac) result = result.filter((p) => p.color === filters.mauSac);
     if (filters.loaiSan) result = result.filter((p) => p.loaiSan === filters.loaiSan);
 
-    // Lọc theo giá sau giảm (Chỉ lọc nếu dải giá bị thay đổi đáng kể)
     const minPrice = filters.khoangGia[0] || 0;
     const maxPrice = filters.khoangGia[1] || dynamicMaxPrice.value;
 
@@ -266,7 +353,7 @@ const totalBottomPages = computed(() => {
     return Math.ceil(filteredSelectedDetails.value.length / bottomPageSize.value) || 1;
 });
 
-// Reset bottom page when filters change
+// Reset bottom page khi bộ lọc thay đổi
 watch(
     detailFilters,
     () => {
@@ -274,10 +361,10 @@ watch(
     },
     { deep: true }
 );
+
 watch(
     selectedVariantsIds,
     () => {
-        // Nếu trang hiện tại không còn dữ liệu sau khi xóa, quay về trang trước
         if (bottomPage.value > totalBottomPages.value) {
             bottomPage.value = Math.max(1, totalBottomPages.value);
         }
@@ -289,19 +376,6 @@ const calculateDiscountedPrice = (originalPrice) => {
     return originalPrice * (1 - (form.value.soTienGiam || 0) / 100);
 };
 
-const isVariantSelected = (id) => selectedVariantsIds.value.includes(id);
-
-const toggleVariantSelection = (id) => {
-    const index = selectedVariantsIds.value.indexOf(id);
-    if (index > -1) {
-        selectedVariantsIds.value.splice(index, 1);
-    } else {
-        selectedVariantsIds.value.push(id);
-    }
-};
-
-const bottomTableSelection = ref([]); // Chỉ dùng cho bulk action XÓA (UI)
-
 const toggleBottomSelection = (id) => {
     const index = bottomTableSelection.value.indexOf(id);
     if (index === -1) bottomTableSelection.value.push(id);
@@ -310,7 +384,7 @@ const toggleBottomSelection = (id) => {
 
 const toggleAllBottomSelection = () => {
     const allIds = filteredSelectedDetails.value.map((p) => p.id);
-    const allSelected = allIds.every((id) => bottomTableSelection.value.includes(id));
+    const allSelected = allIds.length > 0 && allIds.every((id) => bottomTableSelection.value.includes(id));
     if (allSelected) {
         bottomTableSelection.value = bottomTableSelection.value.filter((id) => !allIds.includes(id));
     } else {
@@ -320,104 +394,91 @@ const toggleAllBottomSelection = () => {
 };
 
 const removeBulkSelected = () => {
-    selectedVariantsIds.value = selectedVariantsIds.value.filter((id) => !bottomTableSelection.value.includes(id));
+    const newMap = new Map(selectedVariantsMap.value);
+    bottomTableSelection.value.forEach((id) => newMap.delete(id));
+    selectedVariantsMap.value = newMap;
     bottomTableSelection.value = [];
 };
 
 const removeAllSelected = () => {
-    selectedVariantsIds.value = [];
+    selectedVariantsMap.value = new Map();
     bottomTableSelection.value = [];
 };
 
-// Hàm đồng bộ mở trình chọn ngày giờ khi bấm vào icon (giống màn NV/KH)
-const openDatePicker = (event) => {
-    const container = event.target.closest('.v-input');
-    const input = container ? container.querySelector('input[type="datetime-local"]') : null;
-    if (input) {
-        if (typeof input.showPicker === 'function') input.showPicker();
-        else input.click();
-    }
-};
+// --- PHẦN 3: FORM CONFIG VÀ LƯU DỮ LIỆU ---
+const isEditMode = computed(() => !!route.params.id && !route.path.includes('/detail'));
+const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật đợt giảm giá' : 'Thêm đợt giảm giá'));
+const isDetailView = computed(() => route.path.includes('/detail'));
+
+const tenDotGiamGiaRules = getNameRules('Tên đợt giảm giá');
+
+const form = ref({
+    ma: '',
+    ten: '',
+    moTa: '',
+    loaiGiamGia: 'PHAN_TRAM',
+    soTienGiam: 0,
+    dieuKienGiamGia: 0,
+    mucUuTien: 0,
+    ngayBatDau: '',
+    ngayKetThuc: '',
+    trangThai: SYSTEM_STATUS.ACTIVE
+});
 
 const init = async () => {
+    loading.value = true;
     try {
-        await loadMaxPrice();
-        // Load attributes for filters
-        const [brandData, colorData, sizeData, materialData] = await Promise.all([
-            dichVuThuongHieu.layThuongHieu({ trangThai: SYSTEM_STATUS.ACTIVE }),
-            dichVuMauSac.layMauSac({ trangThai: SYSTEM_STATUS.ACTIVE }),
-            dichVuKichThuoc.layKichThuoc({ trangThai: SYSTEM_STATUS.ACTIVE }),
-            dichVuChatLieu.layChatLieu({ trangThai: SYSTEM_STATUS.ACTIVE })
+        const [maxPrice, brandData, colorData, sizeData, materialData] = await Promise.all([
+            dichVuSanPham.layGiaLonNhat().catch(() => 6500000),
+            dichVuThuongHieu.layThuongHieu({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => []),
+            dichVuMauSac.layMauSac({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => []),
+            dichVuKichThuoc.layKichThuoc({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => []),
+            dichVuChatLieu.layChatLieu({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => [])
         ]);
+
+        if (maxPrice !== undefined && maxPrice !== null) {
+            dynamicMaxPrice.value = Math.max(maxPrice, 50000);
+            detailFilters.value.khoangGia = [0, dynamicMaxPrice.value];
+        }
 
         brands.value = (brandData?.content || brandData || []).map((b) => b.ten);
         colors.value = (colorData?.content || colorData || []).map((c) => c.ten);
         sizes.value = (sizeData?.content || sizeData || []).map((s) => s.ten);
         materials.value = (materialData?.content || materialData || []).map((m) => m.ten);
 
-        const data = await dichVuDotGiamGia.layDanhSachSanPhamApDung();
-        products.value = (data || []).map((p, i) => ({
-            ...p,
-            ma: p.maChiTietSanPham || p.ma || p.maSanPham || p.sanPhamMa || p.maSp,
-            maSanPham: p.maSanPham || p.sanPhamMa || p.maSp || p.maChiTietSanPham || p.ma,
-            tenSanPham: p.tenSanPham || p.tenSanPhamDayDu || p.ten,
-            tenSanPhamDayDu: p.tenSanPhamDayDu || p.tenSanPham || p.ten,
-            anhMauc:
-                p.hinhAnh ||
-                p.urlAnh ||
-                p.anhMauc ||
-                (p.images?.length > 0 ? p.images[0].duongDanAnh : null) ||
-                p.anh ||
-                p.duongDanAnh ||
-                p.imageUrl ||
-                'https://via.placeholder.com/40',
-            color: p.tenMauSac || p.color || '--',
-            kichCo: p.tenKichThuoc || p.kichCo || '--',
-            thuongHieu: p.sanPham?.thuongHieu?.ten || p.tenThuongHieu || p.thuongHieu || '--',
-            chatLieu: p.sanPham?.chatLieu?.ten || p.tenChatLieu || p.chatLieu || '--',
-            giaGoc: p.giaGoc !== null && p.giaGoc !== undefined ? p.giaGoc : p.giaBan || 0
-        }));
+        // Nạp trang đầu tiên của bảng sản phẩm chọn (chỉ nạp 5-10 SP, cực nhẹ)
+        await loadProductsToSelect(1);
 
-        // Cập nhật giá lớn nhất thực tế từ danh sách sản phẩm đã load
-        if (products.value.length > 0) {
-            const actualMax = products.value.reduce((max, p) => Math.max(max, p.giaGoc || 0), 0);
-            if (actualMax > 0) {
-                dynamicMaxPrice.value = actualMax;
-                // Nếu giá trị lọc hiện tại đang là mặc định hoặc lớn hơn thực tế quá nhiều, cập nhật lại
-                if (detailFilters.value.khoangGia[1] >= 6500000 || detailFilters.value.khoangGia[1] === 0) {
-                    detailFilters.value.khoangGia = [0, actualMax];
-                }
-            }
-        }
-    } catch (e) {
-        console.error('Error loading products:', e);
-    }
+        if (isEditMode.value || isDetailView.value) {
+            const [data, applied] = await Promise.all([
+                dichVuDotGiamGia.layChiTietDotGiamGia(route.params.id),
+                dichVuDotGiamGia.layDanhSachBienTheApDung(route.params.id).catch(() => [])
+            ]);
 
-    if (isEditMode.value || isDetailView.value) {
-        loading.value = true;
-        try {
-            const data = await dichVuDotGiamGia.layChiTietDotGiamGia(route.params.id);
             form.value = {
                 ...data,
                 ngayBatDau: data.ngayBatDau ? toLocalDatetimeString(data.ngayBatDau) : '',
                 ngayKetThuc: data.ngayKetThuc ? toLocalDatetimeString(data.ngayKetThuc) : ''
             };
-            const applied = await dichVuDotGiamGia.layDanhSachBienTheApDung(route.params.id);
-            selectedVariantsIds.value = applied.map((v) => v.id);
 
-            // KHÔNG tự động 'active' ở trên để bảng dưới chỉ hiện những cái đã chọn ban đầu
-            expandedProductIds.value = [];
-        } catch (e) {
-            addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.LOAD_DATA, color: 'error' });
-        } finally {
-            loading.value = false;
+            const newMap = new Map();
+            (applied || []).forEach((v) => {
+                const normalized = normalizeVariant(v);
+                newMap.set(v.id, normalized);
+            });
+            selectedVariantsMap.value = newMap;
+        } else {
+            try {
+                form.value.ma = await generateRandomCode('DotGiamGia');
+            } catch (e) {
+                console.error('Lỗi khi lấy mã', e);
+            }
         }
-    } else {
-        try {
-            form.value.ma = await generateRandomCode('DotGiamGia');
-        } catch (e) {
-            console.error('Lỗi khi lấy mã', e);
-        }
+    } catch (e) {
+        console.error('Error during init:', e);
+        addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.LOAD_DATA, color: 'error' });
+    } finally {
+        loading.value = false;
     }
 };
 
@@ -516,19 +577,6 @@ const handleSave = () => {
 
 const goBack = () => {
     router.back();
-};
-
-const handleRefreshSearch = () => {
-    searchQuery.value = '';
-    selectionPage.value = 1;
-};
-
-const getExpandIcon = (id) => {
-    return expandedProductIds.value.includes(id) ? 'mdi-minus' : 'mdi-plus';
-};
-
-const updateSelectionPageSize = (size) => {
-    selectionPageSize.value = size;
 };
 
 onMounted(init);
@@ -712,7 +760,12 @@ onMounted(init);
                         </div>
 
                         <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="height: 380px">
-                            <table class="native-admin-table">
+                            <div v-if="selectionLoading" class="d-flex flex-column align-center justify-center h-100 py-12">
+                                <v-progress-circular indeterminate color="primary" size="36" width="3" />
+                                <span class="text-caption text-slate-500 mt-2">Đang tải danh sách sản phẩm...</span>
+                            </div>
+
+                            <table v-else class="native-admin-table">
                                 <thead>
                                     <tr>
                                         <th class="header-cell text-center text-no-wrap" style="width: 40px"></th>
@@ -722,7 +775,7 @@ onMounted(init);
                                                     density="compact"
                                                     color="primary"
                                                     hide-details
-                                                    :model-value="isAllProductsSelected"
+                                                    :model-value="isAllCurrentPageSelected"
                                                     @change="toggleAllProductsSelection"
                                                 ></v-checkbox-btn>
                                             </div>
@@ -732,11 +785,19 @@ onMounted(init);
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <template v-for="item in paginatedProductsToSelect" :key="item.ma">
+                                    <template v-for="item in productsList" :key="item.id">
                                         <tr class="data-row">
                                             <td class="data-cell text-center">
                                                 <div class="d-flex align-center justify-center" style="height: 32px">
+                                                    <v-progress-circular
+                                                        v-if="loadingProductVariants[item.id]"
+                                                        indeterminate
+                                                        size="18"
+                                                        width="2"
+                                                        color="primary"
+                                                    />
                                                     <v-btn
+                                                        v-else
                                                         icon
                                                         variant="text"
                                                         size="small"
@@ -750,9 +811,9 @@ onMounted(init);
                                             <td class="data-cell text-center">
                                                 <div class="d-flex align-center justify-center" style="height: 32px">
                                                     <v-checkbox-btn
-                                                        :model-value="isProductSelected(item.id)"
-                                                        :indeterminate="isProductIndeterminate(item.id)"
-                                                        @update:model-value="toggleProductSelection(item.id)"
+                                                        :model-value="isProductSelected(item)"
+                                                        :indeterminate="isProductIndeterminate(item)"
+                                                        @update:model-value="toggleProductSelection(item)"
                                                         :readonly="isDetailView"
                                                         color="primary"
                                                         hide-details
@@ -768,15 +829,26 @@ onMounted(init);
                                                 {{ item.ten }}
                                             </td>
                                         </tr>
-                                        <!-- Variant rows -->
+                                        <!-- Variant rows (Lazy Loaded) -->
                                         <template v-if="expandedProductIds.includes(item.id)">
-                                            <tr v-for="variant in item.variants" :key="variant.id" class="variant-row bg-slate-50-50">
+                                            <tr v-if="loadingProductVariants[item.id]" class="variant-row bg-slate-50">
+                                                <td colspan="4" class="text-center py-3 text-slate-500 text-caption">
+                                                    <v-progress-circular indeterminate size="16" width="2" color="primary" class="mr-2" />
+                                                    Đang tải biến thể của sản phẩm...
+                                                </td>
+                                            </tr>
+                                            <tr v-else-if="!item.variants || item.variants.length === 0" class="variant-row bg-slate-50">
+                                                <td colspan="4" class="text-center py-3 text-slate-400 text-caption">
+                                                    Sản phẩm chưa có biến thể hoạt động nào.
+                                                </td>
+                                            </tr>
+                                            <tr v-else v-for="variant in item.variants" :key="variant.id" class="variant-row bg-slate-50">
                                                 <td class="data-cell text-right pr-3"></td>
                                                 <td class="data-cell text-center">
                                                     <div class="d-flex align-center justify-center" style="height: 32px">
                                                         <v-checkbox-btn
-                                                            :model-value="selectedVariantsIds.includes(variant.id)"
-                                                            @update:model-value="toggleVariantSelection(variant.id)"
+                                                            :model-value="isVariantSelected(variant.id)"
+                                                            @update:model-value="toggleVariantSelection(variant)"
                                                             :readonly="isDetailView"
                                                             color="primary"
                                                             hide-details
@@ -785,7 +857,7 @@ onMounted(init);
                                                         ></v-checkbox-btn>
                                                     </div>
                                                 </td>
-                                                <td class="data-cell text-center text-slate-500 font-weight-medium">
+                                                <td class="data-cell text-center text-slate-600 font-weight-medium">
                                                     {{ variant.ma }}
                                                 </td>
                                                 <td class="data-cell text-center text-slate-500">
@@ -798,7 +870,7 @@ onMounted(init);
                             </table>
 
                             <div
-                                v-if="filteredProductsToSelect.length === 0"
+                                v-if="!selectionLoading && productsList.length === 0"
                                 class="d-flex flex-column align-center justify-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2 border-t"
                             >
                                 <v-icon icon="mdi-package-variant" size="48" style="color: #94a3b8 !important; opacity: 0.6" class="mb-3" />
@@ -814,9 +886,10 @@ onMounted(init);
                             v-model="selectionPage"
                             :page-size="selectionPageSize"
                             @update:pageSize="updateSelectionPageSize"
-                            :total-pages="totalSelectionPages"
-                            :total-elements="filteredProductsToSelect.length"
-                            :current-size="paginatedProductsToSelect.length"
+                            @update:model-value="updateSelectionPage"
+                            :total-pages="selectionTotalPages"
+                            :total-elements="selectionTotalElements"
+                            :current-size="productsList.length"
                             class="mt-4"
                         />
                     </v-card-text>
@@ -999,8 +1072,8 @@ onMounted(init);
                                                     color="primary"
                                                     hide-details
                                                     density="compact"
-                                                    :model-value="isVariantSelected(item.id)"
-                                                    @update:model-value="toggleVariantSelection(item.id)"
+                                                    :model-value="bottomTableSelection.includes(item.id)"
+                                                    @update:model-value="toggleBottomSelection(item.id)"
                                                 ></v-checkbox-btn>
                                             </div>
                                         </td>

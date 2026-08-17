@@ -80,5 +80,18 @@ export const dichVuLanding = {
     async layDanhSachTinhNang() {
         const response = await api.get('/customer/landing/features');
         return response.data?.data || [];
+    },
+
+    async layFlashSale() {
+        const response = await api.get('/customer/landing/flash-sale');
+        const data = response.data?.data;
+        if (!data) return null;
+        return {
+            ...data,
+            items: (data.items || []).map((item) => ({
+                ...item,
+                hinhAnh: resolveImageUrl(item.hinhAnh)
+            }))
+        };
     }
 };

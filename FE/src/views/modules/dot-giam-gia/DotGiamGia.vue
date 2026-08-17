@@ -14,6 +14,7 @@ import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import { downloadFile } from '@/utils/fileUtils';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
+import FlashSaleModal from './FlashSaleModal.vue';
 
 import { useAdminTable } from '@/composables/useAdminTable';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
@@ -24,6 +25,7 @@ import { useNotifications } from '@/services/notificationService';
 const router = useRouter();
 const { addNotification } = useNotifications();
 const { isRefreshing, handleRefresh: executeRefresh } = useRefreshHandler();
+const showFlashSaleModal = ref(false);
 
 const {
     items: campaigns,
@@ -276,16 +278,35 @@ onMounted(() => loadCampaigns());
             @add="router.push(PATH.DOT_GIAM_GIA_FORM)"
             @export="handleExport"
         >
+            <template #extra-actions>
+                <v-btn
+                    prepend-icon="mdi-flash"
+                    variant="flat"
+                    color="amber-darken-3"
+                    class="mr-2 text-none font-weight-bold shadow-sm"
+                    @click="showFlashSaleModal = true"
+                >
+                    ⚡ Tạo Flash Sale Giờ Vàng
+                </v-btn>
+            </template>
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell text-slate-400">
                         {{ getIndex(index) }}
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-truncate" :title="item.ma">{{ item.ma }}</div>
+                        <div class="text-truncate font-weight-bold" :title="item.ma">{{ item.ma }}</div>
                     </td>
                     <td class="data-cell text-balanced">
-                        <div class="text-truncate" :title="item.ten">{{ item.ten || '--' }}</div>
+                        <div class="d-flex align-center">
+                            <div class="text-truncate font-weight-medium" :title="item.ten">{{ item.ten || '--' }}</div>
+                            <v-chip v-if="item.isFlashSale" size="x-small" color="amber-darken-3" class="ml-2 font-weight-bold" variant="flat">
+                                ⚡ Flash Sale
+                            </v-chip>
+                        </div>
+                        <div v-if="item.khungGio" class="text-caption text-amber-darken-4 font-weight-bold mt-0.5">
+                            ⏰ {{ item.khungGio }}
+                        </div>
                     </td>
                     <td class="data-cell text-center">
                         <div class="text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
@@ -357,6 +378,12 @@ onMounted(() => loadCampaigns());
             :loading="confirmDialog.loading"
             @confirm="handleConfirm(true)"
             @cancel="handleConfirm(false)"
+        />
+
+        <!-- FLASH SALE MODAL -->
+        <FlashSaleModal
+            v-model="showFlashSaleModal"
+            @success="handleRefresh"
         />
     </v-container>
 </template>

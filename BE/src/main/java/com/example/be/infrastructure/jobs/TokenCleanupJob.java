@@ -25,11 +25,8 @@ public class TokenCleanupJob {
     public void execute() {
         log.info("Cron Job [TokenCleanupJob] - Started");
         try {
-            var expired = refreshTokenRepository.findAll().stream()
-                    .filter(t -> t.getExpiryDate().isBefore(Instant.now()))
-                    .toList();
-            refreshTokenRepository.deleteAll(expired);
-            log.info("Cron Job [TokenCleanupJob] - Deleted {} expired tokens", expired.size());
+            refreshTokenRepository.deleteByExpiryDateBefore(Instant.now());
+            log.info("Cron Job [TokenCleanupJob] - Successfully cleaned expired tokens");
         } catch (Exception e) {
             log.error("Cron Job [TokenCleanupJob] - Failed with error: {}", e.getMessage());
         }

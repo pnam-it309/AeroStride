@@ -26,6 +26,9 @@ public class AdminDanhGiaResponse {
         if (entity.getKhachHang() != null) {
             this.tenKhachHang = entity.getKhachHang().getTen();
             this.soDienThoai = entity.getKhachHang().getSdt();
+        } else if (entity.getHoaDon() != null) {
+            this.tenKhachHang = entity.getHoaDon().getTenNguoiNhan();
+            this.soDienThoai = entity.getHoaDon().getSoDienThoaiNguoiNhan();
         }
         if (entity.getSanPham() != null) {
             this.tenSanPham = entity.getSanPham().getTen();

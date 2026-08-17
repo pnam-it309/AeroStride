@@ -53,4 +53,11 @@ public class CustomerLandingController {
         List<CustomerLandingVariantResponse> response = landingService.getTopVariantsByQuantity(size);
         return ResponseEntity.ok(ApiResponse.success(response, "Lay bien the nhieu hang thanh cong"));
     }
+
+    @GetMapping("/flash-sale")
+    @RateLimit(limit = 60, windowSeconds = 60)
+    public ResponseEntity<ApiResponse<com.example.be.core.customer.landing.model.response.CustomerLandingFlashSaleResponse>> getFlashSale() {
+        var response = landingService.getFlashSale();
+        return ResponseEntity.ok(ApiResponse.success(response, "Lấy thông tin Flash Sale thành công"));
+    }
 }

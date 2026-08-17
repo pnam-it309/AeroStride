@@ -11,6 +11,7 @@ import com.example.be.core.admin.hoadon.service.AdminHoaDonService;
 import com.example.be.entity.*;
 import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.infrastructure.exceptions.BusinessException;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.infrastructure.exceptions.SystemException;
@@ -49,6 +50,9 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     private final TemplateEngine templateEngine;
     private final AdminHoaDonMapper hoaDonMapper;
     private final com.example.be.core.notification.EmailService emailService;
+
+    @org.springframework.beans.factory.annotation.Value("${app.frontend_url}")
+    private String frontendUrl;
 
 
     @Override
@@ -181,6 +185,21 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         history.setNgayTao(System.currentTimeMillis());
         lichSuTrangThaiHoaDonRepository.save(history);
 
+        // Nếu giao lại (từ Giao thất bại / Khách không nhận sang Đang giao hoặc Hoàn thành) -> Trừ kho lại
+        if ((oldStatus == OrderStatus.GIAO_THAT_BAI || oldStatus == OrderStatus.KHACH_KHONG_NHAN) 
+                && (newStatus == OrderStatus.DANG_GIAO || newStatus == OrderStatus.HOAN_THANH)) {
+            if (hd.getListsHoaDonChiTiet() != null) {
+                for (HoaDonChiTiet detail : hd.getListsHoaDonChiTiet()) {
+                    ChiTietSanPham ct = detail.getChiTietSanPham();
+                    if (ct != null && detail.getSoLuong() != null) {
+                        int currentStock = ct.getSoLuong() != null ? ct.getSoLuong() : 0;
+                        ct.setSoLuong(Math.max(0, currentStock - detail.getSoLuong()));
+                        chiTietSanPhamRepository.saveAndFlush(ct);
+                    }
+                }
+            }
+        }
+
         if (newStatus == OrderStatus.DA_HUY || newStatus == OrderStatus.HOAN_DON 
                 || newStatus == OrderStatus.GIAO_THAT_BAI || newStatus == OrderStatus.KHACH_KHONG_NHAN) {
             if ((newStatus == OrderStatus.HOAN_DON || newStatus == OrderStatus.GIAO_THAT_BAI || newStatus == OrderStatus.KHACH_KHONG_NHAN) 
@@ -188,9 +207,10 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 // GHN return fee is typically equal to forward fee
                 hd.setPhiHoanHang(hd.getPhiVanChuyen());
             }
-            // Chỉ hoàn kho nếu kho ĐÃ TỪNG BỊ TRỪ (tức là không phải đơn ONLINE đang ở Chờ xác nhận)
+            // Chỉ hoàn kho nếu kho ĐÃ TỪNG BỊ TRỪ và chưa bị hoàn kho trước đó
+            boolean alreadyRestoredStock = oldStatus == OrderStatus.GIAO_THAT_BAI || oldStatus == OrderStatus.KHACH_KHONG_NHAN;
             boolean chuaTruKho = oldStatus == OrderStatus.CHO_XAC_NHAN && isOnlineOrder(hd);
-            if (!chuaTruKho) {
+            if (!chuaTruKho && !alreadyRestoredStock) {
                 if (hd.getListsHoaDonChiTiet() != null) {
                     hd.getListsHoaDonChiTiet().forEach(detail -> {
                         ChiTietSanPham ct = detail.getChiTietSanPham();
@@ -225,8 +245,14 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 ? hd.getKhachHang().getTen()
                 : (hd.getTenNguoiNhan() != null ? hd.getTenNguoiNhan() : "Quý khách");
 
-        emailService.guiEmailCapNhatTrangThaiHoaDon(email, tenKhachHang, hd.getMaHoaDon(),
-                trangThaiLabel(newStatus), note);
+        if (newStatus == OrderStatus.DANG_GIAO) {
+            String donVi = "Giao Hàng Nhanh (GHN)";
+            String trackingUrl = frontendUrl + "/orders?code=" + (hd.getMaHoaDon() != null ? hd.getMaHoaDon() : "");
+            emailService.guiEmailVanChuyen(email, tenKhachHang, hd.getMaHoaDon(), "GHN-" + hd.getMaHoaDon(), donVi, hd.getNgayDuKienNhan(), trackingUrl);
+        } else {
+            emailService.guiEmailCapNhatTrangThaiHoaDon(email, tenKhachHang, hd.getMaHoaDon(),
+                    trangThaiLabel(newStatus), note);
+        }
     }
 
     private String trangThaiLabel(OrderStatus status) {
@@ -463,9 +489,9 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
 
     private boolean isOnlineOrder(HoaDon hoaDon) {
         if (hoaDon.getOrderType() != null) {
-            return hoaDon.getOrderType() == com.example.be.infrastructure.constants.OrderType.ONLINE;
+            return hoaDon.getOrderType() == OrderType.ONLINE;
         }
-        return hoaDon.getNhanVien() == null && "ONLINE".equalsIgnoreCase(hoaDon.getLoaiDon());
+        return hoaDon.getNhanVien() == null && OrderType.ONLINE.name().equalsIgnoreCase(hoaDon.getLoaiDon());
     }
 
     private String resolvePaymentMethodLabel(HoaDon hd) {

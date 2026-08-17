@@ -31,6 +31,9 @@ public class EmailServiceImpl implements EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    @Value("${app.frontend_url}")
+    private String frontendUrl;
+
     @Async("mailExecutor")
     @Override
     public void sendHtmlEmail(EmailRequest request) {
@@ -44,8 +47,12 @@ public class EmailServiceImpl implements EmailService {
                     StandardCharsets.UTF_8.name()
             );
 
+            Map<String, Object> vars = request.getVariables() != null ? new HashMap<>(request.getVariables()) : new HashMap<>();
+            vars.putIfAbsent("baseUrl", frontendUrl);
+            vars.putIfAbsent("frontendUrl", frontendUrl);
+
             Context context = new Context();
-            context.setVariables(request.getVariables());
+            context.setVariables(vars);
 
             String html = templateEngine.process("email/" + request.getTemplateName(), context);
 
@@ -136,6 +143,82 @@ public class EmailServiceImpl implements EmailService {
                 .to(to)
                 .subject("AeroStride - Cập nhật đơn hàng #" + maHoaDon + ": " + trangThaiLabel)
                 .templateName("order-status-update")
+                .variables(variables)
+                .build();
+
+        this.sendHtmlEmail(request);
+    }
+
+    @Async("mailExecutor")
+    @Override
+    public void guiEmailXacNhanDatHang(String to, String tenNguoiNhan, String maHoaDon, 
+                                        String soDienThoai, String diaChi, String phuongThuc,
+                                        java.math.BigDecimal tamTinh, java.math.BigDecimal phiVanChuyen,
+                                        java.math.BigDecimal tienGiam, java.math.BigDecimal tongTien,
+                                        java.util.List<java.util.Map<String, Object>> items) {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("title", "Xác nhận đặt hàng thành công #" + maHoaDon);
+        variables.put("tenNguoiNhan", tenNguoiNhan);
+        variables.put("orderCode", maHoaDon);
+        variables.put("soDienThoai", soDienThoai);
+        variables.put("diaChi", diaChi);
+        variables.put("phuongThuc", phuongThuc);
+        variables.put("tamtinh", tamTinh);
+        variables.put("phiVanChuyen", phiVanChuyen);
+        variables.put("tienGiam", tienGiam);
+        variables.put("tongTienSauGiam", tongTien);
+        variables.put("items", items);
+
+        EmailRequest request = EmailRequest.builder()
+                .to(to)
+                .subject("🎉 AeroStride - Xác nhận đơn hàng #" + maHoaDon + " thành công")
+                .templateName("order-confirmation")
+                .variables(variables)
+                .build();
+
+        this.sendHtmlEmail(request);
+    }
+
+    @Async("mailExecutor")
+    @Override
+    public void guiEmailVanChuyen(String to, String tenKhachHang, String maHoaDon,
+                                   String maVanDon, String donViVanChuyen, Long ngayGiaoDuKien, String linkTraCuu) {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("title", "Đơn hàng đang được giao");
+        variables.put("tenKhachHang", tenKhachHang);
+        variables.put("maHoaDon", maHoaDon);
+        variables.put("maVanDon", maVanDon != null ? maVanDon : "Chờ cập nhật");
+        variables.put("donViVanChuyen", donViVanChuyen != null ? donViVanChuyen : "Giao Hàng Nhanh (GHN)");
+        variables.put("ngayGiaoDuKien", ngayGiaoDuKien);
+        variables.put("linkTraCuu", linkTraCuu != null ? linkTraCuu : (frontendUrl + "/orders"));
+
+        EmailRequest request = EmailRequest.builder()
+                .to(to)
+                .subject("🚚 AeroStride - Đơn hàng #" + maHoaDon + " đang trên đường giao đến bạn!")
+                .templateName("shipping-email")
+                .variables(variables)
+                .build();
+
+        this.sendHtmlEmail(request);
+    }
+
+    @Async("mailExecutor")
+    @Override
+    public void guiEmailChucMungSinhNhat(String to, String tenKhachHang, String maVoucher,
+                                         String tenVoucher, java.math.BigDecimal giaTriGiam, String loaiGiam, Long ngayHetHan) {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("title", "Chúc Mừng Sinh Nhật Quý Khách!");
+        variables.put("tenKhachHang", tenKhachHang);
+        variables.put("maVoucher", maVoucher);
+        variables.put("tenVoucher", tenVoucher);
+        variables.put("giaTriGiam", giaTriGiam);
+        variables.put("loaiGiam", loaiGiam);
+        variables.put("ngayHetHan", ngayHetHan);
+
+        EmailRequest request = EmailRequest.builder()
+                .to(to)
+                .subject("🎂 Happy Birthday! AeroStride tặng bạn món quà sinh nhật đặc biệt 🎁")
+                .templateName("birthday-email")
                 .variables(variables)
                 .build();
 

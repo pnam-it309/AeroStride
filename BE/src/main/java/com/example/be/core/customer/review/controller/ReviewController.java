@@ -19,9 +19,12 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @PostMapping("/submit")
-    public ResponseEntity<ApiResponse<Void>> submitReview(@RequestBody ReviewRequest request) {
-        reviewService.submitReview(request);
-        return ResponseEntity.ok(ApiResponse.success(null));
+    public ResponseEntity<ApiResponse<CustomerReviewResponse>> submitReview(@RequestBody ReviewRequest request) {
+        CustomerReviewResponse response = reviewService.submitReview(request);
+        String message = "APPROVED".equalsIgnoreCase(response.getTrangThai())
+                ? "Đánh giá của bạn đã được phê duyệt và hiển thị thành công!"
+                : "Cảm ơn bạn! Đánh giá đang chờ ban quản trị kiểm duyệt.";
+        return ResponseEntity.ok(ApiResponse.success(response, message));
     }
 
     @GetMapping("/product/{idSanPham}")

@@ -498,7 +498,6 @@ const close = () => {
                                 <v-text-field
                                     v-model="newAddressForm.diaChiChiTiet"
                                     label="Địa chỉ chi tiết *"
-                                    placeholder="Số nhà, tên đường..."
                                     variant="outlined"
                                     density="compact"
                                     hide-details
@@ -557,10 +556,19 @@ const close = () => {
     position: absolute;
     top: -1px;
     right: -1px;
-    background-color: #2563eb;
+    background: linear-gradient(135deg, #1e257c 0%, #2563eb 100%) !important;
     border-bottom-left-radius: 8px;
     border-top-right-radius: 10px;
-    padding: 2px 6px;
+    padding: 3px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+.active-check-badge :deep(.v-icon),
+.active-check-badge i {
+    color: #ffffff !important;
+    fill: #ffffff !important;
 }
 .default-badge {
     font-size: 11px !important;

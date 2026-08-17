@@ -13,6 +13,13 @@ import java.util.Optional;
 @Repository
 public interface AdminChiTietSanPhamRepository extends ChiTietSanPhamRepository, AdminChiTietSanPhamRepositoryCustom, JpaSpecificationExecutor<ChiTietSanPham> {
 
+    @Override
+    @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
+    org.springframework.data.domain.Page<ChiTietSanPham> findAll(
+            @org.springframework.lang.Nullable org.springframework.data.jpa.domain.Specification<ChiTietSanPham> spec,
+            org.springframework.data.domain.Pageable pageable
+    );
+
     @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
     Optional<ChiTietSanPham> findByIdAndXoaMemFalse(String id);
 

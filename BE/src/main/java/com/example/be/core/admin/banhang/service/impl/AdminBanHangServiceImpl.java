@@ -15,6 +15,8 @@ import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.infrastructure.constants.DeliveryMethod;
 import com.example.be.infrastructure.constants.HinhThucPhieuGiamGia;
 import com.example.be.infrastructure.constants.LoaiPhieuGiamGia;
+import com.example.be.infrastructure.constants.OrderType;
+import com.example.be.infrastructure.constants.PaymentConstants;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.exceptions.BusinessException;
@@ -35,6 +37,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -61,6 +64,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     private final LichSuTrangThaiHoaDonRepository lichSuTrangThaiHoaDonRepository;
     private final com.example.be.core.admin.giaoca.repository.AdminGiaoCaRepository giaoCaRepository;
     private final com.example.be.repository.PhieuGiamGiaCaNhanRepository phieuGiamGiaCaNhanRepository;
+    private final com.example.be.core.admin.sanpham.repository.AdminAnhChiTietSanPhamRepository anhChiTietSanPhamRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -458,10 +462,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         saveDefaultShippingAddressIfNeeded(hd, request);
 
         if (request.getTienMat() != null && request.getTienMat().compareTo(BigDecimal.ZERO) > 0) {
-            createGiaoDich(hd, "TIEN_MAT", request.getTienMat(), null);
+            createGiaoDich(hd, PaymentConstants.METHOD_TIEN_MAT, request.getTienMat(), null);
         }
         if (request.getTienChuyenKhoan() != null && request.getTienChuyenKhoan().compareTo(BigDecimal.ZERO) > 0) {
-            createGiaoDich(hd, "CHUYEN_KHOAN", request.getTienChuyenKhoan(), request.getMaGiaoDich());
+            createGiaoDich(hd, PaymentConstants.METHOD_CHUYEN_KHOAN, request.getTienChuyenKhoan(), request.getMaGiaoDich());
         }
 
         String nguoiThucHienName = SecurityUtils.getCurrentUserEmail()
@@ -597,24 +601,42 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         List<ChiTietSanPham> variants = chiTietSanPhamRepository.searchForPOS(keyword, thuongHieu, chatLieu, xuatXu, mucDich, mauSac, kichCo, minGia, maxGia, pageable);
         Map<String, List<ChiTietDotGiamGia>> discountMap = getDiscountRelationMap(variants);
 
+        List<String> ids = variants.stream().map(ChiTietSanPham::getId).toList();
+        Map<String, String> imageMap = new HashMap<>();
+        if (!ids.isEmpty()) {
+            List<AnhChiTietSanPham> images = anhChiTietSanPhamRepository
+                    .findAllByChiTietSanPhamIdInAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(ids);
+            for (AnhChiTietSanPham img : images) {
+                if (img.getChiTietSanPham() != null && img.getDuongDanAnh() != null && !img.getDuongDanAnh().trim().isEmpty()) {
+                    imageMap.putIfAbsent(img.getChiTietSanPham().getId(), img.getDuongDanAnh());
+                }
+            }
+        }
+
         return variants
                 .stream()
-                .map(ct -> BanHangSanPhamResponse.builder()
-                        .id(ct.getId())
-                        .tenSanPham(ct.getSanPham() != null ? ct.getSanPham().getTen() : null)
-                        .maSanPham(ct.getSanPham() != null ? ct.getSanPham().getMa() : null)
-                        .maChiTietSanPham(ct.getMaChiTietSanPham())
-                        .tenThuongHieu(ct.getSanPham() != null && ct.getSanPham().getThuongHieu() != null ? ct.getSanPham().getThuongHieu().getTen() : null)
-                        .tenChatLieu(ct.getSanPham() != null && ct.getSanPham().getChatLieu() != null ? ct.getSanPham().getChatLieu().getTen() : null)
-                        .tenDeGiay(ct.getSanPham() != null && ct.getSanPham().getDeGiay() != null ? ct.getSanPham().getDeGiay().getTen() : null)
-                        .tenMauSac(ct.getMauSac() != null ? ct.getMauSac().getTen() : null)
-                        .tenKichThuoc(ct.getKichThuoc() != null ? ct.getKichThuoc().getTen() : null)
-                        .soLuongTon(ct.getSoLuong())
-                        .giaGoc(getActiveDiscountPercent(ct, discountMap).compareTo(BigDecimal.ZERO) > 0 ? ct.getGiaBan() : null)
-                        .giaBan(getEffectiveVariantPrice(ct, discountMap))
-                        .phanTramGiam(getActiveDiscountPercent(ct, discountMap))
-                        .hinhAnh(getHinhAnhVariant(ct))
-                        .build())
+                .map(ct -> {
+                    String imgUrl = imageMap.get(ct.getId());
+                    if (imgUrl == null && ct.getSanPham() != null) {
+                        imgUrl = ct.getSanPham().getHinhAnh();
+                    }
+                    return BanHangSanPhamResponse.builder()
+                            .id(ct.getId())
+                            .tenSanPham(ct.getSanPham() != null ? ct.getSanPham().getTen() : null)
+                            .maSanPham(ct.getSanPham() != null ? ct.getSanPham().getMa() : null)
+                            .maChiTietSanPham(ct.getMaChiTietSanPham())
+                            .tenThuongHieu(ct.getSanPham() != null && ct.getSanPham().getThuongHieu() != null ? ct.getSanPham().getThuongHieu().getTen() : null)
+                            .tenChatLieu(ct.getSanPham() != null && ct.getSanPham().getChatLieu() != null ? ct.getSanPham().getChatLieu().getTen() : null)
+                            .tenDeGiay(ct.getSanPham() != null && ct.getSanPham().getDeGiay() != null ? ct.getSanPham().getDeGiay().getTen() : null)
+                            .tenMauSac(ct.getMauSac() != null ? ct.getMauSac().getTen() : null)
+                            .tenKichThuoc(ct.getKichThuoc() != null ? ct.getKichThuoc().getTen() : null)
+                            .soLuongTon(ct.getSoLuong())
+                            .giaGoc(getActiveDiscountPercent(ct, discountMap).compareTo(BigDecimal.ZERO) > 0 ? ct.getGiaBan() : null)
+                            .giaBan(getEffectiveVariantPrice(ct, discountMap))
+                            .phanTramGiam(getActiveDiscountPercent(ct, discountMap))
+                            .hinhAnh(imgUrl)
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
@@ -878,7 +900,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         if (deliveryMethod != null) {
             return deliveryMethod;
         }
-        return "ONLINE".equalsIgnoreCase(legacyLoaiDon) || "GIAO_HANG".equalsIgnoreCase(legacyLoaiDon)
+        return OrderType.ONLINE.name().equalsIgnoreCase(legacyLoaiDon) || "GIAO_HANG".equalsIgnoreCase(legacyLoaiDon)
                 ? DeliveryMethod.SHIPPING
                 : DeliveryMethod.TAKEAWAY;
     }
@@ -890,7 +912,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     private void createGiaoDich(HoaDon hd, String maPTTT, BigDecimal soTien, String maGiaoDichNgoai) {
         PhuongThucThanhToan pt = phuongThucThanhToanRepository.findByMa(maPTTT);
         if (pt == null) {
-            pt = new PhuongThucThanhToan(maPTTT, maPTTT.equals("TIEN_MAT") ? "Tiền mặt" : "Chuyển khoản");
+            pt = new PhuongThucThanhToan(maPTTT, PaymentConstants.METHOD_TIEN_MAT.equals(maPTTT) ? "Tiền mặt" : "Chuyển khoản");
             phuongThucThanhToanRepository.save(pt);
         }
         GiaoDichThanhToan gd = GiaoDichThanhToan.builder()
@@ -898,7 +920,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .phuongThucThanhToan(pt)
                 .soTien(soTien)
                 .maGiaoDichNgoai(maGiaoDichNgoai)
-                .loaiGiaoDich("THANH_TOAN")
+                .loaiGiaoDich(PaymentConstants.TYPE_THANH_TOAN)
                 .build();
         // Không set id thủ công: để id=null → Spring Data JPA gọi persist() → @PrePersist set id qua @GeneratedValue
         // Nếu set id thủ công → isNew()=false → Spring Data JPA gọi merge() → StaleObjectStateException
@@ -1056,26 +1078,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         List<com.example.be.core.admin.banhang.model.response.ProductSuggestionResponse> suggestions = java.util.Collections.emptyList();
         
         // Lấy danh sách sản phẩm có đợt giảm giá đang hoạt động
-        // Sử dụng repository method có sẵn
-        List<ChiTietDotGiamGia> allDiscounts = chiTietDotGiamGiaRepository.findAll();
-        
         long currentTime = System.currentTimeMillis();
+        List<ChiTietDotGiamGia> activeDiscounts = chiTietDotGiamGiaRepository.findActiveDiscounts(currentTime);
         
-        // Filter active discounts based on time and status
-        List<ChiTietDotGiamGia> activeDiscounts = allDiscounts.stream()
-                .filter(d -> {
-                    DotGiamGia dot = d.getDotGiamGia();
-                    if (dot == null) return false;
-                    // Check time range
-                    Long start = dot.getNgayBatDau();
-                    Long end = dot.getNgayKetThuc();
-                    if (start != null && currentTime < start) return false;
-                    if (end != null && currentTime > end) return false;
-                    return true;
-                })
-                .collect(Collectors.toList());
-        
-        if (activeDiscounts.isEmpty() || currentTotal.compareTo(BigDecimal.ZERO) == 0) {
+        if (activeDiscounts == null || activeDiscounts.isEmpty() || currentTotal.compareTo(BigDecimal.ZERO) == 0) {
             return suggestions;
         }
         
@@ -1083,7 +1089,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         for (ChiTietDotGiamGia discount : activeDiscounts) {
             ChiTietSanPham variant = discount.getChiTietSanPham();
             if (variant != null && variant.getSanPham() != null 
-                    && Boolean.TRUE.equals(variant.getSanPham().getTrangThai())) {
+                    && variant.getSanPham().getTrangThai() == TrangThai.DANG_HOAT_DONG) {
                 
                 BigDecimal giaBan = variant.getGiaBan();
                 DotGiamGia dotGiamGia = discount.getDotGiamGia();

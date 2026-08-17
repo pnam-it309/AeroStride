@@ -19,6 +19,7 @@ class AdminBanHangHoaDonRepositoryTest {
         assertTrue(repository.findAllPendingPOSOrders(
                 OrderStatus.CHO_XAC_NHAN,
                 OrderType.IN_STORE,
+                null,
                 null
         ).isEmpty());
     }
@@ -44,6 +45,7 @@ class AdminBanHangHoaDonRepositoryTest {
         var pendingOrders = repository.findAllPendingPOSOrders(
                 OrderStatus.CHO_XAC_NHAN,
                 OrderType.IN_STORE,
+                null,
                 null
         );
 

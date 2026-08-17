@@ -130,6 +130,6 @@ public class PaymentOrderFinalizer {
         if (hoaDon.getOrderType() != null) {
             return hoaDon.getOrderType() == OrderType.ONLINE;
         }
-        return hoaDon.getNhanVien() == null && "ONLINE".equalsIgnoreCase(hoaDon.getLoaiDon());
+        return hoaDon.getNhanVien() == null && OrderType.ONLINE.name().equalsIgnoreCase(hoaDon.getLoaiDon());
     }
 }

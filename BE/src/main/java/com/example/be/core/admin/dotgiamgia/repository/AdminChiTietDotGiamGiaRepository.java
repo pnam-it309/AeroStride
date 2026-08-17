@@ -17,4 +17,10 @@ public interface AdminChiTietDotGiamGiaRepository extends ChiTietDotGiamGiaRepos
 
     @EntityGraph(attributePaths = {"dotGiamGia", "chiTietSanPham"})
     List<ChiTietDotGiamGia> findAllByChiTietSanPhamIdIn(List<String> chiTietSanPhamIds);
+
+    @EntityGraph(attributePaths = {"dotGiamGia", "chiTietSanPham", "chiTietSanPham.sanPham"})
+    @org.springframework.data.jpa.repository.Query("SELECT c FROM ChiTietDotGiamGia c WHERE " +
+           "c.dotGiamGia.trangThai = com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG AND " +
+           "c.dotGiamGia.ngayBatDau <= :now AND c.dotGiamGia.ngayKetThuc >= :now")
+    List<ChiTietDotGiamGia> findActiveDiscounts(@org.springframework.data.repository.query.Param("now") Long now);
 }

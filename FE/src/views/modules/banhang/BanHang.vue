@@ -79,8 +79,16 @@ const openChotCaModal = async () => {
     showGiaoCaModal.value = true;
 };
 
-const handleGiaoCaSuccess = () => {
-    checkGiaoCa();
+const handleGiaoCaSuccess = async () => {
+    await checkGiaoCa();
+    if (orders.value.length === 0) {
+        await initializePendingOrders({
+            fetchPendingOrders: () => dichVuDonHang.layDonHangCho(),
+            setPendingOrders: setOrders,
+            createEmptyOrder: () => createNewOrder({ force: true, silent: true }),
+            preferredOrderId: getStoredActiveOrderId()
+        });
+    }
 };
 
 // Address and Quick Add
@@ -817,12 +825,18 @@ onMounted(async () => {
         await checkGiaoCa();
         fetchProvincesShip();
         await loadCurrentEmployeeDetails();
-        await initializePendingOrders({
-            fetchPendingOrders: () => dichVuDonHang.layDonHangCho(),
-            setPendingOrders: setOrders,
-            createEmptyOrder: () => createNewOrder({ force: true, silent: true }),
-            preferredOrderId: getStoredActiveOrderId()
-        });
+
+        if (isStaff.value && !currentGiaoCa.value) {
+            // Nhân viên chưa mở ca: Mở modal mở ca để nhân viên nhập tiền đầu két, không tự tạo đơn rỗng ngầm tránh lỗi 400
+            openMoCaModal();
+        } else {
+            await initializePendingOrders({
+                fetchPendingOrders: () => dichVuDonHang.layDonHangCho(),
+                setPendingOrders: setOrders,
+                createEmptyOrder: () => createNewOrder({ force: true, silent: true }),
+                preferredOrderId: getStoredActiveOrderId()
+            });
+        }
 
         // Tải danh sách + voucher tốt nhất một lần khi khởi tạo.
         try {
@@ -1212,6 +1226,17 @@ watch(
 
 // Logic: Hóa đơn
 const createNewOrder = async ({ silent = false, force = false } = {}) => {
+    if (isStaff.value && !currentGiaoCa.value) {
+        openMoCaModal();
+        if (!silent) {
+            addNotification({
+                title: 'Chưa mở ca làm việc',
+                subtitle: 'Vui lòng mở ca làm việc trước khi tạo hóa đơn.',
+                color: 'warning'
+            });
+        }
+        return;
+    }
     if (isProcessing.value && !force) return;
     if (orders.value.length >= MAX_WAITING_ORDERS) {
         if (!silent) {
@@ -2157,10 +2182,22 @@ const handleVnPayCallbackFromUrl = async () => {
 
             <!-- Empty Orders State -->
             <div v-else class="empty-orders-state">
-                <v-icon size="56" color="grey-lighten-1">mdi-receipt-text-outline</v-icon>
-                <div class="text-subtitle-1 font-weight-bold mt-3">Chưa có hóa đơn chờ</div>
-                <div class="text-body-2 text-grey-darken-1 mt-1">Tạo hóa đơn mới để bắt đầu bán hàng tại quầy.</div>
-                <v-btn color="primary" class="mt-4 rounded-lg" :loading="isProcessing" @click="createNewOrder"> Tạo hóa đơn </v-btn>
+                <template v-if="isStaff && !currentGiaoCa">
+                    <v-icon size="56" color="warning">mdi-store-clock-outline</v-icon>
+                    <div class="text-subtitle-1 font-weight-bold mt-3">Chưa Mở Ca Làm Việc</div>
+                    <div class="text-body-2 text-grey-darken-1 mt-1">
+                        Bạn cần mở ca làm việc và kiểm két tiền trước khi bắt đầu tạo hóa đơn bán hàng tại quầy.
+                    </div>
+                    <v-btn color="primary" class="mt-4 rounded-lg px-6 font-weight-bold" prepend-icon="mdi-store-clock" @click="openMoCaModal">
+                        Mở Ca Làm Việc Ngay
+                    </v-btn>
+                </template>
+                <template v-else>
+                    <v-icon size="56" color="grey-lighten-1">mdi-receipt-text-outline</v-icon>
+                    <div class="text-subtitle-1 font-weight-bold mt-3">Chưa có hóa đơn chờ</div>
+                    <div class="text-body-2 text-grey-darken-1 mt-1">Tạo hóa đơn mới để bắt đầu bán hàng tại quầy.</div>
+                    <v-btn color="primary" class="mt-4 rounded-lg" :loading="isProcessing" @click="createNewOrder"> Tạo hóa đơn </v-btn>
+                </template>
             </div>
         </div>
 

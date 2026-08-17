@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{email/base-template :: layout(~{::#main-content})}">
+<head>
+    <title>Đơn hàng đang được vận chuyển</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+
+<div id="main-content">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding: 10px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:white;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;max-width:600px;">
+          <tr>
+            <td style="background:linear-gradient(135deg, #1e257c 0%, #2563eb 100%);padding:28px;text-align:center;">
+              <h1 style="color:white;margin:0;font-size:24px;letter-spacing:1px;">🚚 AeroStride Delivery</h1>
+              <p style="color:#93c5fd;margin:6px 0 0;font-size:14px;">
+                Đơn hàng của bạn đang trên đường vận chuyển!
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 36px;">
+              <p style="font-size:16px;color:#1e293b;margin:0 0 12px;">
+                Xin chào <strong th:text="${tenKhachHang ?: 'Quý khách'}">Quý khách</strong>,
+              </p>
+              <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 24px;">
+                AeroStride xin thông báo đơn hàng <strong style="color:#1e257c;" th:text="${'#' + maHoaDon}">#HD123456</strong> đã được bàn giao cho đối tác vận chuyển và đang trên đường giao tới bạn.
+              </p>
+
+              <!-- Box Thông tin vận đơn -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <h3 style="margin:0 0 14px;font-size:15px;color:#1e293b;border-bottom:1px solid #e2e8f0;padding-bottom:8px;">
+                      📋 THÔNG TIN VẬN CHUYỂN
+                    </h3>
+                    <p style="margin:0 0 10px;font-size:14px;color:#475569;">
+                      <strong>Mã vận đơn:</strong>
+                      <span style="font-family:monospace;font-size:15px;font-weight:bold;color:#2563eb;background:#eff6ff;padding:3px 8px;border-radius:4px;"
+                            th:text="${maVanDon}">GHN-123456789</span>
+                    </p>
+                    <p style="margin:0 0 10px;font-size:13px;color:#475569;">
+                      <strong>Đơn vị vận chuyển:</strong> <span th:text="${donViVanChuyen}">Giao Hàng Nhanh (GHN)</span>
+                    </p>
+                    <p style="margin:0 0 10px;font-size:13px;color:#475569;" th:if="${ngayGiaoDuKien != null}">
+                      <strong>Ngày dự kiến giao:</strong>
+                      <span style="color:#059669;font-weight:bold;" th:text="${#dates.format(new java.util.Date(ngayGiaoDuKien), 'dd/MM/yyyy')}">18/08/2026</span>
+                    </p>
+                    <p style="margin:0;font-size:13px;color:#64748b;">
+                      💡 <em>Lưu ý: Bạn vui lòng chú ý điện thoại để shipper có thể liên hệ thuận tiện nhất khi giao hàng.</em>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Action Button -->
+              <div style="text-align:center;margin-top:28px;">
+                <a th:href="${linkTraCuu ?: (baseUrl + '/orders')}"
+                   style="display:inline-block;padding:12px 32px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:9999px;font-size:14px;font-weight:bold;box-shadow:0 4px 6px -1px rgba(37,99,235,0.2);">
+                  🔍 Tra cứu hành trình đơn hàng
+                </a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>
+
+</body>
+</html>

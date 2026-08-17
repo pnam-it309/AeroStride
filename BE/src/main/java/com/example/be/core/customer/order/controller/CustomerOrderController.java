@@ -8,6 +8,7 @@ import com.example.be.core.customer.order.model.response.CustomerOrderResponse;
 import com.example.be.core.customer.order.service.CustomerOrderService;
 import com.example.be.entity.PhieuGiamGia;
 import com.example.be.infrastructure.constants.RoutesConstant;
+import com.example.be.infrastructure.constants.VaiTro;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +48,7 @@ public class CustomerOrderController {
 
     // Lấy danh sách đơn hàng cá nhân của khách hàng (có thể lọc theo trạng thái)
     @GetMapping("/my-orders")
-    @PreAuthorize("hasRole('KHACH_HANG')")
+    @PreAuthorize(VaiTro.PRE_AUTH_CUSTOMER)
     public ResponseEntity<ApiResponse<List<CustomerOrderResponse>>> getMyOrders(
             @RequestParam(required = false) String trangThai,
             @RequestParam(required = false) String keyword,
@@ -60,7 +61,7 @@ public class CustomerOrderController {
 
     // Lấy thống kê đơn hàng cá nhân
     @GetMapping("/stats")
-    @PreAuthorize("hasRole('KHACH_HANG')")
+    @PreAuthorize(VaiTro.PRE_AUTH_CUSTOMER)
     public ResponseEntity<ApiResponse<com.example.be.core.customer.order.model.response.CustomerOrderStatsResponse>> getMyOrderStats(
             Authentication authentication
     ) {
@@ -95,7 +96,7 @@ public class CustomerOrderController {
 
     // Hủy đơn hàng (nếu đơn hàng đang ở trạng thái cho phép hủy)
     @PutMapping("/{id}/cancel")
-    @PreAuthorize("hasRole('KHACH_HANG')")
+    @PreAuthorize(VaiTro.PRE_AUTH_CUSTOMER)
     public ResponseEntity<ApiResponse<Void>> cancelOrder(
             @PathVariable String id,
             Authentication authentication
@@ -107,7 +108,7 @@ public class CustomerOrderController {
 
     // Khách cập nhật thông tin nhận hàng (sđt, địa chỉ, ghi chú) khi đơn đang chờ xác nhận
     @PutMapping("/{id}/shipping")
-    @PreAuthorize("hasRole('KHACH_HANG')")
+    @PreAuthorize(VaiTro.PRE_AUTH_CUSTOMER)
     public ResponseEntity<ApiResponse<CustomerOrderResponse>> updateShipping(
             @PathVariable String id,
             @Valid @RequestBody CustomerUpdateShippingRequest request,
@@ -120,7 +121,7 @@ public class CustomerOrderController {
 
     // Khách cập nhật số lượng sản phẩm (chỉ đơn tiền mặt, đang chờ xác nhận)
     @PutMapping("/{id}/items")
-    @PreAuthorize("hasRole('KHACH_HANG')")
+    @PreAuthorize(VaiTro.PRE_AUTH_CUSTOMER)
     public ResponseEntity<ApiResponse<CustomerOrderResponse>> updateItems(
             @PathVariable String id,
             @Valid @RequestBody CustomerUpdateItemsRequest request,
