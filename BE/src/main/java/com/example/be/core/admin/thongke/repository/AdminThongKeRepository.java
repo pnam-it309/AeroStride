@@ -71,41 +71,41 @@ public interface AdminThongKeRepository extends HoaDonRepository,
     List<Object[]> getDonHangGanDay(PageRequest pageRequest);
 
     // Top sản phẩm bán chạy
-    @Query("""
-           SELECT sp.ma,
-                  sp.ten,
-                  th.ten,
-                  COALESCE(SUM(hdct.soLuong * hdct.donGia), 0),
-                  COALESCE(SUM(hdct.soLuong), 0)
-           FROM HoaDonChiTiet hdct
-           JOIN hdct.chiTietSanPham ctsp
-           JOIN ctsp.sanPham sp
-           LEFT JOIN sp.thuongHieu th
-           JOIN hdct.hoaDon hd
-           WHERE CAST(hd.trangThai AS int) = 4
-           AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
-           AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
-           GROUP BY sp.id, sp.ma, sp.ten, th.ten
-           ORDER BY SUM(hdct.soLuong) DESC
-           """)
+    @Query(value = """
+           SELECT sp.ma_san_pham AS ma,
+                  sp.ten_san_pham AS ten,
+                  COALESCE(th.ten_thuong_hieu, 'Khác') AS thuongHieu,
+                  COALESCE(SUM(hdct.so_luong * hdct.don_gia), 0) AS doanhThu,
+                  COALESCE(SUM(hdct.so_luong), 0) AS soLuongBan
+           FROM hoa_don_chi_tiet hdct
+           JOIN chi_tiet_san_pham ctsp ON hdct.id_chi_tiet_san_pham = ctsp.id
+           JOIN san_pham sp ON ctsp.id_san_pham = sp.id
+           LEFT JOIN thuong_hieu th ON sp.id_thuong_hieu = th.id
+           JOIN hoa_don hd ON hdct.id_hoa_don = hd.id
+           WHERE hd.trang_thai = 4
+             AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
+             AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+           GROUP BY sp.id, sp.ma_san_pham, sp.ten_san_pham, th.ten_thuong_hieu
+           ORDER BY SUM(hdct.so_luong) DESC
+           """, nativeQuery = true)
     List<Object[]> getTopProductsData(
             @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay, org.springframework.data.domain.Pageable pageable);
 
-    @Query("""
-           SELECT COALESCE(th.ten, 'Khác'),
-                  COALESCE(SUM(hdct.soLuong * hdct.donGia), 0)
-           FROM HoaDonChiTiet hdct
-           JOIN hdct.chiTietSanPham ctsp
-           JOIN ctsp.sanPham sp
-           LEFT JOIN sp.thuongHieu th
-           JOIN hdct.hoaDon hd
-           WHERE CAST(hd.trangThai AS int) = 4
-           AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
-           AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
-           GROUP BY th.ten
-           HAVING COALESCE(SUM(hdct.soLuong * hdct.donGia), 0) > 0
-           ORDER BY SUM(hdct.soLuong * hdct.donGia) DESC
-           """)
+    @Query(value = """
+           SELECT COALESCE(th.ten_thuong_hieu, 'Khác') AS thuongHieu,
+                  COALESCE(SUM(hdct.so_luong * hdct.don_gia), 0) AS doanhThu
+           FROM hoa_don_chi_tiet hdct
+           JOIN chi_tiet_san_pham ctsp ON hdct.id_chi_tiet_san_pham = ctsp.id
+           JOIN san_pham sp ON ctsp.id_san_pham = sp.id
+           LEFT JOIN thuong_hieu th ON sp.id_thuong_hieu = th.id
+           JOIN hoa_don hd ON hdct.id_hoa_don = hd.id
+           WHERE hd.trang_thai = 4
+             AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
+             AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+           GROUP BY th.id, th.ten_thuong_hieu
+           HAVING COALESCE(SUM(hdct.so_luong * hdct.don_gia), 0) > 0
+           ORDER BY doanhThu DESC
+           """, nativeQuery = true)
     List<Object[]> getBrandRevenueData(
             @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
@@ -157,33 +157,34 @@ public interface AdminThongKeRepository extends HoaDonRepository,
     List<Object[]> getRevenueCycleStats(@Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
     @Query(value = """
-           SELECT sp.ma as ma,
-                  sp.ten as ten,
-                  th.ten as thuongHieu,
-                  SUM(hdct.soLuong * hdct.donGia) as doanhThu,
-                  SUM(hdct.soLuong) as soLuongBan
-           FROM HoaDonChiTiet hdct
-           JOIN hdct.chiTietSanPham ctsp
-           JOIN ctsp.sanPham sp
-           LEFT JOIN sp.thuongHieu th
-           JOIN hdct.hoaDon hd
-           WHERE CAST(hd.trangThai AS int) = 4
-             AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
-             AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
-             AND (:keyword IS NULL OR LOWER(sp.ma) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten) LIKE LOWER(CONCAT('%', :keyword, '%')))
-           GROUP BY sp.id, sp.ma, sp.ten, th.ten
+           SELECT sp.ma_san_pham AS ma,
+                  sp.ten_san_pham AS ten,
+                  COALESCE(th.ten_thuong_hieu, 'Khác') AS thuongHieu,
+                  COALESCE(SUM(hdct.so_luong * hdct.don_gia), 0) AS doanhThu,
+                  COALESCE(SUM(hdct.so_luong), 0) AS soLuongBan
+           FROM hoa_don_chi_tiet hdct
+           JOIN chi_tiet_san_pham ctsp ON hdct.id_chi_tiet_san_pham = ctsp.id
+           JOIN san_pham sp ON ctsp.id_san_pham = sp.id
+           LEFT JOIN thuong_hieu th ON sp.id_thuong_hieu = th.id
+           JOIN hoa_don hd ON hdct.id_hoa_don = hd.id
+           WHERE hd.trang_thai = 4
+             AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
+             AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+             AND (:keyword IS NULL OR :keyword = '' OR LOWER(sp.ma_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')))
+           GROUP BY sp.id, sp.ma_san_pham, sp.ten_san_pham, th.ten_thuong_hieu
            """,
            countQuery = """
            SELECT COUNT(DISTINCT sp.id)
-           FROM HoaDonChiTiet hdct
-           JOIN hdct.chiTietSanPham ctsp
-           JOIN ctsp.sanPham sp
-           JOIN hdct.hoaDon hd
-           WHERE CAST(hd.trangThai AS int) = 4
-             AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
-             AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
-             AND (:keyword IS NULL OR LOWER(sp.ma) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten) LIKE LOWER(CONCAT('%', :keyword, '%')))
-           """)
+           FROM hoa_don_chi_tiet hdct
+           JOIN chi_tiet_san_pham ctsp ON hdct.id_chi_tiet_san_pham = ctsp.id
+           JOIN san_pham sp ON ctsp.id_san_pham = sp.id
+           JOIN hoa_don hd ON hdct.id_hoa_don = hd.id
+           WHERE hd.trang_thai = 4
+             AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
+             AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+             AND (:keyword IS NULL OR :keyword = '' OR LOWER(sp.ma_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')))
+           """,
+           nativeQuery = true)
     org.springframework.data.domain.Page<Object[]> getProductStatistics(
             @Param("tuNgay") Long tuNgay,
             @Param("denNgay") Long denNgay,

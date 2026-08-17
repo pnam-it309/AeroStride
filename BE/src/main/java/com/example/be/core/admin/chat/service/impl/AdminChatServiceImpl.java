@@ -7,6 +7,7 @@ import com.example.be.core.admin.chat.repository.AdminTinNhanRepository;
 import com.example.be.core.admin.chat.service.AdminChatService;
 import com.example.be.infrastructure.constants.ChatConstants;
 import com.example.be.infrastructure.constants.MessageConstants;
+import com.example.be.infrastructure.constants.VaiTro;
 import com.example.be.entity.CuocHoiThoai;
 import com.example.be.entity.TinNhan;
 import com.example.be.entity.NhanVien;
@@ -131,6 +132,8 @@ public class AdminChatServiceImpl implements AdminChatService {
     @Transactional(readOnly = true)
     public List<AdminChatResponse> getAllConversations(String type, String status, String keyword) {
         String currentUsername = getCurrentUsername();
+        NhanVien currentNv = nhanVienRepository.findByTenTaiKhoan(currentUsername).orElse(null);
+        boolean isManager = currentNv != null && VaiTro.isManagementRole(currentNv);
         
         List<AdminChatResponse> allConvs = conversationRepository.findAllWithDetails().stream()
                 .filter(c -> {
@@ -140,16 +143,19 @@ public class AdminChatServiceImpl implements AdminChatService {
                         return true;
                     }
                     
-                    // 2. Nếu là CUSTOMER và đã ACTIVE hoặc CLOSED: Chỉ người tiếp nhận mới thấy.
+                    // 2. Nếu là CUSTOMER và đã ACTIVE hoặc CLOSED: Quản lý thấy tất cả, nhân viên thấy cuộc mình tiếp nhận.
                     if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
+                        if (isManager) {
+                            return true;
+                        }
                         return c.getNhanVien() != null && c.getNhanVien().getTenTaiKhoan().equals(currentUsername);
                     }
                     
-                    // 3. Nếu là INTERNAL: Chỉ người gửi hoặc người nhận mới thấy.
+                    // 3. Nếu là INTERNAL: Quản lý hoặc người gửi/người nhận mới thấy.
                     if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
                         boolean isSender = c.getNhanVien() != null && c.getNhanVien().getTenTaiKhoan().equals(currentUsername);
                         boolean isReceiver = c.getNhanVienNhan() != null && c.getNhanVienNhan().getTenTaiKhoan().equals(currentUsername);
-                        return isSender || isReceiver;
+                        return isManager || isSender || isReceiver;
                     }
                     
                     return false;
@@ -504,6 +510,11 @@ public class AdminChatServiceImpl implements AdminChatService {
             redisTemplate.convertAndSend(ChatConstants.REDIS_CHANNEL_NOTIFICATIONS, notification);
         } catch (DataAccessException ex) {
             log.warn("Redis notification publish failed; continuing without cross-instance fanout. Error: {}", ex.getMessage());
+        }
+        try {
+            messagingTemplate.convertAndSend(ChatConstants.TOPIC_NOTIFICATIONS, notification);
+        } catch (Exception ex) {
+            log.warn("Local STOMP notification broadcast failed: {}", ex.getMessage());
         }
     }
 

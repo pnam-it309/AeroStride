@@ -270,35 +270,42 @@ onMounted(() => {
     notificationStore.resetUnreadChat();
 
     chatSocket.connect(() => {
-        chatSocket.subscribe(CHAT_TOPICS.NOTIFICATIONS, (msg) => {
+        chatSocket.subscribe(CHAT_TOPICS.NOTIFICATIONS, () => {
             fetchConversations(true);
         });
 
         chatSocket.subscribe(CHAT_TOPICS.MESSAGES, (msg) => {
             const data = typeof msg === 'string' ? JSON.parse(msg) : msg;
+            if (!data) return;
 
             const currentUsername = authStore.user?.username;
-            const isMyChat = !data.staffId || data.staffId === currentUsername || data.secondStaffId === currentUsername;
+            const isAdmin = authStore.isAdmin;
+            const isMyChat =
+                isAdmin ||
+                !data.staffId ||
+                data.staffId === currentUsername ||
+                data.secondStaffId === currentUsername;
 
             if (!isMyChat) return;
 
-            if (data.sender === currentUsername) {
-                if (activeChat.value && data.conversationId === activeChat.value.id) {
-                    if (!chatMessages.value.find((m) => m.id === data.id)) {
-                        chatMessages.value.push(data);
-                        scrollToBottom();
-                    }
-                }
-                fetchConversations(true);
-                return;
-            }
+            const isCurrentActive =
+                activeChat.value &&
+                (activeChat.value.id === data.conversationId ||
+                    (activeChat.value.id.startsWith('NEW_INTERNAL_') &&
+                        (activeChat.value.id.includes(data.staffId) || activeChat.value.id.includes(data.secondStaffId))));
 
-            if (activeChat.value && data.conversationId === activeChat.value.id) {
-                chatMessages.value.push(data);
-                scrollToBottom();
-            } else {
+            if (isCurrentActive) {
+                if (activeChat.value.id.startsWith('NEW_INTERNAL_')) {
+                    activeChat.value.id = data.conversationId;
+                }
+                if (!chatMessages.value.find((m) => m.id === data.id)) {
+                    chatMessages.value.push(data);
+                    scrollToBottom();
+                }
+            } else if (data.sender !== currentUsername) {
                 notificationStore.incrementUnreadChat(data.conversationId);
             }
+
             fetchConversations(true);
         });
     });
@@ -652,6 +659,8 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/scss/tokens' as *;
+
 $blue-primary: #1a56db;
 $blue-dark: #143fa6;
 $blue-light: #e8eefb;
@@ -661,6 +670,11 @@ $blue-bg: #f0f4f8;
     height: calc(100vh - 64px);
     overflow: hidden;
     background: #fff;
+    font-family: $body-font-family !important;
+
+    * {
+        font-family: $body-font-family;
+    }
 }
 
 /* ========== SIDEBAR ========== */

@@ -181,6 +181,11 @@ public class CustomerChatServiceImpl implements CustomerChatService {
         } catch (DataAccessException ex) {
             log.warn("Redis notification publish failed; continuing. Error: {}", ex.getMessage());
         }
+        try {
+            messagingTemplate.convertAndSend(ChatConstants.TOPIC_NOTIFICATIONS, notification);
+        } catch (Exception ex) {
+            log.warn("Local STOMP notification broadcast failed: {}", ex.getMessage());
+        }
     }
 
     @Override

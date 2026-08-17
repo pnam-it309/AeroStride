@@ -5,87 +5,151 @@ class ChatSocketService {
     constructor() {
         this.client = null;
         this.connected = false;
-        this.subscriptions = new Map();
-        // Local bridge for cross-tab testing without a real backend socket server
+        this.subscriptions = new Map(); // topic -> Set of callbacks
+        this.stompSubscriptions = new Map(); // topic -> StompSubscription
         this.localBridge = new BroadcastChannel('aerostride_chat_local');
+
+        // Bridge listener for same-browser multi-tab synchronization
+        this.localBridge.addEventListener('message', (event) => {
+            const { topic, payload } = event.data || {};
+            if (topic && this.subscriptions.has(topic)) {
+                const callbacks = this.subscriptions.get(topic);
+                callbacks.forEach((cb) => {
+                    try {
+                        cb(payload);
+                    } catch (e) {
+                        console.error('Error in local bridge callback:', e);
+                    }
+                });
+            }
+        });
+    }
+
+    getWsUrl() {
+        const envWs = import.meta.env.VITE_WS_URL;
+        if (envWs) {
+            let cleanUrl = envWs.replace(/^wss:/i, 'https:').replace(/^ws:/i, 'http:');
+            return cleanUrl;
+        }
+        return '/ws-chat';
     }
 
     connect(onConnectedCallback) {
-        // Only try to connect if VITE_API_URL is available and looks like a real URL
-        const apiUrl = import.meta.env.VITE_API_URL;
-        if (!apiUrl || apiUrl.includes('localhost:5173')) {
-            console.warn('Real WebSocket skipped (Local Bridge active). Using BroadcastChannel for testing.');
-            this.connected = true;
-            if (onConnectedCallback) onConnectedCallback();
+        if (onConnectedCallback && this.connected) {
+            onConnectedCallback();
+        }
+
+        if (this.client && (this.client.active || this.connected)) {
             return;
         }
 
-        const wsUrl = import.meta.env.VITE_WS_URL || '/ws-chat';
-        let targetEndpoint = wsUrl.includes('ws-chat') ? wsUrl : '/ws-chat';
-        targetEndpoint = targetEndpoint.replace(/^wss:/i, 'https:').replace(/^ws:/i, 'http:');
-        if (!targetEndpoint.startsWith('http') && !targetEndpoint.startsWith('/')) {
-            targetEndpoint = '/ws-chat';
-        }
-
-        // Tự động xây dựng URL WSS/WS tuyệt đối cho native WebSocket
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const nativeWsUrl = targetEndpoint.startsWith('http')
-            ? targetEndpoint.replace(/^http/, 'ws') + '/websocket'
-            : `${protocol}//${window.location.host}${targetEndpoint}/websocket`;
+        const endpoint = this.getWsUrl();
 
         this.client = new Client({
-            brokerURL: nativeWsUrl,
             webSocketFactory: () =>
-                new SockJS(targetEndpoint, null, {
+                new SockJS(endpoint, null, {
                     transports: ['websocket', 'xhr-streaming', 'xhr-polling']
                 }),
-            reconnectDelay: 10000,
+            reconnectDelay: 2500,
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
             onConnect: () => {
+                console.log('✅ Chat WebSocket (STOMP) connected to', endpoint);
                 this.connected = true;
-                if (onConnectedCallback) onConnectedCallback();
+
+                // Re-subscribe all active topics
+                this.resubscribeAll();
+
+                if (onConnectedCallback) {
+                    onConnectedCallback();
+                }
+            },
+            onDisconnect: () => {
+                this.connected = false;
+                this.stompSubscriptions.clear();
             },
             onStompError: (frame) => {
                 console.warn('Socket Stomp Error:', frame.headers ? frame.headers['message'] : frame);
             },
-            onWebSocketError: () => {
-                console.warn('WebSocket connection degraded, using local bridge for messaging.');
-                this.connected = true;
-                if (onConnectedCallback) onConnectedCallback();
+            onWebSocketError: (event) => {
+                console.warn('WebSocket transport error, will auto-reconnect:', event);
             }
         });
 
         this.client.activate();
     }
 
+    resubscribeAll() {
+        if (!this.client || !this.connected) return;
+
+        this.subscriptions.forEach((callbacks, topic) => {
+            if (callbacks.size > 0 && !this.stompSubscriptions.has(topic)) {
+                try {
+                    const stompSub = this.client.subscribe(topic, (message) => {
+                        try {
+                            const data = JSON.parse(message.body);
+                            const topicCallbacks = this.subscriptions.get(topic);
+                            if (topicCallbacks) {
+                                topicCallbacks.forEach((cb) => cb(data));
+                            }
+                        } catch (e) {
+                            console.error('Error parsing STOMP message for topic:', topic, e);
+                        }
+                    });
+                    this.stompSubscriptions.set(topic, stompSub);
+                } catch (err) {
+                    console.error('Error subscribing to topic:', topic, err);
+                }
+            }
+        });
+    }
+
     subscribe(topic, callback) {
-        // Real subscription
-        let stompSub = null;
-        if (this.client && this.connected) {
-            stompSub = this.client.subscribe(topic, (message) => {
-                if (callback) callback(JSON.parse(message.body));
-            });
+        if (!this.subscriptions.has(topic)) {
+            this.subscriptions.set(topic, new Set());
+        }
+        this.subscriptions.get(topic).add(callback);
+
+        // If STOMP is already connected and this topic is not yet subscribed on client
+        if (this.client && this.connected && !this.stompSubscriptions.has(topic)) {
+            try {
+                const stompSub = this.client.subscribe(topic, (message) => {
+                    try {
+                        const data = JSON.parse(message.body);
+                        const topicCallbacks = this.subscriptions.get(topic);
+                        if (topicCallbacks) {
+                            topicCallbacks.forEach((cb) => cb(data));
+                        }
+                    } catch (e) {
+                        console.error('Error parsing STOMP message for topic:', topic, e);
+                    }
+                });
+                this.stompSubscriptions.set(topic, stompSub);
+            } catch (err) {
+                console.error('Error subscribing to topic on STOMP:', topic, err);
+            }
         }
 
-        // Local bridge listener
-        const bridgeListener = (event) => {
-            if (event.data.topic === topic) {
-                callback(event.data.payload);
-            }
-        };
-        this.localBridge.addEventListener('message', bridgeListener);
-
+        // Return unsubscribe handle
         return {
             unsubscribe: () => {
-                if (stompSub) stompSub.unsubscribe();
-                this.localBridge.removeEventListener('message', bridgeListener);
+                const cbs = this.subscriptions.get(topic);
+                if (cbs) {
+                    cbs.delete(callback);
+                    if (cbs.size === 0) {
+                        this.subscriptions.delete(topic);
+                        const stompSub = this.stompSubscriptions.get(topic);
+                        if (stompSub) {
+                            stompSub.unsubscribe();
+                            this.stompSubscriptions.delete(topic);
+                        }
+                    }
+                }
             }
         };
     }
 
     send(destination, payload) {
-        // Send to real backend
         if (this.client && this.connected) {
             this.client.publish({
                 destination: destination,
@@ -93,9 +157,7 @@ class ChatSocketService {
             });
         }
 
-        // Broadcast to other local tabs/components
-        // We simulate the topic by mapping destination to topic
-        // e.g. /app/chat.send -> /topic/messages
+        // Broadcast to other local tabs
         this.localBridge.postMessage({
             topic: destination.replace('/app/', '/topic/'),
             payload: { ...payload, id: Date.now(), time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
@@ -103,8 +165,11 @@ class ChatSocketService {
     }
 
     disconnect() {
-        if (this.client) this.client.deactivate();
+        if (this.client) {
+            this.client.deactivate();
+        }
         this.connected = false;
+        this.stompSubscriptions.clear();
     }
 }
 

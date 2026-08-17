@@ -180,8 +180,8 @@ onMounted(() => {
         <!-- Top Header & Auto-Approval Banner Card -->
         <div class="d-flex flex-wrap align-center justify-space-between mb-4 mt-2 gap-3 header-actions">
             <div>
-                <div class="text-h6 font-weight-bold text-slate-800">Quản lý đánh giá sản phẩm</div>
-                <div class="text-caption text-slate-500">Kiểm duyệt, quản lý nhận xét và tự động phê duyệt đánh giá hợp lệ</div>
+                <div class="font-weight-bold text-slate-800" style="font-size: 18px">Quản lý đánh giá sản phẩm</div>
+                <div class="text-slate-500" style="font-size: 13px">Kiểm duyệt, quản lý nhận xét và tự động phê duyệt đánh giá hợp lệ</div>
             </div>
 
             <!-- Auto-Approval Toggle Switch Card -->
@@ -196,7 +196,7 @@ onMounted(() => {
                     </v-avatar>
                     <div>
                         <div class="d-flex align-center">
-                            <span class="text-subtitle-2 font-weight-bold text-slate-800">Tự động phê duyệt</span>
+                            <span class="font-weight-bold text-slate-800" style="font-size: 14px">Tự động phê duyệt</span>
                             <v-chip 
                                 size="x-small" 
                                 :color="configData.autoApprove ? 'success' : 'secondary'" 
@@ -206,7 +206,7 @@ onMounted(() => {
                                 {{ configData.autoApprove ? 'Đang BẬT' : 'Đang TẮT' }}
                             </v-chip>
                         </div>
-                        <div class="text-caption text-slate-500" style="font-size: 11px !important;">
+                        <div class="text-slate-500" style="font-size: 12px !important;">
                             {{ configData.autoApprove 
                                 ? 'Đánh giá hợp lệ sẽ hiển thị ngay lập tức' 
                                 : 'Mọi đánh giá phải chờ Admin duyệt thủ công' }}
@@ -297,23 +297,24 @@ onMounted(() => {
                                 <v-avatar size="38" color="indigo-lighten-5" class="border">
                                     <v-icon icon="mdi-account" color="indigo-darken-3" size="20"></v-icon>
                                 </v-avatar>
-                                <div class="d-flex flex-column">
-                                    <span class="font-weight-bold text-slate-800 text-body-2">{{ item.tenKhachHang || 'Khách vãng lai' }}</span>
-                                    <span class="text-caption text-slate-500 font-mono">{{ item.soDienThoai || 'Chưa có SĐT' }}</span>
+                                <div class="d-flex flex-column text-left">
+                                    <span class="font-weight-bold text-slate-800" style="font-size: 13px">{{ item.tenKhachHang || 'Khách vãng lai' }}</span>
+                                    <span class="text-slate-500" style="font-size: 12px">{{ item.soDienThoai || 'Chưa có SĐT' }}</span>
                                 </div>
                             </div>
                         </td>
 
                         <!-- Cột Sản phẩm -->
                         <td class="data-cell">
-                            <div class="d-flex align-center ga-3 my-2">
+                            <div class="d-flex align-center ga-3 my-2 text-left">
                                 <v-avatar size="48" rounded="lg" class="border bg-slate-50 flex-shrink-0">
                                     <v-img v-if="item.hinhAnhSanPham" :src="item.hinhAnhSanPham" cover></v-img>
                                     <PhotoIcon v-else size="22" class="text-slate-400" />
                                 </v-avatar>
                                 <div class="d-flex flex-column text-truncate" style="max-width: 200px">
                                     <span
-                                        class="text-body-2 font-weight-medium text-slate-800 text-truncate"
+                                        class="font-weight-medium text-slate-800 text-truncate"
+                                        style="font-size: 13px"
                                         :title="item.tenSanPham"
                                     >
                                         {{ item.tenSanPham || 'Sản phẩm AeroStride' }}
@@ -323,7 +324,7 @@ onMounted(() => {
                         </td>
 
                         <!-- Cột Đánh giá & Nội dung -->
-                        <td class="data-cell">
+                        <td class="data-cell text-left">
                             <div class="d-flex flex-column py-2">
                                 <div class="d-flex align-center ga-1 mb-1">
                                     <StarIcon
@@ -333,9 +334,9 @@ onMounted(() => {
                                         :class="i <= item.diemDanhGia ? 'text-amber-500' : 'text-slate-200'"
                                         :fill="i <= item.diemDanhGia ? 'currentColor' : 'none'"
                                     />
-                                    <span class="text-caption font-weight-bold ml-1 text-slate-700">({{ item.diemDanhGia || 5 }}/5)</span>
+                                    <span class="font-weight-bold ml-1 text-slate-700" style="font-size: 12px">({{ item.diemDanhGia || 5 }}/5)</span>
                                 </div>
-                                <span class="text-body-2 text-slate-700 font-normal" style="white-space: pre-wrap; line-height: 1.45;">
+                                <span class="text-slate-700 font-normal" style="font-size: 13px; white-space: pre-wrap; line-height: 1.45;">
                                     {{ item.noiDung || '(Không có lời nhận xét)' }}
                                 </span>
                                 <!-- Attached Images -->
@@ -369,7 +370,7 @@ onMounted(() => {
 
                         <!-- Cột Thời gian -->
                         <td class="data-cell">
-                            <div class="text-body-2 text-slate-600">{{ formatDate(item.ngayTao, 'DD/MM/YYYY HH:mm') }}</div>
+                            <div class="text-slate-600" style="font-size: 13px">{{ formatDate(item.ngayTao, 'DD/MM/YYYY HH:mm') }}</div>
                         </td>
 
                         <!-- Cột Thao tác -->

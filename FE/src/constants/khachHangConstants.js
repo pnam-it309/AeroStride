@@ -42,7 +42,6 @@ export const KHACH_HANG_STATS_TABLE_HEADERS = [
     { text: 'Tên khách hàng', width: '110px', align: 'left' },
     { text: 'Số điện thoại', width: '110px', align: 'center' },
     { text: 'Số đơn mua', width: '100px', align: 'center' },
-    { text: 'Số đơn hoàn', width: '100px', align: 'center' },
     { text: 'Số tiền đã chi', width: '130px', align: 'center' },
     { text: 'Đơn hàng gần nhất', width: '170px', align: 'center' },
     { text: 'Hành động', width: '110px', align: 'center' }

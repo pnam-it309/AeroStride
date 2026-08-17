@@ -17,6 +17,7 @@ import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumb
 import FormattedNumberField from './components/FormattedNumberField.vue';
 import SafeProductImage from './components/SafeProductImage.vue';
 import VariantFormModal from '@/views/modules/bien-the-san-pham/components/VariantFormModal.vue';
+import { ADMIN_ICONS } from '@/constants/adminIcons';
 import {
     ArrowLeftIcon,
     BoxIcon,
@@ -3124,7 +3125,7 @@ const handleSave = async () => {
                                                 color="primary"
                                                 @click="openEditVariantModal(variant)"
                                             >
-                                                <PencilIcon size="18" />
+                                                <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                                 <v-tooltip activator="parent" location="top" text="Chỉnh sửa biến thể" />
                                             </v-btn>
                                             <div class="switch-wrapper">

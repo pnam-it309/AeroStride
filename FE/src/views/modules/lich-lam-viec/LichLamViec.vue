@@ -929,7 +929,7 @@ onMounted(() => {
 
         <AdminFilter title="Bộ lọc" :isRefreshing="isRefreshing" @refresh="handleRefresh" class="mb-4">
             <v-col cols="12" md="4" class="px-2">
-                <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px">Nhân viên</div>
+                <div class="filter-field-label">Nhân viên</div>
                 <v-text-field
                     v-model="filters.search"
                     placeholder="Tìm kiếm nhân viên..."
@@ -942,7 +942,7 @@ onMounted(() => {
                 />
             </v-col>
             <v-col cols="12" md="3" class="px-2">
-                <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px">Ca làm</div>
+                <div class="filter-field-label">Ca làm</div>
                 <v-select
                     v-model="filters.ca"
                     :items="shiftOptions"
@@ -954,7 +954,7 @@ onMounted(() => {
                 />
             </v-col>
             <v-col cols="12" md="3" class="px-2">
-                <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px">Ngày làm</div>
+                <div class="filter-field-label">Ngày làm</div>
                 <AppDatePicker
                     :model-value="filters.ngay"
                     @update:model-value="
@@ -1060,7 +1060,7 @@ onMounted(() => {
                                         size="small"
                                         @click="handleEditSchedule(item)"
                                     >
-                                        <v-icon size="18">mdi-pencil-outline</v-icon>
+                                        <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                         <v-tooltip activator="parent" location="top">Sửa lịch</v-tooltip>
                                     </v-btn>
                                     <v-btn
@@ -1570,7 +1570,20 @@ onMounted(() => {
     </v-container>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+@use '@/scss/tokens' as *;
+
+.admin-module-page,
+.admin-table-container,
+.main-view-tabs,
+.calendar-view-mode {
+    font-family: $body-font-family !important;
+
+    * {
+        font-family: $body-font-family;
+    }
+}
+
 /* ============ Tab Bảng / Lịch Toggle ============ */
 .main-view-tabs {
     display: flex;

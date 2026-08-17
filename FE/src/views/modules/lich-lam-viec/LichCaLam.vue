@@ -285,7 +285,6 @@ onMounted(() => {
                     :total-pages="Math.ceil(filteredItems.length / pagination.size) || 1"
                     :total-elements="filteredItems.length"
                     :current-size="paginatedItems.length"
-                    @change="handleFilter"
                 />
             </template>
         </AdminTable>

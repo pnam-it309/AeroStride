@@ -11,6 +11,7 @@ import { dichVuBienThe } from '@/services/product/dichVuBienThe';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import SafeProductImage from '../../san-pham/components/SafeProductImage.vue';
 import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
+import QrcodeVue from 'qrcode.vue';
 
 const props = defineProps({
     show: Boolean,

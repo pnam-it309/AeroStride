@@ -9,6 +9,7 @@ import { useNotifications } from '@/services/notificationService';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import TableEmptyState from '@/components/common/TableEmptyState.vue';
 import { ArrowLeftIcon, UserIcon, MapPinIcon, NoteIcon, PlusIcon, EditIcon, TrashIcon, StarIcon, ReceiptIcon } from 'vue-tabler-icons';
+import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useLocation } from '@/composables/useLocation';
 import axios from 'axios';
 
@@ -993,7 +994,7 @@ const dobRules = [
                                             @click="openAddrDialog(addr)"
                                             class="action-icon-btn"
                                         >
-                                            <EditIcon size="18" />
+                                            <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                             <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                                         </v-btn>
                                         <v-btn

@@ -667,12 +667,21 @@ onMounted(() => {
                 }
             }
 
-            if (chatHistory.value.find((existing) => existing.id === data.id)) return;
-
             const parsed = {
                 ...data,
-                sender: data.sender === CHAT_SENDER_TYPE.CUSTOMER ? 'user' : data.sender
+                sender: data.sender === CHAT_SENDER_TYPE.CUSTOMER || data.sender === 'customer' ? 'user' : data.sender
             };
+
+            // Thay thế tin nhắn tạm của user bằng tin nhắn chính thức từ server nếu trùng nội dung
+            if (parsed.sender === 'user') {
+                const tempIndex = chatHistory.value.findIndex(
+                    (m) => m.sender === 'user' && m.text === parsed.text && typeof m.id === 'number'
+                );
+                if (tempIndex !== -1) {
+                    chatHistory.value[tempIndex] = parsed;
+                    return;
+                }
+            }
 
             // Parse JSON sản phẩm cho tin nhắn mới
             if (data.text && data.text.includes('[[PRODUCT_JSON:')) {
@@ -698,9 +707,6 @@ onMounted(() => {
                 showRatingForm.value = true;
                 ratingConversationId.value = data.idCuocHoiThoai;
             }
-
-            // Xóa tin nhắn tạm thời nếu trùng nội dung (giảm giật lag)
-            chatHistory.value = chatHistory.value.filter((m) => m.id > 2000000000000 || m.text !== data.text || m.sender !== 'user');
 
             chatHistory.value.push(parsed);
             updateActiveSuggestions();

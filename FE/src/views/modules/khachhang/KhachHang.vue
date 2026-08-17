@@ -1093,9 +1093,6 @@ const updateInvoicePaginationSize = (size) => {
                         <td class="data-cell text-center">
                             {{ item.tongDonHang || 0 }}
                         </td>
-                        <td class="data-cell text-center">
-                            {{ item.tongDonHoan || 0 }}
-                        </td>
                         <td class="data-cell text-center font-weight-bold" style="color: #1e257c !important">
                             {{ formatCurrency(item.tongChiTieu || 0) }}
                         </td>
@@ -1426,7 +1423,7 @@ const updateInvoicePaginationSize = (size) => {
                                             class="text-none font-weight-medium px-3"
                                             @click="openEditAddrForm(addr)"
                                         >
-                                            <PencilIcon size="14" class="mr-1" /> Chỉnh sửa
+                                            <component :is="ADMIN_ICONS.ACTION.EDIT" size="14" class="mr-1" /> Chỉnh sửa
                                         </v-btn>
                                         <v-btn
                                             v-if="!addr.laMacDinh"

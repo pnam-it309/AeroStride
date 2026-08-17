@@ -8,7 +8,7 @@ import { useHoaDonPrinter } from '@/composables/useHoaDonPrinter';
 import {
     ChevronLeftIcon,
     PrinterIcon,
-    EditIcon,
+    PencilIcon,
     CalendarIcon,
     PackageIcon,
     UserIcon,
@@ -145,6 +145,10 @@ const paginatedProducts = computed(() => {
     const start = (productPagination.value.page - 1) * productPagination.value.size;
     const end = start + productPagination.value.size;
     return filteredProducts.value.slice(start, end);
+});
+
+const productTotalPages = computed(() => {
+    return Math.ceil(filteredProducts.value.length / productPagination.value.size) || 1;
 });
 
 // Confirmation Logic
@@ -1465,7 +1469,7 @@ onMounted(() => {
                     </v-btn>
                     <v-btn color="primary" variant="flat" class="rounded-lg px-6" height="44" @click="openEditModal">
                         <template v-slot:prepend>
-                            <EditIcon size="18" class="mr-2" />
+                            <PencilIcon size="18" class="mr-2" />
                         </template>
                         Chỉnh sửa đơn hàng
                     </v-btn>
@@ -1488,7 +1492,7 @@ onMounted(() => {
                         class="rounded-lg"
                         @click="startEditProducts"
                     >
-                        <EditIcon size="16" class="mr-1" /> Sửa số lượng
+                        <PencilIcon size="16" class="mr-1" /> Sửa số lượng
                     </v-btn>
                     <template v-else>
                         <v-btn
@@ -1675,6 +1679,9 @@ onMounted(() => {
                     <AdminPagination
                         v-model="productPagination.page"
                         :page-size="productPagination.size"
+                        @update:pageSize="productPagination.size = $event"
+                        @update:page-size="productPagination.size = $event"
+                        :total-pages="productTotalPages"
                         :total-elements="filteredProducts.length"
                         :current-size="paginatedProducts.length"
                     />

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import webSocketService from '@/services/auth/websocketService';
+import { APP_ROLES } from '@/constants/appConstants';
 
 export const useNotificationStore = defineStore('notification', {
     state: () => ({
@@ -40,14 +41,20 @@ export const useNotificationStore = defineStore('notification', {
                 const userStr = sessionStorage.getItem('user');
                 const user = userStr ? JSON.parse(userStr) : null;
                 const currentUsername = user?.username;
+                const isAdmin = user?.role === APP_ROLES.ADMIN;
 
                 // 1. Không bao giờ thông báo tin nhắn do chính mình gửi đi
                 if (message.sender === currentUsername) {
                     return;
                 }
 
-                // 2. Chỉ xử lý các tin nhắn thuộc về mình (là người nhận/tiếp nhận) hoặc là tin nhắn chờ (PENDING - chưa có staffId)
-                const isMyChat = !message.staffId || message.staffId === currentUsername || message.secondStaffId === currentUsername;
+                // 2. Xử lý tin nhắn thuộc về mình (là người nhận/tiếp nhận), tin nhắn chờ (chưa có staffId), hoặc là Quản lý (Admin)
+                const isMyChat =
+                    isAdmin ||
+                    !message.staffId ||
+                    message.staffId === currentUsername ||
+                    message.secondStaffId === currentUsername;
+
                 if (!isMyChat) {
                     return;
                 }

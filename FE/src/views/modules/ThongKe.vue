@@ -962,7 +962,7 @@ const loadStatistics = async () => {
         ];
 
         // Tải danh sách sản phẩm
-        fetchProductStats();
+        await fetchProductStats();
     } catch (error) {
         console.error('Error loading statistics:', error);
     } finally {
@@ -1091,13 +1091,18 @@ const resetProductFilters = () => {
     fetchProductStats();
 };
 
-const changeProductPageSize = () => {
+const changeProductPageSize = (newSize) => {
+    if (typeof newSize === 'number' && !isNaN(newSize)) {
+        productPageSize.value = newSize;
+    }
     productPage.value = 1;
     fetchProductStats();
 };
 
 const goToProductPage = (page) => {
-    productPage.value = Math.min(Math.max(page, 1), productTotalPages.value);
+    if (typeof page === 'number' && !isNaN(page)) {
+        productPage.value = Math.min(Math.max(page, 1), productTotalPages.value);
+    }
     fetchProductStats();
 };
 
