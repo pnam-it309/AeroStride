@@ -981,39 +981,44 @@ onMounted(() => {
                 </div>
                 <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions ga-2">
                     <template v-if="canManageSchedule">
-                        <v-btn prepend-icon="mdi-calendar-sync" variant="flat" class="admin-btn-secondary" :disabled="loading" @click="openAutoScheduleDialog">
+                        <v-btn prepend-icon="mdi-calendar-sync" variant="flat" class="admin-btn-orange" :disabled="loading" @click="openAutoScheduleDialog">
                             Xếp ca tự động
                         </v-btn>
                         <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-export" @click="handleDownloadTemplate">
                             Tải Excel
                         </v-btn>
-                        <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary" @click="handleImport">
+                        <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-sky" @click="handleImport">
                             Nhập Excel
                         </v-btn>
                         <v-btn prepend-icon="mdi-plus" variant="flat" color="primary" class="add-btn-primary" @click="handleAdd">
-                            Thêm mới
+                            Tạo lịch mới
                         </v-btn>
                     </template>
-                    <!-- Tab Bảng / Lịch -->
-                    <div class="main-view-tabs ml-2">
-                        <button class="view-tab-btn" :class="{ 'view-tab-btn--active': mainTab === 'table' }" @click="mainTab = 'table'">
-                            <v-icon size="15" class="mr-1">mdi-table-large</v-icon>
-                            Bảng
-                        </button>
-                        <button
-                            class="view-tab-btn"
-                            :class="{ 'view-tab-btn--active': mainTab === 'calendar' }"
-                            @click="mainTab = 'calendar'"
-                        >
-                            <v-icon size="15" class="mr-1">mdi-calendar</v-icon>
-                            Lịch
-                        </button>
-                    </div>
                 </div>
             </div>
 
+            <!-- View Selection Tabs -->
+            <div class="border-b bg-white px-3">
+                <v-tabs
+                    v-model="mainTab"
+                    bg-color="transparent"
+                    color="primary"
+                    class="admin-tabs"
+                    height="48"
+                >
+                    <v-tab value="table" class="text-none px-6 font-weight-bold">
+                        <v-icon start size="16" class="mr-1">mdi-table-large</v-icon>
+                        Bảng lịch làm việc
+                    </v-tab>
+                    <v-tab value="calendar" class="text-none px-6 font-weight-bold">
+                        <v-icon start size="16" class="mr-1">mdi-calendar</v-icon>
+                        Lịch tuần/tháng
+                    </v-tab>
+                </v-tabs>
+            </div>
+
             <!-- Table View Mode Content -->
-            <div v-if="mainTab === 'table'" class="flex-grow-1 overflow-hidden d-flex flex-column">
+            <div v-if="mainTab === 'table'" class="flex-grow-1 overflow-hidden d-flex flex-column" style="min-height: 0">
                 <AdminTable
                     :hideToolbar="true"
                     :headers="tableHeaders"
@@ -1091,7 +1096,7 @@ onMounted(() => {
             </div>
 
             <!-- Calendar View Mode Content -->
-            <div v-else class="flex-grow-1 overflow-hidden d-flex flex-column" style="background-color: #ffffff !important">
+            <div v-else class="flex-grow-1 overflow-hidden d-flex flex-column" style="background-color: #ffffff !important; min-height: 0">
                 <!-- Calendar Sub-tab: Period Navigation + View toggles -->
                 <div
                     class="d-flex align-center justify-space-between pa-3 border-b"
@@ -1142,12 +1147,12 @@ onMounted(() => {
                 </div>
 
                 <!-- Calendar Display Bodies -->
-                <div class="flex-grow-1 d-flex flex-column overflow-hidden">
+                <div class="flex-grow-1 d-flex flex-column overflow-hidden" style="min-height: 0">
                     <!-- 1. WEEK VIEW - Dạng bảng grid (CA LÀM VIỆC | T2 | T3 | T4 | T5 | T6 | T7 | CN) -->
                     <div
                         v-if="calendarTab === 'week'"
                         class="d-flex flex-column flex-grow-1 overflow-hidden"
-                        style="background-color: #ffffff !important"
+                        style="background-color: #ffffff !important; min-height: 0"
                     >
                         <div class="overflow-x-auto flex-grow-1" style="background-color: #ffffff !important">
                             <table class="cal-grid-table w-100">
@@ -1229,7 +1234,7 @@ onMounted(() => {
                     </div>
 
                     <!-- 2. MONTH VIEW (Chia đều) -->
-                    <div v-else-if="calendarTab === 'month'" class="calendar-container flex-grow-1 overflow-y-auto pa-4 bg-white">
+                    <div v-else-if="calendarTab === 'month'" class="calendar-container flex-grow-1 overflow-y-auto pa-4 bg-white" style="min-height: 0">
                         <div class="calendar-header-row mb-2">
                             <div
                                 v-for="day in ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật']"
@@ -1585,49 +1590,16 @@ onMounted(() => {
 }
 
 /* ============ Tab Bảng / Lịch Toggle ============ */
-.main-view-tabs {
-    display: flex;
-    align-items: center;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 3px;
-    gap: 2px;
-    height: 44px;
+.admin-tabs :deep(.v-tab) {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: 0.3px !important;
+    min-height: 48px !important;
 }
 
-.view-tab-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 0 16px;
-    border-radius: 6px;
-    border: none;
-    background: transparent;
-    color: #64748b;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.18s ease;
-    white-space: nowrap;
-    letter-spacing: normal;
-}
-
-.view-tab-btn:hover {
-    background: #f1f5f9;
-    color: #334155;
-}
-
-.view-tab-btn--active {
-    background: #1e257c !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(30, 37, 124, 0.25);
-}
-
-.view-tab-btn--active:hover {
-    background: #1a2070 !important;
-    color: #ffffff !important;
+.admin-tabs :deep(.v-tab--selected) {
+    color: #1e257c !important;
 }
 
 /* Legacy toggle (sub-tabs Tuan/Thang/Nam) */
@@ -2327,5 +2299,15 @@ onMounted(() => {
     min-height: 40px !important;
     padding-top: 4px !important;
     padding-bottom: 4px !important;
+}
+
+:deep(.v-field__input),
+:deep(.v-field__input input),
+:deep(.v-field__input input::placeholder),
+:deep(.v-select__selection),
+:deep(.v-select__selection-text),
+:deep(.v-autocomplete__selection),
+:deep(.v-autocomplete__selection-text) {
+    font-size: 13px !important;
 }
 </style>

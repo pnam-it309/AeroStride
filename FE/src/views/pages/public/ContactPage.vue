@@ -90,11 +90,22 @@ onMounted(() => {
         <MainHeader />
 
         <main class="main-content">
-            <!-- Header Section -->
-            <div class="page-header py-12 bg-grey-lighten-4 border-b">
+            <!-- Header Section: Logo Blue Gradient + Crisp White Text -->
+            <div class="page-header py-14 mb-10 text-white">
                 <v-container>
-                    <h1 class="text-h3 font-weight-black text-center text-slate-900 mb-3">LIÊN HỆ VỚI AEROSTRIDE</h1>
-                    <p class="text-center text-slate-600 text-subtitle-1 max-w-600 mx-auto">
+                    <div class="d-flex justify-center mb-3">
+                        <v-chip
+                            variant="flat"
+                            size="small"
+                            class="font-weight-black px-4 shadow-sm"
+                            style="background-color: rgba(255, 255, 255, 0.15) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;"
+                        >
+                            <v-icon start size="16" color="white">mdi-phone-in-talk-outline</v-icon>
+                            AEROSTRIDE SUPPORT
+                        </v-chip>
+                    </div>
+                    <h1 class="page-header-title font-weight-black text-center mb-3">LIÊN HỆ VỚI AEROSTRIDE</h1>
+                    <p class="page-header-subtitle text-center text-subtitle-1 max-w-600 mx-auto">
                         Chúng tôi luôn sẵn sàng lắng nghe, giải đáp thắc mắc và hỗ trợ bạn 24/7.
                     </p>
                 </v-container>
@@ -354,5 +365,31 @@ onMounted(() => {
 
 .map-container iframe {
     display: block;
+}
+
+.page-header {
+    background: linear-gradient(135deg, #1e257c 0%, #23318c 50%, #1d4ed8 100%) !important;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(30, 37, 124, 0.25);
+    color: #ffffff !important;
+}
+
+.page-header-title {
+    color: #ffffff !important;
+    letter-spacing: -0.5px;
+    font-size: clamp(1.4rem, 2.8vw, 2.2rem) !important;
+    line-height: 1.25 !important;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .page-header-title {
+        white-space: normal;
+    }
+}
+
+.page-header-subtitle {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-weight: 500;
 }
 </style>

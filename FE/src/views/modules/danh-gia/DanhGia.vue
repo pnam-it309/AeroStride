@@ -68,17 +68,14 @@ const handleToggleAutoApprove = async () => {
 };
 
 const statusTabs = computed(() => [
-    { title: 'Tất cả', value: null, count: configData.value.total, color: 'primary' },
-    { title: 'Chờ duyệt', value: 'PENDING', count: configData.value.pending, color: 'warning' },
-    { title: 'Đã duyệt', value: 'APPROVED', count: configData.value.approved, color: 'success' },
-    { title: 'Từ chối', value: 'REJECTED', count: configData.value.rejected, color: 'error' },
-    { title: 'Spam', value: 'SPAM', count: configData.value.spam, color: 'grey' }
+    { title: 'Tất cả', value: null, count: configData.value.total, color: 'primary', icon: 'mdi-view-grid-outline' },
+    { title: 'Chờ duyệt', value: 'PENDING', count: configData.value.pending, color: 'warning', icon: 'mdi-clock-outline' },
+    { title: 'Đã duyệt', value: 'APPROVED', count: configData.value.approved, color: 'success', icon: 'mdi-check-circle-outline' },
+    { title: 'Từ chối', value: 'REJECTED', count: configData.value.rejected, color: 'error', icon: 'mdi-close-circle-outline' },
+    { title: 'Spam', value: 'SPAM', count: configData.value.spam, color: 'grey-darken-1', icon: 'mdi-alert-circle-outline' }
 ]);
 
-const selectStatusTab = (val) => {
-    filters.value.trangThai = val;
-    reloadReviews();
-};
+
 
 const {
     items: reviews,
@@ -177,57 +174,9 @@ onMounted(() => {
             ]"
         />
 
-        <!-- Top Header & Auto-Approval Banner Card -->
-        <div class="d-flex flex-wrap align-center justify-space-between mb-4 mt-2 gap-3 header-actions">
-            <div>
-                <div class="font-weight-bold text-slate-800" style="font-size: 18px">Quản lý đánh giá sản phẩm</div>
-                <div class="text-slate-500" style="font-size: 13px">Kiểm duyệt, quản lý nhận xét và tự động phê duyệt đánh giá hợp lệ</div>
-            </div>
-
-            <!-- Auto-Approval Toggle Switch Card -->
-            <v-card 
-                elevation="0" 
-                class="border px-4 py-2 rounded-xl d-flex align-center bg-white"
-                :style="configData.autoApprove ? 'border-color: #10b981 !important;' : ''"
-            >
-                <div class="d-flex align-center mr-4">
-                    <v-avatar size="34" :color="configData.autoApprove ? 'emerald-lighten-5' : 'slate-100'" class="mr-2">
-                        <SparklesIcon size="18" :class="configData.autoApprove ? 'text-emerald-600' : 'text-slate-400'" />
-                    </v-avatar>
-                    <div>
-                        <div class="d-flex align-center">
-                            <span class="font-weight-bold text-slate-800" style="font-size: 14px">Tự động phê duyệt</span>
-                            <v-chip 
-                                size="x-small" 
-                                :color="configData.autoApprove ? 'success' : 'secondary'" 
-                                class="ml-2 font-weight-bold text-uppercase"
-                                variant="flat"
-                            >
-                                {{ configData.autoApprove ? 'Đang BẬT' : 'Đang TẮT' }}
-                            </v-chip>
-                        </div>
-                        <div class="text-slate-500" style="font-size: 12px !important;">
-                            {{ configData.autoApprove 
-                                ? 'Đánh giá hợp lệ sẽ hiển thị ngay lập tức' 
-                                : 'Mọi đánh giá phải chờ Admin duyệt thủ công' }}
-                        </div>
-                    </div>
-                </div>
-                <v-switch
-                    :model-value="configData.autoApprove"
-                    color="success"
-                    hide-details
-                    density="compact"
-                    :loading="isUpdatingConfig"
-                    :disabled="isUpdatingConfig"
-                    @click.stop="handleToggleAutoApprove"
-                ></v-switch>
-            </v-card>
-        </div>
-
-        <!-- Filter Component with Tabs & Search -->
+        <!-- Filter Component with Search -->
         <AdminFilter
-            title="Bộ lọc đánh giá"
+            title="Bộ lọc"
             @filter="handleFilter"
             @refresh="
                 filters = { keyword: '', trangThai: null };
@@ -253,30 +202,6 @@ onMounted(() => {
                     </template>
                 </v-text-field>
             </v-col>
-
-            <v-col cols="12" md="6" lg="7" class="filter-cell d-flex align-center">
-                <div class="d-flex flex-wrap ga-2 mt-4">
-                    <v-btn
-                        v-for="tab in statusTabs"
-                        :key="tab.title"
-                        size="small"
-                        :variant="filters.trangThai === tab.value ? 'flat' : 'outlined'"
-                        :color="filters.trangThai === tab.value ? 'primary' : 'slate-600'"
-                        class="text-none font-weight-medium rounded-pill px-3"
-                        @click="selectStatusTab(tab.value)"
-                    >
-                        {{ tab.title }}
-                        <v-badge
-                            v-if="tab.count > 0"
-                            :content="tab.count"
-                            inline
-                            :color="filters.trangThai === tab.value ? 'white' : tab.color"
-                            :text-color="filters.trangThai === tab.value ? 'primary' : 'white'"
-                            class="ml-1 font-weight-bold"
-                        />
-                    </v-btn>
-                </div>
-            </v-col>
         </AdminFilter>
 
         <!-- Table Container -->
@@ -289,6 +214,68 @@ onMounted(() => {
                 :loading="loading"
                 :show-add-button="false"
             >
+                <template #extra-actions>
+                    <!-- Auto-Approval Toggle Switch Card -->
+                    <v-card 
+                        elevation="0" 
+                        class="auto-approve-card px-4 py-1.5 rounded-xl d-flex align-center"
+                        :class="{ 'active-card': configData.autoApprove }"
+                        style="max-height: 40px; border: 1px solid #e2e8f0 !important;"
+                    >
+                        <div class="d-flex align-center mr-4">
+                            <v-avatar size="26" class="mr-2 avatar-box">
+                                <SparklesIcon size="13" class="icon-spark" />
+                            </v-avatar>
+                            <div class="text-left">
+                                <div class="font-weight-semibold label-text" style="font-size: 13px; line-height: 1.2;">Tự động phê duyệt</div>
+                                <div class="desc-text" style="font-size: 10px !important; line-height: 1.1; margin-top: 1px;">
+                                    {{ configData.autoApprove 
+                                        ? 'Hiển thị ngay lập tức' 
+                                        : 'Đánh giá chờ duyệt' }}
+                                </div>
+                            </div>
+                        </div>
+                        <v-switch
+                            :model-value="configData.autoApprove"
+                            color="success"
+                            hide-details
+                            density="compact"
+                            class="ml-auto"
+                            :loading="isUpdatingConfig"
+                            :disabled="isUpdatingConfig"
+                            @click.stop="handleToggleAutoApprove"
+                        ></v-switch>
+                    </v-card>
+                </template>
+                <template #top>
+                    <v-tabs
+                        v-model="filters.trangThai"
+                        bg-color="transparent"
+                        color="primary"
+                        show-arrows
+                        grow
+                        class="admin-tabs"
+                        @update:model-value="reloadReviews"
+                        height="54"
+                    >
+                        <v-tab
+                            v-for="tab in statusTabs"
+                            :key="tab.title"
+                            :value="tab.value"
+                            class="text-none px-4 tab-item"
+                        >
+                            <v-icon start size="16" class="mr-1">{{ tab.icon }}</v-icon>
+                            {{ tab.title }}
+                            <v-badge
+                                v-if="tab.count > 0"
+                                :content="tab.count"
+                                inline
+                                :color="filters.trangThai === tab.value ? 'primary' : tab.color"
+                                class="ml-2 font-weight-bold"
+                            />
+                        </v-tab>
+                    </v-tabs>
+                </template>
                 <template #row="{ item }">
                     <tr class="data-row">
                         <!-- Cột Khách hàng -->
@@ -479,11 +466,65 @@ onMounted(() => {
 </template>
 
 <style scoped>
+:deep(.compact-input) .v-field__input,
+:deep(.compact-input) input,
+:deep(.compact-input) input::placeholder {
+    font-size: 13px !important;
+}
+
 .hover-scale {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .hover-scale:hover {
     transform: scale(1.08);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.auto-approve-card {
+    border: 1px solid #e2e8f0 !important;
+    background-color: #ffffff;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 320px;
+}
+
+.auto-approve-card .avatar-box {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    transition: all 0.3s ease;
+}
+
+.auto-approve-card .icon-spark {
+    transition: all 0.3s ease;
+}
+
+.auto-approve-card .label-text {
+    color: #1e293b;
+    transition: all 0.3s ease;
+}
+
+.auto-approve-card .desc-text {
+    color: #64748b;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+/* Active State */
+.auto-approve-card.active-card {
+    border-color: #10b981 !important;
+    background-color: #f0fdf4;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08) !important;
+}
+
+.auto-approve-card.active-card .avatar-box {
+    background-color: #d1fae5;
+    color: #10b981;
+}
+
+.auto-approve-card.active-card .label-text {
+    color: #065f46 !important;
+}
+
+.auto-approve-card.active-card .desc-text {
+    color: #047857 !important;
 }
 </style>

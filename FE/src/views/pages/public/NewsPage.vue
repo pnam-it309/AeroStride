@@ -111,8 +111,13 @@ onMounted(() => {
             <div class="page-header py-14 mb-10 text-white">
                 <v-container>
                     <div class="d-flex justify-center mb-3">
-                        <v-chip color="amber-accent-2" variant="flat" size="small" class="font-weight-black px-4 text-slate-900 shadow-sm">
-                            <v-icon start size="16">mdi-newspaper-variant-outline</v-icon>
+                        <v-chip
+                            variant="flat"
+                            size="small"
+                            class="font-weight-black px-4 shadow-sm"
+                            style="background-color: rgba(255, 255, 255, 0.15) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;"
+                        >
+                            <v-icon start size="16" color="white">mdi-newspaper-variant-outline</v-icon>
                             AEROSTRIDE MAGAZINE
                         </v-chip>
                     </div>
@@ -359,12 +364,19 @@ onMounted(() => {
 .page-header-title {
     color: #ffffff !important;
     letter-spacing: -0.5px;
-    font-size: 2.25rem !important;
+    font-size: clamp(1.4rem, 2.8vw, 2.2rem) !important;
     line-height: 1.25 !important;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .page-header-title {
+        white-space: normal;
+    }
 }
 
 .page-header-subtitle {
-    color: rgba(255, 255, 255, 0.9) !important;
+    color: rgba(255, 255, 255, 0.85) !important;
     font-weight: 500;
 }
 

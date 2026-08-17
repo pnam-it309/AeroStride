@@ -54,7 +54,7 @@ const handleMouseEnter = () => {
 const navLinks = [
     { label: 'TRANG CHỦ', path: PATH.LANDING },
     { label: 'SẢN PHẨM', path: PATH.SHOES },
-    { label: 'GỢI Ý AI', path: PATH.AI_RECOMMEND },
+    { label: 'GỢI Ý', path: PATH.AI_RECOMMEND },
     { label: 'GIỚI THIỆU', path: '/gioi-thieu' },
     { label: 'TIN TỨC', path: '/tin-tuc' },
     { label: 'LIÊN HỆ', path: '/lien-he' },

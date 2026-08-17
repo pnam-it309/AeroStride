@@ -351,4 +351,14 @@ onMounted(() => {
     </v-container>
 </template>
 
-<style scoped></style>
+<style scoped>
+:deep(.v-field__input),
+:deep(.v-field__input input),
+:deep(.v-field__input input::placeholder),
+:deep(.v-select__selection),
+:deep(.v-select__selection-text),
+:deep(.v-autocomplete__selection),
+:deep(.v-autocomplete__selection-text) {
+    font-size: 13px !important;
+}
+</style>

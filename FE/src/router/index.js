@@ -28,7 +28,7 @@ export const router = createRouter({
             path: PATH.AI_RECOMMEND,
             name: 'AiRecommendQuiz',
             component: () => import('@/views/pages/products/AiRecommendQuiz.vue'),
-            meta: { seoTitle: 'Gợi Ý Chọn Giày AI' }
+            meta: { seoTitle: 'Gợi Ý Chọn Sản Phẩm Phù Hợp Với Bạn' }
         },
         {
             path: PATH.VOUCHERS,

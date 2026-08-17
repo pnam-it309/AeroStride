@@ -83,7 +83,7 @@ const progressPercentage = computed(() => {
 onMounted(() => {
     window.scrollTo(0, 0);
     setSeoMeta({
-        title: 'Gợi Ý Chọn Giày AI | AeroStride',
+        title: 'Gợi Ý Chọn Sản Phẩm Phù Hợp Với Bạn | AeroStride',
         description: 'Khảo sát nhanh với AeroStride AI để tìm ra đôi giày chạy bộ, giày thể thao phù hợp nhất với bạn.'
     });
     resetQuiz();
@@ -100,14 +100,19 @@ onMounted(() => {
             <div class="page-header py-14 border-b text-white">
                 <v-container>
                     <div class="d-flex justify-center mb-3">
-                        <v-chip color="amber-accent-2" variant="flat" size="small" class="font-weight-black px-4 text-slate-900 shadow-sm">
-                            <v-icon start size="16">mdi-robot-excited-outline</v-icon>
+                        <v-chip
+                            variant="flat"
+                            size="small"
+                            class="font-weight-black px-4 shadow-sm"
+                            style="background-color: rgba(255, 255, 255, 0.15) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.25) !important;"
+                        >
+                            <v-icon start size="16" color="white">mdi-robot-excited-outline</v-icon>
                             AEROSTRIDE AI ASSISTANT
                         </v-chip>
                     </div>
-                    <h1 class="page-header-title text-h3 font-weight-black text-center mb-3">GỢI Ý CHỌN GIÀY AI</h1>
+                    <h1 class="page-header-title text-h3 font-weight-black text-center mb-3">GỢI Ý CHỌN SẢN PHẨM</h1>
                     <p class="page-header-subtitle text-center text-subtitle-1 max-w-2xl mx-auto">
-                        Hãy hoàn thành bài trắc nghiệm ngắn dưới đây để AeroStride AI phân tích phong cách, form chân và nhu cầu để tìm ra những đôi giày hoàn hảo nhất cho bạn.
+                        Hãy hoàn thành bài trắc nghiệm ngắn dưới đây để AeroStride AI phân tích phong cách và nhu cầu để tìm ra những đôi giày hoàn hảo nhất cho bạn.
                     </p>
                 </v-container>
             </div>

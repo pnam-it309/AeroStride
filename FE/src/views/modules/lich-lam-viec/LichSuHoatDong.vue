@@ -562,4 +562,14 @@ onMounted(() => {
 .shadow-xs {
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
+
+:deep(.v-field__input),
+:deep(.v-field__input input),
+:deep(.v-field__input input::placeholder),
+:deep(.v-select__selection),
+:deep(.v-select__selection-text),
+:deep(.v-autocomplete__selection),
+:deep(.v-autocomplete__selection-text) {
+    font-size: 13px !important;
+}
 </style>

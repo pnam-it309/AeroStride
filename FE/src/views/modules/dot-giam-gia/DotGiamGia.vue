@@ -261,7 +261,6 @@ onMounted(() => loadCampaigns());
         <AdminTable
             title="Danh sách đợt giảm giá"
             addButtonText="Tạo mới"
-            show-export-button
             :headers="[
                 { text: 'STT', align: 'center', width: '60px' },
                 { text: 'Mã đợt giảm giá', width: '110px' },
@@ -276,17 +275,23 @@ onMounted(() => loadCampaigns());
             :total-count="pagination.totalElements"
             :loading="loading"
             @add="router.push(PATH.DOT_GIAM_GIA_FORM)"
-            @export="handleExport"
         >
             <template #extra-actions>
                 <v-btn
                     prepend-icon="mdi-flash"
                     variant="flat"
-                    color="amber-darken-3"
-                    class="mr-2 text-none font-weight-bold shadow-sm"
+                    class="admin-btn-orange-pastel mr-2"
                     @click="showFlashSaleModal = true"
                 >
-                    ⚡ Tạo Flash Sale Giờ Vàng
+                    Tạo sale giờ vàng
+                </v-btn>
+                <v-btn
+                    prepend-icon="mdi-download"
+                    variant="flat"
+                    class="admin-btn-export mr-2"
+                    @click="handleExport"
+                >
+                    Tải Excel
                 </v-btn>
             </template>
             <template #row="{ item, index }">
