@@ -1,3 +1,10 @@
+# [1.42.0](https://github.com/pnam-it309/AeroStride/compare/v1.41.0...v1.42.0) (2026-08-17)
+
+
+### Features
+
+* standardize edit icons, fix statistics and schedule pagination, synchronize typography across admin modules, and optimize websocket messaging ([9ba2d4b](https://github.com/pnam-it309/AeroStride/commit/9ba2d4ba73d265e2e8c575ae81c4803fd8871fe2))
+
 # [1.41.0](https://github.com/pnam-it309/AeroStride/compare/v1.40.0...v1.41.0) (2026-08-17)
 
 
