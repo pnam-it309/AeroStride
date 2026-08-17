@@ -1,3 +1,10 @@
+## [1.42.2](https://github.com/pnam-it309/AeroStride/compare/v1.42.1...v1.42.2) (2026-08-17)
+
+
+### Bug Fixes
+
+* remove returned orders tab, fix quick add customer in POS, and fix AI quiz step jumping ([c611280](https://github.com/pnam-it309/AeroStride/commit/c6112801489b896295ca6c446a13e62216d4ba27))
+
 ## [1.42.1](https://github.com/pnam-it309/AeroStride/compare/v1.42.0...v1.42.1) (2026-08-17)
 
 
