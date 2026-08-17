@@ -34,11 +34,10 @@ const fetchNextQuestion = async () => {
         const res = await dichVuSanPhamPublic.layGoiYQuiz(answers.value);
         if (res.nextQuestion) {
             currentQuestion.value = res.nextQuestion;
+            recommendedProducts.value = [];
         } else {
             currentQuestion.value = null;
-        }
-        if (res.recommendedProducts && res.recommendedProducts.length > 0) {
-            recommendedProducts.value = res.recommendedProducts;
+            recommendedProducts.value = res.recommendedProducts || [];
         }
     } catch (e) {
         console.error(e);
@@ -75,13 +74,15 @@ const viewProductDetail = (productId) => {
 };
 
 const totalSteps = 5;
+const isFinished = computed(() => !currentQuestion.value && !loading.value && (history.value.length > 0 || recommendedProducts.value.length > 0));
 const currentStep = computed(() => {
-    if (recommendedProducts.value.length > 0) return totalSteps;
-    return history.value.length + 1;
+    if (isFinished.value) return totalSteps;
+    return Math.min(history.value.length + 1, totalSteps);
 });
 
 const progressPercentage = computed(() => {
-    return (currentStep.value / totalSteps) * 100;
+    if (isFinished.value) return 100;
+    return Math.min(100, Math.round((currentStep.value / totalSteps) * 100));
 });
 </script>
 

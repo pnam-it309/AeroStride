@@ -392,8 +392,6 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
             answers = new HashMap<>();
         }
 
-        List<CustomerProductResponse> currentRecommended = calculateRecommendedProducts(answers);
-
         // Bước 1: Hỏi giới tính
         String gioiTinh = answers.get("gioiTinh");
         if (gioiTinh == null || gioiTinh.isBlank()) {
@@ -407,7 +405,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                                     new RecommendQuizOption("Unisex (Cả nam và nữ)", "UNISEX")
                             ))
                             .build())
-                    .recommendedProducts(currentRecommended)
+                    .recommendedProducts(Collections.emptyList())
                     .build();
         }
 
@@ -425,7 +423,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                             .questionText("Mục đích sử dụng chính của đôi giày này là gì?")
                             .options(purposeOptions)
                             .build())
-                    .recommendedProducts(currentRecommended)
+                    .recommendedProducts(Collections.emptyList())
                     .build();
         }
 
@@ -444,7 +442,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                             .questionText("Bạn yêu thích hoặc đang hướng tới thương hiệu nào?")
                             .options(brandOptions)
                             .build())
-                    .recommendedProducts(currentRecommended)
+                    .recommendedProducts(Collections.emptyList())
                     .build();
         }
 
@@ -471,7 +469,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                             .questionText("Kích cỡ giày của bạn là bao nhiêu (Size EU)?")
                             .options(sizeOptions)
                             .build())
-                    .recommendedProducts(currentRecommended)
+                    .recommendedProducts(Collections.emptyList())
                     .build();
         }
 
@@ -489,13 +487,14 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                                     new RecommendQuizOption("Bất kỳ mức giá nào", "ALL")
                             ))
                             .build())
-                    .recommendedProducts(currentRecommended)
+                    .recommendedProducts(Collections.emptyList())
                     .build();
         }
 
+        List<CustomerProductResponse> finalRecommended = calculateRecommendedProducts(answers);
         return RecommendQuizResponse.builder()
                 .nextQuestion(null)
-                .recommendedProducts(currentRecommended)
+                .recommendedProducts(finalRecommended)
                 .build();
     }
 

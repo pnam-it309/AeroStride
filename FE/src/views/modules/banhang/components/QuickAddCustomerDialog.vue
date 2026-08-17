@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { XIcon } from 'vue-tabler-icons';
 import { GIOI_TINH_OPTIONS } from '@/constants/appConstants';
 import { useLocation } from '@/composables/useLocation';
+import { useAddressMapping } from '@/composables/useAddressMapping';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { useNotifications } from '@/services/notificationService';
@@ -22,6 +23,7 @@ const emit = defineEmits(['update:modelValue', 'success']);
 
 const { addNotification } = useNotifications();
 const { provinces, districts, wards, loadingLocations, fetchProvinces, fetchDistricts, fetchWards } = useLocation();
+const { mapCodesToNames } = useAddressMapping();
 
 const loading = ref(false);
 const form = ref({

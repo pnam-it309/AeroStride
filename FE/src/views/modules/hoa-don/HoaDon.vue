@@ -87,10 +87,9 @@ const counts = ref({
     waitingDelivery: 0,
     delivering: 0,
     completed: 0,
-    cancelled: 0,
-    returned: 0,
     failed: 0,
-    refused: 0
+    refused: 0,
+    cancelled: 0
 });
 const showOrderDetailDialog = ref(false);
 const selectedOrder = ref(null);
@@ -122,10 +121,9 @@ const loadCounts = async () => {
             waitingDelivery: data['2'] || 0,
             delivering: data['3'] || 0,
             completed: data['4'] || 0,
-            cancelled: data['5'] || 0,
-            returned: data['6'] || 0,
             failed: data['7'] || 0,
-            refused: data['8'] || 0
+            refused: data['8'] || 0,
+            cancelled: data['5'] || 0
         };
     } catch (e) {
         console.error('Error counts:', e);
@@ -410,10 +408,6 @@ onMounted(() => loadOrders());
                     <v-tab :value="8" class="text-none px-3 tab-item">
                         <v-icon start size="16">mdi-account-cancel-outline</v-icon>
                         Khách không nhận
-                    </v-tab>
-                    <v-tab :value="6" class="text-none px-3 tab-item">
-                        <v-icon start size="16">mdi-cash-refund</v-icon>
-                        Hoàn đơn
                     </v-tab>
                     <v-tab :value="5" class="text-none px-3 tab-item">
                         <v-icon start size="16">mdi-close-circle-outline</v-icon>

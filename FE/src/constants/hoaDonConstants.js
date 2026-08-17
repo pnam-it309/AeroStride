@@ -83,6 +83,5 @@ export const ORDER_STATUS_FILTER_OPTIONS = [
     { title: 'Hoàn thành', value: ORDER_STATUS.HOAN_THANH },
     { title: 'Giao thất bại', value: ORDER_STATUS.GIAO_THAT_BAI },
     { title: 'Khách không nhận', value: ORDER_STATUS.KHACH_KHONG_NHAN },
-    { title: 'Đã hủy', value: ORDER_STATUS.DA_HUY },
-    { title: 'Hoàn đơn', value: ORDER_STATUS.HOAN_DON }
+    { title: 'Đã hủy', value: ORDER_STATUS.DA_HUY }
 ];
