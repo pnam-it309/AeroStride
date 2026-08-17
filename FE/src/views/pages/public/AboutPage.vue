@@ -122,13 +122,18 @@ onMounted(() => {
             <section class="about-hero position-relative">
                 <div class="hero-overlay"></div>
                 <v-container class="position-relative z-index-2 text-center text-white py-16">
-                    <v-chip color="white" variant="outlined" size="small" class="font-weight-bold mb-4 tracking-wider">
+                    <v-chip
+                        variant="outlined"
+                        size="small"
+                        class="font-weight-bold mb-4 tracking-wider"
+                        style="color: #ffffff !important; border-color: rgba(255, 255, 255, 0.4) !important;"
+                    >
                         EST. 2024 &bull; AEROSTRIDE VIỆT NAM
                     </v-chip>
                     <h1 class="hero-title font-weight-black mb-4 animate-up">
-                        BƯỚC CHÂN CỦA SỰ <span class="text-gradient">ĐAM MÊ & SẮC MÀU</span>
+                        BƯỚC CHÂN CỦA SỰ <span class="text-gradient">ĐAM MÊ & THÀNH CÔNG</span>
                     </h1>
-                    <p class="hero-subtitle mb-8 text-grey-lighten-2 max-w-700 mx-auto">
+                    <p class="hero-subtitle mb-8 max-w-700 mx-auto">
                         Hành trình mang lại chuẩn mực mua sắm giày thể thao chính hãng đỉnh cao, hiện đại và tràn đầy cảm hứng cho người Việt.
                     </p>
                     <div class="d-flex justify-center flex-wrap ga-4">
@@ -136,18 +141,18 @@ onMounted(() => {
                             color="primary"
                             size="x-large"
                             rounded="pill"
-                            class="font-weight-bold px-8 shadow-blue"
+                            class="font-weight-bold px-8 shadow-blue text-white"
                             prepend-icon="mdi-arrow-down"
                             @click="scrollToSection('story-section')"
                         >
                             Khám Phá Câu Chuyện
                         </v-btn>
                         <v-btn
-                            color="white"
                             variant="outlined"
                             size="x-large"
                             rounded="pill"
-                            class="font-weight-bold px-8 text-white"
+                            class="font-weight-bold px-8"
+                            style="color: #ffffff !important; border-color: rgba(255, 255, 255, 0.4) !important;"
                             append-icon="mdi-shopping-outline"
                             @click="goToProducts"
                         >
@@ -383,8 +388,22 @@ onMounted(() => {
 }
 
 .hero-title {
-    font-size: clamp(2.2rem, 4vw, 3.8rem);
-    line-height: 1.15;
+    font-size: clamp(1.8rem, 2.8vw, 2.6rem) !important;
+    line-height: 1.2;
+    color: #ffffff !important;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .hero-title {
+        white-space: normal;
+    }
+}
+
+.hero-subtitle {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 1.15rem;
+    line-height: 1.6;
 }
 
 .text-gradient {

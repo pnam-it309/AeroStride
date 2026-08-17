@@ -94,18 +94,18 @@ const sidebarItem = [
         roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF]
     },
     {
-        title: 'Quản lý đánh giá',
-        icon: StarIcon,
-        BgColor: 'warning',
-        to: PATH.DANH_GIA,
-        roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF]
-    },
-    {
         title: 'Quản lý nhân viên',
         icon: UserCheckIcon,
         BgColor: 'secondary',
         to: PATH.NHAN_VIEN,
         roles: [APP_ROLES.ADMIN]
+    },
+    {
+        title: 'Quản lý đánh giá',
+        icon: StarIcon,
+        BgColor: 'warning',
+        to: PATH.DANH_GIA,
+        roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF]
     },
     {
         title: 'Quản lý tin nhắn',
