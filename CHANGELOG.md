@@ -1,3 +1,10 @@
+## [1.42.3](https://github.com/pnam-it309/AeroStride/compare/v1.42.2...v1.42.3) (2026-08-17)
+
+
+### Bug Fixes
+
+* isolate product filter state per order tab in POS ([3e9563c](https://github.com/pnam-it309/AeroStride/commit/3e9563c88831aefed8f738e73164f405f650142b))
+
 ## [1.42.2](https://github.com/pnam-it309/AeroStride/compare/v1.42.1...v1.42.2) (2026-08-17)
 
 
