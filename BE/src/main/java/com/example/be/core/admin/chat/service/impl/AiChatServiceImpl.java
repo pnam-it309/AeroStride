@@ -76,18 +76,6 @@ public class AiChatServiceImpl implements AiChatService {
                     .collect(Collectors.toList());
             log.info("Đã nạp thành công {} API Keys cho OpenAI.", openAiApiKeysList.size());
         }
-
-        // Khởi động luồng chạy ngầm tải trước (warm-up) cache danh sách sản phẩm để tránh trễ ở request đầu tiên
-        new Thread(() -> {
-            try {
-                Thread.sleep(1000); // Đợi Spring container và database connection pool ổn định
-                log.info("Bắt đầu tải trước (Warm-up) cache biến thể sản phẩm...");
-                getActiveVariantsIntelligent(null);
-                log.info("Tải trước cache sản phẩm hoàn tất! Chatbot sẵn sàng xử lý tức thì (0ms truy vấn).");
-            } catch (Exception e) {
-                log.warn("Không thể tải trước cache sản phẩm khi khởi động: {}", e.getMessage());
-            }
-        }).start();
     }
 
     private String getOpenAiApiKey() {

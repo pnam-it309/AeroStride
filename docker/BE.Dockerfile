@@ -64,4 +64,4 @@ ENV JAVA_OPTS=${JAVA_OPTS}
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${SERVER_PORT}/actuator/health || exit 1
 
-ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS:--XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k} -jar /app-bin/app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS:--XX:+UseContainerSupport -Xms128m -Xmx256m -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k} -jar /app-bin/app.jar"]
