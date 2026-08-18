@@ -148,11 +148,15 @@ const fetchMessages = async (conversationId) => {
     }
 };
 
+const isSendingMessage = ref(false);
 const sendMessage = async () => {
+    if (isSendingMessage.value) return;
     if (!newMessage.value.trim() && !imagePreview.value) return;
     if (!activeChat.value) return;
     // Phiên đã đóng thì khóa chat, không cho gửi
     if (activeChat.value.status === 'CLOSED') return;
+
+    isSendingMessage.value = true;
 
     // Chuẩn bị payload: base64 thuần (bỏ header "data:image/...;base64," nếu có)
     let base64Image = null;
@@ -169,15 +173,16 @@ const sendMessage = async () => {
 
     isSendingImage.value = !!base64Image;
     try {
-        await api.post(API_CHAT.SEND, messageData);
         newMessage.value = '';
         clearImage();
+        await api.post(API_CHAT.SEND, messageData);
         scrollToBottom();
         fetchConversations(true);
     } catch (error) {
         console.error('Lỗi khi gửi tin nhắn:', error);
     } finally {
         isSendingImage.value = false;
+        isSendingMessage.value = false;
     }
 };
 

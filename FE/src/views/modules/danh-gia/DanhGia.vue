@@ -25,6 +25,9 @@ import {
     EyeIcon
 } from 'vue-tabler-icons';
 
+// Centralized Admin Icons
+import { ADMIN_ICONS } from '@/constants/adminIcons';
+
 // Common Admin Components
 import {
     AdminFilter,
@@ -498,51 +501,59 @@ onMounted(async () => {
 
                         <!-- 7. Hành động -->
                         <td class="data-cell text-center action-cell px-2">
-                            <div class="d-flex align-center justify-center ga-1 action-controls">
+                            <div class="d-flex align-center justify-center action-controls">
                                 <!-- Duyệt -->
                                 <v-btn
                                     v-if="item.trangThai !== 'APPROVED'"
+                                    icon
                                     variant="text"
-                                    class="action-icon-btn"
+                                    size="28"
+                                    class="rounded-lg action-icon-btn"
                                     color="success"
                                     @click.stop="handleUpdateStatus(item.id, 'APPROVED', 'Phê duyệt đánh giá', 'Bạn có chắc chắn muốn phê duyệt đánh giá này để hiển thị công khai trên cửa hàng?')"
                                 >
-                                    <CheckIcon size="16" />
+                                    <CheckIcon size="15" />
                                     <v-tooltip activator="parent" location="top">Phê duyệt</v-tooltip>
                                 </v-btn>
 
                                 <!-- Từ chối -->
                                 <v-btn
                                     v-if="item.trangThai !== 'REJECTED'"
+                                    icon
                                     variant="text"
-                                    class="action-icon-btn"
+                                    size="28"
+                                    class="rounded-lg action-icon-btn"
                                     color="error"
                                     @click.stop="handleUpdateStatus(item.id, 'REJECTED', 'Từ chối đánh giá', 'Bạn có chắc chắn muốn từ chối và ẩn đánh giá này khỏi cửa hàng?')"
                                 >
-                                    <XIcon size="16" />
+                                    <XIcon size="15" />
                                     <v-tooltip activator="parent" location="top">Từ chối</v-tooltip>
                                 </v-btn>
 
                                 <!-- Đánh dấu Spam -->
                                 <v-btn
                                     v-if="item.trangThai !== 'SPAM'"
+                                    icon
                                     variant="text"
-                                    class="action-icon-btn"
+                                    size="28"
+                                    class="rounded-lg action-icon-btn"
                                     color="warning"
                                     @click.stop="handleUpdateStatus(item.id, 'SPAM', 'Đánh dấu Spam', 'Bạn có chắc chắn muốn đánh dấu đánh giá này là SPAM rác?')"
                                 >
-                                    <BanIcon size="16" />
+                                    <BanIcon size="15" />
                                     <v-tooltip activator="parent" location="top">Đánh dấu Spam</v-tooltip>
                                 </v-btn>
 
                                 <!-- Xóa vĩnh viễn -->
                                 <v-btn
+                                    icon
                                     variant="text"
-                                    class="action-icon-btn"
+                                    size="28"
+                                    class="rounded-lg action-icon-btn"
                                     color="error"
                                     @click.stop="handleDelete(item.id)"
                                 >
-                                    <TrashIcon size="16" />
+                                    <component :is="ADMIN_ICONS.ACTION.DELETE" size="15" />
                                     <v-tooltip activator="parent" location="top">Xóa vĩnh viễn</v-tooltip>
                                 </v-btn>
                             </div>
@@ -671,13 +682,5 @@ onMounted(async () => {
 
 .tight-switch {
     transform: scale(0.85);
-}
-
-.action-icon-btn {
-    min-width: 32px !important;
-    width: 32px !important;
-    height: 32px !important;
-    padding: 0 !important;
-    border-radius: 8px !important;
 }
 </style>

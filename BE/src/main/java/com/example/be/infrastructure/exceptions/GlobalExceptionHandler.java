@@ -105,6 +105,22 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "ERR_VAL_INVALID_PARAMS", message, request.getRequestURI(), ErrorSeverity.SYNTAX);
     }
 
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleNoResourceFoundException(
+            org.springframework.web.servlet.resource.NoResourceFoundException e, HttpServletRequest request) {
+        log.info("Resource not found at {}: {}", request.getRequestURI(), e.getResourcePath());
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "ERR_RESOURCE_NOT_FOUND", 
+                "Tài nguyên không tồn tại: " + e.getResourcePath(), request.getRequestURI(), ErrorSeverity.RECOVERABLE);
+    }
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMethodNotSupportedException(
+            org.springframework.web.HttpRequestMethodNotSupportedException e, HttpServletRequest request) {
+        log.warn("Method not supported at {}: {}", request.getRequestURI(), e.getMessage());
+        return buildErrorResponse(HttpStatus.METHOD_NOT_ALLOWED, "ERR_METHOD_NOT_ALLOWED", 
+                e.getMessage(), request.getRequestURI(), ErrorSeverity.SYNTAX);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGeneralException(Exception e, HttpServletRequest request) {
         log.error("UNHANDLED CRITICAL at {}: ", request.getRequestURI(), e);

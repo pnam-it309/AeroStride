@@ -423,21 +423,25 @@ const clearImage = () => {
 };
 
 const sendMessage = () => {
-    if (isChatLocked.value) return;
-    if ((!message.value.trim() && !imagePreview.value) || isSending.value) return;
+    if (isChatLocked.value || isSending.value) return;
+
+    const userMsg = (message.value || '').trim();
+    const currentImagePreview = imagePreview.value;
+
+    if (!userMsg && !currentImagePreview) return;
 
     const now = Date.now();
-    if (now - lastSendTime.value < COOLDOWN_MS) return;
-
-    let userMsg = message.value;
-    const lowerMsg = userMsg.toLowerCase().trim();
+    if (now - lastSendTime.value < 400) return;
+    lastSendTime.value = now;
+    isSending.value = true;
 
     // 1. KIỂM DUYỆT NỘI DUNG TIN NHẮN (Nếu có nhập text)
-    if (userMsg.trim()) {
+    if (userMsg) {
         const modResult = validateChatMessage(userMsg);
         if (!modResult.isValid) {
             violationCount.value++;
             message.value = '';
+            isSending.value = false;
 
             // Thêm tin nhắn cảnh báo hệ thống vào khung chat
             chatHistory.value.push({
@@ -468,6 +472,9 @@ const sendMessage = () => {
         violationCount.value = 0;
     }
 
+    let finalUserMsg = userMsg;
+    const lowerMsg = userMsg.toLowerCase();
+
     // Kiểm tra nếu tin nhắn là yêu cầu kết nối nhân viên
     const isHandoff =
         lowerMsg.includes('nhân viên') ||
@@ -487,23 +494,19 @@ const sendMessage = () => {
         lowerMsg.includes('noi chuyen voi ho tro');
 
     if (isHandoff) {
-        userMsg = 'Tôi muốn nói chuyện với nhân viên hỗ trợ.';
+        finalUserMsg = 'Tôi muốn nói chuyện với nhân viên hỗ trợ.';
     }
 
+    // Clear input ngay lập tức để người dùng không spam được
     message.value = '';
-    isSending.value = true;
-    lastSendTime.value = now;
+    clearImage();
 
     // Tạm thời hiển thị tin nhắn user để UI phản hồi nhanh
-    const tempId = Date.now();
-
-    // Copy ảnh base64 để render ngay lập tức (nếu có)
-    const currentImagePreview = imagePreview.value;
-
+    const tempId = 'temp_' + now;
     chatHistory.value.push({
         id: tempId,
         sender: 'user',
-        text: userMsg,
+        text: finalUserMsg,
         image: currentImagePreview,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
@@ -528,30 +531,27 @@ const sendMessage = () => {
     updateActivity();
     resetGuestInactivityTimer();
 
-    // Tạo data base64 thuần túy (bỏ header "data:image/jpeg;base64,") nếu cần
+    // Chuẩn bị ảnh base64 gửi lên backend
     let base64Image = null;
     if (currentImagePreview) {
-        base64Image = currentImagePreview.split(',')[1];
+        base64Image = currentImagePreview.includes(',') ? currentImagePreview.split(',')[1] : currentImagePreview;
     }
-
-    // Clear image sau khi gửi
-    clearImage();
 
     apiService
         .post(API_CHAT.CUSTOMER_SEND, {
             sessionId: sessionId.value,
             sender: CHAT_SENDER_TYPE.CUSTOMER,
-            text: userMsg,
-            image: base64Image
-        })
-        .then(() => {
-            isSending.value = false;
+            text: finalUserMsg,
+            image: base64Image,
+            imageBase64: base64Image
         })
         .catch((err) => {
             console.error('Lỗi gửi tin nhắn:', err);
             isTyping.value = false;
-            isSending.value = false;
             if (typingTimeout.value) clearTimeout(typingTimeout.value);
+        })
+        .finally(() => {
+            isSending.value = false;
         });
 };
 
@@ -656,10 +656,17 @@ onMounted(() => {
     chatSocket.connect(() => {
         chatSocket.subscribe('/topic/messages', (msg) => {
             const data = typeof msg === 'string' ? JSON.parse(msg) : msg;
-            if (data.secondStaffId || !data.sessionId || data.sessionId !== sessionId.value) return;
+            const targetSession = data.sessionId || data.maPhien;
+            if (data.secondStaffId || !targetSession || targetSession !== sessionId.value) return;
 
-            // Dừng indicator khi nhận được tin nhắn mới từ bot/staff
-            if (data.sender !== CHAT_SENDER_TYPE.CUSTOMER) {
+            const text = data.text || data.noiDung || '';
+            const image = data.image || data.hinhAnh || null;
+            const rawSender = data.sender || data.nguoiGui || 'bot';
+            const isFromCustomer = (rawSender === CHAT_SENDER_TYPE.CUSTOMER || rawSender === 'customer' || rawSender === 'CUSTOMER');
+            const sender = isFromCustomer ? 'user' : rawSender;
+
+            // Dừng typing indicator khi nhận được tin nhắn từ bot hoặc staff
+            if (sender !== 'user') {
                 isTyping.value = false;
                 if (typingTimeout.value) {
                     clearTimeout(typingTimeout.value);
@@ -669,41 +676,55 @@ onMounted(() => {
 
             const parsed = {
                 ...data,
-                sender: data.sender === CHAT_SENDER_TYPE.CUSTOMER || data.sender === 'customer' ? 'user' : data.sender
+                id: data.id || ('msg_' + Date.now()),
+                sender,
+                text,
+                image,
+                time: data.thoiGian || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
 
-            // Thay thế tin nhắn tạm của user bằng tin nhắn chính thức từ server nếu trùng nội dung
-            if (parsed.sender === 'user') {
+            // 1. Nếu là tin nhắn từ user: Thay thế tin nhắn tạm thời trên UI (nếu có)
+            if (sender === 'user') {
                 const tempIndex = chatHistory.value.findIndex(
-                    (m) => m.sender === 'user' && m.text === parsed.text && typeof m.id === 'number'
+                    (m) => m.sender === 'user' && (typeof m.id === 'string' && m.id.startsWith('temp_'))
                 );
                 if (tempIndex !== -1) {
-                    chatHistory.value[tempIndex] = parsed;
+                    chatHistory.value[tempIndex] = {
+                        ...chatHistory.value[tempIndex],
+                        id: parsed.id,
+                        image: parsed.image || chatHistory.value[tempIndex].image,
+                        time: parsed.time
+                    };
                     return;
                 }
             }
 
-            // Parse JSON sản phẩm cho tin nhắn mới
-            if (data.text && data.text.includes('[[PRODUCT_JSON:')) {
-                const products = parseProductJson(data.text);
+            // 2. Chống lặp tin nhắn dựa trên ID đã có trong danh sách
+            if (parsed.id && chatHistory.value.some((m) => m.id === parsed.id)) {
+                return;
+            }
+
+            // 3. Parse JSON sản phẩm cho tin nhắn mới
+            if (text && text.includes('[[PRODUCT_JSON:')) {
+                const products = parseProductJson(text);
                 if (products) {
                     parsed.products = products;
-                    parsed.text = data.text.replace(/\[\[PRODUCT_JSON:[\s\S]*?\]\]/, '');
+                    parsed.text = text.replace(/\[\[PRODUCT_JSON:[\s\S]*?\]\]/, '');
                 }
             }
 
-            // Parse gợi ý từ AI cho tin nhắn mới — luôn xóa marker khỏi text hiển thị
-            if (data.text && data.text.includes('[[SUGGESTIONS:')) {
-                const suggs = parseSuggestionsJson(data.text);
+            // 4. Parse gợi ý từ AI cho tin nhắn mới — luôn xóa marker khỏi text hiển thị
+            if (text && text.includes('[[SUGGESTIONS:')) {
+                const suggs = parseSuggestionsJson(text);
                 if (suggs) {
                     parsed.suggestions = suggs;
                 }
-                const currentText = parsed.text || data.text;
+                const currentText = parsed.text || text;
                 parsed.text = currentText.replace(/\[\[SUGGESTIONS:[\s\S]*?\]\]\]?/, '').trim();
             }
 
-            // Hiển thị form đánh giá nếu cuộc trò chuyện bị đóng
-            if (data.sender === 'system' && data.text && data.text.includes('Cuộc trò chuyện đã được đóng')) {
+            // 5. Hiển thị form đánh giá nếu cuộc trò chuyện bị đóng
+            if (data.sender === 'system' && text && text.includes('Cuộc trò chuyện đã được đóng')) {
                 showRatingForm.value = true;
                 ratingConversationId.value = data.idCuocHoiThoai;
             }

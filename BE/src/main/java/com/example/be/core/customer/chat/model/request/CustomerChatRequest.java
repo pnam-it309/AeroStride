@@ -17,4 +17,12 @@ public class CustomerChatRequest {
     private String text;
     private String sender;
     private String imageBase64;
+    private String image;
+
+    public String getImageBase64() {
+        if (imageBase64 != null && !imageBase64.isEmpty()) {
+            return imageBase64;
+        }
+        return image;
+    }
 }

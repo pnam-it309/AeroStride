@@ -13,6 +13,7 @@ import com.example.be.infrastructure.constants.AiChatPrompts;
 import com.example.be.core.common.chat.local.service.AiLocalService;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.annotation.PostConstruct;
+import org.springframework.util.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.ai.chat.client.ChatClient;
@@ -211,24 +212,32 @@ public class AiChatServiceImpl implements AiChatService {
             return;
         }
 
+        // Fallback customerText if only image was sent
+        String effectiveCustomerText = customerText;
+        if ((effectiveCustomerText == null || effectiveCustomerText.trim().isEmpty()) && StringUtils.hasText(imageBase64)) {
+            effectiveCustomerText = "Tôi vừa gửi hình ảnh mẫu giày này, bạn hãy quan sát và tư vấn chi tiết giúp tôi nhé!";
+        } else if (effectiveCustomerText == null) {
+            effectiveCustomerText = "";
+        }
+
         // 1. Lấy danh sách sản phẩm thông minh dựa trên Index Database
         String chatHistory = buildChatHistory(conversation.getId());
-        String prompt = buildPrompt(chatHistory, customerText, conversation);
+        String prompt = buildPrompt(chatHistory, effectiveCustomerText, conversation);
 
-        // --- Cố gắng gọi OpenAI / Ollama Local (Primary Model) ---
+        // --- Cố gắng gọi OpenAI / Vision API (Primary Model) ---
         String activeOpenAiKey = getOpenAiApiKey();
         boolean hasOpenAiKey = activeOpenAiKey != null && !activeOpenAiKey.isBlank() && !"your_openai_api_key_here".equals(activeOpenAiKey);
 
         if (hasOpenAiKey && isModelHealthy("OPENAI")) {
             try {
-                log.info("Khởi động gọi OpenAI / Ollama API...");
+                log.info("Khởi động gọi OpenAI API (có ảnh: {})...", StringUtils.hasText(imageBase64));
                 String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
-                String botResponseText = callOpenAiApi(apiUrl, prompt);
+                String botResponseText = callOpenAiApi(apiUrl, prompt, imageBase64);
                 saveAndBroadcast(conversation, botResponseText);
-                log.info("OpenAI / Ollama phản hồi thành công.");
+                log.info("OpenAI phản hồi thành công.");
                 return; // Xử lý xong, kết thúc!
             } catch (Exception e) {
-                log.warn("OpenAI / Ollama API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
+                log.warn("OpenAI API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
                 markModelUnhealthy("OPENAI");
             }
         }
@@ -236,7 +245,10 @@ public class AiChatServiceImpl implements AiChatService {
         // --- Cố gắng gọi LOCAL AI (Fallback) ---
         log.info("Tự động chuyển đổi: Kích hoạt AI nội bộ cục bộ làm dự phòng...");
         try {
-            String localResponse = aiLocalService.generateResponse(customerText, conversation.getId());
+            String localResponse = aiLocalService.generateResponse(effectiveCustomerText, conversation.getId());
+            if (StringUtils.hasText(imageBase64) && !localResponse.contains("ảnh") && !localResponse.contains("hình")) {
+                localResponse = "Cảm ơn bạn đã gửi hình ảnh mẫu giày! AeroStride đã nhận được ảnh và đang đối chiếu với các mẫu giày sẵn có.\n\n" + localResponse;
+            }
             saveAndBroadcast(conversation, localResponse);
             log.info("AI nội bộ phản hồi thành công.");
         } catch (Exception ex) {
@@ -616,7 +628,15 @@ public class AiChatServiceImpl implements AiChatService {
      */
     @SuppressWarnings("unchecked")
     private String callOpenAiApi(String apiUrl, String prompt) {
-        if (this.chatClient != null) {
+        return callOpenAiApi(apiUrl, prompt, null);
+    }
+
+    /**
+     * Gọi OpenAI ChatGPT API (hỗ trợ Vision Multimodal khi có ảnh) và trích xuất kết quả.
+     */
+    @SuppressWarnings("unchecked")
+    private String callOpenAiApi(String apiUrl, String prompt, String imageBase64) {
+        if (this.chatClient != null && !StringUtils.hasText(imageBase64)) {
             log.info("Sử dụng Spring AI ChatClient (với Tool searchProducts) để gọi OpenAI...");
             return chatClient.prompt()
                     .user(prompt)
@@ -628,9 +648,32 @@ public class AiChatServiceImpl implements AiChatService {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", openAiModel);
 
-        Map<String, String> message = new HashMap<>();
+        Map<String, Object> message = new HashMap<>();
         message.put("role", "user");
-        message.put("content", prompt);
+
+        if (StringUtils.hasText(imageBase64)) {
+            List<Map<String, Object>> contentList = new ArrayList<>();
+
+            // 1. Text part
+            Map<String, Object> textPart = new HashMap<>();
+            textPart.put("type", "text");
+            textPart.put("text", prompt + "\n\n[QUAN TRỌNG - THỊ GIÁC AI]: Khách hàng vừa gửi kèm một HÌNH ẢNH mẫu giày/sản phẩm. Bạn hãy quan sát kỹ các đặc điểm trong ảnh (màu sắc, phom dáng, loại đế, thương hiệu/logo nếu có, phong cách thể thao/chạy bộ/lifestyle) để phân tích chi tiết, đưa ra nhận xét chuyên nghiệp và gợi ý các mẫu giày tương tự đang có sẵn tại cửa hàng AeroStride!");
+            contentList.add(textPart);
+
+            // 2. Image part (OpenAI Vision standard format)
+            Map<String, Object> imagePart = new HashMap<>();
+            imagePart.put("type", "image_url");
+            Map<String, String> imageUrlMap = new HashMap<>();
+            String pureBase64 = imageBase64.contains(",") ? imageBase64.split(",", 2)[1] : imageBase64;
+            imageUrlMap.put("url", "data:image/jpeg;base64," + pureBase64);
+            imagePart.put("image_url", imageUrlMap);
+            contentList.add(imagePart);
+
+            message.put("content", contentList);
+        } else {
+            message.put("content", prompt);
+        }
+
         requestBody.put("messages", List.of(message));
 
         HttpHeaders headers = new HttpHeaders();

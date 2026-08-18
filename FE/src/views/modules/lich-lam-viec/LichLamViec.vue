@@ -2095,11 +2095,11 @@ onMounted(() => {
 .calendar-tabs {
     display: flex;
     align-items: center;
-    background: #ffffff;
+    background: #f1f5f9;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 2px;
-    gap: 1px;
+    padding: 3px;
+    gap: 2px;
     height: 38px;
 }
 
@@ -2114,20 +2114,22 @@ onMounted(() => {
     background: transparent;
     color: #64748b;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
     white-space: nowrap;
 }
 
 .calendar-tab-btn:hover:not(:disabled) {
-    background: #f1f5f9;
-    color: #334155;
+    background: #e2e8f0;
+    color: #0f172a;
 }
 
 .calendar-tab-btn--active {
-    background: #0f172a !important; /* matches mockup dark active style */
-    color: #ffffff !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
 }
 
 .calendar-tab-btn:disabled {
