@@ -370,35 +370,15 @@ public class AdminChatServiceImpl implements AdminChatService {
     }
 
     /**
-     * Lưu ảnh base64 xuống thư mục local uploads và trả về URL truy cập.
-     * Trả về null nếu base64 rỗng hoặc lỗi.
+     * Chuẩn hóa ảnh chat sang data URI để lưu trữ bền vững trong database (LONGTEXT).
+     * Đảm bảo không bị mất ảnh khi F5, mở tab mới, hay khi container redeploy.
      */
-    private String saveBase64ToFile(String base64Data) {
-        if (!StringUtils.hasText(base64Data)) return null;
-        try {
-            // Loại bỏ header "data:image/jpeg;base64," nếu có
-            String pureBase64 = base64Data.contains(",") ? base64Data.split(",", 2)[1] : base64Data;
-            byte[] imageBytes = Base64.getDecoder().decode(pureBase64);
-
-            String folder = "chat";
-            String fileName = UUID.randomUUID() + ".jpg";
-            Path rootPath = Paths.get(localUploadDir).toAbsolutePath().normalize();
-            Path targetDir = rootPath.resolve(folder).normalize();
-            Files.createDirectories(targetDir);
-            Path targetFile = targetDir.resolve(fileName).normalize();
-
-            if (!targetFile.startsWith(rootPath)) {
-                log.warn("Đường dẫn upload không hợp lệ");
-                return null;
-            }
-
-            Files.write(targetFile, imageBytes);
-
-            return "/uploads/" + folder + "/" + fileName;
-        } catch (IOException | IllegalArgumentException e) {
-            log.error("Lỗi khi lưu ảnh base64 cho chat: {}", e.getMessage());
-            return null;
+    private String processChatImage(String imageBase64) {
+        if (!StringUtils.hasText(imageBase64)) return null;
+        if (imageBase64.startsWith("data:image/") || imageBase64.startsWith("http://") || imageBase64.startsWith("https://") || imageBase64.startsWith("/uploads/")) {
+            return imageBase64;
         }
+        return "data:image/jpeg;base64," + imageBase64;
     }
 
     @Override
@@ -466,8 +446,8 @@ public class AdminChatServiceImpl implements AdminChatService {
             throw new RuntimeException(ChatConstants.ERR_CONVERSATION_NOT_ACCEPTED);
         }
 
-        // Xử lý ảnh: decode base64 và lưu file, lấy URL
-        String imageUrl = saveBase64ToFile(imageBase64);
+        // Xử lý ảnh: lưu data URI bền vững vào database
+        String imageUrl = processChatImage(imageBase64);
 
         TinNhan message = TinNhan.builder()
                 .cuocHoiThoai(conversation)
