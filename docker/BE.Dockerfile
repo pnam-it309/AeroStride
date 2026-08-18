@@ -56,7 +56,7 @@ COPY --from=builder --chown=spring:spring /app/app.jar /app-bin/app.jar
 ARG BE_PORT
 EXPOSE ${BE_PORT}
 
-# Configure environment variables (from .env, not hardcoded)
+# Configure environment variables
 ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
 ENV JAVA_OPTS=${JAVA_OPTS}
 
@@ -64,4 +64,4 @@ ENV JAVA_OPTS=${JAVA_OPTS}
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${SERVER_PORT}/actuator/health || exit 1
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app-bin/app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS:--XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k} -jar /app-bin/app.jar"]
