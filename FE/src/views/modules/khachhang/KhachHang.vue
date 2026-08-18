@@ -93,37 +93,7 @@ const getCustomerAvatar = (itemOrImg) => {
         return DEFAULT_AVATAR_URL;
     }
 
-    // 2. Absolute uploads path
-    if (img.startsWith('/uploads/')) {
-        return img;
-    }
-    if (img.startsWith('uploads/')) {
-        return `/${img}`;
-    }
-
-    // 3. Absolute URLs (Cloudinary, standard http/https, data urls, blob urls)
-    if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('data:') || img.startsWith('blob:')) {
-        if (img.includes('/uploads/')) {
-            const index = img.indexOf('/uploads/');
-            return img.substring(index);
-        }
-        return img;
-    }
-
-    // 4. If it already contains '/api/common/storage/files/'
-    if (img.includes('/api/common/storage/files/')) {
-        const apiBase = import.meta.env.VITE_API_URL || '';
-        const cleanBase = apiBase.replace(/\/+$/, '');
-        const cleanImg = img.startsWith('/') ? img : `/${img}`;
-        return `${cleanBase}${cleanImg}`;
-    }
-
-    // 5. If it's a relative path containing /
-    if (img.includes('/') && !img.startsWith('/')) {
-        return `/uploads/${img}`;
-    }
-
-    return dichVuFile.layUrlFile(img);
+    return dichVuFile.layUrlFile(img) || DEFAULT_AVATAR_URL;
 };
 
 const invoicesTab = useAdminTable(

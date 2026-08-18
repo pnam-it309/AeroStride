@@ -60,9 +60,8 @@ public class LocalStorageServiceImpl implements StorageService {
             }
 
             String publicId = sanitizedFolder + "/" + generatedFileName;
-            String baseUrl = StringUtils.trimTrailingCharacter(appBaseUrl, '/');
             return FileUploadResult.builder()
-                    .fileUrl(baseUrl + "/uploads/" + publicId)
+                    .fileUrl("/uploads/" + publicId)
                     .publicId(publicId)
                     .format(extension.isBlank() ? null : extension.substring(1))
                     .build();

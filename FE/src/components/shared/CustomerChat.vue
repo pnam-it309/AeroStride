@@ -9,6 +9,7 @@ import { validateChatMessage } from '@/utils/chatModeration';
 import { marked } from 'marked';
 import ProductShowcaseCard from './ProductShowcaseCard.vue';
 import { useRouter } from 'vue-router';
+import { dichVuFile } from '@/services/core/dichVuFile';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -777,8 +778,14 @@ const skipRating = () => {
 };
 
 /** Mở ảnh trong tab mới khi click */
+const resolveChatImageUrl = (url) => {
+    if (!url) return '';
+    return dichVuFile.layUrlFile(url);
+};
+
 const openChatImage = (url) => {
-    if (url) window.open(url, '_blank');
+    const fullUrl = resolveChatImageUrl(url);
+    if (fullUrl) window.open(fullUrl, '_blank');
 };
 </script>
 
@@ -888,12 +895,12 @@ const openChatImage = (url) => {
                                     {{ msg.idNhanVien }}
                                 </div>
                                 <!-- Ảnh gửi trực tiếp (local base64 preview) hoặc từ history (imageUrl từ server) -->
-                                <div v-if="msg.image || msg.imageUrl" class="message-image">
+                                <div v-if="msg.image || msg.imageUrl || msg.hinhAnh" class="message-image">
                                     <img
-                                        :src="msg.image || msg.imageUrl"
+                                        :src="resolveChatImageUrl(msg.image || msg.imageUrl || msg.hinhAnh)"
                                         alt="Uploaded Image"
                                         style="max-width: 100%; border-radius: 8px; margin-bottom: 8px; cursor: pointer"
-                                        @click="openChatImage(msg.image || msg.imageUrl)"
+                                        @click="openChatImage(msg.image || msg.imageUrl || msg.hinhAnh)"
                                     />
                                 </div>
                                 <div v-if="msg.text" class="message-bubble" v-html="marked(msg.text)"></div>

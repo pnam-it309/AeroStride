@@ -781,7 +781,7 @@ onMounted(async () => {
                                 class="border-xl border-white elevation-6 cursor-pointer avatar-hover transition-all overflow-hidden"
                                 @click="handleFileClick"
                             >
-                                <v-img :src="employeeForm.hinhAnh || FB_DEFAULT_AVATAR" cover>
+                                <v-img :src="dichVuFile.layUrlFile(employeeForm.hinhAnh) || FB_DEFAULT_AVATAR" cover>
                                     <template v-slot:placeholder>
                                         <v-row class="fill-height ma-0" align="center" justify="center">
                                             <v-progress-circular indeterminate color="primary"></v-progress-circular>

@@ -85,8 +85,7 @@ public class CustomerChatServiceImpl implements CustomerChatService {
             Path targetFile = targetDir.resolve(fileName).normalize();
             if (!targetFile.startsWith(rootPath)) return null;
             Files.write(targetFile, imageBytes);
-            String baseUrl = StringUtils.trimTrailingCharacter(appBaseUrl, '/');
-            return baseUrl + "/uploads/" + folder + "/" + fileName;
+            return "/uploads/" + folder + "/" + fileName;
         } catch (IOException | IllegalArgumentException e) {
             log.error("Lỗi lưu ảnh chat: {}", e.getMessage());
             return null;

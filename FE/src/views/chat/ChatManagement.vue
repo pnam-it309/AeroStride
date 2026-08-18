@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { CHAT_TYPES, CHAT_SENDER_TYPE, CHAT_STATUS, CHAT_TOPICS } from '@/constants/appConstants';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { AdminConfirm } from '@/components/common';
+import { dichVuFile } from '@/services/core/dichVuFile';
 
 const notificationStore = useNotificationStore();
 const authStore = useAuthStore();
@@ -63,8 +64,14 @@ const clearImage = () => {
 };
 
 /** Mở ảnh trong tab mới khi click */
+const resolveChatImageUrl = (url) => {
+    if (!url) return '';
+    return dichVuFile.layUrlFile(url);
+};
+
 const openImage = (url) => {
-    if (url) window.open(url, '_blank');
+    const fullUrl = resolveChatImageUrl(url);
+    if (fullUrl) window.open(fullUrl, '_blank');
 };
 
 // Filters
@@ -160,26 +167,46 @@ const sendMessage = async () => {
 
     // Chuẩn bị payload: base64 thuần (bỏ header "data:image/...;base64," nếu có)
     let base64Image = null;
-    if (imagePreview.value) {
-        base64Image = imagePreview.value.includes(',') ? imagePreview.value.split(',')[1] : imagePreview.value;
+    const localPreview = imagePreview.value;
+    if (localPreview) {
+        base64Image = localPreview.includes(',') ? localPreview.split(',')[1] : localPreview;
     }
+
+    const textToSend = newMessage.value ? newMessage.value.trim() : null;
+    const currentUsername = authStore.user?.username || 'STAFF';
+
+    // Đẩy tin nhắn optimistic lên UI ngay lập tức để hiển thị tức thì cả ảnh và chữ
+    const tempId = 'temp_' + Date.now();
+    const optimisticMessage = {
+        id: tempId,
+        conversationId: activeChat.value.id,
+        sender: currentUsername,
+        text: textToSend,
+        imageUrl: localPreview || null,
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+    };
+    chatMessages.value.push(optimisticMessage);
+    scrollToBottom();
 
     const messageData = {
         conversationId: activeChat.value.id,
-        text: newMessage.value || null,
-        sender: authStore.user?.username || 'STAFF',
+        text: textToSend,
+        sender: currentUsername,
         imageBase64: base64Image
     };
 
     isSendingImage.value = !!base64Image;
+    newMessage.value = '';
+    clearImage();
+
     try {
-        newMessage.value = '';
-        clearImage();
         await api.post(API_CHAT.SEND, messageData);
         scrollToBottom();
         fetchConversations(true);
     } catch (error) {
         console.error('Lỗi khi gửi tin nhắn:', error);
+        // Nếu lỗi, xóa tin nhắn optimistic
+        chatMessages.value = chatMessages.value.filter((m) => m.id !== tempId);
     } finally {
         isSendingImage.value = false;
         isSendingMessage.value = false;
@@ -303,10 +330,20 @@ onMounted(() => {
                 if (activeChat.value.id.startsWith('NEW_INTERNAL_')) {
                     activeChat.value.id = data.conversationId;
                 }
-                if (!chatMessages.value.find((m) => m.id === data.id)) {
+
+                // Cập nhật lại tin nhắn tạm thời hoặc thêm mới nếu chưa có
+                const tempIndex = chatMessages.value.findIndex(
+                    (m) => typeof m.id === 'string' && m.id.startsWith('temp_') && m.sender === data.sender
+                );
+                if (tempIndex !== -1) {
+                    chatMessages.value[tempIndex] = {
+                        ...data,
+                        imageUrl: data.imageUrl || data.image || data.hinhAnh || chatMessages.value[tempIndex].imageUrl
+                    };
+                } else if (!chatMessages.value.find((m) => m.id === data.id)) {
                     chatMessages.value.push(data);
-                    scrollToBottom();
                 }
+                scrollToBottom();
             } else if (data.sender !== currentUsername) {
                 notificationStore.incrementUnreadChat(data.conversationId);
             }
@@ -516,8 +553,12 @@ onMounted(() => {
                                     "
                                 >
                                     <!-- Hiển thị ảnh nếu tin nhắn có ảnh -->
-                                    <div v-if="m.imageUrl" class="bubble-image-wrap mb-1">
-                                        <img :src="m.imageUrl" class="bubble-image" @click="openImage(m.imageUrl)" />
+                                    <div v-if="m.imageUrl || m.image || m.hinhAnh" class="bubble-image-wrap mb-1">
+                                        <img
+                                            :src="resolveChatImageUrl(m.imageUrl || m.image || m.hinhAnh)"
+                                            class="bubble-image"
+                                            @click="openImage(m.imageUrl || m.image || m.hinhAnh)"
+                                        />
                                     </div>
                                     <div v-if="m.text" class="bubble-text">{{ m.text }}</div>
                                     <div class="bubble-meta">

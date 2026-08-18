@@ -394,8 +394,7 @@ public class AdminChatServiceImpl implements AdminChatService {
 
             Files.write(targetFile, imageBytes);
 
-            String baseUrl = StringUtils.trimTrailingCharacter(appBaseUrl, '/');
-            return baseUrl + "/uploads/" + folder + "/" + fileName;
+            return "/uploads/" + folder + "/" + fileName;
         } catch (IOException | IllegalArgumentException e) {
             log.error("Lỗi khi lưu ảnh base64 cho chat: {}", e.getMessage());
             return null;

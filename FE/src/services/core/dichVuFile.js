@@ -80,10 +80,21 @@ export const dichVuFile = {
     layUrlFile(filePath) {
         if (!filePath) return '';
         if (typeof filePath !== 'string') return filePath;
-        if (/^(https?:)?\/\//i.test(filePath) || filePath.startsWith('data:') || filePath.startsWith('blob:')) {
+        if (filePath.startsWith('data:') || filePath.startsWith('blob:')) {
             return filePath;
         }
-        let cleanPath = filePath.replace(/^\/+/, '');
+
+        let cleanPath = filePath.trim();
+        // Xử lý các link cũ bị gắn cứng localhost:8080
+        if (cleanPath.includes('localhost:8080')) {
+            cleanPath = cleanPath.replace(/^https?:\/\/localhost:8080\/?/, '/');
+        }
+
+        if (/^https?:\/\//i.test(cleanPath)) {
+            return cleanPath;
+        }
+
+        cleanPath = cleanPath.replace(/^\/+/, '');
         if (cleanPath.startsWith('uploads/')) {
             cleanPath = cleanPath.substring(8);
         }

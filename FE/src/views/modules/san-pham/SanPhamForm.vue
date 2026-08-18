@@ -370,7 +370,7 @@ const variantTableHeaders = [
     { text: 'Màu sắc', width: '140px' },
     { text: 'Kích thước', width: '140px' },
     { text: 'SKU', width: '240px' },
-    { text: 'Tồn kho', width: '110px' },
+    { text: 'Số lượng', width: '110px' },
     { text: 'Giá bán', width: '130px' },
     { text: 'Trạng thái', width: '160px' },
     { text: 'Thao tác', width: '120px' }
