@@ -5,6 +5,9 @@ class ChatSocketService {
     constructor() {
         this.client = null;
         this.connected = false;
+        this.connecting = false;
+        this.retryCount = 0;
+        this.maxRetries = 5;
         this.subscriptions = new Map(); // topic -> Set of callbacks
         this.stompSubscriptions = new Map(); // topic -> StompSubscription
         this.localBridge = new BroadcastChannel('aerostride_chat_local');
@@ -39,10 +42,11 @@ class ChatSocketService {
             onConnectedCallback();
         }
 
-        if (this.client && (this.client.active || this.connected)) {
+        if (this.connecting || this.connected || (this.client && this.client.active)) {
             return;
         }
 
+        this.connecting = true;
         const endpoint = this.getWsUrl();
 
         this.client = new Client({
@@ -50,12 +54,14 @@ class ChatSocketService {
                 new SockJS(endpoint, null, {
                     transports: ['websocket', 'xhr-streaming', 'xhr-polling']
                 }),
-            reconnectDelay: 2500,
-            heartbeatIncoming: 4000,
-            heartbeatOutgoing: 4000,
+            reconnectDelay: 10000, // 10s backoff to avoid rate-limiting (429)
+            heartbeatIncoming: 10000,
+            heartbeatOutgoing: 10000,
+            connectionTimeout: 10000,
             onConnect: () => {
-                console.log('✅ Chat WebSocket (STOMP) connected to', endpoint);
                 this.connected = true;
+                this.connecting = false;
+                this.retryCount = 0;
 
                 // Re-subscribe all active topics
                 this.resubscribeAll();
@@ -66,13 +72,19 @@ class ChatSocketService {
             },
             onDisconnect: () => {
                 this.connected = false;
+                this.connecting = false;
                 this.stompSubscriptions.clear();
             },
             onStompError: (frame) => {
-                console.warn('Socket Stomp Error:', frame.headers ? frame.headers['message'] : frame);
+                this.connecting = false;
+                console.warn('Chat Socket Stomp Error:', frame?.headers?.message || 'Unknown');
             },
-            onWebSocketError: (event) => {
-                console.warn('WebSocket transport error, will auto-reconnect:', event);
+            onWebSocketError: () => {
+                this.connecting = false;
+                this.retryCount++;
+                if (this.retryCount > this.maxRetries && this.client) {
+                    this.client.reconnectDelay = 30000; // back off to 30s
+                }
             }
         });
 
@@ -140,7 +152,11 @@ class ChatSocketService {
                         this.subscriptions.delete(topic);
                         const stompSub = this.stompSubscriptions.get(topic);
                         if (stompSub) {
-                            stompSub.unsubscribe();
+                            try {
+                                stompSub.unsubscribe();
+                            } catch (e) {
+                                // Ignore
+                            }
                             this.stompSubscriptions.delete(topic);
                         }
                     }
@@ -166,9 +182,14 @@ class ChatSocketService {
 
     disconnect() {
         if (this.client) {
-            this.client.deactivate();
+            try {
+                this.client.deactivate();
+            } catch (e) {
+                // Ignore
+            }
         }
         this.connected = false;
+        this.connecting = false;
         this.stompSubscriptions.clear();
     }
 }

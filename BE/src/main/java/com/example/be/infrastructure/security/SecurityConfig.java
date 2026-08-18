@@ -78,21 +78,25 @@ public class SecurityConfig {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         
-        // Use configured origin or fallback to a safe pattern.
-        // Comma-separated so dev can serve several front-ends at once (the Vite
-        // app and the Expo web build listen on different ports).
         if (org.springframework.util.StringUtils.hasText(ALLOWED_ORIGIN)) {
-            config.setAllowedOrigins(Arrays.stream(ALLOWED_ORIGIN.split(","))
+            Arrays.stream(ALLOWED_ORIGIN.split(","))
                     .map(String::trim)
                     .filter(origin -> !origin.isEmpty())
-                    .toList());
-        } else {
-            config.addAllowedOriginPattern("*");
+                    .forEach(config::addAllowedOriginPattern);
         }
+        
+        // Always allow production domains, Render subdomains, and local dev
+        config.addAllowedOriginPattern("https://*.aerostride.me");
+        config.addAllowedOriginPattern("https://aerostride.me");
+        config.addAllowedOriginPattern("https://*.onrender.com");
+        config.addAllowedOriginPattern("http://localhost:*");
+        config.addAllowedOriginPattern("http://127.0.0.1:*");
         
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setExposedHeaders(List.of("Authorization", "Content-Disposition", "X-Total-Count"));
         config.setAllowCredentials(true);
+        config.setMaxAge(3600L); // Cache preflight CORS response for 1 hour to reduce server load
 
         source.registerCorsConfiguration("/**", config);
         return source;

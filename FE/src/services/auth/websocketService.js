@@ -5,12 +5,18 @@ class WebSocketService {
     constructor() {
         this.stompClient = null;
         this.connected = false;
+        this.connecting = false;
         this.subscriptions = new Map();
-        this.baseUrl = import.meta.env.VITE_WS_URL;
+        this.retryCount = 0;
+        this.maxRetries = 5;
     }
 
     connect(onMessageCallback) {
-        if (this.connected) return;
+        if (this.connected || this.connecting || (this.stompClient && this.stompClient.active)) {
+            return;
+        }
+
+        this.connecting = true;
 
         let rawUrl = import.meta.env.VITE_WS_URL || '/ws';
         let httpUrl = rawUrl.replace(/^wss:/i, 'https:').replace(/^ws:/i, 'http:');
@@ -20,14 +26,16 @@ class WebSocketService {
 
         this.stompClient = new Client({
             webSocketFactory: () => new SockJS(httpUrl),
-            reconnectDelay: 5000,
-            heartbeatIncoming: 4000,
-            heartbeatOutgoing: 4000
+            reconnectDelay: 10000, // 10s backoff to avoid rate limiting (429)
+            heartbeatIncoming: 10000,
+            heartbeatOutgoing: 10000,
+            connectionTimeout: 10000
         });
 
         this.stompClient.onConnect = (frame) => {
             this.connected = true;
-            console.log('WebSocket Connected: ' + frame);
+            this.connecting = false;
+            this.retryCount = 0;
 
             // Default global notifications
             this.subscribe('/topic/notifications', onMessageCallback);
@@ -35,15 +43,35 @@ class WebSocketService {
             this.subscribe('/topic/product-stock', onMessageCallback);
 
             // Subscribe to private notifications if user is logged in
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (user && user.username) {
-                this.subscribe(`/user/${user.username}/queue/notifications`, onMessageCallback);
+            try {
+                const user = JSON.parse(localStorage.getItem('user'));
+                if (user && user.username) {
+                    this.subscribe(`/user/${user.username}/queue/notifications`, onMessageCallback);
+                }
+            } catch (e) {
+                // Ignore parse error
             }
         };
 
+        this.stompClient.onDisconnect = () => {
+            this.connected = false;
+            this.connecting = false;
+        };
+
         this.stompClient.onStompError = (frame) => {
-            console.error('Broker reported error: ' + frame.headers['message']);
-            console.error('Additional details: ' + frame.body);
+            this.connecting = false;
+            console.warn('WebSocket Stomp error:', frame?.headers?.message || 'Unknown error');
+        };
+
+        this.stompClient.onWebSocketError = () => {
+            this.connecting = false;
+            this.retryCount++;
+            if (this.retryCount > this.maxRetries) {
+                // Stop hammering if server is down or rate limited
+                if (this.stompClient) {
+                    this.stompClient.reconnectDelay = 30000; // back off to 30s
+                }
+            }
         };
 
         this.stompClient.activate();
@@ -51,32 +79,48 @@ class WebSocketService {
 
     subscribe(destination, callback) {
         if (!this.stompClient || !this.connected) {
-            console.warn('Cannot subscribe. WebSocket is not connected.');
             return;
         }
 
-        const subscription = this.stompClient.subscribe(destination, (message) => {
-            callback(JSON.parse(message.body));
-        });
+        try {
+            const subscription = this.stompClient.subscribe(destination, (message) => {
+                try {
+                    callback(JSON.parse(message.body));
+                } catch (e) {
+                    callback(message.body);
+                }
+            });
 
-        this.subscriptions.set(destination, subscription);
-        return subscription;
+            this.subscriptions.set(destination, subscription);
+            return subscription;
+        } catch (e) {
+            console.warn('Error subscribing to', destination, e);
+        }
     }
 
     unsubscribe(destination) {
         const subscription = this.subscriptions.get(destination);
         if (subscription) {
-            subscription.unsubscribe();
+            try {
+                subscription.unsubscribe();
+            } catch (e) {
+                // Ignore
+            }
             this.subscriptions.delete(destination);
         }
     }
 
     disconnect() {
         if (this.stompClient !== null) {
-            this.stompClient.deactivate();
+            try {
+                this.stompClient.deactivate();
+            } catch (e) {
+                // Ignore
+            }
         }
         this.connected = false;
-        console.log('WebSocket Disconnected');
+        this.connecting = false;
+        this.subscriptions.clear();
     }
 }
 
