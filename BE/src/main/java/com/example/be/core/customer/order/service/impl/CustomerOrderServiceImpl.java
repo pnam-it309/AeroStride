@@ -107,6 +107,10 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         }
 
         // 2. Validate và lấy chi tiết sản phẩm
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new RuntimeException("Giỏ hàng chưa có sản phẩm để đặt hàng.");
+        }
+
         List<ChiTietSanPham> variants = new ArrayList<>();
         Map<String, Integer> quantityMap = new HashMap<>();
 
@@ -121,6 +125,10 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         Map<String, BigDecimal> giaMap = new HashMap<>();
 
         for (CustomerOrderCheckoutRequest.CartItem item : request.getItems()) {
+            if (item.getSoLuong() == null || item.getSoLuong() <= 0) {
+                throw new RuntimeException("Số lượng sản phẩm trong giỏ hàng không hợp lệ (phải lớn hơn 0).");
+            }
+
             ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(item.getIdChiTietSanPham())
                     .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại: " + item.getIdChiTietSanPham()));
 

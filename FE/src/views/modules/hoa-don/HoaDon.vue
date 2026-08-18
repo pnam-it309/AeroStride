@@ -70,13 +70,13 @@ const {
         loaiDon: null,
         fromDate: getTodayDate(),
         toDate: getTodayDate(),
-        sortDirection: 'ASC'
+        sortDirection: 'DESC'
     }
 );
 
 const sortOptions = [
-    { title: 'Cũ nhất', value: 'ASC' },
-    { title: 'Mới nhất', value: 'DESC' }
+    { title: 'Mới nhất', value: 'DESC' },
+    { title: 'Cũ nhất', value: 'ASC' }
 ];
 
 const isRefreshing = ref(false);

@@ -20,7 +20,7 @@ export const MESSAGES = {
         FILE_LARGE: 'Kích thước tệp quá lớn',
         INVALID_FILE: 'Định dạng tệp không hợp lệ',
         CONNECT_SERVER: 'Không thể kết nối máy chủ',
-        PRODUCT_OUT_OF_STOCK: 'Sản phẩm không đủ số lượng tồn kho',
+        PRODUCT_OUT_OF_STOCK: 'Hết số lượng sản phẩm',
         PAYMENT_FAILED: 'Thanh toán thất bại',
         INSUFFICIENT_FUNDS: 'Khách chưa đưa đủ tiền'
     },

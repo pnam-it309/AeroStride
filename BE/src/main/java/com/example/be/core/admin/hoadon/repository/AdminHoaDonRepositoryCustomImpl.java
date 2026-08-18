@@ -125,6 +125,7 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
         QNhanVien nv = QNhanVien.nhanVien;
         QDiaChi khdc = QDiaChi.diaChi;
 
+        boolean isAsc = "asc".equalsIgnoreCase(req.getSortDirection());
         BooleanBuilder conditions = buildConditions(req);
 
         // Use Tuple to avoid problematic Enum-to-Ordinal SQL function translation in projections
@@ -143,8 +144,8 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                 .leftJoin(hd.nhanVien, nv)
                 .where(conditions)
                 .orderBy(
-                        "desc".equalsIgnoreCase(req.getSortDirection()) ? hd.ngayTao.desc() : hd.ngayTao.asc(),
-                        "desc".equalsIgnoreCase(req.getSortDirection()) ? hd.id.desc() : hd.id.asc()
+                        isAsc ? hd.ngayTao.asc() : hd.ngayTao.desc(),
+                        isAsc ? hd.id.asc() : hd.id.desc()
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())

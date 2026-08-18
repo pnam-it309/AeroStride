@@ -250,9 +250,15 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         String ctspId = hdct.getChiTietSanPham().getId();
         int oldQty = hdct.getSoLuong();
 
-        if (soLuong <= 0) {
+        if (soLuong == null || soLuong <= 0) {
             restoreStock(ctspId, oldQty);
             hoaDonChiTietRepository.delete(hdct);
+            HoaDon hd = getHoaDonOrThrow(idHoaDon);
+            if (hd.getListsHoaDonChiTiet() != null) {
+                hd.getListsHoaDonChiTiet().remove(hdct);
+            }
+            updateHoaDonTotals(hd, true);
+            return mapToHoaDonResponse(hd);
         } else {
             int delta = soLuong - oldQty;
             if (delta > 0) {
@@ -352,6 +358,12 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
         if (details.isEmpty()) {
             throw new BusinessException(MessageConstants.HOA_DON_EMPTY);
+        }
+
+        boolean hasInvalidQuantity = details.stream().anyMatch(d -> d.getSoLuong() == null || d.getSoLuong() <= 0);
+        int tongSoLuong = details.stream().mapToInt(d -> d.getSoLuong() != null ? d.getSoLuong() : 0).sum();
+        if (hasInvalidQuantity || tongSoLuong <= 0) {
+            throw new BusinessException(MessageConstants.PRODUCT_OUT_OF_STOCK);
         }
 
         // Kiểm tra sản phẩm/biến thể có bị ngừng hoạt động hoặc xóa không

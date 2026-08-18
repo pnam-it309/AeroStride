@@ -365,6 +365,14 @@ const changeAmount = computed(() => {
     return Math.max(0, received - finalCollectAmount.value);
 });
 
+// Kiểm tra giỏ hàng có sản phẩm hợp lệ (có ít nhất 1 sản phẩm và tất cả số lượng > 0)
+const hasValidCartItems = computed(() => {
+    const items = selectedOrder.value?.listsHoaDonChiTiet;
+    if (!items || !items.length) return false;
+    const totalQty = items.reduce((sum, item) => sum + (Number(item.soLuong) || 0), 0);
+    return totalQty > 0 && !items.some((item) => !item.soLuong || Number(item.soLuong) <= 0);
+});
+
 // deliveryMethod la nguon chinh; loaiDon chi dung de doc hoa don cu.
 // Chuan hoa tai mot cho de refresh/cap nhat order khong lam cong tac bi tat sai.
 const isShippingOrder = (order) =>
@@ -1329,8 +1337,8 @@ const onUpdateQty = async (item, delta, inputEventTarget = null) => {
         const maxAllowed = item.soLuong + (item.soLuongTon || 0);
         if (newQty > maxAllowed) {
             addNotification({
-                title: 'Vượt quá tồn kho',
-                subtitle: `Chỉ còn tối đa ${maxAllowed} sản phẩm. Hệ thống đã tự động điều chỉnh.`,
+                title: 'Cảnh báo',
+                subtitle: `Hết số lượng sản phẩm (chỉ còn tối đa ${maxAllowed} sản phẩm).`,
                 color: 'warning'
             });
             newQty = maxAllowed;
@@ -1596,7 +1604,10 @@ const onPrintReceiptInvoice = async (receipt = receiptDialog.value) => {
 };
 
 const onPrintInvoice = () => {
-    if (!selectedOrder.value) return;
+    if (!selectedOrder.value || !hasValidCartItems.value) {
+        addNotification({ title: 'Cảnh báo', subtitle: 'Hóa đơn chưa có sản phẩm hợp lệ để in.', color: 'warning' });
+        return;
+    }
 
     const printOrder = JSON.parse(JSON.stringify(selectedOrder.value));
     printOrder.tenKhachHang = customerForm.value.ten || 'Khách lẻ';
@@ -1888,8 +1899,21 @@ const checkBetterVoucherBeforeCheckout = async () => {
 // Logic: Thanh toán
 // Handler chính cho nút "Thanh toán"
 const onCheckout = async () => {
-    if (!selectedOrder.value?.listsHoaDonChiTiet?.length) {
+    const items = selectedOrder.value?.listsHoaDonChiTiet || [];
+    if (!items.length) {
         addNotification({ title: 'Cảnh báo', subtitle: 'Vui lòng thêm sản phẩm trước khi thanh toán.', color: 'warning' });
+        return;
+    }
+
+    const hasInvalidQty = items.some((item) => !item.soLuong || Number(item.soLuong) <= 0);
+    const totalQty = items.reduce((sum, item) => sum + (Number(item.soLuong) || 0), 0);
+
+    if (hasInvalidQty || totalQty <= 0) {
+        addNotification({
+            title: 'Cảnh báo',
+            subtitle: 'Hết số lượng sản phẩm. Vui lòng kiểm tra lại giỏ hàng.',
+            color: 'warning'
+        });
         return;
     }
 
@@ -2167,7 +2191,7 @@ const handleVnPayCallbackFromUrl = async () => {
                         :remaining-balance="remainingBalance"
                         :change-amount="changeAmount"
                         :is-processing="isProcessing"
-                        :has-items="!!selectedOrder?.listsHoaDonChiTiet?.length"
+                        :has-items="hasValidCartItems"
                         :vnpay-method="checkoutData.vnpayMethod"
                         :vnpay-dialog="vnpayDialog"
                         @print-invoice="onPrintInvoice"

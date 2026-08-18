@@ -31,7 +31,7 @@ public final class MessageConstants {
     public static final String HOA_DON_PAYMENT_FAILED = "Thanh toán thất bại!";
 
     // ============ Bán hàng ============
-    public static final String PRODUCT_OUT_OF_STOCK = "Sản phẩm không đủ số lượng tồn kho.";
+    public static final String PRODUCT_OUT_OF_STOCK = "Hết số lượng sản phẩm.";
     public static final String PRODUCT_DETAIL_NOT_FOUND = "Không tìm thấy sản phẩm chi tiết!";
 
     // ============ Khách hàng ============
@@ -111,8 +111,8 @@ public final class MessageConstants {
     // ============ POS sales exception constants ============
     public static final String HOA_DON_NOT_EXIST = "Hóa đơn không tồn tại";
     public static final String SAN_PHAM_NOT_IN_HOA_DON = "Sản phẩm không tìm thấy trong hóa đơn";
-    public static final String PRODUCT_INSUFFICIENT_QTY = "Sản phẩm không đủ số lượng.";
+    public static final String PRODUCT_INSUFFICIENT_QTY = "Hết số lượng sản phẩm.";
     public static final String KHACH_HANG_NOT_EXIST = "Khách hàng không tồn tại";
     public static final String VOUCHER_NOT_EXIST = "Voucher không tồn tại";
-    public static final String PRODUCT_OUT_OF_STOCK_FORMAT = "Sản phẩm %s không đủ tồn kho.";
+    public static final String PRODUCT_OUT_OF_STOCK_FORMAT = "Sản phẩm %s đã hết số lượng.";
 }

@@ -129,7 +129,7 @@ const handleDirectInput = (item, event) => {
                                 class="qty-input-table text-center font-weight-medium"
                                 :value="item.soLuong"
                                 @change="(e) => handleDirectInput(item, e)"
-                                min="0"
+                                min="1"
                             />
                             <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, 1)">
                                 <PlusIcon size="12" />

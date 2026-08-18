@@ -358,20 +358,19 @@ public class AiChatServiceImpl implements AiChatService {
     }
 
     private List<ProductVariantResponse> getActiveVariantsCached(String text) {
+        if (text == null || text.isBlank()) {
+            return sanPhamService.searchVariantsForAi(null, null, null, MAX_CONTEXT_PRODUCTS);
+        }
+
         long now = System.currentTimeMillis();
         if (cachedVariants == null || (now - cacheTimestamp) > CACHE_TTL_MS) {
-            log.info("Cache sản phẩm hết hạn hoặc chưa có → Truy vấn DB...");
-            List<ProductVariantResponse> allVariants = sanPhamService.getAllVariants();
+            log.info("Cache sản phẩm hết hạn hoặc chưa có → Truy vấn DB top sản phẩm...");
+            List<ProductVariantResponse> allVariants = sanPhamService.searchVariantsForAi(null, null, null, 50);
             cachedVariants = allVariants.stream()
                     .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
                     .collect(Collectors.toList());
             cacheTimestamp = now;
-            log.info("Đã cache {} biến thể đang hoạt động.", cachedVariants.size());
-        }
-
-        // Lấy top 20 sản phẩm đang hoạt động khi không truyền từ khóa
-        if (text == null || text.isBlank()) {
-            return cachedVariants.stream().limit(MAX_CONTEXT_PRODUCTS).collect(Collectors.toList());
+            log.info("Đã cache {} biến thể đang hoạt động cho AI.", cachedVariants.size());
         }
 
         String queryLower = text.toLowerCase().trim();
