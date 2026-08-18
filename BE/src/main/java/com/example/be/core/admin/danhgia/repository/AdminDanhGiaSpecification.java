@@ -39,6 +39,10 @@ public class AdminDanhGiaSpecification {
                 predicates.add(cb.equal(root.get("trangThai"), request.getTrangThai()));
             }
 
+            if (request.getDiemDanhGia() != null && request.getDiemDanhGia() > 0) {
+                predicates.add(cb.equal(root.get("diemDanhGia"), request.getDiemDanhGia()));
+            }
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }

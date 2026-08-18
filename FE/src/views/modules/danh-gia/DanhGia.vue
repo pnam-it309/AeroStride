@@ -7,10 +7,23 @@
  */
 import { ref, onMounted, computed } from 'vue';
 import { useAdminTable } from '@/composables/useAdminTable';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import { useRefreshHandler } from '@/composables/useRefreshHandler';
 import { useNotifications } from '@/services/notificationService';
 import { getBackendErrorMessage } from '@/utils/errorUtils';
 import { formatDate } from '@/utils/formatters';
 import { dichVuDanhGia } from '@/services/admin/dichVuDanhGia';
+
+// Icons
+import {
+    SparklesIcon,
+    PhotoIcon,
+    CheckIcon,
+    XIcon,
+    BanIcon,
+    TrashIcon,
+    EyeIcon
+} from 'vue-tabler-icons';
 
 // Common Admin Components
 import {
@@ -22,6 +35,8 @@ import {
 } from '@/components/common';
 
 const { addNotification } = useNotifications();
+const { confirmDialog, setConfirm, clearConfirm, handleConfirm } = useConfirmDialog();
+const { isRefreshing, handleRefresh: executeRefresh } = useRefreshHandler();
 
 const configData = ref({
     autoApprove: true,
@@ -35,11 +50,11 @@ const isUpdatingConfig = ref(false);
 
 const ratingFilterOptions = [
     { title: 'Tất cả số sao', value: null },
-    { title: '5 sao (Xuất sắc)', value: 5 },
-    { title: '4 sao (Tốt)', value: 4 },
-    { title: '3 sao (Bình thường)', value: 3 },
-    { title: '2 sao (Kém)', value: 2 },
-    { title: '1 sao (Rất tệ)', value: 1 }
+    { title: '⭐⭐⭐⭐⭐ 5 sao (Xuất sắc)', value: 5 },
+    { title: '⭐⭐⭐⭐ 4 sao (Tốt)', value: 4 },
+    { title: '⭐⭐⭐ 3 sao (Bình thường)', value: 3 },
+    { title: '⭐⭐ 2 sao (Kém)', value: 2 },
+    { title: '⭐ 1 sao (Rất tệ)', value: 1 }
 ];
 
 const loadConfigAndStats = async () => {
@@ -67,7 +82,7 @@ const {
             page: params.page,
             size: params.size,
             keyword: params.keyword || params.search || undefined,
-            trangThai: params.trangThai || undefined,
+            trangThai: (params.trangThai && params.trangThai !== 'ALL') ? params.trangThai : undefined,
             diemDanhGia: params.diemDanhGia || undefined
         };
         const res = await dichVuDanhGia.getAll(payload);
@@ -76,7 +91,7 @@ const {
     },
     {
         keyword: '',
-        trangThai: null,
+        trangThai: 'ALL',
         diemDanhGia: null
     }
 );
@@ -84,14 +99,22 @@ const {
 const handleCustomReset = () => {
     filters.value = {
         keyword: '',
-        trangThai: null,
+        trangThai: 'ALL',
         diemDanhGia: null
     };
-    handleReset();
+    pagination.value.page = 1;
+    loadReviews();
+};
+
+const onRefresh = async () => {
+    await executeRefresh(async () => {
+        handleCustomReset();
+        await loadConfigAndStats();
+    });
 };
 
 const handleTabChange = (val) => {
-    filters.value.trangThai = val;
+    filters.value.trangThai = val || 'ALL';
     pagination.value.page = 1;
     loadReviews();
 };
@@ -123,13 +146,12 @@ const handleToggleAutoApprove = async () => {
 };
 
 const statusTabs = computed(() => [
-    { title: 'Tất cả', value: null, count: configData.value.total, color: 'primary', icon: 'mdi-view-grid-outline' },
+    { title: 'Tất cả', value: 'ALL', count: configData.value.total, color: 'primary', icon: 'mdi-view-grid-outline' },
     { title: 'Chờ duyệt', value: 'PENDING', count: configData.value.pending, color: 'warning', icon: 'mdi-clock-outline' },
     { title: 'Đã duyệt', value: 'APPROVED', count: configData.value.approved, color: 'success', icon: 'mdi-check-circle-outline' },
     { title: 'Từ chối', value: 'REJECTED', count: configData.value.rejected, color: 'error', icon: 'mdi-close-circle-outline' },
     { title: 'Spam', value: 'SPAM', count: configData.value.spam, color: 'grey-darken-1', icon: 'mdi-alert-circle-outline' }
 ]);
-
 
 const tableHeaders = [
     { text: 'STT', width: '60px', align: 'center' },
@@ -137,8 +159,8 @@ const tableHeaders = [
     { text: 'Sản phẩm', width: '230px', align: 'start' },
     { text: 'Đánh giá & Nhận xét', width: '340px', align: 'start' },
     { text: 'Trạng thái', width: '130px', align: 'center' },
-    { text: 'Thời gian', width: '140px', align: 'center' },
-    { text: 'Hành động', width: '140px', align: 'center' }
+    { text: 'Thời gian', width: '130px', align: 'center' },
+    { text: 'Hành động', width: '130px', align: 'center' }
 ];
 
 const getStatusChip = (status) => {
@@ -155,32 +177,51 @@ const getStatusChip = (status) => {
     }
 };
 
-const confirmDialog = ref({ show: false, title: '', message: '', id: null, action: null });
-const openConfirm = (title, message, id, action) => {
-    confirmDialog.value = { show: true, title, message, id, action };
+const getIndex = (index) => {
+    return (pagination.value.page - 1) * pagination.value.size + index + 1;
 };
-const closeConfirm = () => (confirmDialog.value.show = false);
 
-const executeAction = async () => {
-    const { id, action } = confirmDialog.value;
-    try {
-        if (action === 'DELETE') {
-            await dichVuDanhGia.delete(id);
-            addNotification({ title: 'Thành công', subtitle: 'Đã xóa vĩnh viễn đánh giá', color: 'success' });
-        } else {
-            await dichVuDanhGia.updateStatus(id, action);
-            const actionText = action === 'APPROVED' ? 'duyệt' : action === 'REJECTED' ? 'từ chối' : 'đánh dấu spam';
-            addNotification({ title: 'Thành công', subtitle: `Đã ${actionText} đánh giá`, color: 'success' });
+const handleUpdateStatus = (id, trangThai, title, message) => {
+    setConfirm({
+        title,
+        message,
+        color: trangThai === 'APPROVED' ? 'success' : trangThai === 'REJECTED' ? 'error' : 'warning',
+        action: async () => {
+            try {
+                await dichVuDanhGia.updateStatus(id, trangThai);
+                const actionText = trangThai === 'APPROVED' ? 'duyệt' : trangThai === 'REJECTED' ? 'từ chối' : 'đánh dấu spam';
+                addNotification({ title: 'Thành công', subtitle: `Đã ${actionText} đánh giá`, color: 'success' });
+                await loadReviews();
+            } catch (e) {
+                addNotification({
+                    title: 'Lỗi',
+                    subtitle: getBackendErrorMessage(e, 'Có lỗi xảy ra khi thực hiện thao tác'),
+                    color: 'error'
+                });
+            }
         }
-        closeConfirm();
-        loadReviews();
-    } catch (e) {
-        addNotification({
-            title: 'Lỗi',
-            subtitle: getBackendErrorMessage(e, 'Có lỗi xảy ra khi thực hiện thao tác'),
-            color: 'error'
-        });
-    }
+    });
+};
+
+const handleDelete = (id) => {
+    setConfirm({
+        title: 'Xóa đánh giá',
+        message: 'Bạn có chắc chắn muốn xóa vĩnh viễn đánh giá này? Thao tác này không thể hoàn tác.',
+        color: 'error',
+        action: async () => {
+            try {
+                await dichVuDanhGia.delete(id);
+                addNotification({ title: 'Thành công', subtitle: 'Đã xóa vĩnh viễn đánh giá', color: 'success' });
+                await loadReviews();
+            } catch (e) {
+                addNotification({
+                    title: 'Lỗi',
+                    subtitle: getBackendErrorMessage(e, 'Không thể xóa đánh giá'),
+                    color: 'error'
+                });
+            }
+        }
+    });
 };
 
 const parseImages = (hinhAnhStr) => {
@@ -193,14 +234,26 @@ const parseImages = (hinhAnhStr) => {
     }
 };
 
-// Modal preview ảnh phóng to
-const previewImageModal = ref({ show: false, src: '' });
+// Modal preview ảnh/video
+const previewModal = ref({ show: false, type: 'image', src: '' });
 const openPreviewImage = (src) => {
-    previewImageModal.value = { show: true, src };
+    previewModal.value = { show: true, type: 'image', src };
+};
+const openPreviewVideo = (src) => {
+    previewModal.value = { show: true, type: 'video', src };
 };
 
-onMounted(() => {
-    loadConfigAndStats();
+const updatePaginationSize = (size) => {
+    pagination.value.size = size;
+    pagination.value.page = 1;
+    loadReviews();
+};
+
+onMounted(async () => {
+    await Promise.all([
+        loadConfigAndStats(),
+        loadReviews()
+    ]);
 });
 </script>
 
@@ -214,16 +267,16 @@ onMounted(() => {
             ]"
         />
 
-        <!-- Filter Component with Search -->
+        <div class="mb-2"></div>
+
+        <!-- Filter Component with Search & Rating Select -->
         <AdminFilter
             title="Bộ lọc"
-            @filter="handleFilter"
-            @refresh="
-                handleCustomReset();
-                loadConfigAndStats();
-            "
+            :loading="loading"
+            :is-refreshing="isRefreshing"
+            @refresh="onRefresh"
         >
-            <v-col cols="12" sm="6" md="8" class="filter-cell pb-1">
+            <v-col cols="12" sm="7" md="8" class="filter-cell pb-1">
                 <div class="filter-field-label">Tìm kiếm đánh giá</div>
                 <v-text-field
                     v-model="filters.keyword"
@@ -234,8 +287,22 @@ onMounted(() => {
                     hide-details
                     clearable
                     prepend-inner-icon="mdi-magnify"
+                    @input="handleSearch"
                     @keyup.enter="handleSearch"
                 ></v-text-field>
+            </v-col>
+            <v-col cols="12" sm="5" md="4" class="filter-cell pb-1">
+                <div class="filter-field-label">Số sao đánh giá</div>
+                <v-select
+                    v-model="filters.diemDanhGia"
+                    :items="ratingFilterOptions"
+                    variant="outlined"
+                    bg-color="white"
+                    density="compact"
+                    hide-details
+                    class="compact-input"
+                    @update:model-value="handleSearch"
+                ></v-select>
             </v-col>
         </AdminFilter>
 
@@ -251,19 +318,17 @@ onMounted(() => {
             >
                 <template #extra-actions>
                     <!-- Auto-Approval Toggle Switch Card -->
-                    <v-card 
-                        elevation="0" 
-                        class="auto-approve-card px-4 py-1.5 rounded-xl d-flex align-center"
+                    <div 
+                        class="auto-approve-card px-3 py-1.5 rounded-xl d-flex align-center"
                         :class="{ 'active-card': configData.autoApprove }"
-                        style="max-height: 40px; border: 1px solid #e2e8f0 !important;"
                     >
-                        <div class="d-flex align-center mr-4">
-                            <v-avatar size="26" class="mr-2 avatar-box">
-                                <SparklesIcon size="13" class="icon-spark" />
+                        <div class="d-flex align-center mr-3">
+                            <v-avatar size="28" class="mr-2 avatar-box">
+                                <SparklesIcon size="15" class="icon-spark" />
                             </v-avatar>
                             <div class="text-left">
-                                <div class="font-weight-semibold label-text" style="font-size: 13px; line-height: 1.2;">Tự động phê duyệt</div>
-                                <div class="desc-text" style="font-size: 10px !important; line-height: 1.1; margin-top: 1px;">
+                                <div class="font-weight-bold label-text" style="font-size: 13px; line-height: 1.2;">Tự động phê duyệt</div>
+                                <div class="desc-text" style="font-size: 11px !important; line-height: 1.1; margin-top: 1px;">
                                     {{ configData.autoApprove 
                                         ? 'Hiển thị ngay lập tức' 
                                         : 'Đánh giá chờ duyệt' }}
@@ -275,13 +340,14 @@ onMounted(() => {
                             color="success"
                             hide-details
                             density="compact"
-                            class="ml-auto"
+                            class="ml-auto tight-switch"
                             :loading="isUpdatingConfig"
                             :disabled="isUpdatingConfig"
-                            @click.stop="handleToggleAutoApprove"
+                            @click.prevent.stop="handleToggleAutoApprove"
                         ></v-switch>
-                    </v-card>
+                    </div>
                 </template>
+
                 <template #top>
                     <v-tabs
                         v-model="filters.trangThai"
@@ -291,7 +357,7 @@ onMounted(() => {
                         grow
                         class="admin-tabs"
                         @update:model-value="handleTabChange"
-                        height="54"
+                        height="48"
                     >
                         <v-tab
                             v-for="tab in statusTabs"
@@ -301,39 +367,51 @@ onMounted(() => {
                         >
                             <v-icon start size="16" class="mr-1">{{ tab.icon }}</v-icon>
                             {{ tab.title }}
-                            <v-badge
+                            <v-chip
                                 v-if="tab.count > 0"
-                                :content="tab.count"
-                                inline
+                                size="x-small"
                                 :color="filters.trangThai === tab.value ? 'primary' : tab.color"
+                                variant="flat"
                                 class="ml-2 font-weight-bold"
-                            />
+                            >
+                                {{ tab.count }}
+                            </v-chip>
                         </v-tab>
                     </v-tabs>
                 </template>
-                <template #row="{ item }">
+
+                <template #row="{ item, index }">
                     <tr class="data-row">
-                        <!-- Cột Khách hàng -->
-                        <td class="data-cell">
-                            <div class="d-flex align-center ga-2">
-                                <v-avatar size="38" color="indigo-lighten-5" class="border">
-                                    <v-icon icon="mdi-account" color="indigo-darken-3" size="20"></v-icon>
+                        <!-- 1. STT -->
+                        <td class="data-cell text-center font-weight-medium text-slate-600">
+                            {{ getIndex(index) }}
+                        </td>
+
+                        <!-- 2. Khách hàng -->
+                        <td class="data-cell text-left px-3">
+                            <div class="d-flex align-center ga-3">
+                                <v-avatar size="36" color="indigo-lighten-5" class="border flex-shrink-0">
+                                    <v-icon icon="mdi-account" color="indigo-darken-2" size="18"></v-icon>
                                 </v-avatar>
-                                <div class="d-flex flex-column text-left">
-                                    <span class="font-weight-bold text-slate-800" style="font-size: 13px">{{ item.tenKhachHang || 'Khách vãng lai' }}</span>
-                                    <span class="text-slate-500" style="font-size: 12px">{{ item.soDienThoai || 'Chưa có SĐT' }}</span>
+                                <div class="d-flex flex-column text-truncate" style="max-width: 145px">
+                                    <span class="font-weight-semibold text-slate-800 text-truncate" :title="item.tenKhachHang" style="font-size: 13px">
+                                        {{ item.tenKhachHang || 'Khách vãng lai' }}
+                                    </span>
+                                    <span class="text-caption text-slate-500 text-truncate" :title="item.soDienThoai" style="font-size: 11.5px">
+                                        <v-icon size="12" class="mr-0.5 text-slate-400">mdi-phone</v-icon>{{ item.soDienThoai || 'Chưa có SĐT' }}
+                                    </span>
                                 </div>
                             </div>
                         </td>
 
-                        <!-- Cột Sản phẩm -->
-                        <td class="data-cell">
-                            <div class="d-flex align-center ga-3 my-2 text-left">
-                                <v-avatar size="48" rounded="lg" class="border bg-slate-50 flex-shrink-0">
+                        <!-- 3. Sản phẩm -->
+                        <td class="data-cell text-left px-3">
+                            <div class="d-flex align-center ga-3 my-1">
+                                <v-avatar size="44" rounded="lg" class="border bg-slate-50 flex-shrink-0">
                                     <v-img v-if="item.hinhAnhSanPham" :src="item.hinhAnhSanPham" cover></v-img>
-                                    <PhotoIcon v-else size="22" class="text-slate-400" />
+                                    <PhotoIcon v-else size="20" class="text-slate-400" />
                                 </v-avatar>
-                                <div class="d-flex flex-column text-truncate" style="max-width: 200px">
+                                <div class="d-flex flex-column text-truncate" style="max-width: 165px">
                                     <span
                                         class="font-weight-medium text-slate-800 text-truncate"
                                         style="font-size: 13px"
@@ -345,111 +423,126 @@ onMounted(() => {
                             </div>
                         </td>
 
-                        <!-- Cột Đánh giá & Nội dung -->
-                        <td class="data-cell text-left">
-                            <div class="d-flex flex-column py-2">
+                        <!-- 4. Đánh giá & Nhận xét -->
+                        <td class="data-cell text-left px-3 py-2" style="min-width: 280px">
+                            <div class="d-flex flex-column">
+                                <!-- Star rating -->
                                 <div class="d-flex align-center ga-1 mb-1">
-                                    <StarIcon
+                                    <v-icon
                                         v-for="i in 5"
                                         :key="i"
-                                        size="16"
-                                        :class="i <= item.diemDanhGia ? 'text-amber-500' : 'text-slate-200'"
-                                        :fill="i <= item.diemDanhGia ? 'currentColor' : 'none'"
+                                        size="15"
+                                        :color="i <= (item.diemDanhGia || 5) ? '#f59e0b' : '#cbd5e1'"
+                                        :icon="i <= (item.diemDanhGia || 5) ? 'mdi-star' : 'mdi-star-outline'"
                                     />
-                                    <span class="font-weight-bold ml-1 text-slate-700" style="font-size: 12px">({{ item.diemDanhGia || 5 }}/5)</span>
+                                    <span class="font-weight-bold ml-1 text-slate-700" style="font-size: 12px">
+                                        ({{ item.diemDanhGia || 5 }}/5)
+                                    </span>
                                 </div>
-                                <span class="text-slate-700 font-normal" style="font-size: 13px; white-space: pre-wrap; line-height: 1.45;">
-                                    {{ item.noiDung || '(Không có lời nhận xét)' }}
-                                </span>
-                                <!-- Attached Images -->
-                                <div v-if="parseImages(item.hinhAnhDanhGia).length > 0" class="d-flex flex-wrap ga-2 mt-2">
+
+                                <!-- Review Content -->
+                                <div class="text-slate-700 review-content-clamp" :title="item.noiDung" style="font-size: 13px; line-height: 1.45;">
+                                    {{ item.noiDung || '(Không có nội dung nhận xét)' }}
+                                </div>
+
+                                <!-- Attached Images / Video -->
+                                <div v-if="parseImages(item.hinhAnhDanhGia).length > 0 || item.videoDanhGia" class="d-flex align-center flex-wrap ga-2 mt-2">
                                     <v-avatar
                                         v-for="(img, idx) in parseImages(item.hinhAnhDanhGia)"
                                         :key="idx"
-                                        size="40"
+                                        size="36"
                                         rounded="md"
-                                        class="border cursor-pointer hover-scale"
-                                        @click="openPreviewImage(img)"
+                                        class="border cursor-pointer hover-scale flex-shrink-0"
+                                        @click.stop="openPreviewImage(img)"
                                     >
                                         <v-img :src="img" cover></v-img>
                                     </v-avatar>
+                                    <v-chip
+                                        v-if="item.videoDanhGia"
+                                        size="x-small"
+                                        color="primary"
+                                        variant="tonal"
+                                        prepend-icon="mdi-video"
+                                        class="cursor-pointer"
+                                        @click.stop="openPreviewVideo(item.videoDanhGia)"
+                                    >
+                                        Video
+                                    </v-chip>
                                 </div>
                             </div>
                         </td>
 
-                        <!-- Cột Trạng thái -->
+                        <!-- 5. Trạng thái -->
                         <td class="data-cell text-center">
                             <v-chip
                                 size="small"
                                 variant="flat"
                                 :color="getStatusChip(item.trangThai).color"
-                                class="font-weight-medium px-3 text-none"
+                                class="font-weight-medium px-3 text-none justify-center"
+                                :class="getStatusChip(item.trangThai).chipClass"
                             >
-                                <v-icon start size="14" :icon="getStatusChip(item.trangThai).icon"></v-icon>
+                                <v-icon start size="13" :icon="getStatusChip(item.trangThai).icon"></v-icon>
                                 {{ getStatusChip(item.trangThai).text }}
                             </v-chip>
                         </td>
 
-                        <!-- Cột Thời gian -->
-                        <td class="data-cell">
-                            <div class="text-slate-600" style="font-size: 13px">{{ formatDate(item.ngayTao, 'DD/MM/YYYY HH:mm') }}</div>
+                        <!-- 6. Thời gian -->
+                        <td class="data-cell text-center px-2">
+                            <div class="text-slate-700 font-weight-medium" style="font-size: 12.5px">
+                                {{ formatDate(item.ngayTao, 'dd/MM/yyyy') }}
+                            </div>
+                            <div class="text-caption text-slate-400" style="font-size: 11px">
+                                {{ formatDate(item.ngayTao, 'HH:mm') }}
+                            </div>
                         </td>
 
-                        <!-- Cột Thao tác -->
-                        <td class="data-cell text-center">
-                            <div class="d-flex align-center justify-center ga-1">
+                        <!-- 7. Hành động -->
+                        <td class="data-cell text-center action-cell px-2">
+                            <div class="d-flex align-center justify-center ga-1 action-controls">
                                 <!-- Duyệt -->
                                 <v-btn
-                                    v-if="item.trangThai === 'PENDING' || item.trangThai === 'REJECTED' || item.trangThai === 'SPAM'"
-                                    icon
+                                    v-if="item.trangThai !== 'APPROVED'"
                                     variant="text"
-                                    size="small"
-                                    color="success"
                                     class="action-icon-btn"
-                                    @click="openConfirm('Duyệt đánh giá', 'Bạn có chắc chắn muốn phê duyệt đánh giá này để hiển thị công khai?', item.id, 'APPROVED')"
+                                    color="success"
+                                    @click.stop="handleUpdateStatus(item.id, 'APPROVED', 'Phê duyệt đánh giá', 'Bạn có chắc chắn muốn phê duyệt đánh giá này để hiển thị công khai trên cửa hàng?')"
                                 >
-                                    <CheckIcon size="18" />
+                                    <CheckIcon size="16" />
                                     <v-tooltip activator="parent" location="top">Phê duyệt</v-tooltip>
                                 </v-btn>
 
                                 <!-- Từ chối -->
                                 <v-btn
-                                    v-if="item.trangThai === 'PENDING' || item.trangThai === 'APPROVED'"
-                                    icon
+                                    v-if="item.trangThai !== 'REJECTED'"
                                     variant="text"
-                                    size="small"
-                                    color="error"
                                     class="action-icon-btn"
-                                    @click="openConfirm('Từ chối đánh giá', 'Bạn có chắc chắn muốn từ chối và ẩn đánh giá này?', item.id, 'REJECTED')"
+                                    color="error"
+                                    @click.stop="handleUpdateStatus(item.id, 'REJECTED', 'Từ chối đánh giá', 'Bạn có chắc chắn muốn từ chối và ẩn đánh giá này khỏi cửa hàng?')"
                                 >
-                                    <XIcon size="18" />
+                                    <XIcon size="16" />
                                     <v-tooltip activator="parent" location="top">Từ chối</v-tooltip>
                                 </v-btn>
 
-                                <!-- Spam -->
+                                <!-- Đánh dấu Spam -->
                                 <v-btn
                                     v-if="item.trangThai !== 'SPAM'"
-                                    icon
                                     variant="text"
-                                    size="small"
-                                    color="warning"
                                     class="action-icon-btn"
-                                    @click="openConfirm('Đánh dấu Spam', 'Bạn có chắc chắn muốn đánh dấu đánh giá này là SPAM?', item.id, 'SPAM')"
+                                    color="warning"
+                                    @click.stop="handleUpdateStatus(item.id, 'SPAM', 'Đánh dấu Spam', 'Bạn có chắc chắn muốn đánh dấu đánh giá này là SPAM rác?')"
                                 >
-                                    <BanIcon size="18" />
+                                    <BanIcon size="16" />
                                     <v-tooltip activator="parent" location="top">Đánh dấu Spam</v-tooltip>
                                 </v-btn>
 
-                                <!-- Xóa -->
+                                <!-- Xóa vĩnh viễn -->
                                 <v-btn
-                                    icon
                                     variant="text"
-                                    size="small"
-                                    color="error"
                                     class="action-icon-btn"
-                                    @click="openConfirm('Xóa đánh giá', 'Bạn có chắc chắn muốn xóa vĩnh viễn đánh giá này?', item.id, 'DELETE')"
+                                    color="error"
+                                    @click.stop="handleDelete(item.id)"
                                 >
-                                    <TrashIcon size="18" />
+                                    <TrashIcon size="16" />
                                     <v-tooltip activator="parent" location="top">Xóa vĩnh viễn</v-tooltip>
                                 </v-btn>
                             </div>
@@ -460,7 +553,8 @@ onMounted(() => {
                 <template #pagination>
                     <AdminPagination
                         v-model="pagination.page"
-                        v-model:page-size="pagination.size"
+                        :page-size="pagination.size"
+                        @update:page-size="updatePaginationSize"
                         :total-pages="pagination.totalPages"
                         :total-elements="pagination.totalElements"
                         :current-size="reviews.length"
@@ -472,22 +566,26 @@ onMounted(() => {
 
         <!-- Confirm Action Modal -->
         <AdminConfirm
-            v-model="confirmDialog.show"
+            v-model:show="confirmDialog.show"
             :title="confirmDialog.title"
             :message="confirmDialog.message"
-            confirm-text="Xác nhận"
-            cancel-text="Hủy"
-            confirm-color="primary"
-            @confirm="executeAction"
-            @cancel="closeConfirm"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)"
         />
 
-        <!-- Image Preview Modal -->
-        <v-dialog v-model="previewImageModal.show" max-width="600">
-            <v-card class="rounded-xl overflow-hidden bg-black">
-                <v-img :src="previewImageModal.src" max-height="600" contain></v-img>
-                <v-card-actions class="justify-end pa-2 bg-grey-darken-4">
-                    <v-btn color="white" variant="text" @click="previewImageModal.show = false">Đóng</v-btn>
+        <!-- Media Preview Modal -->
+        <v-dialog v-model="previewModal.show" max-width="650">
+            <v-card class="rounded-2xl overflow-hidden bg-black elevation-8">
+                <div v-if="previewModal.type === 'image'" class="d-flex align-center justify-center" style="min-height: 300px; max-height: 80vh;">
+                    <v-img :src="previewModal.src" max-height="75vh" contain></v-img>
+                </div>
+                <div v-else-if="previewModal.type === 'video'" class="pa-2 d-flex align-center justify-center">
+                    <video :src="previewModal.src" controls autoplay style="max-width: 100%; max-height: 70vh; border-radius: 8px;"></video>
+                </div>
+                <v-card-actions class="justify-end pa-3 bg-grey-darken-4">
+                    <v-btn color="white" variant="text" prepend-icon="mdi-close" @click="previewModal.show = false">Đóng</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -501,6 +599,11 @@ onMounted(() => {
     font-size: 13px !important;
 }
 
+:deep(.v-field),
+:deep(.v-field__outline) {
+    border-radius: 12px !important;
+}
+
 .hover-scale {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -510,11 +613,19 @@ onMounted(() => {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.review-content-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+
 .auto-approve-card {
     border: 1px solid #e2e8f0 !important;
     background-color: #ffffff;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 320px;
+    min-width: 260px;
 }
 
 .auto-approve-card .avatar-box {
@@ -542,7 +653,7 @@ onMounted(() => {
 .auto-approve-card.active-card {
     border-color: #10b981 !important;
     background-color: #f0fdf4;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08) !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08) !important;
 }
 
 .auto-approve-card.active-card .avatar-box {
@@ -556,5 +667,17 @@ onMounted(() => {
 
 .auto-approve-card.active-card .desc-text {
     color: #047857 !important;
+}
+
+.tight-switch {
+    transform: scale(0.85);
+}
+
+.action-icon-btn {
+    min-width: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
 }
 </style>

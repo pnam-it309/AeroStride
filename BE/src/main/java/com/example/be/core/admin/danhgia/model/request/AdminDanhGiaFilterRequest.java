@@ -12,4 +12,5 @@ import lombok.ToString;
 public class AdminDanhGiaFilterRequest extends PageRequest {
     private String keyword;
     private DanhGiaSanPham.TrangThaiDanhGia trangThai;
+    private Integer diemDanhGia;
 }
