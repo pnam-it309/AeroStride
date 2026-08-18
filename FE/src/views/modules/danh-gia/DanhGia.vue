@@ -131,20 +131,6 @@ const statusTabs = computed(() => [
 ]);
 
 
-
-const {
-    items: reviews,
-    loading,
-    pagination,
-    totalElements,
-    totalPages,
-    load: loadReviews,
-    reload: reloadReviews
-} = useServerPagination((pageable) => dichVuDanhGia.getAll({ ...pageable, ...filters.value }), {
-    pageSize: 10,
-    onError: () => addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách đánh giá', color: 'error' })
-});
-
 const tableHeaders = [
     { text: 'STT', width: '60px', align: 'center' },
     { text: 'Khách hàng', width: '200px', align: 'start' },
@@ -233,8 +219,7 @@ onMounted(() => {
             title="Bộ lọc"
             @filter="handleFilter"
             @refresh="
-                filters = { keyword: '', trangThai: null };
-                reloadReviews();
+                handleCustomReset();
                 loadConfigAndStats();
             "
         >
@@ -260,7 +245,7 @@ onMounted(() => {
                 title="Danh sách đánh giá sản phẩm"
                 :headers="tableHeaders"
                 :items="reviews"
-                :total-count="totalElements"
+                :total-count="pagination.totalElements"
                 :loading="loading"
                 :show-add-button="false"
             >
@@ -305,7 +290,7 @@ onMounted(() => {
                         show-arrows
                         grow
                         class="admin-tabs"
-                        @update:model-value="reloadReviews"
+                        @update:model-value="handleTabChange"
                         height="54"
                     >
                         <v-tab
@@ -475,278 +460,15 @@ onMounted(() => {
                 <template #pagination>
                     <AdminPagination
                         v-model="pagination.page"
-                        :page-size="pagination.size"
-                        @update:page-size="
-                            (s) => {
-                                pagination.size = s;
-                                reloadReviews();
-                            }
-                        "
-                        :total-pages="totalPages"
-                        :total-elements="totalElements"
+                        v-model:page-size="pagination.size"
+                        :total-pages="pagination.totalPages"
+                        :total-elements="pagination.totalElements"
                         :current-size="reviews.length"
                         @change="loadReviews"
                     />
-                    <v-chip
-                        size="x-small"
-                        :color="configData.autoApprove ? 'primary' : 'slate-600'"
-                        variant="flat"
-                        class="font-weight-bold text-uppercase"
-                    >
-                        {{ configData.autoApprove ? 'BẬT' : 'TẮT' }}
-                    </v-chip>
-                </div>
-            </template>
-
-            <!-- Status Tabs above Table Header -->
-            <template #top>
-                <v-tabs
-                    v-model="filters.trangThai"
-                    bg-color="transparent"
-                    color="primary"
-                    show-arrows
-                    grow
-                    class="admin-tabs"
-                    @update:model-value="handleTabChange"
-                    height="48"
-                >
-                    <v-tab :value="null" class="text-none px-4 tab-item font-weight-medium">
-                        <v-icon start size="16">mdi-view-grid-outline</v-icon>
-                        Tất cả
-                        <v-chip
-                            size="x-small"
-                            class="ml-2 font-weight-bold tab-count-chip"
-                            :color="filters.trangThai === null ? 'primary' : 'slate-500'"
-                            variant="tonal"
-                        >
-                            {{ configData.total }}
-                        </v-chip>
-                    </v-tab>
-                    <v-tab value="PENDING" class="text-none px-4 tab-item font-weight-medium">
-                        <v-icon start size="16">mdi-clock-outline</v-icon>
-                        Chờ duyệt
-                        <v-chip
-                            size="x-small"
-                            class="ml-2 font-weight-bold tab-count-chip"
-                            :color="filters.trangThai === 'PENDING' ? 'primary' : 'slate-500'"
-                            variant="tonal"
-                        >
-                            {{ configData.pending }}
-                        </v-chip>
-                    </v-tab>
-                    <v-tab value="APPROVED" class="text-none px-4 tab-item font-weight-medium">
-                        <v-icon start size="16">mdi-check-circle-outline</v-icon>
-                        Đã duyệt
-                        <v-chip
-                            size="x-small"
-                            class="ml-2 font-weight-bold tab-count-chip"
-                            :color="filters.trangThai === 'APPROVED' ? 'primary' : 'slate-500'"
-                            variant="tonal"
-                        >
-                            {{ configData.approved }}
-                        </v-chip>
-                    </v-tab>
-                    <v-tab value="REJECTED" class="text-none px-4 tab-item font-weight-medium">
-                        <v-icon start size="16">mdi-close-circle-outline</v-icon>
-                        Từ chối
-                        <v-chip
-                            size="x-small"
-                            class="ml-2 font-weight-bold tab-count-chip"
-                            :color="filters.trangThai === 'REJECTED' ? 'primary' : 'slate-500'"
-                            variant="tonal"
-                        >
-                            {{ configData.rejected }}
-                        </v-chip>
-                    </v-tab>
-                    <v-tab value="SPAM" class="text-none px-4 tab-item font-weight-medium">
-                        <v-icon start size="16">mdi-alert-octagon-outline</v-icon>
-                        Spam
-                        <v-chip
-                            size="x-small"
-                            class="ml-2 font-weight-bold tab-count-chip"
-                            :color="filters.trangThai === 'SPAM' ? 'primary' : 'slate-500'"
-                            variant="tonal"
-                        >
-                            {{ configData.spam }}
-                        </v-chip>
-                    </v-tab>
-                </v-tabs>
-            </template>
-
-            <!-- Table Rows -->
-            <template #row="{ item, index }">
-                <tr class="data-row">
-                    <!-- STT -->
-                    <td class="data-cell text-center">
-                        {{ (pagination.page - 1) * pagination.size + index + 1 }}
-                    </td>
-
-                    <!-- Khách hàng -->
-                    <td class="data-cell">
-                        <div class="d-flex align-center ga-2 text-left">
-                            <v-avatar size="36" color="primary" variant="tonal" class="border">
-                                <v-icon icon="mdi-account" color="primary" size="20"></v-icon>
-                            </v-avatar>
-                            <div class="d-flex flex-column text-left">
-                                <span class="font-weight-bold text-slate-800" style="font-size: 13px">
-                                    {{ item.tenKhachHang || 'Khách vãng lai' }}
-                                </span>
-                                <span class="text-slate-500" style="font-size: 12px">
-                                    {{ item.soDienThoai || '--' }}
-                                </span>
-                            </div>
-                        </div>
-                    </td>
-
-                    <!-- Sản phẩm -->
-                    <td class="data-cell">
-                        <div class="d-flex align-center ga-3 my-1 text-left">
-                            <v-avatar size="44" rounded="lg" class="border bg-slate-50 flex-shrink-0">
-                                <v-img v-if="item.hinhAnhSanPham" :src="item.hinhAnhSanPham" cover></v-img>
-                                <v-icon v-else icon="mdi-image-outline" size="22" color="slate-400" />
-                            </v-avatar>
-                            <div class="d-flex flex-column text-truncate" style="max-width: 170px">
-                                <span
-                                    class="font-weight-medium text-slate-800 text-truncate"
-                                    style="font-size: 13px"
-                                    :title="item.tenSanPham"
-                                >
-                                    {{ item.tenSanPham || 'Sản phẩm AeroStride' }}
-                                </span>
-                            </div>
-                        </div>
-                    </td>
-
-                    <!-- Đánh giá & Nội dung -->
-                    <td class="data-cell text-left">
-                        <div class="d-flex flex-column py-2">
-                            <div class="d-flex align-center ga-1 mb-1">
-                                <v-icon
-                                    v-for="i in 5"
-                                    :key="i"
-                                    size="16"
-                                    :color="i <= item.diemDanhGia ? '#f59e0b' : '#cbd5e1'"
-                                    :icon="i <= item.diemDanhGia ? 'mdi-star' : 'mdi-star-outline'"
-                                />
-                                <span class="font-weight-bold ml-1 text-slate-700" style="font-size: 12px">
-                                    ({{ item.diemDanhGia || 5 }}/5)
-                                </span>
-                            </div>
-                            <span class="text-slate-700 font-normal" style="font-size: 13px; white-space: pre-wrap; line-height: 1.45;">
-                                {{ item.noiDung || '(Không có lời nhận xét)' }}
-                            </span>
-                            <!-- Attached Images -->
-                            <div v-if="parseImages(item.hinhAnhDanhGia).length > 0" class="d-flex flex-wrap ga-2 mt-2">
-                                <v-avatar
-                                    v-for="(img, idx) in parseImages(item.hinhAnhDanhGia)"
-                                    :key="idx"
-                                    size="38"
-                                    rounded="md"
-                                    class="border cursor-pointer hover-scale"
-                                    @click="openPreviewImage(img)"
-                                >
-                                    <v-img :src="img" cover></v-img>
-                                </v-avatar>
-                            </div>
-                        </div>
-                    </td>
-
-                    <!-- Trạng thái -->
-                    <td class="data-cell text-center">
-                        <v-chip
-                            size="small"
-                            variant="flat"
-                            :color="getStatusChip(item.trangThai).color"
-                            :class="['status-chip', getStatusChip(item.trangThai).chipClass]"
-                        >
-                            <v-icon start size="14" :icon="getStatusChip(item.trangThai).icon"></v-icon>
-                            {{ getStatusChip(item.trangThai).text }}
-                        </v-chip>
-                    </td>
-
-                    <!-- Thời gian -->
-                    <td class="data-cell text-center">
-                        <span class="text-slate-600" style="font-size: 13px">
-                            {{ formatDate(item.ngayTao, 'DD/MM/YYYY HH:mm') }}
-                        </span>
-                    </td>
-
-                    <!-- Hành động -->
-                    <td class="data-cell text-center">
-                        <div class="d-flex align-center justify-center ga-1 action-controls">
-                            <!-- Duyệt -->
-                            <v-btn
-                                v-if="item.trangThai === 'PENDING' || item.trangThai === 'REJECTED' || item.trangThai === 'SPAM'"
-                                icon
-                                variant="text"
-                                size="small"
-                                color="primary"
-                                class="action-icon-btn rounded-lg"
-                                @click="openConfirm('Duyệt đánh giá', 'Bạn có chắc chắn muốn phê duyệt đánh giá này để hiển thị công khai?', item.id, 'APPROVED')"
-                            >
-                                <v-icon size="18">mdi-check-circle-outline</v-icon>
-                                <v-tooltip activator="parent" location="top">Phê duyệt</v-tooltip>
-                            </v-btn>
-
-                            <!-- Từ chối -->
-                            <v-btn
-                                v-if="item.trangThai === 'PENDING' || item.trangThai === 'APPROVED'"
-                                icon
-                                variant="text"
-                                size="small"
-                                color="error"
-                                class="action-icon-btn rounded-lg"
-                                @click="openConfirm('Từ chối đánh giá', 'Bạn có chắc chắn muốn từ chối và ẩn đánh giá này?', item.id, 'REJECTED')"
-                            >
-                                <v-icon size="18">mdi-close-circle-outline</v-icon>
-                                <v-tooltip activator="parent" location="top">Từ chối</v-tooltip>
-                            </v-btn>
-
-                            <!-- Spam -->
-                            <v-btn
-                                v-if="item.trangThai !== 'SPAM'"
-                                icon
-                                variant="text"
-                                size="small"
-                                color="warning"
-                                class="action-icon-btn rounded-lg"
-                                @click="openConfirm('Đánh dấu Spam', 'Bạn có chắc chắn muốn đánh dấu đánh giá này là SPAM?', item.id, 'SPAM')"
-                            >
-                                <v-icon size="18">mdi-alert-octagon-outline</v-icon>
-                                <v-tooltip activator="parent" location="top">Đánh dấu Spam</v-tooltip>
-                            </v-btn>
-
-                            <!-- Xóa -->
-                            <v-btn
-                                icon
-                                variant="text"
-                                size="small"
-                                color="error"
-                                class="action-icon-btn rounded-lg"
-                                @click="openConfirm('Xóa đánh giá', 'Bạn có chắc chắn muốn xóa vĩnh viễn đánh giá này?', item.id, 'DELETE')"
-                            >
-                                <v-icon size="18">mdi-trash-can-outline</v-icon>
-                                <v-tooltip activator="parent" location="top">Xóa vĩnh viễn</v-tooltip>
-                            </v-btn>
-                        </div>
-                    </td>
-                </tr>
-            </template>
-
-            <!-- Pagination Slot -->
-            <template #pagination>
-                <AdminPagination
-                    v-model="pagination.page"
-                    :page-size="pagination.size"
-                    @update:pageSize="pagination.size = $event"
-                    @update:page-size="pagination.size = $event"
-                    :total-pages="pagination.totalPages"
-                    :total-elements="pagination.totalElements"
-                    :current-size="reviews.length"
-                    @change="loadReviews"
-                />
-            </template>
-        </AdminTable>
+                </template>
+            </AdminTable>
+        </div>
 
         <!-- Confirm Action Modal -->
         <AdminConfirm

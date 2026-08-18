@@ -282,12 +282,6 @@ onMounted(() => {
             :show-add-button="false"
             :total-count="paginationActivities.totalElements"
         >
-            <template #extra-actions>
-                <v-btn color="primary" variant="tonal" prepend-icon="mdi-refresh" @click="onRefreshActivities" :loading="loadingActivities">
-                    Làm mới
-                </v-btn>
-            </template>
-
             <template #row="{ item, index }">
                 <tr class="data-row cursor-pointer" @click="openDetail(item)">
                     <td class="data-cell text-center font-weight-medium text-slate-500">

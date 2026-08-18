@@ -30,4 +30,3 @@ export const NHAN_VIEN_MESSAGES = {
     CANNOT_CHANGE_OWN_STATUS: 'Bạn không thể chuyển đổi trạng thái của chính mình!',
     CANNOT_CHANGE_OTHER_ADMIN_STATUS: 'Admin không thể chuyển đổi trạng thái của quản lý khác!'
 };
-ý
