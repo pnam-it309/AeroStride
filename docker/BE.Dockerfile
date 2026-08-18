@@ -43,8 +43,9 @@ WORKDIR /app
 # Create a non-root user for security
 RUN addgroup -S spring && adduser -S spring -G spring
 
-# Create app-bin directory and set ownership so spring user can access it
-RUN mkdir /app-bin && chown spring:spring /app-bin
+# Ensure /app and /app-bin directories are created with spring user ownership
+RUN mkdir -p /app /app-bin /app/.logs /app/.local-uploads && \
+    chown -R spring:spring /app /app-bin
 
 USER spring:spring
 

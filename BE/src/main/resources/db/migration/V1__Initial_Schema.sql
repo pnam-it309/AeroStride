@@ -522,6 +522,7 @@ CREATE TABLE IF NOT EXISTS tin_nhan (
     id_nguoi_gui VARCHAR(36),
     ten_nguoi_gui VARCHAR(255),
     noi_dung TEXT,
+    hinh_anh LONGTEXT,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
