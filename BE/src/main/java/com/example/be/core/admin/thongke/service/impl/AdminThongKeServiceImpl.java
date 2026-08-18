@@ -224,17 +224,11 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         Long tuNgayMs = AccountUtils.parseDateToLong(tuNgay != null ? tuNgay.toString() : null, false);
         Long denNgayMs = AccountUtils.parseDateToLong(denNgay != null ? denNgay.toString() : null, true);
         String kw = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+        String sort = (sortBy == null || sortBy.trim().isEmpty()) ? "bestSelling" : sortBy.trim();
 
-        // Sort parsing
-        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "soLuongBan");
-        if ("revenueDesc".equals(sortBy)) {
-            sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "doanhThu");
-        } else if ("bestSelling".equals(sortBy)) {
-            sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "soLuongBan");
-        }
-        
-        org.springframework.data.domain.Pageable pageable = PageRequest.of(page, size, sort);
-        org.springframework.data.domain.Page<Object[]> pageData = thongKeRepository.getProductStatistics(tuNgayMs, denNgayMs, kw, pageable);
+        // Pass unsorted pageable to prevent Spring Data from appending unknown sort aliases to countQuery
+        org.springframework.data.domain.Pageable pageable = PageRequest.of(page, size);
+        org.springframework.data.domain.Page<Object[]> pageData = thongKeRepository.getProductStatistics(tuNgayMs, denNgayMs, kw, sort, pageable);
 
         List<AdminThongKeResponse.SanPhamBanChay> dtos = new ArrayList<>();
         for (Object[] row : pageData.getContent()) {

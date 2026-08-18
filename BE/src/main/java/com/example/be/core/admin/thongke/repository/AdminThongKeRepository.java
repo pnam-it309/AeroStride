@@ -172,6 +172,11 @@ public interface AdminThongKeRepository extends HoaDonRepository,
              AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
              AND (:keyword IS NULL OR :keyword = '' OR LOWER(sp.ma_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')))
            GROUP BY sp.id, sp.ma_san_pham, sp.ten_san_pham, th.ten_thuong_hieu
+           ORDER BY 
+               CASE WHEN :sortBy = 'revenueDesc' THEN SUM(hdct.so_luong * hdct.don_gia) END DESC,
+               CASE WHEN :sortBy = 'revenueAsc' THEN SUM(hdct.so_luong * hdct.don_gia) END ASC,
+               CASE WHEN :sortBy = 'leastSelling' THEN SUM(hdct.so_luong) END ASC,
+               SUM(hdct.so_luong) DESC
            """,
            countQuery = """
            SELECT COUNT(DISTINCT sp.id)
@@ -189,6 +194,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             @Param("tuNgay") Long tuNgay,
             @Param("denNgay") Long denNgay,
             @Param("keyword") String keyword,
+            @Param("sortBy") String sortBy,
             org.springframework.data.domain.Pageable pageable);
 
 }
