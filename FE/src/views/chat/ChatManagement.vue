@@ -613,11 +613,23 @@ const scrollToBottom = () => {
 };
 
 const stats = ref({ ACTIVE: 0, PENDING: 0, CLOSED: 0 });
+const allConversations = ref([]);
 
 const activeCount = computed(() => stats.value.ACTIVE || 0);
 const pendingCount = computed(() => stats.value.PENDING || 0);
 const closedCount = computed(() => stats.value.CLOSED || 0);
 
+const totalCustomerUnread = computed(() => {
+    return allConversations.value.filter(
+        (c) => (c.type === CHAT_TYPES.CUSTOMER || !c.type) && (c.unread > 0 || notificationStore.unreadChatConvIds.includes(c.id))
+    ).length;
+});
+
+const totalInternalUnread = computed(() => {
+    return allConversations.value.filter(
+        (c) => c.type === CHAT_TYPES.INTERNAL && (c.unread > 0 || notificationStore.unreadChatConvIds.includes(c.id))
+    ).length;
+});
 
 // Lấy danh sách hội thoại từ Backend
 const fetchConversations = async (quiet = false) => {
@@ -636,6 +648,8 @@ const fetchConversations = async (quiet = false) => {
             api.get(API_CHAT.CONVERSATIONS),
             api.get(API_CHAT.CONVERSATIONS + '/stats')
         ]);
+
+        allConversations.value = allConvRes.data?.data || [];
 
         let backendConvs = convRes.data?.data || [];
         
