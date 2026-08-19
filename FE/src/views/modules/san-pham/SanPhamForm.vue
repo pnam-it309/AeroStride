@@ -1787,7 +1787,7 @@ const validateProduct = () => {
         if (isNaN(soLuong) || soLuong < 0 || !Number.isInteger(soLuong)) {
             addNotification({
                 title: 'Lỗi',
-                subtitle: 'Số lượng tồn kho của biến thể không hợp lệ (phải là số nguyên lớn hơn hoặc bằng 0).',
+                subtitle: 'Số lượng của biến thể không hợp lệ (phải là số nguyên lớn hơn hoặc bằng 0).',
                 color: 'error'
             });
             return false;
@@ -3045,7 +3045,7 @@ const handleSave = async () => {
                                     <th class="header-cell" style="width: 140px">Màu sắc</th>
                                     <th class="header-cell" style="width: 140px">Kích thước</th>
                                     <th class="header-cell" style="width: 240px">Mã SKU</th>
-                                    <th class="header-cell" style="width: 110px">Tồn kho</th>
+                                    <th class="header-cell" style="width: 110px">Số lượng</th>
                                     <th class="header-cell" style="width: 130px">Giá bán</th>
                                     <th class="header-cell" style="width: 160px">Trạng thái</th>
                                     <th class="header-cell" style="width: 120px">Thao tác</th>
@@ -3219,7 +3219,7 @@ const handleSave = async () => {
                         <v-icon icon="mdi-flash-circle" color="white" class="mr-2" size="24" />
                         <div>
                             <div class="font-weight-bold text-subtitle-1">Thiết Lập Nhanh Giá Bán & Số Lượng</div>
-                            <div class="text-caption opacity-90">Áp dụng giá và tồn kho đồng loạt cho toàn bộ hoặc từng biến thể tùy chọn</div>
+                            <div class="text-caption opacity-90">Áp dụng giá và số lượng đồng loạt cho toàn bộ hoặc từng biến thể tùy chọn</div>
                         </div>
                     </div>
                     <v-btn icon size="small" variant="text" color="white" @click="bulkEditModal.show = false">
@@ -3235,7 +3235,7 @@ const handleSave = async () => {
                         </div>
                         <v-row dense>
                             <v-col cols="12" sm="6">
-                                <div class="field-label mb-1">Số lượng tồn kho (SP)</div>
+                                <div class="field-label mb-1">Số lượng (SP)</div>
                                 <FormattedNumberField
                                     v-model="bulkEditModal.form.soLuong"
                                     placeholder="Nhập số lượng..."
@@ -3381,7 +3381,7 @@ const handleSave = async () => {
                                         <th style="width: 40px" class="text-center">#</th>
                                         <th class="text-left font-weight-bold text-caption">Màu sắc & Size</th>
                                         <th class="text-right font-weight-bold text-caption">Giá hiện tại</th>
-                                        <th class="text-right font-weight-bold text-caption">Tồn kho</th>
+                                        <th class="text-right font-weight-bold text-caption">Số lượng</th>
                                     </tr>
                                 </thead>
                                 <tbody>

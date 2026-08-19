@@ -12,10 +12,10 @@ const emit = defineEmits(['refresh', 'search']);
 
 <template>
     <v-card class="filter-card elevation-0" elevation="0">
-        <v-card-text class="pa-3">
-            <div v-if="title" class="filter-header d-flex align-center mb-2">
-                <v-icon color="#000000" class="mr-2 filter-main-icon" size="18">mdi-filter-variant</v-icon>
-                <div class="filter-title text-black font-weight-bold" style="font-size: 14px">{{ title }}</div>
+        <v-card-text class="pa-2 px-3">
+            <div v-if="title" class="filter-header d-flex align-center mb-1">
+                <v-icon color="#000000" class="mr-1.5 filter-main-icon" size="16">mdi-filter-variant</v-icon>
+                <div class="filter-title text-black font-weight-bold" style="font-size: 13px">{{ title }}</div>
             </div>
 
             <v-row dense align="end" class="filter-grid">
@@ -23,15 +23,16 @@ const emit = defineEmits(['refresh', 'search']);
                 <slot></slot>
 
                 <!-- Nút làm mới - quay lại row -->
-                <v-col v-if="!hideReset" cols="auto" class="filter-reset-col ml-auto align-self-end pb-1">
+                <v-col v-if="!hideReset" cols="auto" class="filter-reset-col ml-auto align-self-end pb-0.5">
                     <v-btn
                         variant="outlined"
                         color="primary"
                         class="reset-btn"
+                        style="height: 32px !important; min-width: 32px !important; width: 32px !important; padding: 0 !important;"
                         :disabled="loading || isRefreshing"
                         @click="emit('refresh')"
                     >
-                        <v-icon size="18">
+                        <v-icon size="16">
                             {{ isRefreshing ? 'mdi-loading' : 'mdi-refresh' }}
                         </v-icon>
                         <v-tooltip activator="parent" location="top"> Làm mới bộ lọc </v-tooltip>

@@ -45,13 +45,36 @@
 
 /* Labels */
 .field-label,
-.field-label-standard,
-.filter-field-label {
-    font-size: 14px !important;
+.field-label-standard {
+    font-size: 13px !important;
     font-weight: 600;
     color: #1e293b;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     display: block;
+}
+
+.filter-field-label {
+    font-size: 12px !important;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 2px !important;
+    display: block;
+    line-height: 1.2;
+}
+
+.compact-input {
+    .v-field {
+        min-height: 32px !important;
+        height: 32px !important;
+    }
+    .v-field__input {
+        min-height: 32px !important;
+        padding-top: 3px !important;
+        padding-bottom: 3px !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+        font-size: 12.5px !important;
+    }
 }
 
 /* Date Field Specifics */

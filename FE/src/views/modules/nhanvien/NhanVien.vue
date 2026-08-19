@@ -75,7 +75,15 @@ const tableHeaders = [
 ];
 
 const handleRefresh = async () => {
-    await refreshData(() => customHandleReset());
+    await refreshData(async () => {
+        filters.value = {
+            search: '',
+            gioiTinh: null,
+            trangThai: null
+        };
+        pagination.value.page = 1;
+        await loadEmployees();
+    });
 };
 
 const handleExport = async () => {

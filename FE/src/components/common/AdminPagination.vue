@@ -137,23 +137,23 @@ const handleJump = (e) => {
 }
 
 .pagination-summary {
-    font-size: 13px !important;
-    line-height: 1.4;
+    font-size: 12px !important;
+    line-height: 1.3;
 }
 .pagination-summary strong {
     color: #000;
     font-weight: 700;
 }
 .pagination-label {
-    font-size: 13px !important;
+    font-size: 12px !important;
     color: #000;
     font-weight: 500;
 }
 .page-size-select {
     border: 1px solid #cbd5e1;
-    padding: 2px 8px;
-    border-radius: 8px;
-    font-size: 13px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 12px;
     font-weight: 600;
     line-height: 1.2;
     outline: none;
@@ -165,15 +165,15 @@ const handleJump = (e) => {
 .mini-pager {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     flex-wrap: wrap;
 }
 .pager-btn {
-    min-width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    min-width: 26px;
+    height: 26px;
+    border-radius: 6px;
     border: 1px solid #dbe4ef;
-    font-size: 13px !important;
+    font-size: 12px !important;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
@@ -194,19 +194,20 @@ const handleJump = (e) => {
 }
 .pager-ellipsis {
     color: #94a3b8;
-    font-size: 13px;
+    font-size: 12px;
     padding: 0;
 }
 .pager-jump-input {
-    width: 32px;
-    height: 32px;
+    width: 26px;
+    height: 26px;
     text-align: center;
     border: 1px solid transparent;
     background: transparent;
     cursor: text;
-    border-radius: 8px;
+    border-radius: 6px;
     outline: none;
     transition: all 0.2s ease;
+    font-size: 12px;
 }
 .pager-jump-input:focus,
 .pager-jump-input:hover {

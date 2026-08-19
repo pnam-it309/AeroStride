@@ -8,12 +8,14 @@ import { generateRandomCode } from '@/utils/codeGenerator';
 import { dichVuThuongHieu, dichVuMauSac, dichVuKichThuoc, dichVuChatLieu } from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
 import { formatCurrency } from '@/utils/formatters';
-import AdminConfirm from '@/components/common/AdminConfirm.vue';
-import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
-import AdminFilter from '@/components/common/AdminFilter.vue';
-import AdminPagination from '@/components/common/AdminPagination.vue';
-import TableEmptyState from '@/components/common/TableEmptyState.vue';
-import FormattedPercentField from '@/components/common/FormattedPercentField.vue';
+import {
+    AdminConfirm,
+    AdminBreadcrumbs,
+    AdminFilter,
+    AdminPagination,
+    TableEmptyState,
+    FormattedPercentField
+} from '@/components/common';
 import { getColorHexByName } from '@/utils/colorDictionary';
 import { CalendarIcon, GiftIcon, InfoCircleIcon, TagIcon, BoxIcon, SearchIcon, TrashIcon } from 'vue-tabler-icons';
 import { PATH } from '@/router/routePaths';

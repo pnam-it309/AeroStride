@@ -62,14 +62,14 @@ const handleQuantityChange = async (id, delta) => {
         const newQty = item.soLuong + delta;
         if (delta > 0 && item.soLuongTonKho && newQty > item.soLuongTonKho) {
             showStockAlert(
-                'Vượt quá số lượng tồn kho',
-                `Sản phẩm "${item.tenSanPham || 'giày'}" hiện chỉ còn tối đa ${item.soLuongTonKho} sản phẩm trong kho.`
+                'Vượt quá số lượng có sẵn',
+                `Sản phẩm "${item.tenSanPham || 'giày'}" hiện chỉ còn tối đa ${item.soLuongTonKho} sản phẩm.`
             );
             return;
         }
         const res = await cartStore.updateQuantity(id, newQty);
         if (res && !res.success) {
-            showStockAlert('Không thể cập nhật số lượng', res.message || 'Số lượng vượt quá tồn kho hiện có.');
+            showStockAlert('Không thể cập nhật số lượng', res.message || 'Số lượng vượt quá số lượng hiện có.');
         }
     }
 };
@@ -82,15 +82,15 @@ const handleQuantityInput = async (item, eventTargetValue) => {
     }
     if (item.soLuongTonKho && num > item.soLuongTonKho) {
         showStockAlert(
-            'Vượt quá số lượng tồn kho',
-            `Sản phẩm "${item.tenSanPham || 'giày'}" hiện chỉ còn tối đa ${item.soLuongTonKho} sản phẩm trong kho.`
+            'Vượt quá số lượng có sẵn',
+            `Sản phẩm "${item.tenSanPham || 'giày'}" hiện chỉ còn tối đa ${item.soLuongTonKho} sản phẩm.`
         );
         await cartStore.updateQuantity(item.idChiTietSanPham, item.soLuongTonKho);
         return;
     }
     const res = await cartStore.updateQuantity(item.idChiTietSanPham, num);
     if (res && !res.success) {
-        showStockAlert('Không thể cập nhật số lượng', res.message || 'Số lượng vượt quá tồn kho hiện có.');
+        showStockAlert('Không thể cập nhật số lượng', res.message || 'Số lượng vượt quá số lượng hiện có.');
     }
 };
 

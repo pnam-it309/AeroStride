@@ -17,7 +17,9 @@ export function useRefreshHandler() {
 
         isRefreshing.value = true;
         try {
-            resetFn();
+            if (resetFn) {
+                await resetFn();
+            }
             await new Promise((resolve) => setTimeout(resolve, delayMs));
         } finally {
             isRefreshing.value = false;

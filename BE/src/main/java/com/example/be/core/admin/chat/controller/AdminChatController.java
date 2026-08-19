@@ -36,8 +36,8 @@ public class AdminChatController {
     }
 
     @GetMapping(RoutesConstant.CONVERSATIONS + "/stats")
-    public ResponseEntity<ApiResponse<Map<String, Long>>> getConversationStats() {
-        return ResponseEntity.ok(ApiResponse.success(chatService.getConversationStats()));
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getConversationStats(@RequestParam(required = false) String type) {
+        return ResponseEntity.ok(ApiResponse.success(chatService.getConversationStats(type)));
     }
 
     @GetMapping(RoutesConstant.CONVERSATION_MESSAGES)

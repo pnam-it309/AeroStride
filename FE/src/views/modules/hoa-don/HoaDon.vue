@@ -6,13 +6,9 @@ import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
 import { ReceiptIcon } from 'vue-tabler-icons';
 
 // Reusable Components
-import AdminFilter from '@/components/common/AdminFilter.vue';
-import AdminTable from '@/components/common/AdminTable.vue';
-import AdminPagination from '@/components/common/AdminPagination.vue';
-import TableEmptyState from '@/components/common/TableEmptyState.vue';
+import { AdminFilter, AdminTable, AdminPagination, AdminBreadcrumbs, TableEmptyState } from '@/components/common';
 import { downloadFile } from '@/utils/fileUtils';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
-import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { useAdminTable } from '@/composables/useAdminTable';
 import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
 import { getOrderStatusMeta } from '@/utils/orderStatus';
@@ -215,29 +211,29 @@ watch(
 
 const hasCount = (value) => Number(value) > 0;
 
-const getOrderTypeClass = (orderType) => {
-    const normalizedType = String(orderType || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toUpperCase()
-        .trim();
-
-    if (normalizedType.includes(ORDER_TYPES.ONLINE) || normalizedType.includes('TRUC TUYEN')) {
+const getOrderTypeClass = (orderType, loaiDon, deliveryMethod) => {
+    const isOnline = String(orderType || '').toUpperCase() === 'ONLINE' || String(loaiDon || '').toUpperCase() === 'ONLINE';
+    if (isOnline) {
         return 'order-type-online';
+    }
+
+    const isShipping = String(deliveryMethod || '').toUpperCase() === 'SHIPPING' || String(loaiDon || '').toUpperCase() === 'GIAO_HANG';
+    if (isShipping) {
+        return 'order-type-shipping';
     }
 
     return 'order-type-offline';
 };
 
-const getOrderTypeLabel = (orderType) => {
-    const normalizedType = String(orderType || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toUpperCase()
-        .trim();
-
-    if (normalizedType.includes(ORDER_TYPES.ONLINE) || normalizedType.includes('TRUC TUYEN')) {
+const getOrderTypeLabel = (orderType, loaiDon, deliveryMethod) => {
+    const isOnline = String(orderType || '').toUpperCase() === 'ONLINE' || String(loaiDon || '').toUpperCase() === 'ONLINE';
+    if (isOnline) {
         return 'Trực tuyến';
+    }
+
+    const isShipping = String(deliveryMethod || '').toUpperCase() === 'SHIPPING' || String(loaiDon || '').toUpperCase() === 'GIAO_HANG';
+    if (isShipping) {
+        return 'Giao hàng';
     }
 
     return 'Cửa hàng';
@@ -439,8 +435,8 @@ onMounted(() => loadOrders());
                     </td>
 
                     <td class="data-cell">
-                        <v-chip :class="['status-chip', getOrderTypeClass(item.orderType)]" variant="flat">
-                            {{ getOrderTypeLabel(item.orderType) }}
+                        <v-chip :class="['status-chip', getOrderTypeClass(item.orderType, item.loaiDon, item.deliveryMethod)]" variant="flat">
+                            {{ getOrderTypeLabel(item.orderType, item.loaiDon, item.deliveryMethod) }}
                         </v-chip>
                     </td>
 

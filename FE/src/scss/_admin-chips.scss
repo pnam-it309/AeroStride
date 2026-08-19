@@ -42,11 +42,11 @@
 }
 
 @mixin admin-chip-base {
-    border-radius: 16px !important;
-    font-size: 13px !important;
+    border-radius: 14px !important;
+    font-size: 11.5px !important;
     font-weight: 600 !important;
-    padding: 0 12px !important;
-    height: 28px !important;
+    padding: 0 8px !important;
+    height: 24px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -70,15 +70,15 @@
 /* ---- Base Classes ---- */
 .status-chip {
     @include admin-chip-base;
-    min-width: 120px !important;
+    min-width: 95px !important;
 }
 .gender-chip {
     @include admin-chip-base;
-    min-width: 80px !important;
+    min-width: 75px !important;
 }
 .order-type-chip {
     @include admin-chip-base;
-    min-width: 90px !important;
+    min-width: 80px !important;
 }
 
 /* ========== MAPPING TRẠNG THÁI -> TÔNG MÀU ========== */
@@ -170,6 +170,10 @@
 .order-offline,
 .order-type-offline {
     @include chip-tone(pink);
+}
+.order-shipping,
+.order-type-shipping {
+    @include chip-tone(orange);
 }
 
 /* ========== CA LÀM VIỆC (Lịch làm việc / Chấm công) - gộp từ file riêng ========== */

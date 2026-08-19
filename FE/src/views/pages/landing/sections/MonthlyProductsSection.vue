@@ -108,9 +108,8 @@ const addToCart = (e, product) => {
                                     >
                                         <div class="card-image-wrap">
                                             <!-- Badges overlay -->
-                                            <div class="premium-badges">
-                                                <div class="badge-new">NEW</div>
-                                                <div v-if="product.phanTramGiam > 0" class="badge-sale">-{{ product.phanTramGiam }}%</div>
+                                            <div v-if="product.phanTramGiam > 0" class="premium-badges">
+                                                <div class="badge-sale">-{{ product.phanTramGiam }}%</div>
                                             </div>
 
                                             <!-- Main Image -->

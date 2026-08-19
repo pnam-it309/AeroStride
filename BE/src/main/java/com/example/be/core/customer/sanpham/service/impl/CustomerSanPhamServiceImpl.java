@@ -50,25 +50,48 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
     // Lấy danh sách sản phẩm (có hỗ trợ lọc theo danh mục, thương hiệu, màu sắc, giới tính...)
     @Override
     public PageResponse<CustomerProductResponse> getProducts(CustomerSearchProductRequest request) {
-        // Ưu tiên mucDichChayIds (multi-select) nếu có, fallback sang mucDichChayId (single)
+        // Multi-select or single specs
         Specification<SanPham> mucDichSpec = null;
-        if (request.getMucDichChayIds() != null && !request.getMucDichChayIds().isEmpty()) {
-            mucDichSpec = CustomerSanPhamSpecification.hasMucDichChayIn(request.getMucDichChayIds());
-        } else {
-            mucDichSpec = CustomerSanPhamSpecification.hasMucDichChay(request.getMucDichChayId());
+        List<String> effectiveMucDich = request.getEffectiveMucDichChayIds();
+        if (effectiveMucDich != null && !effectiveMucDich.isEmpty()) {
+            mucDichSpec = CustomerSanPhamSpecification.hasMucDichChayIn(effectiveMucDich);
+        }
+
+        Specification<SanPham> thuongHieuSpec = null;
+        List<String> effectiveThuongHieu = request.getEffectiveThuongHieuIds();
+        if (effectiveThuongHieu != null && !effectiveThuongHieu.isEmpty()) {
+            thuongHieuSpec = CustomerSanPhamSpecification.hasThuongHieuIn(effectiveThuongHieu);
+        }
+
+        Specification<SanPham> chatLieuSpec = null;
+        List<String> effectiveChatLieu = request.getEffectiveChatLieuIds();
+        if (effectiveChatLieu != null && !effectiveChatLieu.isEmpty()) {
+            chatLieuSpec = CustomerSanPhamSpecification.hasChatLieuIn(effectiveChatLieu);
+        }
+
+        Specification<SanPham> xuatXuSpec = null;
+        List<String> effectiveXuatXu = request.getEffectiveXuatXuIds();
+        if (effectiveXuatXu != null && !effectiveXuatXu.isEmpty()) {
+            xuatXuSpec = CustomerSanPhamSpecification.hasXuatXuIn(effectiveXuatXu);
+        }
+
+        Specification<SanPham> kichThuocSpec = null;
+        List<String> effectiveKichThuocs = request.getEffectiveKichThuocs();
+        if (effectiveKichThuocs != null && !effectiveKichThuocs.isEmpty()) {
+            kichThuocSpec = CustomerSanPhamSpecification.hasKichThuocIn(effectiveKichThuocs);
         }
 
         Specification<SanPham> spec = Specification.where(CustomerSanPhamSpecification.notDeleted())
                 .and(CustomerSanPhamSpecification.hasKeyword(request.getKeyword()))
                 .and(CustomerSanPhamSpecification.hasTrangThai(request.getTrangThai() != null ? request.getTrangThai() : TrangThai.DANG_HOAT_DONG))
-                .and(CustomerSanPhamSpecification.hasThuongHieu(request.getThuongHieuId()))
+                .and(thuongHieuSpec)
                 .and(CustomerSanPhamSpecification.hasGioiTinhKhachHang(request.getGioiTinhKhachHang()))
-                .and(CustomerSanPhamSpecification.hasXuatXu(request.getXuatXuId()))
+                .and(xuatXuSpec)
                 .and(mucDichSpec)
-                .and(CustomerSanPhamSpecification.hasChatLieu(request.getChatLieuId()))
+                .and(chatLieuSpec)
                 .and(CustomerSanPhamSpecification.hasMinGia(request.getMinGia()))
                 .and(CustomerSanPhamSpecification.hasMaxGia(request.getMaxGia()))
-                .and(CustomerSanPhamSpecification.hasKichThuoc(request.getKichThuoc()));
+                .and(kichThuocSpec);
 
         // Detect if price sorting is requested (use raw value before getSortBy() transforms it)
         String originalSortBy = request.getRawSortBy();
@@ -330,35 +353,15 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
 
             BigDecimal activeDiscount = BigDecimal.ZERO;
             if (v.getChiTietDotGiamGias() != null) {
-                List<DotGiamGia> validCampaigns = new ArrayList<>();
                 for (ChiTietDotGiamGia ct : v.getChiTietDotGiamGias()) {
                     DotGiamGia d = ct.getDotGiamGia();
                     if (d != null && d.getTrangThai() == TrangThai.DANG_HOAT_DONG) {
                         if (d.getNgayBatDau() != null && d.getNgayKetThuc() != null
                                 && d.getNgayBatDau() <= now && now <= d.getNgayKetThuc()) {
-                            if (d.getSoTienGiam() != null) {
-                                validCampaigns.add(d);
+                            BigDecimal val = ct.getGiaTriGiam() != null ? ct.getGiaTriGiam() : d.getSoTienGiam();
+                            if (val != null && val.compareTo(activeDiscount) > 0) {
+                                activeDiscount = val;
                             }
-                        }
-                    }
-                }
-                
-                if (!validCampaigns.isEmpty()) {
-                    validCampaigns.sort((c1, c2) -> c2.getSoTienGiam().compareTo(c1.getSoTienGiam()));
-                    if (validCampaigns.size() == 1) {
-                        activeDiscount = validCampaigns.get(0).getSoTienGiam();
-                    } else {
-                        DotGiamGia d1 = validCampaigns.get(0);
-                        DotGiamGia d2 = validCampaigns.get(1);
-                        BigDecimal m1 = d1.getSoTienGiam();
-                        BigDecimal m2 = d2.getSoTienGiam();
-                        long overlapStart = Math.max(d1.getNgayBatDau(), d2.getNgayBatDau());
-                        long overlapEnd = Math.min(d1.getNgayKetThuc(), d2.getNgayKetThuc());
-                        long overlapDays = (overlapEnd - overlapStart) / (1000L * 60 * 60 * 24);
-                        if (overlapDays < 3) {
-                            activeDiscount = m1;
-                        } else {
-                            activeDiscount = m1.add(m2).divide(new BigDecimal("2"), 0, java.math.RoundingMode.HALF_UP);
                         }
                     }
                 }

@@ -52,6 +52,7 @@ public class AdminChatServiceImpl implements AdminChatService {
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
     private final com.example.be.core.admin.chat.service.AiChatService aiChatService;
+    private final com.example.be.infrastructure.security.service.UserPresenceService userPresenceService;
 
     @Value("${app.local-upload-dir}")
     private String localUploadDir;
@@ -222,6 +223,9 @@ public class AdminChatServiceImpl implements AdminChatService {
                             lastMsgTimestamp = last.getNgayTao();
                         }
                     }
+                    boolean isPartnerOnline = partnerUsername != null && userPresenceService.isOnline(partnerUsername);
+                    String internalStatus = isPartnerOnline ? CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name() : CuocHoiThoai.TrangThaiHoiThoai.CLOSED.name();
+
                     return AdminChatResponse.builder()
                             .id(c.getId())
                             .ten(getConversationName(c, currentUsername))
@@ -231,7 +235,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                             .chuaDoc(0)
                             .daChapNhan(c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL ? true : c.getDaChapNhan())
                             .loaiHoiThoai(c.getLoaiHoiThoai() != null ? c.getLoaiHoiThoai().name() : CuocHoiThoai.LoaiHoiThoai.CUSTOMER.name())
-                            .trangThaiHoiThoai(c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL ? CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name() : (c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name()))
+                            .trangThaiHoiThoai(c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL ? internalStatus : (c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name()))
                             .idNhanVien(c.getNhanVien() != null ? c.getNhanVien().getId() : null)
                             .tenTaiKhoanNhanVien(c.getNhanVien() != null ? c.getNhanVien().getTenTaiKhoan() : null)
                             .idNhanVienNhan(c.getNhanVienNhan() != null ? c.getNhanVienNhan().getId() : null)
@@ -264,7 +268,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                         .chuaDoc(0)
                         .daChapNhan(true)
                         .loaiHoiThoai(CuocHoiThoai.LoaiHoiThoai.INTERNAL.name())
-                        .trangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name())
+                        .trangThaiHoiThoai(userPresenceService.isOnline(nv.getTenTaiKhoan()) ? CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name() : CuocHoiThoai.TrangThaiHoiThoai.CLOSED.name())
                         .idNhanVienDoiTac(nv.getId())
                         .tenTaiKhoanDoiTac(nv.getTenTaiKhoan())
                         .vaiTro(VaiTro.isManagementRole(nv) ? "ROLE_QUAN_LY" : "ROLE_NHAN_VIEN")
@@ -285,8 +289,13 @@ public class AdminChatServiceImpl implements AdminChatService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Long> getConversationStats() {
-        // Pass nulls to get all visible conversations without filtering
-        List<AdminChatResponse> allConvs = getAllConversations(null, null, null);
+        return getConversationStats(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getConversationStats(String type) {
+        List<AdminChatResponse> allConvs = getAllConversations(type, null, null);
         
         long activeCount = allConvs.stream().filter(c -> CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name().equals(c.getTrangThaiHoiThoai())).count();
         long pendingCount = allConvs.stream().filter(c -> CuocHoiThoai.TrangThaiHoiThoai.PENDING.name().equals(c.getTrangThaiHoiThoai())).count();

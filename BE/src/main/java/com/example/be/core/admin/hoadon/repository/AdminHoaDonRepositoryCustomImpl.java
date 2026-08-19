@@ -86,20 +86,28 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
             }
         }
 
-        OrderType requestedType = req.getOrderType();
-        if (requestedType == null && req.getLoaiDon() != null && !req.getLoaiDon().trim().isEmpty()) {
-            requestedType = "ONLINE".equalsIgnoreCase(req.getLoaiDon())
-                    ? OrderType.ONLINE
-                    : OrderType.IN_STORE;
-        }
-        if (requestedType != null) {
-            if (requestedType == OrderType.IN_STORE) {
+        if (req.getLoaiDon() != null && !req.getLoaiDon().trim().isEmpty()) {
+            String ld = req.getLoaiDon().trim().toUpperCase();
+            if ("GIAO_HANG".equals(ld)) {
+                builder.and(hd.loaiDon.equalsIgnoreCase("GIAO_HANG")
+                        .or(hd.deliveryMethod.eq(DeliveryMethod.SHIPPING).and(hd.orderType.eq(OrderType.IN_STORE))));
+            } else if ("ONLINE".equals(ld)) {
+                builder.and(hd.orderType.eq(OrderType.ONLINE)
+                        .or(hd.orderType.isNull().and(hd.nhanVien.isNull()).and(hd.loaiDon.equalsIgnoreCase("ONLINE"))));
+            } else if ("IN_STORE".equals(ld) || "TAI_QUAY".equals(ld) || "OFFLINE".equals(ld)) {
+                builder.and(
+                        (hd.orderType.eq(OrderType.IN_STORE).and(hd.deliveryMethod.ne(DeliveryMethod.SHIPPING).or(hd.deliveryMethod.isNull())).and(hd.loaiDon.ne("GIAO_HANG").or(hd.loaiDon.isNull())))
+                                .or(hd.orderType.isNull().and(hd.loaiDon.in("TAI_QUAY", "OFFLINE")))
+                );
+            }
+        } else if (req.getOrderType() != null) {
+            if (req.getOrderType() == OrderType.IN_STORE) {
                 builder.and(hd.orderType.eq(OrderType.IN_STORE)
                         .or(hd.orderType.isNull().and(hd.nhanVien.isNotNull()
                                 .or(hd.loaiDon.in("TAI_QUAY", "OFFLINE", "GIAO_HANG")))));
             } else {
                 builder.and(hd.orderType.eq(OrderType.ONLINE)
-                        .or(hd.orderType.isNull().and(hd.nhanVien.isNull()).and(hd.loaiDon.eq("ONLINE"))));
+                        .or(hd.orderType.isNull().and(hd.nhanVien.isNull()).and(hd.loaiDon.equalsIgnoreCase("ONLINE"))));
             }
         }
 

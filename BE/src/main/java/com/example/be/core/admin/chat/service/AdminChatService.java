@@ -10,6 +10,7 @@ public interface AdminChatService {
 
     List<AdminChatResponse> getAllConversations(String type, String status, String keyword);
     Map<String, Long> getConversationStats();
+    Map<String, Long> getConversationStats(String type);
 
     List<TinNhanResponse> getMessagesByConversation(String id);
 

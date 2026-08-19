@@ -558,7 +558,7 @@ onUnmounted(() => {
                                             >
                                             <span style="margin-left: 15px; margin-right: 15px; color: #cbd5e1; opacity: 0.4">|</span>
                                             <span
-                                                >Tồn: <span class="text-slate-500">{{ variant.soLuongTon || 0 }}</span></span
+                                                >Số lượng: <span class="text-slate-500">{{ variant.soLuongTon || 0 }}</span></span
                                             >
                                         </div>
                                     </div>

@@ -5,8 +5,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import { generateRandomCode } from '@/utils/codeGenerator';
 import { useNotifications } from '@/services/notificationService';
-import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
-import AdminConfirm from '@/components/common/AdminConfirm.vue';
+import { AdminBreadcrumbs, AdminConfirm } from '@/components/common';
 import { ArrowLeftIcon, DeviceFloppyIcon, UserIcon } from 'vue-tabler-icons';
 
 import QrcodeStream from '@/components/common/CCCDQRScanner';

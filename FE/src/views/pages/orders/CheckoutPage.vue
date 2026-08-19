@@ -14,6 +14,7 @@ import { PATH } from '@/router/routePaths';
 import { useLocation } from '@/composables/useLocation';
 import defaultShoeImg from '@/assets/images/products/cat_running.jpg';
 import SafeProductImage from '@/views/modules/san-pham/components/SafeProductImage.vue';
+import { findBestVoucherUpsell } from '@/views/modules/banhang/voucherUpsell';
 
 const DEFAULT_SHOE_IMAGE = defaultShoeImg || new URL('/src/assets/images/products/cat_running.jpg', import.meta.url).href;
 
@@ -238,23 +239,29 @@ const campaignDiscountPercent = computed(() => {
 
 const calcVoucherDiscount = (v) => {
     if (!v) return 0;
-    const isPercentage = v.loaiPhieu === 'PHAN_TRAM' || v.loaiPhieu === 'PERCENTAGE';
-    if (isPercentage && (v.phanTramGiamGia || v.discountPercent)) {
-        const pct = v.phanTramGiamGia || v.discountPercent || 0;
+    const isPercentage = v.loaiPhieu === 'PHAN_TRAM' || v.loaiPhieu === 'PERCENTAGE' || v.loaiPhieu === 1 || v.loaiPhieu === '1';
+    if (isPercentage && (v.phanTramGiamGia || v.discountPercent || v.giamGia)) {
+        const pct = Number(v.phanTramGiamGia || v.discountPercent || v.giamGia || 0);
         let discount = (cartStore.cartTotal * pct) / 100;
-        if (v.giamToiDa && discount > v.giamToiDa) discount = v.giamToiDa;
+        const maxDisc = Number(v.giamToiDa || v.maxDiscount || 0);
+        if (maxDisc > 0 && discount > maxDisc) discount = maxDisc;
         return Math.floor(discount);
     }
-    return v.soTienGiam || 0;
+    return Number(v.soTienGiam || v.discountAmount || v.giamGia || 0);
 };
 
 const voucherDiscount = computed(() => calcVoucherDiscount(selectedVoucher.value));
 
+// Voucher tốt nhất ĐÃ ĐỦ ĐIỀU KIỆN áp dụng ngay cho đơn hàng hiện tại
 const bestVoucher = computed(() => {
     if (!availableVouchers.value?.length) return null;
     let best = null;
     let bestValue = 0;
     for (const v of availableVouchers.value) {
+        const minOrder = Number(v.donHangToiThieu ?? v.minOrderValue ?? 0);
+        if (minOrder > 0 && cartStore.cartTotal < minOrder) {
+            continue;
+        }
         const d = calcVoucherDiscount(v);
         if (d > bestValue) {
             bestValue = d;
@@ -266,7 +273,17 @@ const bestVoucher = computed(() => {
 
 const bestVoucherDiscount = computed(() => calcVoucherDiscount(bestVoucher.value));
 
-const isBestSelected = computed(() => bestVoucher.value && selectedVoucher.value && bestVoucher.value.id === selectedVoucher.value.id);
+const isBestSelected = computed(
+    () =>
+        bestVoucher.value &&
+        selectedVoucher.value &&
+        (bestVoucher.value.id === selectedVoucher.value.id || (bestVoucher.value.ma && bestVoucher.value.ma === selectedVoucher.value.ma))
+);
+
+// Gợi ý mua thêm để áp dụng voucher giá trị cao hơn
+const upsellSuggestion = computed(() => {
+    return findBestVoucherUpsell(availableVouchers.value, cartStore.cartTotal, Date.now(), selectedVoucher.value);
+});
 
 const totalAmount = computed(() => {
     const fee = shippingFee.value !== null ? shippingFee.value : 0;
@@ -972,14 +989,29 @@ onUnmounted(() => {
                                                     selectedVoucher.maPhieuGiamGia ||
                                                     'Mã Voucher'
                                                 }}</span>
-                                                <span class="text-caption" style="color: #1e257c"
-                                                    >Giảm {{ formatPrice(voucherDiscount) }}</span
-                                                >
+                                                <div class="text-caption" style="color: #1e257c">
+                                                    Giảm {{ formatPrice(voucherDiscount) }}
+                                                    <span v-if="selectedVoucher.donHangToiThieu" class="text-grey-darken-1">
+                                                        • Đơn tối thiểu: {{ formatPrice(selectedVoucher.donHangToiThieu) }}
+                                                    </span>
+                                                    <span v-else class="text-grey-darken-1"> • Mọi đơn hàng</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <v-btn icon variant="text" size="small" color="grey" @click="removeVoucher">
-                                            <v-icon size="18">mdi-close-circle</v-icon>
-                                        </v-btn>
+                                        <div class="d-flex align-center ga-1">
+                                            <v-btn
+                                                variant="text"
+                                                size="small"
+                                                class="text-none font-weight-bold"
+                                                style="color: #1e257c"
+                                                @click="openVoucherModal"
+                                            >
+                                                Đổi mã
+                                            </v-btn>
+                                            <v-btn icon variant="text" size="small" color="grey" @click="removeVoucher">
+                                                <v-icon size="18">mdi-close-circle</v-icon>
+                                            </v-btn>
+                                        </div>
                                     </div>
                                     <v-btn
                                         v-else
@@ -996,20 +1028,37 @@ onUnmounted(() => {
                                         <v-icon size="18">mdi-chevron-right</v-icon>
                                     </v-btn>
 
+                                    <!-- Gợi ý voucher tốt nhất đã đủ điều kiện áp dụng ngay -->
                                     <div
                                         v-if="bestVoucher && !isBestSelected && bestVoucherDiscount > 0"
-                                        class="best-voucher-suggest d-flex align-center justify-space-between pa-3 mt-3"
+                                        class="best-voucher-suggest d-flex align-center justify-space-between pa-3 mt-3 rounded-lg"
                                         style="border: 1px dashed #1e257c; background: #f5f7ff"
                                     >
-                                        <div class="d-flex align-center ga-2">
-                                            <v-icon size="18" style="color: #1e257c">mdi-lightbulb-on-outline</v-icon>
-                                            <div>
-                                                <span class="text-caption font-weight-bold d-block" style="color: #1e257c">
-                                                    Gợi ý tốt nhất: {{ bestVoucher.ten || bestVoucher.ma }}
-                                                </span>
-                                                <span class="text-caption text-grey-darken-1"
-                                                    >Tiết kiệm {{ formatPrice(bestVoucherDiscount) }}</span
-                                                >
+                                        <div class="d-flex align-center ga-2 flex-grow-1 pr-2">
+                                            <v-icon size="20" style="color: #1e257c" class="flex-shrink-0">mdi-lightbulb-on-outline</v-icon>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-center flex-wrap ga-1">
+                                                    <span class="text-caption font-weight-bold" style="color: #1e257c">
+                                                        Gợi ý tốt nhất: {{ bestVoucher.ten || bestVoucher.ma }}
+                                                    </span>
+                                                    <v-chip
+                                                        v-if="bestVoucher.donHangToiThieu"
+                                                        size="x-small"
+                                                        variant="tonal"
+                                                        color="primary"
+                                                        class="font-weight-medium px-1"
+                                                        style="font-size: 10.5px; height: 18px"
+                                                    >
+                                                        Đơn từ {{ formatPrice(bestVoucher.donHangToiThieu) }}
+                                                    </v-chip>
+                                                </div>
+                                                <div class="text-caption text-grey-darken-2 mt-0.5">
+                                                    <span class="font-weight-bold text-success">Tiết kiệm {{ formatPrice(bestVoucherDiscount) }}</span>
+                                                    <span v-if="bestVoucher.donHangToiThieu" class="text-grey-darken-1">
+                                                        • Đơn tối thiểu: {{ formatPrice(bestVoucher.donHangToiThieu) }}
+                                                    </span>
+                                                    <span v-else class="text-grey-darken-1"> • Không giới hạn đơn tối thiểu</span>
+                                                </div>
                                             </div>
                                         </div>
                                         <v-btn
@@ -1017,11 +1066,30 @@ onUnmounted(() => {
                                             variant="flat"
                                             style="background: #1e257c; color: white"
                                             rounded="pill"
-                                            class="text-none font-weight-bold"
+                                            class="text-none font-weight-bold flex-shrink-0"
                                             @click="selectVoucher(bestVoucher)"
                                         >
                                             Áp dụng
                                         </v-btn>
+                                    </div>
+
+                                    <!-- Gợi ý mua thêm để áp dụng voucher giá trị cao hơn -->
+                                    <div
+                                        v-if="upsellSuggestion"
+                                        class="upsell-voucher-suggest d-flex align-start ga-2 pa-3 mt-3 rounded-lg"
+                                        style="border: 1px dashed #f59e0b; background: #fffbeb"
+                                    >
+                                        <v-icon size="18" style="color: #d97706" class="mt-0.5 flex-shrink-0">mdi-sparkles</v-icon>
+                                        <div class="text-caption text-slate-800" style="line-height: 1.45">
+                                            <span>Mua thêm </span>
+                                            <strong style="color: #d97706">{{ formatPrice(upsellSuggestion.remainingAmount) }}</strong>
+                                            <span> để áp dụng mã </span>
+                                            <strong style="color: #1e257c">{{ upsellSuggestion.voucher?.ten || upsellSuggestion.voucher?.ma }}</strong>
+                                            <span> (giảm <strong>{{ formatPrice(upsellSuggestion.discountAmount) }}</strong> cho đơn từ <strong>{{ formatPrice(upsellSuggestion.minimumOrderValue) }}</strong>)</span>
+                                            <span v-if="selectedVoucher && upsellSuggestion.extraDiscountAmount > 0" class="font-weight-bold text-success">
+                                                — Lợi hơn {{ formatPrice(upsellSuggestion.extraDiscountAmount) }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1251,11 +1319,12 @@ onUnmounted(() => {
                         <div
                             v-for="v in availableVouchers"
                             :key="v.id"
-                            class="voucher-item d-flex pa-4 mb-3"
+                            class="voucher-item d-flex pa-4 mb-3 rounded-lg border"
                             :class="{ 
                                 selected: selectedVoucher?.id === v.id,
                                 'opacity-60': v.donHangToiThieu && cartStore.cartTotal < v.donHangToiThieu 
                             }"
+                            style="cursor: pointer; transition: all 0.2s ease"
                             @click="selectVoucher(v)"
                         >
                             <div class="voucher-badge mr-4 px-2">
@@ -1272,21 +1341,29 @@ onUnmounted(() => {
                                     <div v-else class="unselected-radio"></div>
                                 </div>
                                 <p class="text-caption text-grey-darken-1 mb-1">
-                                    <span v-if="v.loaiPhieu === 'PHAN_TRAM' || v.loaiPhieu === 'PERCENTAGE'">
-                                        Giảm {{ v.phanTramGiamGia || v.discountPercent }}%
-                                        <span v-if="v.giamToiDa" class="font-weight-medium" style="color: #ef4444"
-                                            >(Tối đa {{ formatPrice(v.giamToiDa) }})</span
+                                    <span v-if="v.loaiPhieu === 'PHAN_TRAM' || v.loaiPhieu === 'PERCENTAGE' || v.loaiPhieu === 1 || v.loaiPhieu === '1'">
+                                        Giảm {{ v.phanTramGiamGia || v.discountPercent || v.giamGia }}%
+                                        <span v-if="v.giamToiDa || v.maxDiscount" class="font-weight-medium" style="color: #ef4444"
+                                            >(Tối đa {{ formatPrice(v.giamToiDa || v.maxDiscount) }})</span
                                         >
                                     </span>
-                                    <span v-else>Giảm {{ formatPrice(v.soTienGiam) }} trực tiếp</span>
+                                    <span v-else>Giảm {{ formatPrice(v.soTienGiam || v.discountAmount || v.giamGia) }} trực tiếp</span>
                                 </p>
-                                <div class="d-flex align-center justify-space-between mt-1">
+                                <div class="d-flex align-center justify-space-between flex-wrap ga-1 mt-1">
                                     <p v-if="v.donHangToiThieu" class="text-caption font-weight-bold mb-0" style="color: #1e257c">
-                                        <v-icon size="12" class="mr-1" style="color: #1e257c">mdi-cart-outline</v-icon>
-                                        Đơn tối thiểu {{ formatPrice(v.donHangToiThieu) }}
+                                        <v-icon size="13" class="mr-1" style="color: #1e257c">mdi-cart-outline</v-icon>
+                                        Đơn tối thiểu: {{ formatPrice(v.donHangToiThieu) }}
                                     </p>
-                                    <span v-if="v.donHangToiThieu && cartStore.cartTotal < v.donHangToiThieu" class="text-caption font-weight-medium text-warning">
-                                        Chưa đủ điều kiện
+                                    <p v-else class="text-caption font-weight-bold mb-0 text-success">
+                                        <v-icon size="13" class="mr-1" color="success">mdi-cart-outline</v-icon>
+                                        Áp dụng cho mọi đơn hàng
+                                    </p>
+
+                                    <span v-if="v.donHangToiThieu && cartStore.cartTotal < v.donHangToiThieu" class="text-caption font-weight-bold text-warning">
+                                        Cần mua thêm {{ formatPrice(v.donHangToiThieu - cartStore.cartTotal) }}
+                                    </span>
+                                    <span v-else class="text-caption font-weight-bold text-success">
+                                        Đủ điều kiện
                                     </span>
                                 </div>
                             </div>

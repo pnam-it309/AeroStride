@@ -3,8 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { useNotifications } from '@/services/notificationService';
 import { formatCurrency } from '@/utils/formatters';
-import TableEmptyState from '@/components/common/TableEmptyState.vue';
-import FormattedPercentField from '@/components/common/FormattedPercentField.vue';
+import { TableEmptyState, FormattedPercentField } from '@/components/common';
 import { getColorHexByName } from '@/utils/colorDictionary';
 import SafeProductImage from '@/views/modules/san-pham/components/SafeProductImage.vue';
 
@@ -371,7 +370,7 @@ const handleSave = async () => {
                                     />
                                 </th>
                                 <th class="text-left py-2 font-weight-bold text-caption text-slate-700">Sản phẩm / Biến thể</th>
-                                <th class="text-center py-2 font-weight-bold text-caption text-slate-700">Tồn kho</th>
+                                <th class="text-center py-2 font-weight-bold text-caption text-slate-700">Số lượng</th>
                                 <th class="text-right py-2 font-weight-bold text-caption text-slate-700">Giá gốc</th>
                                 <th class="text-right py-2 font-weight-bold text-caption text-deep-orange">Giá Flash Sale (-{{ discountPercent }}%)</th>
                             </tr>

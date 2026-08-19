@@ -492,8 +492,8 @@ const handleQuantityInput = (val) => {
     }
     if (maxQuantity.value > 0 && num > maxQuantity.value) {
         showStockAlert(
-            'Vượt quá số lượng tồn kho',
-            `Sản phẩm này hiện chỉ còn tối đa ${maxQuantity.value} sản phẩm trong kho. Bạn không thể chọn số lượng lớn hơn.`
+            'Vượt quá số lượng có sẵn',
+            `Sản phẩm này hiện chỉ còn tối đa ${maxQuantity.value} sản phẩm. Bạn không thể chọn số lượng lớn hơn.`
         );
         selectedQuantity.value = maxQuantity.value;
         return;
@@ -527,7 +527,7 @@ const onQuantityBlur = (e) => {
 
 const handleIncrement = () => {
     if (maxQuantity.value > 0 && selectedQuantity.value >= maxQuantity.value) {
-        showStockAlert('Vượt quá số lượng tồn kho', `Sản phẩm này hiện chỉ còn tối đa ${maxQuantity.value} sản phẩm trong kho.`);
+        showStockAlert('Vượt quá số lượng có sẵn', `Sản phẩm này hiện chỉ còn tối đa ${maxQuantity.value} sản phẩm.`);
         return;
     }
     selectedQuantity.value++;
@@ -551,13 +551,13 @@ const addToCart = async () => {
     if (!variant || variant.soLuong <= 0) {
         showStockAlert(
             'Sản phẩm đã hết hàng',
-            'Phiên bản màu sắc và kích thước này hiện đã hết hàng trong kho. Vui lòng chọn phiên bản khác.'
+            'Phiên bản màu sắc và kích thước này hiện đã hết hàng. Vui lòng chọn phiên bản khác.'
         );
         return;
     }
 
     if (selectedQuantity.value > variant.soLuong) {
-        showStockAlert('Vượt quá số lượng tồn kho', `Phiên bản này hiện chỉ còn tối đa ${variant.soLuong} sản phẩm trong kho.`);
+        showStockAlert('Vượt quá số lượng có sẵn', `Phiên bản này hiện chỉ còn tối đa ${variant.soLuong} sản phẩm.`);
         selectedQuantity.value = variant.soLuong;
         return;
     }

@@ -1696,7 +1696,7 @@ const submitCheckout = async ({
 
 const finalizeVnPayCheckout = async (tienChuyenKhoan, maGiaoDich, order = selectedOrder.value) => {
     vnpayDialog.value.loading = true;
-    vnpayDialog.value.statusText = 'Đang xác nhận hóa đơn và cập nhật tồn kho...';
+    vnpayDialog.value.statusText = 'Đang xác nhận hóa đơn và cập nhật số lượng...';
     try {
         await submitCheckout({
             order,
@@ -2216,22 +2216,34 @@ const handleVnPayCallbackFromUrl = async () => {
             </div>
 
             <!-- Empty Orders State -->
-            <div v-else class="empty-orders-state">
+            <div v-else class="empty-orders-state d-flex flex-column align-center justify-center py-16 px-4 text-center">
                 <template v-if="isStaff && !currentGiaoCa">
-                    <v-icon size="56" color="warning">mdi-store-clock-outline</v-icon>
-                    <div class="text-subtitle-1 font-weight-bold mt-3">Chưa Mở Ca Làm Việc</div>
-                    <div class="text-body-2 text-grey-darken-1 mt-1">
+                    <div
+                        class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3 mx-auto"
+                        style="width: 72px; height: 72px; background: rgba(254, 243, 199, 0.8); border: 1.5px dashed #f59e0b"
+                    >
+                        <v-icon size="36" color="warning">mdi-store-clock-outline</v-icon>
+                    </div>
+                    <div class="text-subtitle-1 font-weight-bold mt-1 text-slate-800">Chưa Mở Ca Làm Việc</div>
+                    <div class="text-body-2 text-slate-500 mt-1" style="max-width: 440px">
                         Bạn cần mở ca làm việc và kiểm két tiền trước khi bắt đầu tạo hóa đơn bán hàng tại quầy.
                     </div>
-                    <v-btn color="primary" class="mt-4 rounded-lg px-6 font-weight-bold" prepend-icon="mdi-store-clock" @click="openMoCaModal">
+                    <v-btn color="primary" class="mt-4 rounded-pill px-6 font-weight-bold text-none" prepend-icon="mdi-store-clock" @click="openMoCaModal">
                         Mở Ca Làm Việc Ngay
                     </v-btn>
                 </template>
                 <template v-else>
-                    <v-icon size="56" color="grey-lighten-1">mdi-receipt-text-outline</v-icon>
-                    <div class="text-subtitle-1 font-weight-bold mt-3">Chưa có hóa đơn chờ</div>
-                    <div class="text-body-2 text-grey-darken-1 mt-1">Tạo hóa đơn mới để bắt đầu bán hàng tại quầy.</div>
-                    <v-btn color="primary" class="mt-4 rounded-lg" :loading="isProcessing" @click="createNewOrder"> Tạo hóa đơn </v-btn>
+                    <div
+                        class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3 mx-auto"
+                        style="width: 72px; height: 72px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
+                    >
+                        <v-icon size="36" style="color: #94a3b8 !important">mdi-receipt-text-outline</v-icon>
+                    </div>
+                    <div class="text-subtitle-1 font-weight-bold mt-1 text-slate-800">Chưa có hóa đơn chờ</div>
+                    <div class="text-body-2 text-slate-500 mt-1" style="max-width: 440px">Tạo hóa đơn mới để bắt đầu bán hàng tại quầy.</div>
+                    <v-btn color="primary" class="mt-4 rounded-pill px-6 font-weight-bold text-none" prepend-icon="mdi-plus" :loading="isProcessing" @click="createNewOrder">
+                        Tạo hóa đơn mới
+                    </v-btn>
                 </template>
             </div>
         </div>

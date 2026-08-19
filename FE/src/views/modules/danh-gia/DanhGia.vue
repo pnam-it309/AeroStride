@@ -34,6 +34,11 @@ import {
     AdminBreadcrumbs
 } from '@/components/common';
 
+import { useAuthStore } from '@/stores/authStore';
+import { isManagementRole } from '@/constants/appConstants';
+
+const authStore = useAuthStore();
+const isAdmin = computed(() => authStore.isAdmin || isManagementRole(authStore.user));
 const { addNotification } = useNotifications();
 const { confirmDialog, setConfirm, clearConfirm, handleConfirm } = useConfirmDialog();
 const { isRefreshing, handleRefresh: executeRefresh } = useRefreshHandler();
@@ -317,8 +322,9 @@ onMounted(async () => {
                 :show-add-button="false"
             >
                 <template #extra-actions>
-                    <!-- Auto-Approval Toggle Switch Card -->
+                    <!-- Auto-Approval Toggle Switch Card (Chỉ dành cho Admin) -->
                     <div 
+                        v-if="isAdmin"
                         class="auto-approve-card px-3 py-1.5 rounded-xl d-flex align-center"
                         :class="{ 'active-card': configData.autoApprove }"
                     >

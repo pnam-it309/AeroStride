@@ -27,7 +27,7 @@ const decoratedProducts = computed(() => {
         specs: [
             { label: 'CHẤT LIỆU', value: p.chatLieu || 'CAO CẤP' },
             { label: 'ĐẾ GIÀY', value: p.deGiay || 'ÊM ÁI' },
-            { label: 'SỐ LƯỢNG TỒN', value: `${p.tongSoLuongTon ?? p.raw?.tongSoLuongTon ?? p.soLuong ?? 0} sản phẩm` },
+            { label: 'SỐ LƯỢNG', value: `${p.tongSoLuongTon ?? p.raw?.tongSoLuongTon ?? p.soLuong ?? 0} sản phẩm` },
             {
                 label: 'GIÁ CHỈ TỪ',
                 value:

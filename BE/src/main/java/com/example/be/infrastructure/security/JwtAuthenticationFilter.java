@@ -27,6 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider tokenProvider;
     private final UserDetailsService userDetailsService;
     private final TokenBlacklistService blacklistService;
+    private final com.example.be.infrastructure.security.service.UserPresenceService userPresenceService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -43,6 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                userPresenceService.recordActivity(username);
             } else if (StringUtils.hasText(jwt) && blacklistService.isBlacklisted(jwt)) {
                 log.warn("Attempt to use blacklisted token detected!");
             }

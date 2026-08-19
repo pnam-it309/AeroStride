@@ -298,8 +298,37 @@ const getStatusTimestampMap = computed(() => {
 // --- UI Logic Computed ---
 const orderStatusLabel = computed(() => getStatusLabel(order.value.trangThai));
 const orderStatusTone = computed(() => getStatusTone(order.value.trangThai));
-const showStatusChip = computed(() => loaded.value && getOrderStatusMeta(order.value.trangThai));
 const canUpdateStatus = computed(() => order.value && getOrderStatus() !== null && getOrderStatus() < ORDER_STATUS_ORDINALS.HOAN_THANH);
+const isDelivering = computed(() => getOrderStatus() === ORDER_STATUS_ORDINALS.DANG_GIAO);
+const canEditOrder = computed(() => {
+    if (!order.value) return false;
+    const ord = getOrderStatus();
+    const status = order.value.trangThai;
+    if (
+        ord === ORDER_STATUS_ORDINALS.HOAN_THANH ||
+        ord === ORDER_STATUS_ORDINALS.DA_HUY ||
+        ord === ORDER_STATUS_ORDINALS.HOAN_DON ||
+        ord === ORDER_STATUS_ORDINALS.GIAO_THAT_BAI ||
+        ord === ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN
+    ) {
+        return false;
+    }
+    if (
+        status === ORDER_STATUS.HOAN_THANH ||
+        status === ORDER_STATUS.DA_HUY ||
+        status === ORDER_STATUS.HOAN_DON ||
+        status === ORDER_STATUS.GIAO_THAT_BAI ||
+        status === ORDER_STATUS.KHACH_KHONG_NHAN ||
+        status === 'HOAN_THANH' ||
+        status === 'DA_HUY' ||
+        status === 'HOAN_DON' ||
+        status === 'GIAO_THAT_BAI' ||
+        status === 'KHACH_KHONG_NHAN'
+    ) {
+        return false;
+    }
+    return true;
+});
 
 // Xác định xem đơn hàng có cần nút "Xác nhận hoàn phí" không:
 // Áp dụng cho các đơn bị hủy (DA_HUY) đặt trực tuyến (ONLINE) hoặc có thanh toán trước mà chưa hoàn phí
@@ -313,7 +342,13 @@ const canHoanPhi = computed(() => {
 });
 
 const customerName = computed(() => order.value.tenKhachHang || order.value.tenNguoiNhan || 'Khách vãng lai');
-const orderTypeLabel = computed(() => (order.value.orderType === 'ONLINE' ? 'Trực tuyến' : 'Cửa hàng'));
+const orderTypeLabel = computed(() => {
+    const isOnline = order.value.orderType === 'ONLINE' || String(order.value.loaiDon || '').toUpperCase() === 'ONLINE';
+    if (isOnline) return 'Trực tuyến';
+    const isShipping = order.value.deliveryMethod === 'SHIPPING' || String(order.value.loaiDon || '').toUpperCase() === 'GIAO_HANG';
+    if (isShipping) return 'Giao hàng';
+    return 'Cửa hàng';
+});
 const deliveryMethodLabel = computed(() => {
     const shipping = order.value.deliveryMethod
         ? order.value.deliveryMethod === 'SHIPPING'
@@ -456,8 +491,6 @@ const allowedStatuses = computed(() => {
         { title: 'Chờ giao hàng', value: ORDER_STATUS.CHO_GIAO },
         { title: 'Đang giao hàng', value: ORDER_STATUS.DANG_GIAO },
         { title: 'Hoàn thành', value: ORDER_STATUS.HOAN_THANH },
-        { title: 'Giao thất bại', value: ORDER_STATUS.GIAO_THAT_BAI },
-        { title: 'Khách không nhận', value: ORDER_STATUS.KHACH_KHONG_NHAN },
         { title: 'Đã hủy', value: ORDER_STATUS.DA_HUY }
     ];
 
@@ -479,8 +512,6 @@ const allowedStatuses = computed(() => {
             case ORDER_STATUS.DANG_GIAO:
                 return (
                     item.value === ORDER_STATUS.HOAN_THANH ||
-                    item.value === ORDER_STATUS.GIAO_THAT_BAI ||
-                    item.value === ORDER_STATUS.KHACH_KHONG_NHAN ||
                     item.value === ORDER_STATUS.DA_HUY
                 );
             case ORDER_STATUS.GIAO_THAT_BAI:
@@ -715,7 +746,7 @@ const handleReorder = () => {
 };
 
 const openEditModal = () => {
-    if (order.value.trangThai === ORDER_STATUS.HOAN_THANH || order.value.trangThai === ORDER_STATUS.DA_HUY || order.value.trangThai === ORDER_STATUS.HOAN_DON) {
+    if (!canEditOrder.value) {
         return;
     }
     activeTab.value = 0;
@@ -948,7 +979,7 @@ onMounted(() => {
                                                 <div class="text-body-2 text-slate-500 mb-1">Email</div>
                                                 <div class="text-body-2 text-slate-800 d-flex align-center">
                                                     <v-icon color="primary" class="mr-2" size="18">mdi-email-check</v-icon>
-                                                    <span>{{ order.emailKhachHang || order.emailNguoiNhan || 'N/A' }}</span>
+                                                    <span>{{ order.emailKhachHang || order.emailNguoiNhan || order.khachHang?.email || 'Không có email' }}</span>
                                                 </div>
                                             </div>
                                             <div class="info-item">
@@ -1289,31 +1320,34 @@ onMounted(() => {
                     </div>
 
                     <!-- 2 Nút thao tác nhanh trực tiếp: Giao thất bại & Khách không nhận (Chỉ hiển thị khi Đang giao hàng) -->
-                    <template v-if="order.trangThai === ORDER_STATUS.DANG_GIAO">
+                    <template v-if="isDelivering">
                         <v-btn
-                            color="warning"
-                            variant="flat"
-                            class="rounded-lg px-6 text-white"
-                            height="44"
-                            @click="requestStatusUpdate(ORDER_STATUS.GIAO_THAT_BAI)"
-                        >
-                            <template v-slot:prepend>
-                                <v-icon size="18" class="mr-1">mdi-truck-alert-outline</v-icon>
-                            </template>
-                            Giao thất bại
-                        </v-btn>
-                        <v-btn
-                            color="error"
+                            color="#f59e0b"
                             variant="flat"
                             class="rounded-lg px-6"
                             height="44"
+                            style="background-color: #f59e0b !important; color: #ffffff !important;"
+                            @click="requestStatusUpdate(ORDER_STATUS.GIAO_THAT_BAI)"
+                        >
+                            <template v-slot:prepend>
+                                <v-icon size="18" class="mr-1" color="#ffffff">mdi-truck-alert-outline</v-icon>
+                            </template>
+                            <span class="text-white font-weight-bold" style="color: #ffffff !important">Giao thất bại</span>
+                        </v-btn>
+                        <v-btn
+                            color="#ef4444"
+                            variant="flat"
+                            class="rounded-lg px-6"
+                            height="44"
+                            style="background-color: #ef4444 !important; color: #ffffff !important;"
                             @click="requestStatusUpdate(ORDER_STATUS.KHACH_KHONG_NHAN)"
                         >
                             <template v-slot:prepend>
-                                <v-icon size="18" class="mr-1">mdi-account-cancel-outline</v-icon>
+                                <v-icon size="18" class="mr-1" color="#ffffff">mdi-account-cancel-outline</v-icon>
                             </template>
-                            Khách không nhận
+                            <span class="text-white font-weight-bold" style="color: #ffffff !important">Khách không nhận</span>
                         </v-btn>
+                    </template>
                     <!-- Nút Đặt lại đơn hàng khi đơn đã bị hủy -->
                     <v-btn
                         v-if="order.trangThai === ORDER_STATUS.DA_HUY"
@@ -1336,7 +1370,7 @@ onMounted(() => {
                         In hóa đơn
                     </v-btn>
                     <v-btn
-                        v-if="order.trangThai !== ORDER_STATUS.HOAN_THANH && order.trangThai !== ORDER_STATUS.DA_HUY && order.trangThai !== ORDER_STATUS.HOAN_DON"
+                        v-if="canEditOrder"
                         color="primary"
                         variant="flat"
                         class="rounded-lg px-6"

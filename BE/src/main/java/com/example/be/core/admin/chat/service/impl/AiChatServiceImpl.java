@@ -28,6 +28,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
@@ -136,7 +139,7 @@ public class AiChatServiceImpl implements AiChatService {
             RestTemplateBuilder restTemplateBuilder,
             AiLocalService aiLocalService,
             ObjectProvider<ChatClient.Builder> chatClientBuilderProvider,
-            @Value("${google.gemini.timeout-ms:30000}") int timeoutMs
+            @Value("${google.gemini.timeout-ms:8000}") int timeoutMs
     ) {
         this.sanPhamService = sanPhamService;
         this.messageRepository = messageRepository;
@@ -146,11 +149,11 @@ public class AiChatServiceImpl implements AiChatService {
         ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
         this.chatClient = (builder != null) ? builder.build() : null;
 
-        // [Cải tiến 3] RestTemplate có Timeout → chống treo luồng @Async
-        // Tăng mặc định lên 30s để hỗ trợ prompt phức tạp
+        // [Cải tiến 3] RestTemplate có Timeout 8s → chống treo luồng @Async, nhanh chóng chuyển Local AI
+        int effectiveTimeout = Math.min(timeoutMs, 8000);
         this.restTemplate = restTemplateBuilder
-                .connectTimeout(Duration.ofMillis(timeoutMs))
-                .readTimeout(Duration.ofMillis(timeoutMs))
+                .connectTimeout(Duration.ofMillis(effectiveTimeout))
+                .readTimeout(Duration.ofMillis(effectiveTimeout))
                 .build();
     }
 
@@ -220,12 +223,19 @@ public class AiChatServiceImpl implements AiChatService {
             try {
                 log.info("Khởi động gọi OpenAI API (có ảnh: {})...", StringUtils.hasText(imageBase64));
                 String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
-                String botResponseText = callOpenAiApi(apiUrl, prompt, imageBase64);
+                
+                // Giới hạn thời gian tối đa 8 giây cho Cloud AI, nếu quá thời gian lập tức chuyển sang Local AI
+                String botResponseText = CompletableFuture.supplyAsync(() -> callOpenAiApi(apiUrl, prompt, imageBase64))
+                        .get(8000, TimeUnit.MILLISECONDS);
+                        
                 saveAndBroadcast(conversation, botResponseText);
                 log.info("OpenAI phản hồi thành công.");
                 return; // Xử lý xong, kết thúc!
+            } catch (TimeoutException te) {
+                log.warn("OpenAI API phản hồi quá chậm (>8s). Tự động kích hoạt Local AI dự phòng ngay lập tức!");
+                markModelUnhealthy("OPENAI");
             } catch (Exception e) {
-                log.warn("OpenAI API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
+                log.warn("OpenAI API gặp sự cố. Tự động chuyển đổi sang Local AI: {}", e.getMessage());
                 markModelUnhealthy("OPENAI");
             }
         }

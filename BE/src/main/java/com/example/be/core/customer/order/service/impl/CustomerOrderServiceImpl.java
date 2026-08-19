@@ -276,7 +276,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .hoaDon(hoaDon)
                 .trangThaiCu(null)
                 .trangThaiMoi(OrderStatus.CHO_XAC_NHAN.ordinal())
-                .ghiChu("Khách hàng đặt hàng online")
+                .ghiChu("Khách hàng đặt hàng trực tuyến")
                 .nguoiThucHien(username)
                 .build();
         lichSuRepository.save(lichSu);
@@ -297,7 +297,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .phuongThucThanhToan(pttt)
                 .soTien(tongTienSauGiam)
                 .loaiGiaoDich(PaymentConstants.METHOD_COD.equalsIgnoreCase(payMethod) ? PaymentConstants.METHOD_COD : PaymentConstants.METHOD_ONLINE)
-                .ghiChu("Thanh toán đơn hàng online - " + payMethod)
+                .ghiChu("Thanh toán đơn hàng trực tuyến - " + payMethod)
                 .build();
         giaoDichRepository.save(giaoDich);
 

@@ -103,11 +103,16 @@ watch(priceRange, (newRange) => {
     handleFilterChange();
 });
 
-// Watch size selection to update query parameters (multi-select: send first selected for now, backend supports single kichThuoc)
-watch(selectedSizes, (newSizes) => {
-    searchParams.value.kichThuoc = newSizes.length > 0 ? newSizes[0] : null;
-    handleFilterChange();
-}, { deep: true });
+// Watch size selection to update query parameters (multi-select: support multiple sizes)
+watch(
+    selectedSizes,
+    (newSizes) => {
+        searchParams.value.kichThuocs = newSizes.length > 0 ? [...newSizes] : [];
+        searchParams.value.kichThuoc = newSizes.length > 0 ? newSizes.join(',') : null;
+        handleFilterChange();
+    },
+    { deep: true }
+);
 
 // Map backend filter categories dynamically
 const brandList = computed(() => {
@@ -149,10 +154,10 @@ const fetchProducts = async () => {
 
         Object.keys(searchParams.value).forEach((key) => {
             const val = searchParams.value[key];
-            // Handle arrays (mucDichChayIds)
+            // Handle arrays (mucDichChayIds, kichThuocs, etc.)
             if (Array.isArray(val)) {
                 if (val.length > 0) {
-                    params[key] = val;
+                    params[key] = val.join(',');
                 }
                 return;
             }
@@ -193,7 +198,8 @@ const resetFilters = () => {
         sortBy: 'newest',
         minGia: null,
         maxGia: null,
-        kichThuoc: null
+        kichThuoc: null,
+        kichThuocs: []
     };
     priceRange.value = null;
     selectedSizes.value = [];
@@ -524,7 +530,6 @@ const closeMobileFilter = () => {
                                         @error="(e) => handleImageError(e, p.id)"
                                     />
                                     <div v-if="p.phanTramGiam > 0" class="badge-label-new">-{{ p.phanTramGiam }}%</div>
-                                    <div v-else class="badge-label-new">MỚI</div>
                                     <div class="favorite-overlay-btn" @click.stop="(e) => toggleFavorite(p.id, e)">
                                         <v-icon :color="isFavorite(p.id) ? 'red' : 'grey-darken-1'" size="20">
                                             {{ isFavorite(p.id) ? 'mdi-heart' : 'mdi-heart-outline' }}

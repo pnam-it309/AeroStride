@@ -74,6 +74,26 @@ const formatDateFull = (timestamp) => {
     }).format(new Date(timestamp));
 };
 
+const formatPaymentMethod = (method) => {
+    if (!method) return 'Trực tuyến';
+    const m = String(method).toUpperCase().trim();
+    if (m === 'COD' || m === 'TIEN_MAT' || m === 'TIỀN MẶT') {
+        return 'Thanh toán khi nhận hàng';
+    }
+    if (m === 'ONLINE' || m === 'TRỰC TUYẾN' || m === 'TRUC_TUYEN') {
+        return 'Trực tuyến';
+    }
+    if (m === 'VNPAY') {
+        return 'VNPay (Trực tuyến)';
+    }
+    return String(method).replace(/online/gi, 'Trực tuyến');
+};
+
+const formatStatusNote = (note) => {
+    if (!note) return '';
+    return note.replace(/\bonline\b/gi, 'trực tuyến');
+};
+
 const canCancel = computed(() => {
     return order.value?.trangThai === 'CHO_XAC_NHAN';
 });
@@ -540,7 +560,7 @@ onMounted(async () => {
                                                 style="background: #f5f7ff"
                                             >
                                                 <v-icon size="12" class="mr-1">mdi-comment-text-outline</v-icon>
-                                                {{ ls.ghiChu }}
+                                                {{ formatStatusNote(ls.ghiChu) }}
                                             </p>
                                         </div>
                                     </v-timeline-item>
@@ -650,7 +670,7 @@ onMounted(async () => {
                                         style="color: #1e257c; background: #f0f4ff"
                                     >
                                         <v-icon size="14" class="mr-1">mdi-credit-card-outline</v-icon>
-                                        {{ order.phuongThucThanhToan === 'COD' ? 'Thanh toán khi nhận hàng' : order.phuongThucThanhToan }}
+                                        {{ formatPaymentMethod(order.phuongThucThanhToan) }}
                                     </v-chip>
                                     <v-chip
                                         v-if="order.maVoucher"

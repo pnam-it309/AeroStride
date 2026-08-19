@@ -64,14 +64,16 @@ const invoiceHistoryTableHeaders = [
 const getInvoiceTypeLabel = (value) => {
     const normalized = String(value || '').toUpperCase();
     if (normalized === 'ONLINE') return 'Trực tuyến';
-    if (normalized === 'TAI_QUAY' || normalized === 'OFFLINE') return 'Cửa hàng';
+    if (normalized === 'GIAO_HANG') return 'Giao hàng';
+    if (normalized === 'TAI_QUAY' || normalized === 'OFFLINE' || normalized === 'IN_STORE') return 'Cửa hàng';
     return value || '-';
 };
 
 const getInvoiceTypeChipClass = (value) => {
     const normalized = String(value || '').toUpperCase();
     if (normalized === 'ONLINE') return 'order-type-online';
-    if (normalized === 'TAI_QUAY' || normalized === 'OFFLINE') return 'order-type-offline';
+    if (normalized === 'GIAO_HANG') return 'order-type-shipping';
+    if (normalized === 'TAI_QUAY' || normalized === 'OFFLINE' || normalized === 'IN_STORE') return 'order-type-offline';
     return '';
 };
 
@@ -232,17 +234,23 @@ const onDateRangeChange = (val) => {
     handleLocalFilterChange();
 };
 
-const handleReset = () => {
+const handleReset = async () => {
     listTab.handleReset();
     statsTab.handleReset();
     if (statsTab.filters.value.khoangChiTieu) {
         statsTab.filters.value.khoangChiTieu = [0, maxChiTieu.value];
     }
-    statsTab.handleFilter();
+    if (activeTab.value === 'danh-sach') {
+        await listTab.loadData();
+    } else {
+        await statsTab.loadData();
+    }
 };
 
 const handleRefresh = async () => {
-    await executeRefresh(() => handleReset(), 1200);
+    await executeRefresh(async () => {
+        await handleReset();
+    });
 };
 
 const handleExport = async () => {

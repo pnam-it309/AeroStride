@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, nextTick } from 'vue';
 import api from '@/services/apiService';
 import { API_CHAT } from '@/constants/apiPaths';
 import { chatSocket } from '@/services/chatSocket';
@@ -7,15 +7,39 @@ import { useNotificationStore } from '@/stores/notificationStore';
 import { useAuthStore } from '@/stores/authStore';
 import { CHAT_TYPES, CHAT_SENDER_TYPE, CHAT_STATUS, CHAT_TOPICS } from '@/constants/appConstants';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import { useRefreshHandler } from '@/composables/useRefreshHandler';
 import { AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import { dichVuFile } from '@/services/core/dichVuFile';
 
 const notificationStore = useNotificationStore();
 const authStore = useAuthStore();
 const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
+const { isRefreshing, handleRefresh: executeRefresh } = useRefreshHandler();
 const customers = ref([]);
 const activeChat = ref(null);
 const chatMessages = ref([]);
+const messagesEndRef = ref(null);
+
+// Shared Media & Photos Gallery
+const previewPhotoModal = ref(false);
+const currentPreviewPhoto = ref(null);
+
+const sharedPhotos = computed(() => {
+    return chatMessages.value
+        .filter((m) => m.imageUrl || m.image || m.hinhAnh)
+        .map((m) => ({
+            id: m.id,
+            url: resolveChatImageUrl(m.imageUrl || m.image || m.hinhAnh),
+            time: m.time || m.thoiGian || '',
+            sender: m.sender || m.nguoiGui || ''
+        }))
+        .reverse();
+});
+
+const openPhotoPreview = (photo) => {
+    currentPreviewPhoto.value = photo;
+    previewPhotoModal.value = true;
+};
 
 // Trạng thái hiển thị panel thông tin chi tiết (mặc định đóng, chỉ mở khi người dùng bấm nút)
 const showDetailPanel = ref(false);
@@ -254,13 +278,31 @@ const chatType = ref(CHAT_TYPES.CUSTOMER);
 const chatStatus = ref('ALL');
 const searchQuery = ref('');
 
-const scrollToBottom = () => {
-    setTimeout(() => {
+const scrollToBottom = (smooth = false) => {
+    nextTick(() => {
+        if (messagesEndRef.value) {
+            messagesEndRef.value.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'end' });
+        }
         if (messagesContainer.value) {
             messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
         }
-    }, 100);
+        setTimeout(() => {
+            if (messagesContainer.value) {
+                messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+            }
+            if (messagesEndRef.value) {
+                messagesEndRef.value.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'end' });
+            }
+        }, 120);
+    });
 };
+
+watch(
+    () => chatMessages.value.length,
+    () => {
+        scrollToBottom(true);
+    }
+);
 
 const stats = ref({ ACTIVE: 0, PENDING: 0, CLOSED: 0 });
 const allConversations = ref([]);
@@ -296,7 +338,11 @@ const fetchConversations = async (quiet = false) => {
                 }
             }),
             api.get(API_CHAT.CONVERSATIONS),
-            api.get(API_CHAT.CONVERSATIONS + '/stats')
+            api.get(API_CHAT.CONVERSATIONS + '/stats', {
+                params: {
+                    type: chatType.value
+                }
+            })
         ]);
 
         allConversations.value = allConvRes.data?.data || [];
@@ -332,6 +378,11 @@ const fetchConversations = async (quiet = false) => {
         isLoading.value = false;
     }
 };
+
+watch(chatType, () => {
+    chatStatus.value = 'ALL';
+    searchQuery.value = '';
+});
 
 watch([chatType, chatStatus, searchQuery], () => {
     fetchConversations();
@@ -415,12 +466,14 @@ const sendMessage = async () => {
 const selectChat = async (customer) => {
     activeChat.value = customer;
     isAccepted.value = customer.isAccepted || false;
+    showDetailPanel.value = false;
     if (customer.id.startsWith('NEW_INTERNAL_')) {
         chatMessages.value = [];
     } else {
-        fetchMessages(customer.id);
+        await fetchMessages(customer.id);
     }
     notificationStore.markChatRead(customer.id);
+    scrollToBottom(false);
 };
 
 const acceptChat = async () => {
@@ -499,6 +552,7 @@ const confirmDeleteChat = () => {
                 if (activeChat.value && activeChat.value.id === target.id) {
                     activeChat.value = null;
                     chatMessages.value = [];
+                    showDetailPanel.value = false;
                 }
                 fetchConversations(true);
             } catch (error) {
@@ -590,6 +644,17 @@ onMounted(() => {
         });
     });
 });
+
+const handleRefresh = async () => {
+    await executeRefresh(async () => {
+        searchQuery.value = '';
+        chatStatus.value = 'ALL';
+        await fetchConversations();
+        if (activeChat.value) {
+            await fetchMessages(activeChat.value.id);
+        }
+    });
+};
 </script>
 
 <template>
@@ -654,9 +719,23 @@ onMounted(() => {
                             hide-details
                             class="search-field flex-grow-1"
                         ></v-text-field>
-                        <v-btn icon="mdi-filter-variant" variant="outlined" color="#64748b" class="rounded-lg" size="small" style="height: 40px; width: 40px; border-color: #e2e8f0;"></v-btn>
+                        <v-btn
+                            variant="outlined"
+                            color="primary"
+                            class="reset-btn rounded-lg"
+                            size="small"
+                            style="height: 40px; width: 40px; border-color: #cbd5e1;"
+                            :disabled="isLoading || isRefreshing"
+                            @click="handleRefresh"
+                        >
+                            <v-icon size="18" :class="{ 'filter-spin': isRefreshing }">
+                                {{ isRefreshing ? 'mdi-loading' : 'mdi-refresh' }}
+                            </v-icon>
+                            <v-tooltip activator="parent" location="top">Làm mới danh sách tin nhắn</v-tooltip>
+                        </v-btn>
                     </div>
 
+                    <!-- Customer Filter Chips -->
                     <v-chip-group v-if="chatType === CHAT_TYPES.CUSTOMER" v-model="chatStatus" mandatory selected-class="chip-active" class="status-chips mt-3">
                         <v-chip value="ALL" size="small" variant="outlined" color="#1e257c">
                             Tất cả
@@ -672,6 +751,21 @@ onMounted(() => {
                         <v-chip value="CLOSED" size="small" variant="outlined" color="#1e257c">
                             <v-icon icon="mdi-circle" size="8" class="mr-1" color="grey-darken-1"></v-icon>
                             Đã đóng ({{ closedCount }})
+                        </v-chip>
+                    </v-chip-group>
+
+                    <!-- Internal Filter Chips -->
+                    <v-chip-group v-else v-model="chatStatus" mandatory selected-class="chip-active" class="status-chips mt-3">
+                        <v-chip value="ALL" size="small" variant="outlined" color="#1e257c">
+                            Tất cả
+                        </v-chip>
+                        <v-chip value="ACTIVE" size="small" variant="outlined" color="#1e257c">
+                            <v-icon icon="mdi-circle" size="8" class="mr-1" color="success"></v-icon>
+                            Đang hoạt động ({{ activeCount }})
+                        </v-chip>
+                        <v-chip value="CLOSED" size="small" variant="outlined" color="#1e257c">
+                            <v-icon icon="mdi-circle" size="8" class="mr-1" color="grey-darken-1"></v-icon>
+                            Ngoại tuyến ({{ closedCount }})
                         </v-chip>
                     </v-chip-group>
                 </div>
@@ -701,7 +795,7 @@ onMounted(() => {
                                         alt="avatar"
                                     ></v-img>
                                 </v-avatar>
-                                <span class="status-dot-badge" :class="c.type === CHAT_TYPES.INTERNAL ? 'active' : c.status?.toLowerCase()"></span>
+                                <span class="status-dot-badge" :class="c.type === CHAT_TYPES.INTERNAL ? (c.status === 'ACTIVE' ? 'active' : 'offline') : c.status?.toLowerCase()"></span>
                             </div>
                         </template>
                         <v-list-item-title :class="['conv-name', { 'unread-bold': c.unread > 0 }]">{{ c.name }}</v-list-item-title>
@@ -714,10 +808,15 @@ onMounted(() => {
                         </template>
                     </v-list-item>
 
-                    <div v-if="sortedCustomers.length === 0" class="text-center py-16 px-4">
-                        <v-icon size="48" color="grey-lighten-1">mdi-message-off-outline</v-icon>
-                        <div class="mt-3" style="color: #64748b">Không có cuộc trò chuyện nào</div>
-                        <div class="text-caption" style="color: #94a3b8">Hãy thử thay đổi bộ lọc</div>
+                    <div v-if="sortedCustomers.length === 0" class="d-flex flex-column align-center justify-center py-12 px-4 w-100 animate-fade-in text-center">
+                        <div
+                            class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3 mx-auto"
+                            style="width: 56px; height: 56px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
+                        >
+                            <v-icon icon="mdi-message-off-outline" size="28" style="color: #94a3b8 !important" />
+                        </div>
+                        <span class="text-slate-600 font-weight-medium" style="font-size: 13.5px; line-height: 1.4;">Không có cuộc trò chuyện nào</span>
+                        <span class="text-slate-400 text-caption mt-1">Hãy thử thay đổi bộ lọc hoặc tìm kiếm</span>
                     </div>
                 </v-list>
             </v-col>
@@ -739,26 +838,28 @@ onMounted(() => {
                                         alt="avatar"
                                     ></v-img>
                                 </v-avatar>
-                                <span class="status-dot-badge header-badge" :class="activeChat.type === CHAT_TYPES.INTERNAL ? 'active' : activeChat.status?.toLowerCase()"></span>
+                                <span class="status-dot-badge header-badge" :class="activeChat.type === CHAT_TYPES.INTERNAL ? (activeChat.status === 'ACTIVE' ? 'active' : 'offline') : activeChat.status?.toLowerCase()"></span>
                             </div>
                             <div>
                                 <div class="main-chat-name">{{ activeChat.name }}</div>
                                 <div class="d-flex align-center">
                                     <template v-if="activeChat.type !== CHAT_TYPES.INTERNAL">
-                                        <span class="status-indicator" :class="activeChat.status.toLowerCase()"></span>
-                                        <span class="status-label" :class="activeChat.status.toLowerCase()">
+                                        <span class="status-indicator" :class="activeChat.status?.toLowerCase()"></span>
+                                        <span class="status-label" :class="activeChat.status?.toLowerCase()">
                                             {{
                                                 activeChat.status === 'ACTIVE'
                                                     ? 'Đang hoạt động'
                                                     : activeChat.status === 'PENDING'
-                                                       ? 'Chờ tiếp nhận'
-                                                       : 'Đã đóng'
+                                                        ? 'Chờ tiếp nhận'
+                                                        : 'Đã đóng'
                                             }}
                                         </span>
                                     </template>
                                     <template v-else>
-                                        <span class="status-indicator active"></span>
-                                        <span class="status-label active">Trò chuyện nội bộ</span>
+                                        <span class="status-indicator" :class="activeChat.status === 'ACTIVE' ? 'active' : 'offline'"></span>
+                                        <span class="status-label" :class="activeChat.status === 'ACTIVE' ? 'active' : 'offline'">
+                                            {{ activeChat.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngoại tuyến' }}
+                                        </span>
                                     </template>
                                 </div>
                             </div>
@@ -856,6 +957,8 @@ onMounted(() => {
                                     </div>
                                 </div>
                             </div>
+                            <!-- Neo cuộn xuống cuối cùng -->
+                            <div ref="messagesEndRef" style="height: 1px; width: 100%;"></div>
                         </template>
                     </div>
 
@@ -969,11 +1072,15 @@ onMounted(() => {
                 </template>
 
                 <!-- Empty State -->
-                <div v-else class="d-flex flex-column justify-center align-center fill-height empty-state">
-                    <div class="empty-icon-wrap mb-4">
-                        <v-icon size="72" color="#1e257c">mdi-chat-processing-outline</v-icon>
+                <div v-else class="d-flex flex-column justify-center align-center fill-height empty-state px-4 text-center">
+                    <div
+                        class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3 mx-auto"
+                        style="width: 68px; height: 68px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
+                    >
+                        <v-icon size="32" style="color: #94a3b8 !important">mdi-chat-processing-outline</v-icon>
                     </div>
-                    <div class="empty-sub text-muted font-weight-medium" style="font-size: 0.95rem; color: #64748b;">Vui lòng chọn 1 cuộc hội thoại bên trái để bắt đầu</div>
+                    <span class="text-slate-700 font-weight-bold" style="font-size: 15px;">Chưa chọn cuộc trò chuyện</span>
+                    <span class="text-slate-500 text-caption mt-1">Vui lòng chọn 1 cuộc hội thoại bên trái để bắt đầu nhắn tin</span>
                 </div>
             </v-col>
 
@@ -991,7 +1098,7 @@ onMounted(() => {
                             <v-avatar size="80" class="border">
                                 <v-img :src="!activeChat.avatar || activeChat.avatar.length <= 2 ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : activeChat.avatar" alt="avatar"></v-img>
                             </v-avatar>
-                            <span class="status-dot-badge" :class="activeChat.type === CHAT_TYPES.INTERNAL ? 'active' : activeChat.status?.toLowerCase()" style="width: 16px; height: 16px; border-width: 3px;"></span>
+                            <span class="status-dot-badge" :class="activeChat.type === CHAT_TYPES.INTERNAL ? (activeChat.status === 'ACTIVE' ? 'active' : 'offline') : activeChat.status?.toLowerCase()" style="width: 16px; height: 16px; border-width: 3px;"></span>
                         </div>
                         <div class="font-weight-black text-subtitle-1" style="color: #0f172a; line-height: 1.2">{{ activeChat.name }}</div>
                         <v-chip size="x-small" class="mt-2 font-weight-bold" :color="activeChatRoleColor" variant="flat">
@@ -1112,6 +1219,51 @@ onMounted(() => {
                         </div>
                     </div>
 
+                    <!-- Shared Media & Photos Section (Giống Messenger/Facebook) -->
+                    <div class="media-section rounded-xl border bg-white pa-4 shadow-sm">
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <div class="section-title font-weight-bold text-subtitle-2 d-flex align-center" style="color: #64748b">
+                                <v-icon icon="mdi-image-multiple-outline" size="18" class="mr-1"></v-icon>
+                                File phương tiện đã chia sẻ
+                            </div>
+                            <span v-if="sharedPhotos.length > 0" class="text-caption font-weight-bold text-primary">
+                                {{ sharedPhotos.length }} ảnh
+                            </span>
+                        </div>
+
+                        <!-- Trạng thái chưa có ảnh -->
+                        <div v-if="sharedPhotos.length === 0" class="text-center py-4 px-2">
+                            <v-icon size="32" color="grey-lighten-1">mdi-image-off-outline</v-icon>
+                            <div class="text-caption text-slate-400 mt-1">Chưa có hình ảnh nào được gửi</div>
+                        </div>
+
+                        <!-- Lưới ảnh chia sẻ dạng thumbnail giống Facebook Messenger -->
+                        <div v-else class="shared-media-grid">
+                            <div
+                                v-for="(photo, pIdx) in sharedPhotos.slice(0, 9)"
+                                :key="photo.id || pIdx"
+                                class="media-thumb-item position-relative overflow-hidden rounded-lg cursor-pointer"
+                                @click="openPhotoPreview(photo)"
+                            >
+                                <v-img
+                                    :src="photo.url"
+                                    aspect-ratio="1"
+                                    cover
+                                    class="bg-grey-lighten-3 media-img"
+                                >
+                                    <template v-slot:placeholder>
+                                        <div class="d-flex align-center justify-center fill-height">
+                                            <v-progress-circular indeterminate color="primary" size="18"></v-progress-circular>
+                                        </div>
+                                    </template>
+                                </v-img>
+                                <div v-if="pIdx === 8 && sharedPhotos.length > 9" class="more-overlay d-flex align-center justify-center">
+                                    +{{ sharedPhotos.length - 8 }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Staff Session Notes -->
                     <div class="notes-section rounded-xl border bg-white pa-4 shadow-sm d-flex flex-column ga-2">
                         <div class="d-flex align-center justify-space-between">
@@ -1155,6 +1307,38 @@ onMounted(() => {
             </v-col>
         </v-row>
 
+        <!-- Modal xem ảnh phóng to chi tiết (Lightbox) -->
+        <v-dialog v-model="previewPhotoModal" max-width="850px">
+            <v-card class="rounded-xl overflow-hidden bg-white pa-0">
+                <div class="d-flex align-center justify-space-between px-4 py-3 border-b bg-slate-50">
+                    <div class="d-flex align-center">
+                        <v-icon icon="mdi-image" color="#1e257c" class="mr-2"></v-icon>
+                        <span class="font-weight-bold text-slate-800" style="font-size: 0.95rem">Hình ảnh trong đoạn chat</span>
+                        <span v-if="currentPreviewPhoto?.time" class="text-caption text-slate-400 ml-2">({{ currentPreviewPhoto.time }})</span>
+                    </div>
+                    <div class="d-flex align-center ga-1">
+                        <v-btn
+                            icon="mdi-open-in-new"
+                            variant="text"
+                            size="small"
+                            color="slate-600"
+                            :href="currentPreviewPhoto?.url"
+                            target="_blank"
+                            title="Mở trong tab mới"
+                        ></v-btn>
+                        <v-btn icon="mdi-close" variant="text" size="small" @click="previewPhotoModal = false"></v-btn>
+                    </div>
+                </div>
+                <div class="d-flex align-center justify-center pa-4 bg-grey-darken-4" style="min-height: 380px; max-height: 75vh;">
+                    <img
+                        v-if="currentPreviewPhoto"
+                        :src="currentPreviewPhoto.url"
+                        style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px;"
+                    />
+                </div>
+            </v-card>
+        </v-dialog>
+
         <!-- Xác nhận xóa lịch sử đoạn chat -->
         <AdminConfirm
             v-model:show="confirmDialog.show"
@@ -1178,8 +1362,18 @@ $blue-light: #e8eefb;
 $blue-bg: #f8fafc; // Clean off-white background
 $primary-gradient: linear-gradient(135deg, #1e257c 0%, #343fa8 100%);
 
+.chat-management-wrapper {
+    height: calc(100vh - 75px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 .chat-page {
-    height: calc(100vh - 64px);
+    flex: 1 1 0;
+    min-height: 0;
+    height: 100% !important;
+    max-height: 100% !important;
     overflow: hidden;
     background: #ffffff;
     font-family: $body-font-family !important;
@@ -1422,7 +1616,7 @@ $primary-gradient: linear-gradient(135deg, #1e257c 0%, #343fa8 100%);
     &.pending {
         background-color: #f59e0b !important;
     }
-    &.closed {
+    &.closed, &.offline {
         background-color: #94a3b8 !important;
     }
 }
@@ -1482,7 +1676,7 @@ $primary-gradient: linear-gradient(135deg, #1e257c 0%, #343fa8 100%);
         background: #f59e0b;
         box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
     }
-    &.closed {
+    &.closed, &.offline {
         background: #94a3b8;
     }
 }
@@ -1497,8 +1691,8 @@ $primary-gradient: linear-gradient(135deg, #1e257c 0%, #343fa8 100%);
     &.pending {
         color: #f59e0b;
     }
-    &.closed {
-        color: #94a3b8;
+    &.closed, &.offline {
+        color: #64748b;
     }
 }
 
@@ -1875,12 +2069,41 @@ $primary-gradient: linear-gradient(135deg, #1e257c 0%, #343fa8 100%);
     animation: pulse-badge 2s infinite ease-in-out;
 }
 
-@keyframes pulse-badge {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.08);
+/* ========== SHARED MEDIA GALLERY (MESSENGER / FB STYLE) ========== */
+.shared-media-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+
+    .media-thumb-item {
+        aspect-ratio: 1;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+
+        .media-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.25s ease;
+        }
+
+        &:hover .media-img {
+            transform: scale(1.06);
+        }
+
+        .more-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 0.95rem;
+            backdrop-filter: blur(2px);
+        }
     }
 }
 </style>

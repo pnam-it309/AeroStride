@@ -544,7 +544,7 @@ const handleSubmit = async () => {
     if (!Number.isInteger(soLuong) || soLuong < 0) {
         addNotification({
             title: 'Lỗi',
-            subtitle: 'Số lượng tồn kho phải là số nguyên lớn hơn hoặc bằng 0.',
+            subtitle: 'Số lượng phải là số nguyên lớn hơn hoặc bằng 0.',
             color: 'error'
         });
         return;

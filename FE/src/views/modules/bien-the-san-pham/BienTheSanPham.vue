@@ -949,7 +949,7 @@ onBeforeUnmount(() => {
                     </td>
                     <td class="data-cell text-center">
                         <div class="product-image-container d-inline-block position-relative">
-                            <v-avatar rounded="lg" size="36" class="border bg-slate-50 elevation-1 avatar-hover">
+                            <v-avatar rounded="md" size="28" class="border bg-slate-50 elevation-0 avatar-hover">
                                 <SafeProductImage
                                     :src="getVariantThumbnail(item)"
                                     :fallback-src="logoPlaceholder"
@@ -1176,21 +1176,18 @@ onBeforeUnmount(() => {
 
 .discount-badge {
     position: absolute;
-    top: -8px;
-    right: -8px;
+    top: -4px;
+    right: -4px;
     background: #ef4444;
     color: white;
-    font-size: 10px;
+    font-size: 8.5px;
     font-weight: 700;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    padding: 1px 3px;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
     z-index: 2;
     white-space: nowrap;
+    line-height: 1;
 }
 
 /* Style input text, placeholders and selections */

@@ -26,11 +26,13 @@ const { addNotification } = useNotifications();
 const loading = ref(false);
 const submitting = ref(false);
 const activeCa = ref(null);
+const lastClosedShift = ref(null);
 const listGiaoCaHistory = ref([]);
 const listNhanVien = ref([]);
 
 // 4-step stepper state
 const currentStep = computed(() => {
+    if (lastClosedShift.value) return 4; // Step 4: Hoàn thành bàn giao
     if (!activeCa.value) return 1; // Step 1: Mở ca
     if (activeCa.value.trangThai === 'OPEN') return 2; // Step 2: Đóng ca / Chốt ca
     if (activeCa.value.trangThai === 'PENDING') return 3; // Step 3: Đã bàn giao - Chờ xác nhận
@@ -273,12 +275,23 @@ const handleChotCa = async () => {
 
     submitting.value = true;
     try {
-        await dichVuGiaoCa.chotCa({
+        const res = await dichVuGiaoCa.chotCa({
             nhanVienNhanCaId: closeShiftForm.value.nhanVienNhanCaId,
             tienThucTe: tienThucTe,
             ghiChu: ghiChu
         });
-        addNotification({ title: 'Thành công', subtitle: 'Đã chốt ca làm việc và gửi bàn giao', color: 'success' });
+        const closedData = res?.data || res || {};
+        const receiverName = listNhanVien.value.find((n) => n.id === closeShiftForm.value.nhanVienNhanCaId)?.ten;
+        lastClosedShift.value = {
+            ...closedData,
+            nhanVienTen: closedData.nhanVienTen || activeCa.value?.nhanVienTen || authStore.user?.ten || authStore.user?.username,
+            nhanVienNhanCaTen: closedData.nhanVienNhanCaTen || receiverName || 'Chưa chỉ định',
+            tienThucTe: tienThucTe,
+            tienChenhLech: chenhLechTien.value,
+            ghiChu: ghiChu,
+            id: closedData.id || activeCa.value?.id || closedData.maGiaoCa || ''
+        };
+        addNotification({ title: 'Thành công', subtitle: 'Đã chốt ca làm việc và gửi bàn giao ca thành công', color: 'success' });
         fetchCurrentShift();
         fetchHistory();
     } catch (e) {
@@ -286,6 +299,15 @@ const handleChotCa = async () => {
     } finally {
         submitting.value = false;
     }
+};
+
+const resetToNewShift = () => {
+    lastClosedShift.value = null;
+    openShiftForm.value = {
+        tienBanDau: 0,
+        ghiChuMoCa: '',
+        canhBaoKiet: false
+    };
 };
 
 // Table headers for history
@@ -320,8 +342,8 @@ const getStatusBadge = (status) => {
                         <BuildingStoreIcon class="text-primary" size="28" />
                     </v-avatar>
                     <div>
-                        <h2 class="text-h5 font-weight-bold mb-1">Màn Hình Bàn Giao Ca Làm Việc</h2>
-                        <div class="text-subtitle-2 opacity-90">
+                        <h2 class="text-h5 font-weight-bold mb-1" style="color: #ffffff !important;">Màn Hình Bàn Giao Ca Làm Việc</h2>
+                        <div class="text-subtitle-2" style="color: #ffffff !important; opacity: 0.95;">
                             Quản lý két tiền, doanh thu ca, kiểm kê tài chính & bàn giao ca cho nhân viên tiếp theo
                         </div>
                     </div>
@@ -371,10 +393,62 @@ const getStatusBadge = (status) => {
 
         <!-- CONTENT KHU VỰC THAO TÁC CA -->
         <v-row class="mb-6">
-            <!-- CỘT TRÁI: FORM MỞ CA HOẶC ĐÓNG CA -->
+            <!-- CỘT TRÁI: FORM THAO TÁC THEO BƯỚC -->
             <v-col cols="12" md="7">
-                <!-- STEP 1: CHƯA MỞ CA -->
-                <v-card v-if="!activeCa" class="rounded-xl border elevation-2 h-100 pa-5 bg-white">
+                <!-- STEP 3 & 4: HOÀN THÀNH BÀN GIAO CA -->
+                <v-card v-if="lastClosedShift" class="rounded-xl border elevation-2 h-100 pa-6 bg-white animate-fade-in">
+                    <div class="text-center py-4">
+                        <v-avatar size="68" color="success" class="mb-3 elevation-2">
+                            <v-icon size="40" color="white">mdi-check-circle-outline</v-icon>
+                        </v-avatar>
+                        <h3 class="text-h6 font-weight-bold text-slate-800 mb-1">
+                            Bàn Giao Ca Thành Công!
+                        </h3>
+                        <div class="text-caption text-slate-500">
+                            Mã ca #{{ lastClosedShift.id }} đã được chốt và gửi đến nhân viên nhận ca.
+                        </div>
+                    </div>
+
+                    <v-divider class="my-4"></v-divider>
+
+                    <div class="space-y-3 mb-6 bg-slate-50 pa-4 rounded-xl border">
+                        <div class="d-flex justify-space-between align-center">
+                            <span class="text-slate-600 text-body-2">Nhân viên chốt ca:</span>
+                            <strong class="text-slate-800">{{ lastClosedShift.nhanVienTen }}</strong>
+                        </div>
+                        <div class="d-flex justify-space-between align-center">
+                            <span class="text-slate-600 text-body-2">Nhân viên tiếp nhận:</span>
+                            <strong class="text-primary">{{ lastClosedShift.nhanVienNhanCaTen }}</strong>
+                        </div>
+                        <div class="d-flex justify-space-between align-center">
+                            <span class="text-slate-600 text-body-2">Tiền thực tế bàn giao:</span>
+                            <strong class="text-success text-subtitle-1">{{ formatCurrency(lastClosedShift.tienThucTe || 0) }}</strong>
+                        </div>
+                        <div class="d-flex justify-space-between align-center">
+                            <span class="text-slate-600 text-body-2">Chênh lệch két:</span>
+                            <span :class="(lastClosedShift.tienChenhLech || 0) >= 0 ? 'text-success font-weight-bold' : 'text-error font-weight-bold'">
+                                {{ formatCurrency(lastClosedShift.tienChenhLech || 0) }}
+                            </span>
+                        </div>
+                        <div v-if="lastClosedShift.ghiChu" class="d-flex justify-space-between align-center">
+                            <span class="text-slate-600 text-body-2">Ghi chú:</span>
+                            <span class="text-slate-700 italic">{{ lastClosedShift.ghiChu }}</span>
+                        </div>
+                    </div>
+
+                    <v-btn
+                        color="primary"
+                        block
+                        size="large"
+                        class="rounded-lg font-weight-bold text-subtitle-1 py-3 text-none"
+                        @click="resetToNewShift"
+                    >
+                        <v-icon class="mr-2">mdi-plus-circle-outline</v-icon> Bắt đầu mở ca làm việc mới
+                    </v-btn>
+                </v-card>
+
+                <!-- STEP 1: MỞ CA LÀM VIỆC -->
+                <v-card v-else-if="!activeCa" class="rounded-xl border elevation-2 h-100 pa-5 bg-white">
                     <div class="d-flex align-center mb-4 text-primary">
                         <CashIcon size="28" class="mr-2" />
                         <h3 class="text-h6 font-weight-bold">Bắt Đầu Ca Làm Việc Mới (Mở Ca)</h3>

@@ -516,19 +516,13 @@ const sendMessage = () => {
 
     isTyping.value = true;
 
-    // Tự động tắt typing indicator sau 45s nếu không có phản hồi từ WebSocket
+    // Tự động tắt typing indicator sau 30s nếu không có phản hồi
     if (typingTimeout.value) clearTimeout(typingTimeout.value);
     typingTimeout.value = setTimeout(() => {
         if (isTyping.value) {
             isTyping.value = false;
-            chatHistory.value.push({
-                id: Date.now(),
-                sender: 'system',
-                text: 'Hệ thống đang bận. Bạn vui lòng chờ thêm giây lát hoặc nhắn "Gặp nhân viên" để được hỗ trợ trực tiếp nhé!'
-            });
-            scrollToBottom();
         }
-    }, 45000);
+    }, 30000);
 
     scrollToBottom();
     updateActivity();
@@ -962,25 +956,26 @@ const openChatImage = (url) => {
                     <!-- Suggestions Panel -->
                     <transition name="chat-slide">
                         <div v-if="showSuggestions" class="suggestions-panel">
-                            <!-- Handoff Button -->
-                            <button class="handoff-btn" @click="sendSuggestion('Tôi muốn nói chuyện với nhân viên hỗ trợ.')">
-                                <v-icon icon="mdi-account-tie" size="small" class="mr-2"></v-icon>
-                                Gặp nhân viên hỗ trợ
-                            </button>
-
-                            <!-- Zalo Quick Link -->
-                            <a href="https://zalo.me/0987654321" target="_blank" class="handoff-btn zalo-btn text-decoration-none">
-                                <v-icon icon="mdi-message-processing" size="small" class="mr-2"></v-icon>
-                                Chat Qua Zalo CSKH (0987.654.321)
-                            </a>
+                            <!-- Handoff & Zalo quick buttons in horizontal grid -->
+                            <div class="handoff-row">
+                                <button class="handoff-btn" @click="sendSuggestion('Tôi muốn nói chuyện với nhân viên hỗ trợ.')">
+                                    <v-icon icon="mdi-account-tie" size="small" class="mr-1.5"></v-icon>
+                                    <span>Gặp nhân viên</span>
+                                </button>
+                                <a href="https://zalo.me/0987654321" target="_blank" class="handoff-btn zalo-btn text-decoration-none">
+                                    <v-icon icon="mdi-message-processing" size="small" class="mr-1.5"></v-icon>
+                                    <span>Chat Zalo CSKH</span>
+                                </a>
+                            </div>
 
                             <div class="suggestions-title">
                                 <v-icon icon="mdi-lightbulb-on" color="amber-darken-2" size="small" class="mr-1"></v-icon>
-                                Câu hỏi gợi ý:
+                                Gợi ý câu hỏi nhanh:
                             </div>
 
                             <div class="suggestions-list">
                                 <button v-for="s in suggestions" :key="s" class="suggestion-pill" @click="sendSuggestion(s)">
+                                    <v-icon size="12" class="mr-1 text-primary">mdi-lightning-bolt</v-icon>
                                     {{ s }}
                                 </button>
                                 <button class="suggestion-pill collapse-pill" @click="showSuggestions = false">Thu gọn ↑</button>
@@ -1585,40 +1580,47 @@ const openChatImage = (url) => {
 .suggestions-panel {
     position: absolute;
     bottom: 84px;
-    left: 20px;
-    right: 20px;
-    background: #fff;
+    left: 16px;
+    right: 16px;
+    background: #ffffff;
     border-radius: 16px;
     box-shadow:
         0 -8px 24px rgba(0, 0, 0, 0.08),
         0 8px 24px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    padding: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 14px;
     z-index: 10;
+}
+
+.handoff-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
 .handoff-btn {
     width: 100%;
-    background: #f8f9fa;
+    background: #f8fafc;
     color: #1e257c;
     border: 1.5px solid #cbd5e1;
-    padding: 10px;
-    border-radius: 12px;
-    font-size: 0.88rem;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 0.8rem;
     font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
 
     &:hover {
         background: #1e257c;
         color: #ffffff;
         border-color: #1e257c;
         transform: translateY(-1px);
-        box-shadow: 0 4px 14px rgba(30, 37, 124, 0.25);
+        box-shadow: 0 4px 12px rgba(30, 37, 124, 0.2);
     }
 
     &:active {
@@ -1638,10 +1640,10 @@ const openChatImage = (url) => {
 }
 
 .suggestions-title {
-    font-size: 0.825rem;
+    font-size: 0.8rem;
     color: #1e257c;
     font-weight: 700;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
 }
@@ -1649,16 +1651,16 @@ const openChatImage = (url) => {
 .suggestions-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    max-height: 200px;
+    gap: 6px;
+    max-height: 180px;
     overflow-y: auto;
-    padding-right: 4px;
+    padding-right: 2px;
 
     &::-webkit-scrollbar {
         width: 4px;
     }
     &::-webkit-scrollbar-thumb {
-        background: #e0e0e0;
+        background: #e2e8f0;
         border-radius: 4px;
     }
 }
@@ -1666,20 +1668,28 @@ const openChatImage = (url) => {
 .suggestion-pill {
     background: #f0f4ff;
     color: #1e257c;
-    border: 1.5px solid #c7d2fe;
-    padding: 7px 14px;
+    border: 1px solid #c7d2fe;
+    padding: 6px 12px;
     border-radius: 20px;
-    font-size: 0.825rem;
+    font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
     transition: all 0.2s ease;
+    text-align: left;
+    line-height: 1.25;
 
     &:hover {
         background: #1e257c;
         color: #ffffff;
         border-color: #1e257c;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(30, 37, 124, 0.25);
+        box-shadow: 0 3px 8px rgba(30, 37, 124, 0.2);
+
+        .text-primary {
+            color: #ffffff !important;
+        }
     }
 
     &.collapse-pill {

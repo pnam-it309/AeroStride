@@ -240,7 +240,7 @@ const setMainImage = async (imgId) => {
                         </v-col>
                         <v-col cols="6" class="mt-3">
                             <div class="info-group">
-                                <label class="info-label">Tồn kho</label>
+                                <label class="info-label">Số lượng</label>
                                 <div class="info-value-box">{{ variant.soLuong }}</div>
                             </div>
                         </v-col>

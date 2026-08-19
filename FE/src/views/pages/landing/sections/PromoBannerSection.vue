@@ -102,7 +102,7 @@ const formatPrice = (v) => {
                                                 <span
                                                     class="stock-label text-caption d-block"
                                                     style="color: rgba(255, 255, 255, 0.7); font-size: 0.75rem"
-                                                    >Số lượng tồn</span
+                                                    >Số lượng</span
                                                 >
                                                 <span
                                                     class="banner-stock px-2 py-1 rounded-pill text-caption font-weight-bold d-inline-block"

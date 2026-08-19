@@ -1555,7 +1555,15 @@ onMounted(() => {
                     <div v-if="loading" class="panel-loader">
                         <v-progress-circular indeterminate color="primary" />
                     </div>
-                    <div v-else-if="!hasValidDonutData" class="empty-state">Không có dữ liệu trong thời gian này</div>
+                    <div v-else-if="!hasValidDonutData" class="d-flex flex-column align-center justify-center py-10 px-4 w-100 animate-fade-in text-center">
+                        <div
+                            class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3 mx-auto"
+                            style="width: 56px; height: 56px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
+                        >
+                            <v-icon icon="mdi-chart-donut" size="26" style="color: #94a3b8 !important" />
+                        </div>
+                        <span class="text-slate-600 font-weight-medium" style="font-size: 13.5px">Không có dữ liệu trong thời gian này</span>
+                    </div>
                     <div v-else class="category-chart-body">
                         <div class="category-donut-wrap">
                             <apexchart
@@ -1583,8 +1591,14 @@ onMounted(() => {
                         <v-progress-circular indeterminate color="primary" />
                     </div>
                     <div v-else class="cust-stats-table-container">
-                        <div v-if="revenueCycles.length === 0" class="empty-state py-8 text-center text-grey">
-                            Không có dữ liệu chu kỳ doanh thu.
+                        <div v-if="revenueCycles.length === 0" class="d-flex flex-column align-center justify-center py-8 px-4 w-100 animate-fade-in text-center">
+                            <div
+                                class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3 mx-auto"
+                                style="width: 56px; height: 56px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
+                            >
+                                <v-icon icon="mdi-calendar-remove-outline" size="26" style="color: #94a3b8 !important" />
+                            </div>
+                            <span class="text-slate-600 font-weight-medium" style="font-size: 13.5px">Không có dữ liệu chu kỳ doanh thu</span>
                         </div>
                         <table v-else class="cust-stats-table">
                             <thead>
@@ -1626,8 +1640,14 @@ onMounted(() => {
                         <v-progress-circular indeterminate color="primary" />
                     </div>
                     <div v-else class="cust-stats-table-container">
-                        <div v-if="customerPurchaseStats.length === 0" class="empty-state py-8 text-center text-grey">
-                            Không có dữ liệu của khách hàng nào.
+                        <div v-if="customerPurchaseStats.length === 0" class="d-flex flex-column align-center justify-center py-8 px-4 w-100 animate-fade-in text-center">
+                            <div
+                                class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3 mx-auto"
+                                style="width: 56px; height: 56px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
+                            >
+                                <v-icon icon="mdi-account-off-outline" size="26" style="color: #94a3b8 !important" />
+                            </div>
+                            <span class="text-slate-600 font-weight-medium" style="font-size: 13.5px">Không có dữ liệu của khách hàng nào</span>
                         </div>
                         <table v-else class="cust-stats-table">
                             <thead>
@@ -1681,8 +1701,14 @@ onMounted(() => {
                         <v-progress-circular indeterminate color="primary" />
                     </div>
                     <div v-else class="cust-stats-table-container">
-                        <div v-if="employeePurchaseStats.length === 0" class="empty-state py-8 text-center text-grey">
-                            Không có dữ liệu của nhân viên nào.
+                        <div v-if="employeePurchaseStats.length === 0" class="d-flex flex-column align-center justify-center py-8 px-4 w-100 animate-fade-in text-center">
+                            <div
+                                class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3 mx-auto"
+                                style="width: 56px; height: 56px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
+                            >
+                                <v-icon icon="mdi-account-tie-voice-off-outline" size="26" style="color: #94a3b8 !important" />
+                            </div>
+                            <span class="text-slate-600 font-weight-medium" style="font-size: 13.5px">Không có dữ liệu của nhân viên nào</span>
                         </div>
                         <table v-else class="cust-stats-table">
                             <thead>

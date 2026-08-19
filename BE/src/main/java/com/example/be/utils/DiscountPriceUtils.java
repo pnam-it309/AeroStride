@@ -19,16 +19,23 @@ public final class DiscountPriceUtils {
     private DiscountPriceUtils() {
     }
 
+    private static BigDecimal getEffectiveDiscountValue(ChiTietDotGiamGia rel) {
+        if (rel == null || rel.getDotGiamGia() == null) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal value = rel.getGiaTriGiam() != null
+                ? rel.getGiaTriGiam()
+                : rel.getDotGiamGia().getSoTienGiam();
+        return value != null ? value : BigDecimal.ZERO;
+    }
+
     /** Lay gia tri giam dang hoat dong tot nhat de hien thi/doi soat. */
     public static BigDecimal getActiveDiscountValue(Collection<ChiTietDotGiamGia> relations) {
         ChiTietDotGiamGia activeRelation = getBestActiveRelation(relations);
         if (activeRelation == null) {
             return BigDecimal.ZERO;
         }
-        BigDecimal value = activeRelation.getGiaTriGiam() != null
-                ? activeRelation.getGiaTriGiam()
-                : activeRelation.getDotGiamGia().getSoTienGiam();
-        return value != null ? value : BigDecimal.ZERO;
+        return getEffectiveDiscountValue(activeRelation);
     }
 
     /** Lay ten dot giam gia dang hoat dong tot nhat de hien thi tren giao dien. */
@@ -46,10 +53,7 @@ public final class DiscountPriceUtils {
         if (activeRelation == null || !isPercentDiscount(activeRelation.getDotGiamGia())) {
             return BigDecimal.ZERO;
         }
-        BigDecimal value = activeRelation.getGiaTriGiam() != null
-                ? activeRelation.getGiaTriGiam()
-                : activeRelation.getDotGiamGia().getSoTienGiam();
-        return value != null ? value : BigDecimal.ZERO;
+        return getEffectiveDiscountValue(activeRelation);
     }
 
     /** Tra ve gia sau giam, khong bao gio nho hon 0. */
@@ -60,10 +64,8 @@ public final class DiscountPriceUtils {
             return basePrice;
         }
 
-        BigDecimal discountValue = activeRelation.getGiaTriGiam() != null
-                ? activeRelation.getGiaTriGiam()
-                : activeRelation.getDotGiamGia().getSoTienGiam();
-        if (discountValue == null || discountValue.compareTo(BigDecimal.ZERO) <= 0) {
+        BigDecimal discountValue = getEffectiveDiscountValue(activeRelation);
+        if (discountValue.compareTo(BigDecimal.ZERO) <= 0) {
             return basePrice;
         }
 
@@ -75,7 +77,7 @@ public final class DiscountPriceUtils {
         return discountedPrice.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : discountedPrice;
     }
 
-    /** Chon dot giam gia dang hieu luc co uu tien/gia tri cao nhat. */
+    /** Chon dot giam gia dang hieu luc co gia tri giam lon nhat (MAX DISCOUNT). */
     private static ChiTietDotGiamGia getBestActiveRelation(Collection<ChiTietDotGiamGia> relations) {
         if (relations == null || relations.isEmpty()) {
             return null;
@@ -86,15 +88,10 @@ public final class DiscountPriceUtils {
                 .filter(rel -> rel.getDotGiamGia() != null)
                 .filter(rel -> isActiveNow(rel.getDotGiamGia(), now))
                 .max(Comparator
-                        .comparing((ChiTietDotGiamGia rel) -> rel.getDotGiamGia().getMucUuTien() != null
+                        .comparing(DiscountPriceUtils::getEffectiveDiscountValue)
+                        .thenComparing(rel -> rel.getDotGiamGia().getMucUuTien() != null
                                 ? rel.getDotGiamGia().getMucUuTien()
-                                : 0)
-                        .thenComparing(rel -> {
-                            BigDecimal value = rel.getGiaTriGiam() != null
-                                    ? rel.getGiaTriGiam()
-                                    : rel.getDotGiamGia().getSoTienGiam();
-                            return value != null ? value : BigDecimal.ZERO;
-                        }))
+                                : 0))
                 .orElse(null);
     }
 

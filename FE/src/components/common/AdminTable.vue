@@ -11,15 +11,18 @@ defineProps({
     showExportButton: { type: Boolean, default: false },
     showImportButton: { type: Boolean, default: false },
     showTemplateButton: { type: Boolean, default: false },
-    exportButtonText: { type: String, default: 'Tải Excel' },
+    exportButtonText: { type: String, default: 'Xuất Excel' },
     emptyText: { type: String, default: 'Không có dữ liệu phù hợp để hiển thị' },
-    emptyIcon: { type: String, default: 'mdi-package-variant' },
+    emptySubtext: { type: String, default: '' },
+    emptyIcon: { type: String, default: 'mdi-database-search-outline' },
+    showEmptyAction: { type: Boolean, default: false },
+    emptyActionText: { type: String, default: '' },
     selectable: { type: Boolean, default: false },
     hideToolbar: { type: Boolean, default: false },
     totalCount: { type: Number, default: 0 }
 });
 
-const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
+const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate', 'empty-action']);
 </script>
 
 <template>
@@ -131,6 +134,21 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                         >
                             {{ emptyText }}
                         </span>
+                        <span v-if="emptySubtext" class="text-slate-400 text-center text-caption mt-1">
+                            {{ emptySubtext }}
+                        </span>
+                        <slot name="empty-action">
+                            <v-btn
+                                v-if="showEmptyAction && emptyActionText"
+                                variant="outlined"
+                                color="primary"
+                                size="small"
+                                class="rounded-pill mt-3 text-none"
+                                @click="$emit('empty-action')"
+                            >
+                                {{ emptyActionText }}
+                            </v-btn>
+                        </slot>
                     </div>
                 </div>
             </div>

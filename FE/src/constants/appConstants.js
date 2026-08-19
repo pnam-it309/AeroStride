@@ -111,7 +111,8 @@ export const ORDER_TYPES = {
     ONLINE: 'ONLINE',
     IN_STORE: 'IN_STORE',
     TAI_QUAY: 'TAI_QUAY',
-    OFFLINE: 'OFFLINE'
+    OFFLINE: 'OFFLINE',
+    GIAO_HANG: 'GIAO_HANG'
 };
 
 export const DELIVERY_METHODS = {
@@ -122,5 +123,6 @@ export const DELIVERY_METHODS = {
 export const ORDER_TYPE_OPTIONS = [
     { title: 'Tất cả', value: null },
     { title: 'Trực tuyến', value: ORDER_TYPES.ONLINE },
-    { title: 'Cửa hàng', value: ORDER_TYPES.IN_STORE }
+    { title: 'Cửa hàng', value: ORDER_TYPES.IN_STORE },
+    { title: 'Giao hàng', value: ORDER_TYPES.GIAO_HANG }
 ];

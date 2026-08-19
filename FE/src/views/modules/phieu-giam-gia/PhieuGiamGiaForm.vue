@@ -7,11 +7,7 @@ import { formatCurrency, formatDate, formatNumberWithDots, parseNumberFromDots }
 import { PATH } from '@/router/routePaths';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { useNotifications } from '@/services/notificationService';
-import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
-import AdminConfirm from '@/components/common/AdminConfirm.vue';
-import AdminPagination from '@/components/common/AdminPagination.vue';
-import AdminFilter from '@/components/common/AdminFilter.vue';
-import TableEmptyState from '@/components/common/TableEmptyState.vue';
+import { AdminBreadcrumbs, AdminConfirm, AdminPagination, AdminFilter, TableEmptyState } from '@/components/common';
 import {
     ChevronLeftIcon,
     DeviceFloppyIcon,
