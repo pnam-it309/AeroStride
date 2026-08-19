@@ -613,11 +613,23 @@ const scrollToBottom = () => {
 };
 
 const stats = ref({ ACTIVE: 0, PENDING: 0, CLOSED: 0 });
+const allConversations = ref([]);
 
 const activeCount = computed(() => stats.value.ACTIVE || 0);
 const pendingCount = computed(() => stats.value.PENDING || 0);
 const closedCount = computed(() => stats.value.CLOSED || 0);
 
+const totalCustomerUnread = computed(() => {
+    return allConversations.value.filter(
+        (c) => (c.type === CHAT_TYPES.CUSTOMER || !c.type) && (c.unread > 0 || notificationStore.unreadChatConvIds.includes(c.id))
+    ).length;
+});
+
+const totalInternalUnread = computed(() => {
+    return allConversations.value.filter(
+        (c) => c.type === CHAT_TYPES.INTERNAL && (c.unread > 0 || notificationStore.unreadChatConvIds.includes(c.id))
+    ).length;
+});
 
 // Lấy danh sách hội thoại từ Backend
 const fetchConversations = async (quiet = false) => {
@@ -636,6 +648,8 @@ const fetchConversations = async (quiet = false) => {
             api.get(API_CHAT.CONVERSATIONS),
             api.get(API_CHAT.CONVERSATIONS + '/stats')
         ]);
+
+        allConversations.value = allConvRes.data?.data || [];
 
         let backendConvs = convRes.data?.data || [];
         
@@ -1007,13 +1021,14 @@ onMounted(() => {
 </script>
 
 <template>
-    <AdminBreadcrumbs
-        :items="[
-            { title: 'Quản lý chăm sóc khách hàng', disabled: false, href: '#' },
-            { title: 'Quản lý tin nhắn', disabled: true }
-        ]"
-    />
-    <v-container fluid class="chat-page pa-0 fill-height">
+    <div class="chat-management-wrapper">
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý chăm sóc khách hàng', disabled: false, href: '#' },
+                { title: 'Quản lý tin nhắn', disabled: true }
+            ]"
+        />
+        <v-container fluid class="chat-page pa-0 fill-height">
         <v-row no-gutters class="fill-height">
             <!-- Sidebar (Left Pane) -->
             <v-col cols="12" md="3" class="sidebar d-flex flex-column fill-height">
@@ -1249,6 +1264,8 @@ onMounted(() => {
                                             class="bubble-image"
                                             @click="openImage(m.imageUrl || m.image || m.hinhAnh)"
                                         />
+                                    </div>
+
                                     <!-- Render Product Card -->
                                     <div v-if="parseMessage(m).type === 'product'" class="bubble-product-card mb-1">
                                         <div class="d-flex ga-3">
@@ -1588,6 +1605,7 @@ onMounted(() => {
             @cancel="handleConfirm(false)"
         />
     </v-container>
+    </div>
 </template>
 
 <style scoped lang="scss">
