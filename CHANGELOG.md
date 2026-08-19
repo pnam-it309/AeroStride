@@ -1,3 +1,10 @@
+## [1.42.4](https://github.com/pnam-it309/AeroStride/compare/v1.42.3...v1.42.4) (2026-08-19)
+
+
+### Bug Fixes
+
+* update chat management, customer chat, sales services and order pages on DUC_FIX ([9fd91be](https://github.com/pnam-it309/AeroStride/commit/9fd91be594254dd4722da2c0f7c82d872b17114b))
+
 ## [1.42.3](https://github.com/pnam-it309/AeroStride/compare/v1.42.2...v1.42.3) (2026-08-17)
 
 
