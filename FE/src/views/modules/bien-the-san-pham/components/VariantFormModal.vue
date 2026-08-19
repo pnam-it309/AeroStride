@@ -9,8 +9,7 @@ import { computed, ref, watch } from 'vue';
 import { DeviceFloppyIcon, PhotoIcon, PlusIcon, RefreshIcon, TrashIcon } from 'vue-tabler-icons';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import { useNotifications } from '@/services/notificationService';
-import { dichVuMauSac, dichVuKichThuoc } from '@/services/product/dichVuThuocTinh';
-import FormattedNumberField from '../../san-pham/components/FormattedNumberField.vue';
+import { FormattedNumberField } from '@/components/common';
 import SafeProductImage from '../../san-pham/components/SafeProductImage.vue';
 import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
 

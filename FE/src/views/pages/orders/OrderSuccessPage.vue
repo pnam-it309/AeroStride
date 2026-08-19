@@ -73,7 +73,7 @@ onMounted(async () => {
 
             <div v-else-if="order" class="success-block">
                 <div class="check-circle">
-                    <v-icon size="40" color="white">mdi-check</v-icon>
+                    <v-icon size="40" style="color: #ffffff !important">mdi-check</v-icon>
                 </div>
 
                 <h1 class="success-title">Đặt hàng thành công!</h1>
@@ -99,7 +99,7 @@ onMounted(async () => {
 
             <div v-else class="success-block">
                 <div class="check-circle">
-                    <v-icon size="40" color="white">mdi-check</v-icon>
+                    <v-icon size="40" style="color: #ffffff !important">mdi-check</v-icon>
                 </div>
 
                 <h1 class="success-title">Đặt hàng thành công!</h1>
@@ -147,6 +147,14 @@ onMounted(async () => {
     align-items: center;
     justify-content: center;
     margin: 0 auto 24px;
+    color: #ffffff !important;
+}
+
+.check-circle :deep(.v-icon),
+.check-circle :deep(i),
+.check-circle :deep(svg) {
+    color: #ffffff !important;
+    fill: #ffffff !important;
 }
 
 .success-title {

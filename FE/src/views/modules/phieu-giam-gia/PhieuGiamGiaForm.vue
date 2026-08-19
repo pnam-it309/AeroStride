@@ -25,7 +25,7 @@ import {
     FilterIcon,
     UsersIcon
 } from 'vue-tabler-icons';
-import FormattedNumberField from '@/views/modules/san-pham/components/FormattedNumberField.vue';
+import { FormattedNumberField, FormattedPercentField } from '@/components/common';
 import { getNameRules } from '@/utils/validators';
 
 const route = useRoute();
@@ -470,16 +470,15 @@ onMounted(init);
                                     density="compact"
                                     hide-details
                                 ></FormattedNumberField>
-                                <v-text-field
+                                <FormattedPercentField
                                     v-else
-                                    v-model.number="form.phanTramGiamGia"
+                                    v-model="form.phanTramGiamGia"
                                     :readonly="isViewOnly"
-                                    type="number"
                                     placeholder="0"
                                     variant="outlined"
                                     density="compact"
                                     hide-details
-                                ></v-text-field>
+                                />
                             </v-col>
                             <v-col cols="12" md="4" v-if="form.loaiPhieu === 'TIEN_MAT'"></v-col>
                             <v-col cols="12" md="4" v-if="form.loaiPhieu === 'PHAN_TRAM'">
@@ -564,6 +563,7 @@ onMounted(init);
                                 <AppDatePicker
                                     v-model="form.ngayBatDau"
                                     :disabled="isViewOnly"
+                                    disable-past
                                     enable-time-picker
                                     placeholder="Chọn ngày bắt đầu"
                                     :text-field-props="{ error: !!errors.ngayBatDau, 'error-messages': errors.ngayBatDau }"
@@ -574,6 +574,8 @@ onMounted(init);
                                 <AppDatePicker
                                     v-model="form.ngayKetThuc"
                                     :disabled="isViewOnly"
+                                    disable-past
+                                    :min-date="form.ngayBatDau"
                                     enable-time-picker
                                     placeholder="Chọn ngày kết thúc"
                                     :text-field-props="{ error: !!errors.ngayKetThuc, 'error-messages': errors.ngayKetThuc }"

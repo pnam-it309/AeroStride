@@ -11,7 +11,7 @@ import { ADMIN_ICONS } from '@/constants/adminIcons';
 const { addNotification } = useNotifications();
 const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 
-const loading = ref(false);
+const loading = ref(true);
 const isRefreshing = ref(false);
 const items = ref([]);
 

@@ -40,7 +40,8 @@
                     {{ paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
                 </span>
                 <v-text-field
-                    :model-value="formatNumberWithDots(receivedAmount)"
+                    :model-value="receivedAmount > 0 ? formatNumberWithDots(receivedAmount) : ''"
+                    :placeholder="formatNumberWithDots(finalCollectAmount || 0)"
                     @input="onAmountInput"
                     variant="outlined"
                     density="compact"
@@ -112,6 +113,7 @@ import { formatCurrency, formatNumberWithDots, parseNumberFromDots } from '@/uti
 const props = defineProps({
     paymentMethod: { type: String, default: 'CASH' },
     receivedAmount: { type: Number, default: 0 },
+    finalCollectAmount: { type: Number, default: 0 },
     remainingBalance: { type: Number, default: 0 },
     changeAmount: { type: Number, default: 0 },
     isProcessing: { type: Boolean, default: false },

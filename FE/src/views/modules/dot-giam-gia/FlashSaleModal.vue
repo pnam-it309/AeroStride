@@ -3,6 +3,9 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { useNotifications } from '@/services/notificationService';
 import { formatCurrency } from '@/utils/formatters';
+import TableEmptyState from '@/components/common/TableEmptyState.vue';
+import FormattedPercentField from '@/components/common/FormattedPercentField.vue';
+import { getColorHexByName } from '@/utils/colorDictionary';
 
 const props = defineProps({
     modelValue: { type: Boolean, default: false }
@@ -32,6 +35,7 @@ const TIME_SLOTS = [
 
 const selectedSlot = ref(TIME_SLOTS[1]); // Mặc định 12:00 - 14:00
 const selectedDate = ref(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
+const todayStr = computed(() => new Date().toISOString().split('T')[0]);
 const customStartTime = ref('12:00');
 const customEndTime = ref('14:00');
 const isCustomSlot = ref(false);
@@ -227,6 +231,7 @@ const handleSave = async () => {
                         <v-text-field
                             v-model="selectedDate"
                             type="date"
+                            :min="todayStr"
                             variant="outlined"
                             density="compact"
                             hide-details
@@ -286,12 +291,10 @@ const handleSave = async () => {
                     <v-col cols="12" sm="6">
                         <label class="form-label font-weight-bold">Mức giảm giá Flash Sale (%)</label>
                         <div class="d-flex align-center gap-2 mt-1">
-                            <v-text-field
-                                v-model.number="discountPercent"
-                                type="number"
-                                min="1"
-                                max="90"
-                                suffix="%"
+                            <FormattedPercentField
+                                v-model="discountPercent"
+                                :max="90"
+                                placeholder="0"
                                 variant="outlined"
                                 density="compact"
                                 hide-details
@@ -394,8 +397,15 @@ const handleSave = async () => {
                                 </td>
                                 <td class="py-2">
                                     <div class="font-weight-bold text-body-2 text-slate-900">{{ item.tenSanPham }}</div>
-                                    <div class="text-caption text-slate-500">
-                                        Màu: {{ item.tenMauSac || 'N/A' }} | Size: {{ item.tenKichThuoc || 'N/A' }}
+                                    <div class="text-caption text-slate-500 d-inline-flex align-center ga-1 mt-1">
+                                        <span
+                                            class="color-dot"
+                                            :style="{
+                                                backgroundColor: getColorHexByName(item.tenMauSac) || item.maMauHex || '#cbd5e1',
+                                                border: '1px solid rgba(0, 0, 0, 0.15)'
+                                            }"
+                                        ></span>
+                                        <span>Màu: {{ item.tenMauSac || 'N/A' }} | Size: {{ item.tenKichThuoc || 'N/A' }}</span>
                                     </div>
                                 </td>
                                 <td class="text-center py-2">
@@ -410,11 +420,11 @@ const handleSave = async () => {
                                     {{ formatCurrency(item.giaBan * (100 - discountPercent) / 100) }}
                                 </td>
                             </tr>
-                            <tr v-if="filteredProducts.length === 0">
-                                <td colspan="5" class="text-center py-6 text-slate-400">
-                                    Không tìm thấy sản phẩm phù hợp
-                                </td>
-                            </tr>
+                            <TableEmptyState
+                                v-if="filteredProducts.length === 0"
+                                :colspan="5"
+                                text="Không tìm thấy sản phẩm phù hợp"
+                            />
                         </tbody>
                     </table>
                 </div>

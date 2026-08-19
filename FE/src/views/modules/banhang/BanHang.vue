@@ -357,6 +357,7 @@ const finalCollectAmount = computed(() => {
 
 const remainingBalance = computed(() => {
     const received = Number(checkoutData.value.receivedAmount || 0);
+    if (received <= 0) return 0;
     return Math.max(0, finalCollectAmount.value - received);
 });
 
@@ -1917,7 +1918,12 @@ const onCheckout = async () => {
         return;
     }
 
-    if (checkoutData.value.paymentMethod === 'CASH' && Number(checkoutData.value.receivedAmount || 0) < Number(finalCollectAmount.value)) {
+    // Nếu chưa nhập tiền khách đưa hoặc nhập 0, tự động thanh toán đúng số tiền cần thanh toán
+    if (!checkoutData.value.receivedAmount || Number(checkoutData.value.receivedAmount) <= 0) {
+        checkoutData.value.receivedAmount = Number(finalCollectAmount.value);
+    }
+
+    if (checkoutData.value.paymentMethod === 'CASH' && Number(checkoutData.value.receivedAmount) < Number(finalCollectAmount.value)) {
         addNotification({ title: 'Cảnh báo', subtitle: MESSAGES.ERROR.INSUFFICIENT_FUNDS, color: 'warning' });
         return;
     }
@@ -2188,6 +2194,7 @@ const handleVnPayCallbackFromUrl = async () => {
                         v-model:paymentMethod="checkoutData.paymentMethod"
                         class="flex-shrink-0"
                         v-model:receivedAmount="checkoutData.receivedAmount"
+                        :final-collect-amount="finalCollectAmount"
                         :remaining-balance="remainingBalance"
                         :change-amount="changeAmount"
                         :is-processing="isProcessing"

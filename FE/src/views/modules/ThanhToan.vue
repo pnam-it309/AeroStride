@@ -229,12 +229,12 @@ onMounted(() => {
                                     <v-progress-circular indeterminate color="primary"></v-progress-circular>
                                 </td>
                             </tr>
-                            <tr v-else-if="transactions.length === 0">
-                                <td colspan="7" class="text-center py-12">
-                                    <v-icon size="48" color="slate-200" class="mb-4">mdi-receipt-outline</v-icon>
-                                    <p class="text-slate-500">Không tìm thấy giao dịch nào</p>
-                                </td>
-                            </tr>
+                            <TableEmptyState
+                                v-else-if="transactions.length === 0"
+                                :colspan="7"
+                                text="Không tìm thấy giao dịch nào"
+                                icon="mdi-receipt-outline"
+                            />
                             <tr v-for="transaction in transactions" :key="transaction.id" class="data-row">
                                 <td class="data-cell">
                                     <span class="mono-font">{{ transaction.transactionCode }}</span>

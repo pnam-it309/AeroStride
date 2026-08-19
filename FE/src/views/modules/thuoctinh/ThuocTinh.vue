@@ -29,7 +29,7 @@ import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const { addNotification } = useNotifications();
 
-const loading = ref(false);
+const loading = ref(true);
 const isRefreshing = ref(false);
 const selectedTab = ref('brands');
 const searchQuery = ref('');

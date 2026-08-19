@@ -220,9 +220,6 @@ const shippingFee = computed(() => {
     if (!shippingInfo.value.tinhThanh || !shippingInfo.value.quanHuyen || !shippingInfo.value.phuongXa) {
         return null;
     }
-    if (cartStore.cartTotal >= FREE_SHIP_THRESHOLD.value) {
-        return 0;
-    }
     return ghnShippingFee.value !== null ? ghnShippingFee.value : calculatedShippingFee.value;
 });
 
@@ -293,15 +290,13 @@ const isShippingValid = computed(() => {
     );
 });
 
-const remainingForFreeShip = computed(() => Math.max(0, FREE_SHIP_THRESHOLD.value - cartStore.cartTotal));
-
 const estimatedDelivery = computed(() => {
     if (!shippingInfo.value.tinhThanh || !shippingInfo.value.quanHuyen || !shippingInfo.value.phuongXa) {
         return null;
     }
     const now = new Date();
     const est = new Date(now);
-    est.setDate(est.getDate() + (cartStore.cartTotal >= FREE_SHIP_THRESHOLD.value ? 5 : 7));
+    est.setDate(est.getDate() + 3);
     return est.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 });
 
@@ -442,6 +437,7 @@ const handleCheckout = async () => {
             quanHuyen: d ? d.name : shippingInfo.value.quanHuyen || '',
             phuongXa: w ? w.name : shippingInfo.value.phuongXa || '',
             diaChi: shippingInfo.value.diaChi,
+            phiVanChuyen: shippingFee.value !== null ? shippingFee.value : 0,
             idPhieuGiamGia: selectedVoucher.value?.id || null,
             phuongThucThanhToan: paymentMethod.value,
             ghiChu: ghiChu.value
@@ -1115,16 +1111,6 @@ onUnmounted(() => {
                                     <span class="text-h5 font-weight-bold total-label">{{ formatPrice(totalAmount) }}</span>
                                 </div>
 
-                                <!-- Free ship notice -->
-                                <p
-                                    v-if="cartStore.cartTotal < FREE_SHIP_THRESHOLD"
-                                    class="text-caption text-center text-grey-darken-1 mb-4 px-2"
-                                >
-                                    <v-icon size="14" class="mr-1 pb-1">mdi-truck-fast-outline</v-icon>
-                                    Mua thêm <strong style="color: #1e257c">{{ formatPrice(remainingForFreeShip) }}</strong> để được
-                                    <strong style="color: #1e257c">Miễn phí vận chuyển</strong>
-                                </p>
-
                                 <v-btn
                                     style="background: #1e257c; color: white"
                                     rounded="pill"
@@ -1148,13 +1134,13 @@ onUnmounted(() => {
         <!-- Order Confirmation Modal -->
         <v-dialog v-model="showConfirmDialog" max-width="520" class="confirm-order-dialog">
             <div class="modal-content overflow-hidden rounded-xl bg-white elevation-10" style="border: 1px solid #e2e8f0">
-                <div class="pa-5 text-white d-flex align-center justify-space-between" style="background: #1e257c">
+                <div class="confirm-dialog-header pa-5 d-flex align-center justify-space-between" style="background: #1e257c !important; color: #ffffff !important">
                     <div class="d-flex align-center">
-                        <v-icon size="24" class="mr-3" color="white">mdi-clipboard-check-outline</v-icon>
-                        <h3 class="text-h6 font-weight-bold mb-0 text-white">Xác nhận thông tin đặt hàng</h3>
+                        <v-icon size="24" class="mr-3" style="color: #ffffff !important">mdi-clipboard-check-outline</v-icon>
+                        <h3 class="text-h6 font-weight-bold mb-0" style="color: #ffffff !important">Xác nhận thông tin đặt hàng</h3>
                     </div>
-                    <v-btn icon variant="text" size="small" @click="showConfirmDialog = false" color="white">
-                        <v-icon>mdi-close</v-icon>
+                    <v-btn icon variant="text" size="small" @click="showConfirmDialog = false" style="color: #ffffff !important">
+                        <v-icon style="color: #ffffff !important">mdi-close</v-icon>
                     </v-btn>
                 </div>
 
@@ -1599,6 +1585,16 @@ onUnmounted(() => {
 <style scoped>
 :deep(.v-field) {
     font-size: 0.95rem;
+}
+
+.confirm-dialog-header,
+.confirm-dialog-header h3,
+.confirm-dialog-header .text-white,
+.confirm-dialog-header :deep(.v-icon),
+.confirm-dialog-header :deep(i),
+.confirm-dialog-header :deep(svg) {
+    color: #ffffff !important;
+    fill: #ffffff !important;
 }
 
 @media (max-width: 768px) {

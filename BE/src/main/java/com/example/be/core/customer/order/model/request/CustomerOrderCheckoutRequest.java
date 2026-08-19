@@ -33,6 +33,7 @@ public class CustomerOrderCheckoutRequest {
 
     private String idPhieuGiamGia;
     private String email;
+    private BigDecimal phiVanChuyen;
 
     // COD, VNPAY
     @NotBlank(message = "Phương thức thanh toán không được trống")

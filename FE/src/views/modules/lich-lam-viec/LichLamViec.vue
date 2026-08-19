@@ -16,7 +16,7 @@ const router = useRouter();
 const { addNotification } = useNotifications();
 const { currentUser, isStaff, canManageSchedule } = useRoleAccess();
 
-const loading = ref(false);
+const loading = ref(true);
 const isRefreshing = ref(false);
 const items = ref([]);
 const shiftOptions = ref(['Tất cả']);
@@ -1398,11 +1398,11 @@ onMounted(() => {
                                         </div>
                                     </td>
                                 </tr>
-                                <tr v-if="!selectedCellSchedules || selectedCellSchedules.length === 0">
-                                    <td colspan="4" class="text-center py-6 text-slate-400 text-caption">
-                                        Chưa có nhân viên nào đăng ký ca này.
-                                    </td>
-                                </tr>
+                                <TableEmptyState
+                                    v-if="!selectedCellSchedules || selectedCellSchedules.length === 0"
+                                    :colspan="4"
+                                    text="Chưa có nhân viên nào đăng ký ca này."
+                                />
                             </tbody>
                         </table>
                     </div>
@@ -1514,6 +1514,7 @@ onMounted(() => {
                             <div class="filter-field-label">Ngày làm</div>
                             <AppDatePicker
                                 :model-value="addForm.ngay"
+                                disable-past
                                 @update:model-value="
                                     (val) =>
                                         (addForm.ngay = val
@@ -1577,21 +1578,11 @@ onMounted(() => {
                                         </v-chip>
                                     </td>
                                 </tr>
-                                <tr v-if="!importPreviewData || importPreviewData.length === 0">
-                                    <td colspan="5" class="empty-state py-16 text-center">
-                                        <div class="d-flex flex-column align-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2">
-                                            <v-icon
-                                                icon="mdi-package-variant"
-                                                size="48"
-                                                style="color: #94a3b8 !important; opacity: 0.6"
-                                                class="mb-3"
-                                            />
-                                            <span class="text-slate-500" style="font-size: 14px !important; font-weight: 400 !important"
-                                                >Không có dữ liệu hợp lệ trong file Excel.</span
-                                            >
-                                        </div>
-                                    </td>
-                                </tr>
+                                <TableEmptyState
+                                    v-if="!importPreviewData || importPreviewData.length === 0"
+                                    :colspan="5"
+                                    text="Không có dữ liệu xem trước."
+                                />
                             </tbody>
                         </table>
                     </div>

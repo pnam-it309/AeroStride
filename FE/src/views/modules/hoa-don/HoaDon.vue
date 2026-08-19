@@ -21,15 +21,13 @@ import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
 const authStore = useAuthStore();
-const TAB_ALL = 'ALL';
-
 const getTodayDate = () => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 };
 
 const normalizeTrangThai = (value) => {
-    if (value === null || value === undefined || value === '' || value === 'null' || value === 'all' || value === TAB_ALL) {
+    if (value === null || value === undefined || value === '' || value === 'null') {
         return null;
     }
     const numericValue = Number(value);
@@ -66,17 +64,17 @@ const {
     },
     {
         search: '',
-        trangThai: TAB_ALL,
+        trangThai: 0,
         loaiDon: null,
         fromDate: getTodayDate(),
         toDate: getTodayDate(),
-        sortDirection: 'DESC'
+        sortDirection: 'ASC'
     }
 );
 
 const sortOptions = [
-    { title: 'Mới nhất', value: 'DESC' },
-    { title: 'Cũ nhất', value: 'ASC' }
+    { title: 'Đặt trước ở trên (Cũ nhất)', value: 'ASC' },
+    { title: 'Đặt sau ở trên (Mới nhất)', value: 'DESC' }
 ];
 
 const isRefreshing = ref(false);
@@ -137,7 +135,7 @@ const handleRefresh = async () => {
 };
 
 const handleTabChange = async (value) => {
-    filters.value.trangThai = value ?? TAB_ALL;
+    filters.value.trangThai = value ?? 0;
     handleSearch();
 };
 
@@ -355,15 +353,15 @@ onMounted(() => loadOrders());
                     class="rounded-md mr-3"
                     size="36"
                     @click="
-                        filters.sortDirection = filters.sortDirection === 'DESC' ? 'ASC' : 'DESC';
+                        filters.sortDirection = filters.sortDirection === 'ASC' ? 'DESC' : 'ASC';
                         handleSearch();
                     "
                 >
                     <v-icon size="20">{{
-                        filters.sortDirection === 'DESC' ? 'mdi-sort-clock-descending-outline' : 'mdi-sort-clock-ascending-outline'
+                        filters.sortDirection === 'ASC' ? 'mdi-sort-clock-ascending-outline' : 'mdi-sort-clock-descending-outline'
                     }}</v-icon>
                     <v-tooltip activator="parent" location="top">
-                        {{ filters.sortDirection === 'DESC' ? 'Đang sắp xếp: Mới nhất' : 'Đang sắp xếp: Cũ nhất' }}
+                        {{ filters.sortDirection === 'ASC' ? 'Sắp xếp: Đặt trước ở trên (Cũ nhất)' : 'Sắp xếp: Đặt sau ở trên (Mới nhất)' }}
                     </v-tooltip>
                 </v-btn>
             </template>
@@ -378,10 +376,6 @@ onMounted(() => loadOrders());
                     @update:model-value="handleTabChange"
                     height="54"
                 >
-                    <v-tab :value="TAB_ALL" class="text-none px-3 tab-item">
-                        <v-icon start size="16">mdi-view-grid-outline</v-icon>
-                        Tất cả
-                    </v-tab>
                     <v-tab :value="0" class="text-none px-3 tab-item">
                         <v-icon start size="16">mdi-progress-clock</v-icon>
                         Chờ xác nhận
@@ -432,21 +426,11 @@ onMounted(() => loadOrders());
                     </td>
 
                     <td class="data-cell text-center">
-                        <div
-                            class="text-truncate"
-                            :title="
-                                item.maNhanVien ||
-                                item.maNV ||
-                                item.tenNhanVien ||
-                                (authStore.user?.username ? authStore.user.username.toUpperCase() : 'ADMIN')
-                            "
-                        >
-                            {{
-                                item.maNhanVien ||
-                                item.maNV ||
-                                item.tenNhanVien ||
-                                (authStore.user?.username ? authStore.user.username.toUpperCase() : 'ADMIN')
-                            }}
+                        <div class="text-truncate" :title="item.maNhanVien || item.maNV || 'Chưa gán'">
+                            <span v-if="item.maNhanVien || item.maNV" class="font-weight-medium text-slate-800">
+                                {{ item.maNhanVien || item.maNV }}
+                            </span>
+                            <span v-else class="text-slate-400 font-italic">Chưa gán</span>
                         </div>
                     </td>
 

@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia';
 import { getBackendErrorMessage, formatUserErrorMessage } from '@/utils/errorUtils';
 
+let lastToastMessage = '';
+let lastToastTime = 0;
+
 export const useToastStore = defineStore('toast', {
     state: () => ({
         show: false,
@@ -17,8 +20,8 @@ export const useToastStore = defineStore('toast', {
 
         error(message, timeout = 5000) {
             const userMsg = typeof message === 'object' && message !== null
-                ? getBackendErrorMessage(message, 'Đã xảy ra lỗi. Vui lòng thử lại.', 'ToastStore')
-                : formatUserErrorMessage(message, 'Đã xảy ra lỗi. Vui lòng thử lại.');
+                ? getBackendErrorMessage(message, 'Thao tác chưa hoàn tất. Vui lòng thử lại.', 'ToastStore')
+                : formatUserErrorMessage(message, 'Thao tác chưa hoàn tất. Vui lòng thử lại.');
             this.showToast(userMsg, 'error', 'mdi-alert-circle', timeout);
         },
 
@@ -38,27 +41,36 @@ export const useToastStore = defineStore('toast', {
                 ? getBackendErrorMessage(message, 'Thông báo', 'ToastStore')
                 : formatUserErrorMessage(message, 'Thông báo');
 
+            const now = Date.now();
+            // Chống spam thông báo: Nếu cùng một thông điệp xuất hiện liên tục trong vòng 2 giây, không hiển thị lại để tránh làm phiền
+            if (this.show && lastToastMessage === userMsg && now - lastToastTime < 2000) {
+                return;
+            }
+
+            lastToastMessage = userMsg;
+            lastToastTime = now;
+
             this.message = userMsg;
-            // Force primary (dark blue) color for all toasts per user request
+            // Force primary (dark blue) color for consistent aesthetic
             this.color = 'primary';
             this.icon = icon || (color === 'error' ? 'mdi-alert-circle' : color === 'warning' ? 'mdi-alert' : 'mdi-check-circle');
             this.timeout = timeout;
             this.show = true;
         },
 
-        showError(message, timeout = 5000) {
+        showError(message, timeout = 3000) {
             this.error(message, timeout);
         },
 
-        showSuccess(message, timeout = 3000) {
+        showSuccess(message, timeout = 2500) {
             this.success(message, timeout);
         },
 
-        showWarning(message, timeout = 4000) {
+        showWarning(message, timeout = 3000) {
             this.warning(message, timeout);
         },
 
-        showInfo(message, timeout = 3000) {
+        showInfo(message, timeout = 2500) {
             this.info(message, timeout);
         },
 

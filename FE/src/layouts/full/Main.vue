@@ -13,11 +13,12 @@ import NotificationDD from './vertical-header/NotificationDD.vue';
 import ProfileDD from './vertical-header/ProfileDD.vue';
 import GiaoCaModal from '@/components/common/GiaoCaModal.vue';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
-import { Menu2Icon } from 'vue-tabler-icons';
+import { Menu2Icon, MessagesIcon } from 'vue-tabler-icons';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { computed, onMounted } from 'vue';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 import { isRoleAdmin, isRoleStaff, isRoleCustomer } from '@/constants/appConstants';
+import { PATH } from '@/router/routePaths';
 
 const uiStore = useUIStore();
 const notificationStore = useNotificationStore();
@@ -150,16 +151,18 @@ onMounted(() => {
                     </v-breadcrumbs>
                 </div>
                 <div class="d-flex align-center">
-                    <!-- <v-btn
-                        variant="tonal"
-                        color="primary"
-                        class="mr-2 rounded-pill font-weight-bold px-4"
-                        prepend-icon="mdi-store-clock"
-                        @click="handleGiaoCaClick"
-                        height="40"
-                    >
-                        Giao Ca
-                    </v-btn> -->
+                    <v-btn icon variant="text" class="custom-hover-primary text-muted mr-1" :to="PATH.QUAN_LY_CHAT">
+                        <v-badge
+                            :content="unreadChatCount"
+                            :model-value="unreadChatCount > 0"
+                            color="error"
+                            offset-x="-5"
+                            offset-y="-3"
+                        >
+                            <MessagesIcon stroke-width="1.8" size="22" />
+                        </v-badge>
+                        <v-tooltip activator="parent" location="bottom">Quản lý tin nhắn</v-tooltip>
+                    </v-btn>
                     <NotificationDD />
                     <ProfileDD />
                 </div>

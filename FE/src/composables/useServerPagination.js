@@ -15,7 +15,7 @@ import { reactive, ref } from 'vue';
  */
 export function useServerPagination(fetchPage, { pageSize = 5, onError, onLoaded } = {}) {
     const items = ref([]);
-    const loading = ref(false);
+    const loading = ref(true);
     const pagination = reactive({ page: 1, size: pageSize });
     const totalElements = ref(0);
     const totalPages = ref(1);

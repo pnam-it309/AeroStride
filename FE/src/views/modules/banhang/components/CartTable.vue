@@ -58,12 +58,17 @@ const handleDirectInput = (item, event) => {
             </thead>
             <tbody>
                 <tr v-if="!items?.length">
-                    <td colspan="9" class="text-center py-16">
-                        <div class="opacity-20 mb-4">
-                            <ShoppingCartIcon size="64" />
+                    <td colspan="9" class="text-center py-12">
+                        <div class="d-flex flex-column align-center justify-center py-4 px-4 w-100 animate-fade-in">
+                            <div
+                                class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3 mx-auto"
+                                style="width: 64px; height: 64px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
+                            >
+                                <v-icon icon="mdi-cart-off" size="30" style="color: #94a3b8 !important" />
+                            </div>
+                            <span class="text-slate-700 font-weight-bold mb-1" style="font-size: 14px">Giỏ hàng đang trống</span>
+                            <span class="text-slate-500 font-weight-regular" style="font-size: 13px">Tìm mã hoặc chọn sản phẩm để thêm vào đơn</span>
                         </div>
-                        <p class="text-h6 text-medium-emphasis">Giỏ hàng đang trống</p>
-                        <p class="text-body-2 text-grey">Tìm mã hoặc tên sản phẩm để thêm vào đơn</p>
                     </td>
                 </tr>
                 <tr v-for="(item, idx) in items" :key="item.id" class="item-row">

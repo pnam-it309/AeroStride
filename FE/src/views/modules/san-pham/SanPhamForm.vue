@@ -14,8 +14,7 @@ import { dichVuBienThe } from '@/services/product/dichVuBienThe';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import { useNotifications } from '@/services/notificationService';
 import { getBackendErrorMessage } from '@/utils/errorUtils';
-import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
-import FormattedNumberField from './components/FormattedNumberField.vue';
+import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs, TableEmptyState, FormattedNumberField } from '@/components/common';
 import SafeProductImage from './components/SafeProductImage.vue';
 import VariantFormModal from '@/views/modules/bien-the-san-pham/components/VariantFormModal.vue';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
@@ -2859,6 +2858,11 @@ const handleSave = async () => {
                                                             </v-btn>
                                                         </td>
                                                     </tr>
+                                                    <TableEmptyState
+                                                        v-if="paginatedVisibleVariantItems.length === 0"
+                                                        :colspan="4"
+                                                        text="Chưa có biến thể nào được tạo."
+                                                    />
                                                 </tbody>
                                             </v-table>
                                         </div>
@@ -3399,6 +3403,11 @@ const handleSave = async () => {
                                             {{ variant.soLuong || 0 }} SP
                                         </td>
                                     </tr>
+                                    <TableEmptyState
+                                        v-if="!variantItems || variantItems.length === 0"
+                                        :colspan="4"
+                                        text="Chưa có biến thể nào được chọn."
+                                    />
                                 </tbody>
                             </v-table>
                         </div>

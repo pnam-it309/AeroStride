@@ -538,8 +538,7 @@ const allowedStatuses = computed(() => {
         { title: 'Hoàn thành', value: ORDER_STATUS.HOAN_THANH },
         { title: 'Giao thất bại', value: ORDER_STATUS.GIAO_THAT_BAI },
         { title: 'Khách không nhận', value: ORDER_STATUS.KHACH_KHONG_NHAN },
-        { title: 'Đã hủy', value: ORDER_STATUS.DA_HUY },
-        { title: 'Hoàn đơn', value: ORDER_STATUS.HOAN_DON }
+        { title: 'Đã hủy', value: ORDER_STATUS.DA_HUY }
     ];
 
     if (!current) return allItems;
@@ -553,25 +552,28 @@ const allowedStatuses = computed(() => {
             case ORDER_STATUS.XAC_NHAN:
                 return item.value === ORDER_STATUS.CHO_GIAO || item.value === ORDER_STATUS.DA_HUY;
             case ORDER_STATUS.CHO_GIAO:
-                return item.value === ORDER_STATUS.DANG_GIAO || item.value === ORDER_STATUS.DA_HUY;
+                return (
+                    item.value === ORDER_STATUS.DANG_GIAO ||
+                    item.value === ORDER_STATUS.DA_HUY ||
+                    item.value === ORDER_STATUS.GIAO_THAT_BAI ||
+                    item.value === ORDER_STATUS.KHACH_KHONG_NHAN
+                );
             case ORDER_STATUS.DANG_GIAO:
                 return (
                     item.value === ORDER_STATUS.HOAN_THANH ||
                     item.value === ORDER_STATUS.GIAO_THAT_BAI ||
                     item.value === ORDER_STATUS.KHACH_KHONG_NHAN ||
-                    item.value === ORDER_STATUS.HOAN_DON
+                    item.value === ORDER_STATUS.DA_HUY
                 );
             case ORDER_STATUS.GIAO_THAT_BAI:
             case ORDER_STATUS.KHACH_KHONG_NHAN:
                 return (
                     item.value === ORDER_STATUS.DANG_GIAO ||
-                    item.value === ORDER_STATUS.HOAN_DON ||
-                    item.value === ORDER_STATUS.HOAN_THANH
+                    item.value === ORDER_STATUS.HOAN_THANH ||
+                    item.value === ORDER_STATUS.DA_HUY
                 );
             case ORDER_STATUS.HOAN_THANH:
-                return item.value === ORDER_STATUS.HOAN_DON;
             case ORDER_STATUS.DA_HUY:
-            case ORDER_STATUS.HOAN_DON:
             default:
                 return false;
         }
@@ -674,7 +676,6 @@ const timelineSteps = computed(() => {
     // Exception steps
     const exceptionSteps = [
         { key: ORDER_STATUS_ORDINALS.DA_HUY, label: 'Đã hủy', icon: CircleXIcon, note: 'Đơn hàng bị hủy' },
-        { key: ORDER_STATUS_ORDINALS.HOAN_DON, label: 'Hoàn đơn', icon: CircleXIcon, note: 'Đơn hàng đã hoàn trả' },
         { key: ORDER_STATUS_ORDINALS.GIAO_THAT_BAI, label: 'Giao thất bại', icon: AlertCircleIcon, note: 'Giao hàng không thành công' },
         { key: ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN, label: 'Khách không nhận', icon: CircleXIcon, note: 'Khách từ chối nhận hàng' }
     ];
@@ -688,7 +689,7 @@ const timelineSteps = computed(() => {
         steps = steps.filter((s) => s.key === ORDER_STATUS_ORDINALS.CHO_XAC_NHAN || s.key === ORDER_STATUS_ORDINALS.HOAN_THANH);
     }
 
-    // Nếu trạng thái hiện tại là Hủy, Hoàn đơn, Giao thất bại, hoặc Khách không nhận
+    // Nếu trạng thái hiện tại là Hủy, Giao thất bại, hoặc Khách không nhận
     if (status >= ORDER_STATUS_ORDINALS.DA_HUY && status <= ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN) {
         const exc = exceptionSteps.find((s) => s.key === status);
         if (exc) {
@@ -747,7 +748,7 @@ const requestStatusUpdate = (status) => {
         color: 'primary',
         showInput: true,
         inputLabel: 'Ghi chú cập nhật',
-        inputRequired: targetOrdinal === ORDER_STATUS_ORDINALS.DA_HUY || targetOrdinal === ORDER_STATUS_ORDINALS.HOAN_DON, // Yêu cầu ghi chú khi hủy đơn hoặc trả hàng
+        inputRequired: targetOrdinal === ORDER_STATUS_ORDINALS.DA_HUY || targetOrdinal === ORDER_STATUS_ORDINALS.GIAO_THAT_BAI || targetOrdinal === ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN, // Yêu cầu ghi chú khi hủy đơn hoặc giao không thành công
         action: async (note) => {
             confirmDialog.value.loading = true;
             try {
@@ -869,10 +870,9 @@ onMounted(() => {
                         <span>Nhân viên hỗ trợ:</span>
                         <span class="font-weight-bold ml-1 text-slate-900">
                             {{
-                                order.tenNhanVien
-                                    ? `${order.tenNhanVien}
-                            (${order.maNhanVien || 'N/A'})`
-                                    : 'Hệ thống'
+                                order.maNhanVien || order.tenNhanVien
+                                    ? `${order.tenNhanVien || ''} (${order.maNhanVien || ''})`.trim()
+                                    : (order.orderType === 'ONLINE' && order.trangThai === 0 ? 'Chưa tiếp nhận' : 'Chưa gán')
                             }}
                         </span>
                     </div>
@@ -1337,127 +1337,31 @@ onMounted(() => {
                         <span class="text-success font-weight-bold">Đã hoàn phí cho khách</span>
                     </div>
 
-                    <!-- Quick status transitions -->
-                    <template v-if="order.trangThai === ORDER_STATUS.CHO_XAC_NHAN">
-                        <v-btn color="success" variant="flat" class="rounded-lg px-6" height="44" @click="requestStatusUpdate(ORDER_STATUS.XAC_NHAN)">
-                            <template v-slot:prepend>
-                                <v-icon size="18" class="mr-1">mdi-check-circle-outline</v-icon>
-                            </template>
-                            Xác nhận đơn hàng
-                        </v-btn>
-                        <v-btn color="error" variant="outlined" class="rounded-lg px-6" height="44" @click="requestStatusUpdate(ORDER_STATUS.DA_HUY)">
-                            <template v-slot:prepend>
-                                <v-icon size="18" class="mr-1">mdi-close-circle-outline</v-icon>
-                            </template>
-                            Hủy đơn hàng
-                        </v-btn>
-                    </template>
-
-                    <template v-else-if="order.trangThai === ORDER_STATUS.XAC_NHAN">
-                        <v-btn color="primary" variant="flat" class="rounded-lg px-6" height="44" @click="requestStatusUpdate(ORDER_STATUS.CHO_GIAO)">
-                            <template v-slot:prepend>
-                                <v-icon size="18" class="mr-1">mdi-package-variant-closed</v-icon>
-                            </template>
-                            Chuẩn bị giao hàng
-                        </v-btn>
-                        <v-btn color="error" variant="outlined" class="rounded-lg px-6" height="44" @click="requestStatusUpdate(ORDER_STATUS.DA_HUY)">
-                            <template v-slot:prepend>
-                                <v-icon size="18" class="mr-1">mdi-close-circle-outline</v-icon>
-                            </template>
-                            Hủy đơn hàng
-                        </v-btn>
-                    </template>
-
-                    <template v-else-if="order.trangThai === ORDER_STATUS.CHO_GIAO">
-                        <v-btn color="primary" variant="flat" class="rounded-lg px-6" height="44" @click="requestStatusUpdate(ORDER_STATUS.DANG_GIAO)">
-                            <template v-slot:prepend>
-                                <v-icon size="18" class="mr-1">mdi-truck-fast-outline</v-icon>
-                            </template>
-                            Giao cho shipper
-                        </v-btn>
-                        <v-btn color="error" variant="outlined" class="rounded-lg px-6" height="44" @click="requestStatusUpdate(ORDER_STATUS.DA_HUY)">
-                            <template v-slot:prepend>
-                                <v-icon size="18" class="mr-1">mdi-close-circle-outline</v-icon>
-                            </template>
-                            Hủy đơn hàng
-                        </v-btn>
-                    </template>
-
-                    <template v-else-if="order.trangThai === ORDER_STATUS.DANG_GIAO">
+                    <!-- 2 Nút thao tác nhanh trực tiếp: Giao thất bại & Khách không nhận -->
+                    <template v-if="order.trangThai !== ORDER_STATUS.HOAN_THANH && order.trangThai !== ORDER_STATUS.DA_HUY && order.trangThai !== ORDER_STATUS.GIAO_THAT_BAI && order.trangThai !== ORDER_STATUS.KHACH_KHONG_NHAN">
                         <v-btn
-                            color="success"
+                            color="warning"
+                            variant="flat"
+                            class="rounded-lg px-6 text-white"
+                            height="44"
+                            @click="requestStatusUpdate(ORDER_STATUS.GIAO_THAT_BAI)"
+                        >
+                            <template v-slot:prepend>
+                                <v-icon size="18" class="mr-1">mdi-truck-alert-outline</v-icon>
+                            </template>
+                            Giao thất bại
+                        </v-btn>
+                        <v-btn
+                            color="error"
                             variant="flat"
                             class="rounded-lg px-6"
                             height="44"
-                            @click="requestStatusUpdate(ORDER_STATUS.HOAN_THANH)"
+                            @click="requestStatusUpdate(ORDER_STATUS.KHACH_KHONG_NHAN)"
                         >
                             <template v-slot:prepend>
-                                <v-icon size="18" class="mr-1">mdi-checkbox-marked-circle-outline</v-icon>
+                                <v-icon size="18" class="mr-1">mdi-account-cancel-outline</v-icon>
                             </template>
-                            Giao thành công
-                        </v-btn>
-                        <v-row dense class="ma-0 ga-2">
-                            <v-col class="pa-0">
-                                <v-btn
-                                    color="warning"
-                                    variant="tonal"
-                                    class="rounded-lg w-100"
-                                    height="44"
-                                    @click="requestStatusUpdate(ORDER_STATUS.GIAO_THAT_BAI)"
-                                >
-                                    Giao thất bại
-                                </v-btn>
-                            </v-col>
-                            <v-col class="pa-0">
-                                <v-btn
-                                    color="error"
-                                    variant="tonal"
-                                    class="rounded-lg w-100"
-                                    height="44"
-                                    @click="requestStatusUpdate(ORDER_STATUS.KHACH_KHONG_NHAN)"
-                                >
-                                    Khách không nhận
-                                </v-btn>
-                            </v-col>
-                        </v-row>
-                    </template>
-
-                    <template v-else-if="order.trangThai === ORDER_STATUS.GIAO_THAT_BAI || order.trangThai === ORDER_STATUS.KHACH_KHONG_NHAN">
-                        <v-btn
-                            color="primary"
-                            variant="flat"
-                            class="rounded-lg px-6"
-                            height="44"
-                            @click="requestStatusUpdate(ORDER_STATUS.DANG_GIAO)"
-                        >
-                            <template v-slot:prepend>
-                                <v-icon size="18" class="mr-1">mdi-truck-fast-outline</v-icon>
-                            </template>
-                            Giao lại lần 2
-                        </v-btn>
-                        <v-btn
-                            color="success"
-                            variant="flat"
-                            class="rounded-lg px-6"
-                            height="44"
-                            @click="requestStatusUpdate(ORDER_STATUS.HOAN_THANH)"
-                        >
-                            <template v-slot:prepend>
-                                <v-icon size="18" class="mr-1">mdi-checkbox-marked-circle-outline</v-icon>
-                            </template>
-                            Giao thành công (Giao lại)
-                        </v-btn>
-                        <v-btn
-                            color="deep-purple"
-                            variant="tonal"
-                            class="rounded-lg px-6"
-                            height="44"
-                            @click="requestStatusUpdate(ORDER_STATUS.HOAN_DON)"
-                        >
-                            <template v-slot:prepend>
-                                <v-icon size="18" class="mr-1">mdi-cash-refund</v-icon>
-                            </template>
-                            Xác nhận hoàn đơn về kho
+                            Khách không nhận
                         </v-btn>
                     </template>
 

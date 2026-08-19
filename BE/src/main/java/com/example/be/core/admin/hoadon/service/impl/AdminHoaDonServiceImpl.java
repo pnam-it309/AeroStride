@@ -117,7 +117,10 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 if (log.getNguoiThucHien() != null) {
                     String performer = log.getNguoiThucHien();
                     nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(performer, performer, performer, performer)
-                            .ifPresent(nv -> log.setNguoiThucHien(nv.getTen() != null ? nv.getTen() : performer));
+                            .ifPresent(nv -> {
+                                String display = nv.getMa() != null ? nv.getMa() + (nv.getTen() != null ? " - " + nv.getTen() : "") : (nv.getTen() != null ? nv.getTen() : performer);
+                                log.setNguoiThucHien(display);
+                            });
                 }
             });
         }
@@ -165,14 +168,21 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         }
 
 
+        // Gán nhân viên xử lý hóa đơn khi có nhân viên đăng nhập thực hiện chuyển trạng thái
+        com.example.be.utils.SecurityUtils.getCurrentUserEmail().ifPresent(email -> {
+            nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email).ifPresent(staff -> {
+                hd.setNhanVien(staff);
+            });
+        });
+
         hd.setTrangThai(newStatus);
         hd.setNgayCapNhat(System.currentTimeMillis());
         repository.save(hd);
 
-        // Resolve display name for the person performing the action
+        // Resolve display name for the person performing the action (Mã NV - Tên NV)
         String nguoiThucHienName = com.example.be.utils.SecurityUtils.getCurrentUserEmail()
                 .map(email -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email)
-                        .map(nv -> nv.getTen() != null ? nv.getTen() : email)
+                        .map(nv -> nv.getMa() != null ? nv.getMa() + (nv.getTen() != null ? " - " + nv.getTen() : "") : (nv.getTen() != null ? nv.getTen() : email))
                         .orElse(email))
                 .orElse("Hệ thống");
         LichSuTrangThaiHoaDon history = LichSuTrangThaiHoaDon.builder()
@@ -397,9 +407,19 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     }
 
     private void logHistory(HoaDon hd, String note) {
+        // Gán nhân viên xử lý nếu đơn chưa có nhân viên
+        com.example.be.utils.SecurityUtils.getCurrentUserEmail().ifPresent(email -> {
+            nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email).ifPresent(staff -> {
+                if (hd.getNhanVien() == null) {
+                    hd.setNhanVien(staff);
+                    repository.save(hd);
+                }
+            });
+        });
+
         String nguoiThucHienName = com.example.be.utils.SecurityUtils.getCurrentUserEmail()
                 .map(email -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email)
-                        .map(nv -> nv.getTen() != null ? nv.getTen() : email)
+                        .map(nv -> nv.getMa() != null ? nv.getMa() + (nv.getTen() != null ? " - " + nv.getTen() : "") : (nv.getTen() != null ? nv.getTen() : email))
                         .orElse(email))
                 .orElse("Hệ thống");
         LichSuTrangThaiHoaDon history = LichSuTrangThaiHoaDon.builder()

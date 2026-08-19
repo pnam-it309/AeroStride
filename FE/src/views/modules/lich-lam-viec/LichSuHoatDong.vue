@@ -218,7 +218,7 @@ onMounted(() => {
                 :is-refreshing="isRefreshingActivities"
                 @refresh="onRefreshActivities"
             >
-                <v-col cols="12" md="4" class="filter-cell">
+                <v-col cols="12" sm="4" md="4" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm hoạt động</div>
                     <v-text-field
                         v-model="filtersActivities.search"
@@ -233,7 +233,7 @@ onMounted(() => {
                     />
                 </v-col>
 
-                <v-col cols="12" md="4" class="filter-cell">
+                <v-col cols="12" sm="4" md="3" class="filter-cell">
                     <div class="filter-field-label">Phân loại danh mục</div>
                     <v-select
                         v-model="filtersActivities.category"
@@ -254,7 +254,7 @@ onMounted(() => {
                     />
                 </v-col>
 
-                <v-col cols="12" md="4" class="filter-cell">
+                <v-col cols="12" sm="4" md="3" class="filter-cell">
                     <div class="filter-field-label">Lọc theo ngày</div>
                     <AppDatePicker
                         :model-value="filtersActivities.ngay"

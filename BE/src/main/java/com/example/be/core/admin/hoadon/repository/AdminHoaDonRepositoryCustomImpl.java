@@ -125,7 +125,7 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
         QNhanVien nv = QNhanVien.nhanVien;
         QDiaChi khdc = QDiaChi.diaChi;
 
-        boolean isAsc = "asc".equalsIgnoreCase(req.getSortDirection());
+        boolean isAsc = !"desc".equalsIgnoreCase(req.getSortDirection());
         BooleanBuilder conditions = buildConditions(req);
 
         // Use Tuple to avoid problematic Enum-to-Ordinal SQL function translation in projections
@@ -180,8 +180,8 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
 
             String maNv = t.get(nv.ma);
             String tenNv = t.get(nv.ten);
-            String finalMaNv = (maNv != null && !maNv.trim().isEmpty() && !"Hệ thống".equalsIgnoreCase(maNv)) ? maNv : fallbackMaNv;
-            String finalTenNv = (tenNv != null && !tenNv.trim().isEmpty() && !"Hệ thống".equalsIgnoreCase(tenNv)) ? tenNv : fallbackTenNv;
+            String finalMaNv = (maNv != null && !maNv.trim().isEmpty() && !"Hệ thống".equalsIgnoreCase(maNv)) ? maNv : null;
+            String finalTenNv = (tenNv != null && !tenNv.trim().isEmpty() && !"Hệ thống".equalsIgnoreCase(tenNv)) ? tenNv : null;
 
             String dcNhan = t.get(hd.diaChiNguoiNhan);
             String finalDiaChi;

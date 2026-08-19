@@ -53,7 +53,7 @@
                 <v-card-text class="pa-4">
                     <!-- Calendar -->
                     <div class="calendar-nav d-flex align-center justify-space-between mb-4">
-                        <v-btn icon variant="text" size="small" @click="prevMonth">
+                        <v-btn icon variant="text" size="small" :disabled="isPrevMonthDisabled" @click="prevMonth">
                             <v-icon>mdi-chevron-left</v-icon>
                         </v-btn>
                         <div class="d-flex ga-2 align-center">
@@ -154,6 +154,10 @@ const props = defineProps({
     maxDate: {
         type: [Date, String, Number],
         default: null
+    },
+    disablePast: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -172,15 +176,63 @@ const singleTimeStr = ref('12:00');
 
 const dayHeaders = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
-const monthOptions = Array.from({ length: 12 }, (_, i) => ({
-    title: `Tháng ${i + 1}`,
-    value: i
-}));
+const toDateStart = (value) => {
+    if (!value) return null;
+    const date = value instanceof Date ? new Date(value) : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    date.setHours(0, 0, 0, 0);
+    return date;
+};
+
+const getEffectiveMinDate = () => {
+    let min = toDateStart(props.minDate);
+    if (props.disablePast) {
+        const today = toDateStart(new Date());
+        if (!min || today > min) {
+            min = today;
+        }
+    }
+    return min;
+};
+
+const isDateDisabled = (date) => {
+    if (!date) return true;
+    const current = toDateStart(date);
+    const min = getEffectiveMinDate();
+    const max = toDateStart(props.maxDate);
+
+    if (min && current < min) return true;
+    if (max && current > max) return true;
+    return false;
+};
+
+const isPrevMonthDisabled = computed(() => {
+    const min = getEffectiveMinDate();
+    if (!min) return false;
+    const currentViewMonthStart = new Date(viewDate.value.getFullYear(), viewDate.value.getMonth(), 1);
+    const minMonthStart = new Date(min.getFullYear(), min.getMonth(), 1);
+    return currentViewMonthStart <= minMonthStart;
+});
+
+const monthOptions = computed(() => {
+    const min = getEffectiveMinDate();
+    const selectedYear = viewDate.value.getFullYear();
+    const minYear = min ? min.getFullYear() : null;
+    const minMonth = min ? min.getMonth() : 0;
+
+    return Array.from({ length: 12 }, (_, i) => ({
+        title: `Tháng ${i + 1}`,
+        value: i,
+        disabled: minYear !== null && selectedYear === minYear && i < minMonth
+    })).filter((m) => !m.disabled);
+});
 
 const yearOptions = computed(() => {
     const currentYear = new Date().getFullYear();
+    const min = getEffectiveMinDate();
+    const startYear = min ? min.getFullYear() : currentYear - 100;
     const years = [];
-    for (let y = currentYear - 100; y <= currentYear + 10; y++) {
+    for (let y = startYear; y <= Math.max(currentYear + 10, startYear + 10); y++) {
         years.push(y);
     }
     return years;
@@ -222,25 +274,6 @@ const calendarDays = computed(() => {
 const isSameDay = (a, b) => {
     if (!a || !b) return false;
     return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-};
-
-const toDateStart = (value) => {
-    if (!value) return null;
-    const date = value instanceof Date ? new Date(value) : new Date(value);
-    if (Number.isNaN(date.getTime())) return null;
-    date.setHours(0, 0, 0, 0);
-    return date;
-};
-
-const isDateDisabled = (date) => {
-    if (!date) return true;
-    const current = toDateStart(date);
-    const min = toDateStart(props.minDate);
-    const max = toDateStart(props.maxDate);
-
-    if (min && current < min) return true;
-    if (max && current > max) return true;
-    return false;
 };
 
 const isInRange = (day) => {
@@ -530,9 +563,12 @@ watch(open, (val) => {
 }
 
 .calendar-day.disabled {
-    cursor: default;
-    color: #cbd5e1;
-    pointer-events: none;
+    cursor: not-allowed !important;
+    color: #94a3b8 !important;
+    opacity: 0.35 !important;
+    pointer-events: none !important;
+    text-decoration: line-through;
+    user-select: none;
 }
 
 .calendar-day.today {

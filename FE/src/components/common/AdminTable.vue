@@ -93,7 +93,8 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                                     :style="{ width: header.width || 'auto' }"
                                     :class="[
                                         'header-cell',
-                                        header.align === 'start' ? 'text-left' : header.align === 'end' ? 'text-right' : 'text-center'
+                                        header.align === 'start' ? 'text-left' : header.align === 'end' ? 'text-right' : 'text-center',
+                                        header.class
                                     ]"
                                 >
                                     {{ header.text || header }}
@@ -108,22 +109,28 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                     </tbody>
                 </table>
 
-                <!-- Render empty state outside the table to avoid table-layout: fixed colspan bugs -->
+                <!-- Render empty and loading states outside the table -->
                 <div
                     v-if="loading || items.length === 0"
-                    class="empty-state-wrapper py-10 w-100 d-flex flex-column align-center justify-center border-t"
+                    class="empty-state-wrapper py-12 w-100 d-flex flex-column align-center justify-center border-t"
                 >
-                    <div v-if="loading" class="d-flex flex-column align-center justify-center w-100">
-                        <v-progress-circular indeterminate color="primary" size="48" width="6" class="mb-4" />
-                        <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">Đang tải dữ liệu...</span>
+                    <div v-if="loading" class="d-flex flex-column align-center justify-center w-100 py-6">
+                        <v-progress-circular indeterminate color="primary" size="42" width="4" class="mb-3" />
+                        <span class="text-subtitle-2 font-weight-medium text-slate-500">Đang tải dữ liệu...</span>
                     </div>
-                    <div v-else class="d-flex flex-column align-center justify-center py-8 w-100">
-                        <v-icon :icon="emptyIcon" size="48" style="color: #94a3b8 !important; opacity: 0.6" class="mb-3" />
-                        <span
-                            class="text-slate-500 text-center"
-                            style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block"
-                            >{{ emptyText }}</span
+                    <div v-else class="d-flex flex-column align-center justify-center py-6 px-4 w-100 animate-fade-in">
+                        <div
+                            class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3"
+                            style="width: 68px; height: 68px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
                         >
+                            <v-icon :icon="emptyIcon || 'mdi-database-search-outline'" size="32" style="color: #94a3b8 !important" />
+                        </div>
+                        <span
+                            class="text-slate-600 text-center font-weight-medium"
+                            style="font-size: 14px !important; line-height: 1.5; max-width: 420px"
+                        >
+                            {{ emptyText }}
+                        </span>
                     </div>
                 </div>
             </div>

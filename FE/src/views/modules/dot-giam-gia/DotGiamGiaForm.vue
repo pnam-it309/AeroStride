@@ -13,6 +13,8 @@ import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import AdminFilter from '@/components/common/AdminFilter.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import TableEmptyState from '@/components/common/TableEmptyState.vue';
+import FormattedPercentField from '@/components/common/FormattedPercentField.vue';
+import { getColorHexByName } from '@/utils/colorDictionary';
 import { CalendarIcon, GiftIcon, InfoCircleIcon, TagIcon, BoxIcon, SearchIcon, TrashIcon } from 'vue-tabler-icons';
 import { PATH } from '@/router/routePaths';
 import { getNameRules } from '@/utils/validators';
@@ -63,6 +65,16 @@ const expandedProductIds = ref([]);
 const selectedVariantsMap = ref(new Map());
 const selectedVariantsIds = computed(() => Array.from(selectedVariantsMap.value.keys()));
 
+// Hàm lấy mã màu Hex chuẩn từ dữ liệu hoặc thư viện màu sắc
+const getVariantColorHex = (variant) => {
+    if (!variant) return '#cbd5e1';
+    if (variant.maMauHex && /^#[0-9A-Fa-f]{3,8}$/.test(variant.maMauHex)) {
+        return variant.maMauHex;
+    }
+    const colorName = variant.color || variant.tenMauSac || (variant.mauSac ? variant.mauSac.ten : '');
+    return getColorHexByName(colorName) || '#cbd5e1';
+};
+
 // Hàm chuẩn hóa dữ liệu biến thể
 const normalizeVariant = (v, fallbackProduct = {}) => {
     const maSp = fallbackProduct.maSanPham || fallbackProduct.ma || v.maSanPham || v.sanPhamMa || v.maSp || '';
@@ -81,6 +93,7 @@ const normalizeVariant = (v, fallbackProduct = {}) => {
         (v.images?.length > 0 ? v.images[0].duongDanAnh : null) ||
         fallbackProduct.hinhAnh ||
         'https://via.placeholder.com/40';
+    const maMauHex = v.maMauHex || v.maMau || (v.mauSac ? (v.mauSac.maMauHex || v.mauSac.maMau) : '') || getColorHexByName(color) || '#cbd5e1';
 
     return {
         ...v,
@@ -92,6 +105,7 @@ const normalizeVariant = (v, fallbackProduct = {}) => {
         tenSanPham: tenSp,
         tenSanPhamDayDu: v.tenSanPhamDayDu || `${tenSp} [${color} - ${kichCo}]`,
         color,
+        maMauHex,
         kichCo,
         thuongHieu,
         chatLieu,
@@ -129,6 +143,14 @@ const loadProductsToSelect = async (page = 1) => {
                 variants: cached || []
             };
         });
+
+        // Tải sẵn biến thể của các sản phẩm trên trang hiện tại để trạng thái checkbox của sản phẩm hiển thị chính xác ngay lập tức
+        await Promise.all(
+            productsList.value.map(async (p) => {
+                const variants = await loadProductVariants(p);
+                p.variants = variants;
+            })
+        );
     } catch (e) {
         console.error('Lỗi khi tải danh sách sản phẩm:', e);
         productsList.value = [];
@@ -175,14 +197,18 @@ const toggleExpand = async (productId) => {
 
 // Kiểm tra trạng thái chọn của sản phẩm
 const isProductSelected = (product) => {
-    const variants = variantsCache.value.get(product.id);
+    const variants = variantsCache.value.get(product.id) || product.variants;
     if (!variants || variants.length === 0) return false;
     return variants.every((v) => selectedVariantsMap.value.has(v.id));
 };
 
 const isProductIndeterminate = (product) => {
-    const variants = variantsCache.value.get(product.id);
-    if (!variants || variants.length === 0) return false;
+    const variants = variantsCache.value.get(product.id) || product.variants;
+    if (!variants || variants.length === 0) {
+        return Array.from(selectedVariantsMap.value.values()).some(
+            (v) => (v.idSanPham || v.sanPhamId) === product.id
+        );
+    }
     const selectedCount = variants.filter((v) => selectedVariantsMap.value.has(v.id)).length;
     return selectedCount > 0 && selectedCount < variants.length;
 };
@@ -446,9 +472,6 @@ const init = async () => {
         sizes.value = (sizeData?.content || sizeData || []).map((s) => s.ten);
         materials.value = (materialData?.content || materialData || []).map((m) => m.ten);
 
-        // Nạp trang đầu tiên của bảng sản phẩm chọn (chỉ nạp 5-10 SP, cực nhẹ)
-        await loadProductsToSelect(1);
-
         if (isEditMode.value || isDetailView.value) {
             const [data, applied] = await Promise.all([
                 dichVuDotGiamGia.layChiTietDotGiamGia(route.params.id),
@@ -474,6 +497,9 @@ const init = async () => {
                 console.error('Lỗi khi lấy mã', e);
             }
         }
+
+        // Nạp trang đầu tiên của bảng sản phẩm chọn sau khi đã có dữ liệu biến thể đã chọn
+        await loadProductsToSelect(1);
     } catch (e) {
         console.error('Error during init:', e);
         addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.LOAD_DATA, color: 'error' });
@@ -672,24 +698,14 @@ onMounted(init);
 
                             <div class="mb-5">
                                 <div class="field-label">Mức giảm giá (%) <span class="text-error">*</span></div>
-                                <v-text-field
-                                    :model-value="form.soTienGiam"
-                                    @update:model-value="
-                                        (val) => {
-                                            let v = Number(val);
-                                            form.soTienGiam = isNaN(v) ? null : v < 0 ? 0 : v > 100 ? 100 : v;
-                                        }
-                                    "
+                                <FormattedPercentField
+                                    v-model="form.soTienGiam"
                                     :readonly="isDetailView"
-                                    type="number"
-                                    suffix="%"
                                     placeholder="0"
                                     variant="outlined"
                                     density="compact"
-                                    min="1"
-                                    max="100"
                                     hide-details
-                                ></v-text-field>
+                                />
                             </div>
 
                             <div class="mb-5">
@@ -697,6 +713,7 @@ onMounted(init);
                                 <AppDatePicker
                                     v-model="form.ngayBatDau"
                                     :disabled="isDetailView"
+                                    disable-past
                                     enable-time-picker
                                     placeholder="Chọn ngày bắt đầu"
                                 />
@@ -707,6 +724,8 @@ onMounted(init);
                                 <AppDatePicker
                                     v-model="form.ngayKetThuc"
                                     :disabled="isDetailView"
+                                    disable-past
+                                    :min-date="form.ngayBatDau"
                                     enable-time-picker
                                     placeholder="Chọn ngày kết thúc"
                                 />
@@ -861,25 +880,27 @@ onMounted(init);
                                                     {{ variant.ma }}
                                                 </td>
                                                 <td class="data-cell text-center text-slate-500">
-                                                    {{ variant.color }} - {{ variant.kichCo }} - {{ variant.chatLieu }}
+                                                    <div class="d-inline-flex align-center justify-center ga-2">
+                                                        <div
+                                                            class="color-dot"
+                                                            :style="{
+                                                                backgroundColor: getVariantColorHex(variant),
+                                                                border: '1px solid rgba(0, 0, 0, 0.15)'
+                                                            }"
+                                                        ></div>
+                                                        <span>{{ variant.color }} - {{ variant.kichCo }} - {{ variant.chatLieu }}</span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </template>
                                     </template>
+                                    <TableEmptyState
+                                        v-if="!selectionLoading && productsList.length === 0"
+                                        :colspan="4"
+                                        text="Không tìm thấy sản phẩm nào."
+                                    />
                                 </tbody>
                             </table>
-
-                            <div
-                                v-if="!selectionLoading && productsList.length === 0"
-                                class="d-flex flex-column align-center justify-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2 border-t"
-                            >
-                                <v-icon icon="mdi-package-variant" size="48" style="color: #94a3b8 !important; opacity: 0.6" class="mb-3" />
-                                <span
-                                    class="text-slate-500 text-center"
-                                    style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block"
-                                    >Không tìm thấy sản phẩm nào.</span
-                                >
-                            </div>
                         </div>
 
                         <AdminPagination
@@ -1116,34 +1137,21 @@ onMounted(init);
                                                 <div
                                                     class="color-dot"
                                                     :style="{
-                                                        backgroundColor:
-                                                            item.color === 'Xanh dương'
-                                                                ? '#3b82f6'
-                                                                : item.color === 'Xanh lá'
-                                                                  ? '#22c55e'
-                                                                  : item.color === 'Đen'
-                                                                    ? '#000'
-                                                                    : '#ccc'
+                                                        backgroundColor: getVariantColorHex(item),
+                                                        border: '1px solid rgba(0, 0, 0, 0.15)'
                                                     }"
                                                 ></div>
                                                 <span>{{ item.color }}</span>
                                             </div>
                                         </td>
                                     </tr>
+                                    <TableEmptyState
+                                        v-if="filteredSelectedDetails.length === 0"
+                                        :colspan="10"
+                                        text="Không tìm thấy sản phẩm nào phù hợp."
+                                    />
                                 </tbody>
                             </table>
-
-                            <div
-                                v-if="filteredSelectedDetails.length === 0"
-                                class="d-flex flex-column align-center justify-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2 border-t"
-                            >
-                                <v-icon icon="mdi-package-variant" size="48" style="color: #94a3b8 !important; opacity: 0.6" class="mb-3" />
-                                <span
-                                    class="text-slate-500 text-center"
-                                    style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block"
-                                    >Không tìm thấy sản phẩm nào phù hợp.</span
-                                >
-                            </div>
                         </div>
 
                         <AdminPagination

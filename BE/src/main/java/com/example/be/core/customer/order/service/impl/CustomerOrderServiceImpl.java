@@ -166,8 +166,10 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             tongTien = tongTien.add(giaMap.get(ctsp.getId()).multiply(BigDecimal.valueOf(soLuong)));
         }
 
-        // 4. Tính phí vận chuyển
-        BigDecimal phiVanChuyen = tongTien.compareTo(FREE_SHIP_THRESHOLD) >= 0 ? BigDecimal.ZERO : PHI_VAN_CHUYEN;
+        // 4. Tính phí vận chuyển (lấy phí GHN từ client hoặc mặc định nếu không truyền)
+        BigDecimal phiVanChuyen = (request.getPhiVanChuyen() != null && request.getPhiVanChuyen().compareTo(BigDecimal.ZERO) >= 0)
+                ? request.getPhiVanChuyen()
+                : PHI_VAN_CHUYEN;
 
         // 5. Áp dụng voucher (nếu có)
         BigDecimal tienGiam = BigDecimal.ZERO;

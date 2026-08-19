@@ -25,8 +25,8 @@
             </div>
         </div>
 
-        <!-- Voucher Selection & Ticket Section -->
-        <div class="d-flex flex-column mb-3 ga-2">
+        <!-- Voucher Selection & Ticket Section (Chỉ hiển thị khi đã chọn sản phẩm) -->
+        <div v-if="hasProducts" class="d-flex flex-column mb-3 ga-2">
             <div class="d-flex align-center">
                 <span class="font-weight-semibold" style="font-size: 11px !important; letter-spacing: 0.5px; color: #2b2a2a !important"
                     >MÃ ƯU ĐÃI / GIẢM GIÁ</span
@@ -330,9 +330,12 @@ const noVoucherMessage = computed(() => {
     return message.toLowerCase().includes('chưa có') ? message : 'Chưa có phiếu giảm giá phù hợp với đơn hàng hiện tại.';
 });
 
-const upsellSuggestion = computed(() =>
-    findBestVoucherUpsell(props.vouchers, props.voucherBaseAmount ?? props.totalRawAmount, Date.now(), activeVoucher.value)
-);
+const hasProducts = computed(() => (props.voucherBaseAmount ?? props.totalRawAmount) > 0);
+
+const upsellSuggestion = computed(() => {
+    if (!hasProducts.value) return null;
+    return findBestVoucherUpsell(props.vouchers, props.voucherBaseAmount ?? props.totalRawAmount, Date.now(), activeVoucher.value);
+});
 
 const upsellVoucherLabel = computed(() => {
     const voucher = upsellSuggestion.value?.voucher;

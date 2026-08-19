@@ -20,9 +20,15 @@ public class TinNhanResponse {
     @JsonProperty("staffId")
     private String idNhanVien; // Assigned staff for customer chat or sender for internal
     
+    @JsonProperty("staffUsername")
+    private String tenTaiKhoanNhanVien;
+
     @JsonProperty("secondStaffId")
     private String idNhanVienNhan; // Receiver for internal chat
     
+    @JsonProperty("secondStaffUsername")
+    private String tenTaiKhoanNhanVienNhan;
+
     @JsonProperty("sender")
     private String nguoiGui; // customer, staff, system
     

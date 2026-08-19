@@ -75,7 +75,11 @@ public class AdminChatServiceImpl implements AdminChatService {
         
         if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
             NhanVien partner = null;
-            if (c.getNhanVienNhan() != null && !c.getNhanVienNhan().getTenTaiKhoan().equals(currentUsername)) {
+            if (c.getNhanVien() != null && c.getNhanVien().getTenTaiKhoan().equals(currentUsername)) {
+                partner = c.getNhanVienNhan();
+            } else if (c.getNhanVienNhan() != null && c.getNhanVienNhan().getTenTaiKhoan().equals(currentUsername)) {
+                partner = c.getNhanVien();
+            } else if (c.getNhanVienNhan() != null) {
                 partner = c.getNhanVienNhan();
             } else if (c.getNhanVien() != null) {
                 partner = c.getNhanVien();
@@ -95,11 +99,19 @@ public class AdminChatServiceImpl implements AdminChatService {
         }
         
         if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
-            if (c.getNhanVienNhan() != null && !c.getNhanVienNhan().getTenTaiKhoan().equals(currentUsername)) {
+            boolean isSender = c.getNhanVien() != null && c.getNhanVien().getTenTaiKhoan().equals(currentUsername);
+            boolean isReceiver = c.getNhanVienNhan() != null && c.getNhanVienNhan().getTenTaiKhoan().equals(currentUsername);
+            
+            if (isSender && c.getNhanVienNhan() != null) {
                 return c.getNhanVienNhan().getTen();
-            }
-            if (c.getNhanVien() != null) {
+            } else if (isReceiver && c.getNhanVien() != null) {
                 return c.getNhanVien().getTen();
+            } else if (c.getNhanVien() != null && c.getNhanVienNhan() != null) {
+                return c.getNhanVien().getTen() + " & " + c.getNhanVienNhan().getTen();
+            } else if (c.getNhanVien() != null) {
+                return c.getNhanVien().getTen();
+            } else if (c.getNhanVienNhan() != null) {
+                return c.getNhanVienNhan().getTen();
             }
             return ChatConstants.DEFAULT_STAFF_NAME;
         }
@@ -160,28 +172,58 @@ public class AdminChatServiceImpl implements AdminChatService {
                     
                     return false;
                 })
-                .map(c -> AdminChatResponse.builder()
-                        .id(c.getId())
-                        .ten(getConversationName(c, currentUsername))
-                        .tinNhanCuoi((c.getDanhSachTinNhan() == null || c.getDanhSachTinNhan().isEmpty()) ? "" : c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1).getNoiDung())
-                        .anhDaiDien(getAvatarUrl(c, currentUsername))
-                        .thoiGian(formatTime(c.getNgayCapNhat()))
-                        .chuaDoc(0)
-                        .daChapNhan(c.getDaChapNhan())
-                        .loaiHoiThoai(c.getLoaiHoiThoai() != null ? c.getLoaiHoiThoai().name() : CuocHoiThoai.LoaiHoiThoai.CUSTOMER.name())
-                        .trangThaiHoiThoai(c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name())
-                        .build())
+                .map(c -> {
+                    String partnerStaffId = null;
+                    String partnerUsername = null;
+                    if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
+                        if (c.getNhanVien() != null && c.getNhanVien().getTenTaiKhoan().equals(currentUsername)) {
+                            if (c.getNhanVienNhan() != null) {
+                                partnerStaffId = c.getNhanVienNhan().getId();
+                                partnerUsername = c.getNhanVienNhan().getTenTaiKhoan();
+                            }
+                        } else if (c.getNhanVienNhan() != null && c.getNhanVienNhan().getTenTaiKhoan().equals(currentUsername)) {
+                            if (c.getNhanVien() != null) {
+                                partnerStaffId = c.getNhanVien().getId();
+                                partnerUsername = c.getNhanVien().getTenTaiKhoan();
+                            }
+                        } else {
+                            if (c.getNhanVienNhan() != null) {
+                                partnerStaffId = c.getNhanVienNhan().getId();
+                                partnerUsername = c.getNhanVienNhan().getTenTaiKhoan();
+                            }
+                        }
+                    }
+
+                    return AdminChatResponse.builder()
+                            .id(c.getId())
+                            .ten(getConversationName(c, currentUsername))
+                            .tinNhanCuoi((c.getDanhSachTinNhan() == null || c.getDanhSachTinNhan().isEmpty()) ? "" : c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1).getNoiDung())
+                            .anhDaiDien(getAvatarUrl(c, currentUsername))
+                            .thoiGian(formatTime(c.getNgayCapNhat()))
+                            .chuaDoc(0)
+                            .daChapNhan(c.getDaChapNhan())
+                            .loaiHoiThoai(c.getLoaiHoiThoai() != null ? c.getLoaiHoiThoai().name() : CuocHoiThoai.LoaiHoiThoai.CUSTOMER.name())
+                            .trangThaiHoiThoai(c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name())
+                            .idNhanVien(c.getNhanVien() != null ? c.getNhanVien().getId() : null)
+                            .tenTaiKhoanNhanVien(c.getNhanVien() != null ? c.getNhanVien().getTenTaiKhoan() : null)
+                            .idNhanVienNhan(c.getNhanVienNhan() != null ? c.getNhanVienNhan().getId() : null)
+                            .tenTaiKhoanNhanVienNhan(c.getNhanVienNhan() != null ? c.getNhanVienNhan().getTenTaiKhoan() : null)
+                            .idNhanVienDoiTac(partnerStaffId)
+                            .tenTaiKhoanDoiTac(partnerUsername)
+                            .build();
+                })
                 .collect(Collectors.toCollection(ArrayList::new));
 
         // For INTERNAL chat, we want to see ALL staff except current user (as potential new chats)
-        Set<String> existingInternalNames = allConvs.stream()
+        Set<String> existingInternalPartnerIds = allConvs.stream()
                 .filter(c -> CuocHoiThoai.LoaiHoiThoai.INTERNAL.name().equals(c.getLoaiHoiThoai()))
-                .map(AdminChatResponse::getTen)
+                .map(AdminChatResponse::getIdNhanVienDoiTac)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
         List<AdminChatResponse> allStaff = nhanVienRepository.findAll().stream()
                 .filter(nv -> nv.getTenTaiKhoan() != null && !nv.getTenTaiKhoan().equals(currentUsername))
-                .filter(nv -> !existingInternalNames.contains(nv.getTen()))
+                .filter(nv -> !existingInternalPartnerIds.contains(nv.getId()))
                 .map(nv -> AdminChatResponse.builder()
                         .id("NEW_INTERNAL_" + nv.getId())
                         .ten(nv.getTen())
@@ -192,6 +234,8 @@ public class AdminChatServiceImpl implements AdminChatService {
                         .daChapNhan(true)
                         .loaiHoiThoai(CuocHoiThoai.LoaiHoiThoai.INTERNAL.name())
                         .trangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name())
+                        .idNhanVienDoiTac(nv.getId())
+                        .tenTaiKhoanDoiTac(nv.getTenTaiKhoan())
                         .build())
                 .collect(Collectors.toList());
         
@@ -233,6 +277,10 @@ public class AdminChatServiceImpl implements AdminChatService {
                         .id(m.getId())
                         .idCuocHoiThoai(m.getCuocHoiThoai().getId())
                         .maPhien(m.getCuocHoiThoai().getMaPhien())
+                        .idNhanVien(m.getCuocHoiThoai().getNhanVien() != null ? m.getCuocHoiThoai().getNhanVien().getId() : null)
+                        .tenTaiKhoanNhanVien(m.getCuocHoiThoai().getNhanVien() != null ? m.getCuocHoiThoai().getNhanVien().getTenTaiKhoan() : null)
+                        .idNhanVienNhan(m.getCuocHoiThoai().getNhanVienNhan() != null ? m.getCuocHoiThoai().getNhanVienNhan().getId() : null)
+                        .tenTaiKhoanNhanVienNhan(m.getCuocHoiThoai().getNhanVienNhan() != null ? m.getCuocHoiThoai().getNhanVienNhan().getTenTaiKhoan() : null)
                         .nguoiGui(m.getLoaiNguoiGui())
                         .noiDung(m.getNoiDung())
                         .hinhAnh(m.getHinhAnh())
@@ -462,8 +510,10 @@ public class AdminChatServiceImpl implements AdminChatService {
                 .id(savedMessage.getId())
                 .idCuocHoiThoai(conversation.getId())
                 .maPhien(conversation.getMaPhien())
-                .idNhanVien(conversation.getNhanVien() != null ? conversation.getNhanVien().getTenTaiKhoan() : null)
-                .idNhanVienNhan(conversation.getNhanVienNhan() != null ? conversation.getNhanVienNhan().getTenTaiKhoan() : null)
+                .idNhanVien(conversation.getNhanVien() != null ? conversation.getNhanVien().getId() : null)
+                .tenTaiKhoanNhanVien(conversation.getNhanVien() != null ? conversation.getNhanVien().getTenTaiKhoan() : null)
+                .idNhanVienNhan(conversation.getNhanVienNhan() != null ? conversation.getNhanVienNhan().getId() : null)
+                .tenTaiKhoanNhanVienNhan(conversation.getNhanVienNhan() != null ? conversation.getNhanVienNhan().getTenTaiKhoan() : null)
                 .nguoiGui(senderType)
                 .noiDung(text)
                 .hinhAnh(imageUrl)
@@ -471,6 +521,13 @@ public class AdminChatServiceImpl implements AdminChatService {
                 .build();
 
         messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
+
+        // Phát thông báo cho tất cả client để đồng bộ danh sách hội thoại và tin nhắn mới
+        Map<String, String> notification = new HashMap<>();
+        notification.put("content", "NEW_MESSAGE");
+        notification.put("conversationId", conversation.getId());
+        notification.put("timestamp", Instant.now().toString());
+        publishNotification(notification);
 
         log.info("Checking AI Trigger: senderType={}, isAccepted={}, convType={}", 
                 senderType, conversation.getDaChapNhan(), conversation.getLoaiHoiThoai());

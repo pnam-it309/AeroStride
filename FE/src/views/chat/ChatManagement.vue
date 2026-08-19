@@ -7,7 +7,7 @@ import { useNotificationStore } from '@/stores/notificationStore';
 import { useAuthStore } from '@/stores/authStore';
 import { CHAT_TYPES, CHAT_SENDER_TYPE, CHAT_STATUS, CHAT_TOPICS } from '@/constants/appConstants';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
-import { AdminConfirm } from '@/components/common';
+import { AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import { dichVuFile } from '@/services/core/dichVuFile';
 
 const notificationStore = useNotificationStore();
@@ -122,8 +122,14 @@ const fetchConversations = async (quiet = false) => {
         }
 
         if (activeChat.value && activeChat.value.id.startsWith('NEW_INTERNAL_')) {
+            const targetPartnerId = activeChat.value.id.replace('NEW_INTERNAL_', '');
             const realConv = customers.value.find(
-                (c) => c.type === CHAT_TYPES.INTERNAL && c.name === activeChat.value.name && !c.id.startsWith('NEW_INTERNAL_')
+                (c) =>
+                    c.type === CHAT_TYPES.INTERNAL &&
+                    !c.id.startsWith('NEW_INTERNAL_') &&
+                    (c.partnerStaffId === targetPartnerId ||
+                        c.partnerUsername === activeChat.value.partnerUsername ||
+                        c.name === activeChat.value.name)
             );
             if (realConv) {
                 activeChat.value = realConv;
@@ -216,7 +222,11 @@ const sendMessage = async () => {
 const selectChat = (customer) => {
     activeChat.value = customer;
     isAccepted.value = customer.isAccepted || false;
-    fetchMessages(customer.id);
+    if (customer.id.startsWith('NEW_INTERNAL_')) {
+        chatMessages.value = [];
+    } else {
+        fetchMessages(customer.id);
+    }
 };
 
 const acceptChat = async () => {
@@ -312,19 +322,32 @@ onMounted(() => {
 
             const currentUsername = authStore.user?.username;
             const isAdmin = authStore.isAdmin;
+
+            // Kiểm tra xem tin nhắn có thuộc về người dùng hiện tại không
             const isMyChat =
                 isAdmin ||
-                !data.staffId ||
+                (!data.staffUsername && !data.staffId) ||
+                data.staffUsername === currentUsername ||
+                data.secondStaffUsername === currentUsername ||
                 data.staffId === currentUsername ||
-                data.secondStaffId === currentUsername;
+                data.secondStaffId === currentUsername ||
+                data.sender === currentUsername;
 
             if (!isMyChat) return;
 
+            // Kiểm tra xem cuộc hội thoại có đang được mở không
             const isCurrentActive =
                 activeChat.value &&
                 (activeChat.value.id === data.conversationId ||
                     (activeChat.value.id.startsWith('NEW_INTERNAL_') &&
-                        (activeChat.value.id.includes(data.staffId) || activeChat.value.id.includes(data.secondStaffId))));
+                        (activeChat.value.id === `NEW_INTERNAL_${data.staffId}` ||
+                            activeChat.value.id === `NEW_INTERNAL_${data.secondStaffId}` ||
+                            activeChat.value.partnerStaffId === data.staffId ||
+                            activeChat.value.partnerStaffId === data.secondStaffId ||
+                            activeChat.value.partnerUsername === data.staffUsername ||
+                            activeChat.value.partnerUsername === data.secondStaffUsername ||
+                            activeChat.value.partnerUsername === data.sender ||
+                            activeChat.value.name === data.sender)));
 
             if (isCurrentActive) {
                 if (activeChat.value.id.startsWith('NEW_INTERNAL_')) {
@@ -355,6 +378,12 @@ onMounted(() => {
 </script>
 
 <template>
+    <AdminBreadcrumbs
+        :items="[
+            { title: 'Quản lý chăm sóc khách hàng', disabled: false, href: '#' },
+            { title: 'Quản lý tin nhắn', disabled: true }
+        ]"
+    />
     <v-container fluid class="chat-page pa-0 fill-height">
         <v-row no-gutters class="fill-height">
             <!-- Sidebar -->

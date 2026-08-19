@@ -29,4 +29,22 @@ public class AdminChatResponse {
     
     @JsonProperty("status")
     private String trangThaiHoiThoai; // PENDING, ACTIVE, CLOSED
+
+    @JsonProperty("staffId")
+    private String idNhanVien;
+
+    @JsonProperty("staffUsername")
+    private String tenTaiKhoanNhanVien;
+
+    @JsonProperty("secondStaffId")
+    private String idNhanVienNhan;
+
+    @JsonProperty("secondStaffUsername")
+    private String tenTaiKhoanNhanVienNhan;
+
+    @JsonProperty("partnerStaffId")
+    private String idNhanVienDoiTac;
+
+    @JsonProperty("partnerUsername")
+    private String tenTaiKhoanDoiTac;
 }

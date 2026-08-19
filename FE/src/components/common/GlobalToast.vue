@@ -5,15 +5,15 @@
         :timeout="toast.timeout"
         location="top right"
         class="premium-toast"
-        elevation="24"
+        elevation="12"
     >
-        <div class="d-flex align-center">
-            <v-icon :icon="toast.icon" class="mr-3 text-white" size="24"></v-icon>
-            <span class="text-white font-weight-bold">{{ toast.message }}</span>
+        <div class="d-flex align-center cursor-pointer" style="cursor: pointer;" @click="toast.show = false">
+            <v-icon :icon="toast.icon" class="mr-3 text-white" size="22"></v-icon>
+            <span class="text-white font-weight-medium text-body-2">{{ toast.message }}</span>
         </div>
 
         <template v-slot:actions>
-            <v-btn variant="text" icon="mdi-close" color="white" @click="toast.show = false"></v-btn>
+            <v-btn variant="text" icon="mdi-close" size="small" color="white" @click="toast.show = false"></v-btn>
         </template>
     </v-snackbar>
 </template>

@@ -9,7 +9,7 @@ import { ref, reactive, watch } from 'vue';
  */
 export function useAdminTable(fetchFn, initialFilters = {}) {
     const items = ref([]);
-    const loading = ref(false);
+    const loading = ref(true);
     const pagination = ref({
         page: 1,
         size: 5,

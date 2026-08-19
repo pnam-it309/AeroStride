@@ -28,7 +28,7 @@ export const useNotifications = () => {
 
         // Use the passed color or default to primary
         let displayColor = notif.color || 'primary';
-        const defaultTimeout = displayColor === 'error' ? 6000 : displayColor === 'warning' ? 4000 : 2500;
+        const defaultTimeout = displayColor === 'error' ? 3000 : displayColor === 'warning' ? 2500 : 2000;
 
         // Show toast (snackbar) with default timeout
         toast.showToast(
