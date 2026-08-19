@@ -36,6 +36,17 @@ const estimatedDelivery = computed(() => {
 });
 
 onMounted(async () => {
+    // Nếu mở ra từ popup window, chuyển hướng tab chính và đóng popup window lập tức
+    if (window.opener && !window.opener.closed) {
+        try {
+            window.opener.location.href = window.location.href;
+            window.close();
+            return;
+        } catch (e) {
+            console.warn('Opener redirect warning:', e);
+        }
+    }
+
     try {
         if (route.query && route.query.vnp_ResponseCode) {
             try {

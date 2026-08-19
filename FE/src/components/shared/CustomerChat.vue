@@ -22,6 +22,7 @@ const isSending = ref(false);
 const lastSendTime = ref(0);
 const COOLDOWN_MS = 3000;
 const typingTimeout = ref(null);
+const customerUnreadCount = ref(0);
 
 // Inactivity timeout 2 phút (120s) cho khách chưa đăng nhập
 const GUEST_TIMEOUT_SECONDS = 120;
@@ -196,6 +197,7 @@ watch(
 
 watch(isOpen, (newVal) => {
     if (newVal) {
+        customerUnreadCount.value = 0;
         updateActivity();
         resetGuestInactivityTimer();
         scrollToBottom();
@@ -673,6 +675,9 @@ onMounted(() => {
                     clearTimeout(typingTimeout.value);
                     typingTimeout.value = null;
                 }
+                if (!isOpen.value) {
+                    customerUnreadCount.value++;
+                }
             }
 
             const parsed = {
@@ -826,7 +831,18 @@ const openChatImage = (url) => {
             @pointerdown="onPointerDown"
             @click="handleFabClick"
         >
-            <v-btn icon color="primary" size="large" elevation="8" class="chat-fab">
+            <v-badge
+                v-if="customerUnreadCount > 0"
+                :content="customerUnreadCount > 99 ? '99+' : customerUnreadCount"
+                color="error"
+                offset-x="4"
+                offset-y="4"
+            >
+                <v-btn icon color="primary" size="large" elevation="8" class="chat-fab">
+                    <v-icon size="26" color="white">mdi-message-text-outline</v-icon>
+                </v-btn>
+            </v-badge>
+            <v-btn v-else icon color="primary" size="large" elevation="8" class="chat-fab">
                 <v-icon size="26" color="white">mdi-message-text-outline</v-icon>
             </v-btn>
             <div class="chat-tooltip">Chat hỗ trợ trực tuyến!</div>

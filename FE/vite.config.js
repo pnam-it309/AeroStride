@@ -31,7 +31,7 @@ function optimizeTablerIcons() {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
-    const backendHost = env.BACKEND_HOST || 'localhost';
+    const backendHost = env.BACKEND_HOST || '127.0.0.1';
     const backendPort = env.BACKEND_PORT || '8080';
     const devPort = Number(env.FE_DEV_PORT) || 5173;
     const backendTarget = `http://${backendHost}:${backendPort}`;
@@ -130,7 +130,7 @@ export default defineConfig(({ mode }) => {
                     ws: true,
                     configure: (proxy) => {
                         proxy.on('error', (err) => {
-                            if (err.code === 'ECONNRESET') return;
+                            if (err.code === 'ECONNRESET' || err.code === 'ECONNREFUSED') return;
                             console.error('ws proxy error:', err);
                         });
                     }
@@ -142,7 +142,7 @@ export default defineConfig(({ mode }) => {
                     ws: true,
                     configure: (proxy) => {
                         proxy.on('error', (err) => {
-                            if (err.code === 'ECONNRESET') return;
+                            if (err.code === 'ECONNRESET' || err.code === 'ECONNREFUSED') return;
                             console.error('ws-chat proxy error:', err);
                         });
                     }

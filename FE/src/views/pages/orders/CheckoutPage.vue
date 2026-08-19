@@ -112,7 +112,7 @@ const onConfirmPaidOnline = async () => {
 
 const openVnPayGateway = () => {
     if (vnpayDialog.value.paymentUrl) {
-        window.open(vnpayDialog.value.paymentUrl, '_blank', 'width=800,height=600');
+        window.open(vnpayDialog.value.paymentUrl, 'vnpay_popup', 'width=850,height=650,top=100,left=200');
     }
 };
 
@@ -456,7 +456,7 @@ const handleCheckout = async () => {
                         amount: totalAmount.value,
                         orderId: createdOrder.id,
                         orderInfo: 'Thanh toan hoa don ' + (createdOrder.maHoaDon || createdOrder.id),
-                        returnUrl: `${window.location.origin}/order-success/${createdOrder.id}`
+                        returnUrl: `${window.location.origin}${PATH.ORDER_SUCCESS}/${createdOrder.id}`
                     };
                     const vnpData = await dichVuVnPay.createPaymentUrl(payload);
                     if (vnpData && vnpData.paymentUrl) {

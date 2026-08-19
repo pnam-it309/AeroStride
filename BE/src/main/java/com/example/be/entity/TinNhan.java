@@ -33,4 +33,7 @@ public class TinNhan extends PrimaryEntity {
     @Column(name = "hinh_anh", columnDefinition = "LONGTEXT")
     private String hinhAnh;
 
+    @Builder.Default
+    @Column(name = "da_doc")
+    private Boolean daDoc = false;
 }

@@ -7,7 +7,10 @@
  *            và in hóa đơn sau khi hoàn tất.
  */
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import api from '@/services/apiService';
+import { API_ADMIN } from '@/constants/apiPaths';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
+import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { dichVuVnPay } from './composables/dichVuVnPay.js';
 import { initializePendingOrders } from './posInitialization.js';
 import { useNotifications } from '@/services/notificationService';

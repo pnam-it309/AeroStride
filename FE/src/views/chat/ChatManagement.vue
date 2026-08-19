@@ -93,13 +93,27 @@ const activeCount = computed(() => stats.value.ACTIVE || 0);
 const pendingCount = computed(() => stats.value.PENDING || 0);
 const closedCount = computed(() => stats.value.CLOSED || 0);
 
+const allConversationsList = ref([]);
+
+const totalCustomerUnread = computed(() => {
+    return allConversationsList.value
+        .filter((c) => c.type === CHAT_TYPES.CUSTOMER)
+        .reduce((sum, c) => sum + (c.unread || 0), 0);
+});
+
+const totalInternalUnread = computed(() => {
+    return allConversationsList.value
+        .filter((c) => c.type === CHAT_TYPES.INTERNAL)
+        .reduce((sum, c) => sum + (c.unread || 0), 0);
+});
+
 // Lấy danh sách hội thoại từ Backend
 const fetchConversations = async (quiet = false) => {
     if (!quiet && customers.value.length === 0) {
         isLoading.value = true;
     }
     try {
-        const [convRes, statsRes] = await Promise.all([
+        const [convRes, allConvRes, statsRes] = await Promise.all([
             api.get(API_CHAT.CONVERSATIONS, {
                 params: {
                     type: chatType.value,
@@ -107,10 +121,12 @@ const fetchConversations = async (quiet = false) => {
                     search: searchQuery.value
                 }
             }),
+            api.get(API_CHAT.CONVERSATIONS),
             api.get(API_CHAT.CONVERSATIONS + '/stats')
         ]);
 
         customers.value = convRes.data?.data || [];
+        allConversationsList.value = allConvRes.data?.data || [];
         stats.value = statsRes.data?.data || { ACTIVE: 0, PENDING: 0, CLOSED: 0 };
 
         if (activeChat.value) {
@@ -213,9 +229,19 @@ const sendMessage = async () => {
     }
 };
 
-const selectChat = (customer) => {
+const selectChat = async (customer) => {
     activeChat.value = customer;
     isAccepted.value = customer.isAccepted || false;
+
+    if (customer.unread > 0 && !customer.id.startsWith('NEW_INTERNAL_')) {
+        customer.unread = 0;
+        try {
+            await api.post(API_CHAT.READ(customer.id));
+        } catch (e) {
+            console.error('Lỗi khi đánh dấu đã đọc:', e);
+        }
+    }
+
     fetchMessages(customer.id);
 };
 
@@ -370,10 +396,28 @@ onMounted(() => {
                     <v-tab :value="CHAT_TYPES.CUSTOMER">
                         <v-icon icon="mdi-account" size="18" class="mr-1"></v-icon>
                         Khách hàng
+                        <v-chip
+                            v-if="totalCustomerUnread > 0"
+                            color="error"
+                            size="x-small"
+                            class="ml-1 px-1 py-0 font-weight-bold"
+                            style="height: 18px; min-width: 18px;"
+                        >
+                            {{ totalCustomerUnread > 99 ? '99+' : totalCustomerUnread }}
+                        </v-chip>
                     </v-tab>
                     <v-tab :value="CHAT_TYPES.INTERNAL">
                         <v-icon icon="mdi-account-group" size="18" class="mr-1"></v-icon>
                         Nội bộ
+                        <v-chip
+                            v-if="totalInternalUnread > 0"
+                            color="error"
+                            size="x-small"
+                            class="ml-1 px-1 py-0 font-weight-bold"
+                            style="height: 18px; min-width: 18px;"
+                        >
+                            {{ totalInternalUnread > 99 ? '99+' : totalInternalUnread }}
+                        </v-chip>
                     </v-tab>
                 </v-tabs>
 
@@ -420,7 +464,19 @@ onMounted(() => {
                         @click="selectChat(c)"
                     >
                         <template v-slot:prepend>
-                            <v-avatar size="44" class="conv-avatar">
+                            <v-badge v-if="c.unread > 0" dot color="#e53e3e" offset-x="4" offset-y="4">
+                                <v-avatar size="44" class="conv-avatar">
+                                    <v-img
+                                        :src="
+                                            !c.avatar || c.avatar.length <= 2
+                                                ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'
+                                                : c.avatar
+                                        "
+                                        alt="avatar"
+                                    ></v-img>
+                                </v-avatar>
+                            </v-badge>
+                            <v-avatar v-else size="44" class="conv-avatar">
                                 <v-img
                                     :src="
                                         !c.avatar || c.avatar.length <= 2
@@ -431,12 +487,14 @@ onMounted(() => {
                                 ></v-img>
                             </v-avatar>
                         </template>
-                        <v-list-item-title class="conv-name">{{ c.name }}</v-list-item-title>
-                        <v-list-item-subtitle class="conv-msg">{{ c.lastMsg || 'Bắt đầu trò chuyện...' }}</v-list-item-subtitle>
+                        <v-list-item-title :class="['conv-name', { 'unread-bold': c.unread > 0 }]">{{ c.name }}</v-list-item-title>
+                        <v-list-item-subtitle :class="['conv-msg', { 'unread-bold-msg': c.unread > 0 }]">{{ c.lastMsg || 'Bắt đầu trò chuyện...' }}</v-list-item-subtitle>
                         <template v-slot:append>
-                            <div class="d-flex flex-column align-end">
-                                <span class="conv-time">{{ c.time }}</span>
-                                <v-badge v-if="c.unread" :content="c.unread" color="red" inline class="mt-1"></v-badge>
+                            <div class="d-flex flex-column align-end justify-center">
+                                <span :class="['conv-time', { 'unread-time': c.unread > 0 }]">{{ c.time }}</span>
+                                <span v-if="c.unread > 0" class="zalo-unread-badge mt-1">
+                                    {{ c.unread > 99 ? '99+' : c.unread }}
+                                </span>
                             </div>
                         </template>
                     </v-list-item>
@@ -1057,6 +1115,47 @@ $blue-bg: #f0f4f8;
     transition: opacity 0.2s;
     &:hover {
         opacity: 0.88;
+    }
+}
+
+/* ========== ZALO UNREAD BADGE ========== */
+.unread-bold {
+    font-weight: 700 !important;
+    color: #0f172a !important;
+}
+
+.unread-bold-msg {
+    font-weight: 600 !important;
+    color: #1e293b !important;
+}
+
+.unread-time {
+    color: #e53e3e !important;
+    font-weight: 600 !important;
+}
+
+.zalo-unread-badge {
+    background-color: #e53e3e;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    box-shadow: 0 2px 4px rgba(229, 62, 62, 0.4);
+    animation: pulse-badge 2s infinite ease-in-out;
+}
+
+@keyframes pulse-badge {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.08);
     }
 }
 </style>

@@ -26,4 +26,6 @@ public interface AdminChatService {
     String summarizeConversation(String id);
 
     List<String> getDynamicWelcomeSuggestions(String sessionId);
+
+    boolean markAsRead(String id);
 }

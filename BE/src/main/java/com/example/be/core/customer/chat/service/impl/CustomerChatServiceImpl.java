@@ -154,6 +154,11 @@ public class CustomerChatServiceImpl implements CustomerChatService {
 
         messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
 
+        Map<String, String> notification = new HashMap<>();
+        notification.put("content", "NEW_MESSAGE_" + conversation.getId());
+        notification.put("timestamp", Instant.now().toString());
+        publishNotification(notification);
+
         log.info("Checking AI Trigger: senderType={}, isAccepted={}, convType={}", 
                 senderType, conversation.getDaChapNhan(), conversation.getLoaiHoiThoai());
 

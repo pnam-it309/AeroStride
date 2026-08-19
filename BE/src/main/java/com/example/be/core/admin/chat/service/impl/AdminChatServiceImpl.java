@@ -160,17 +160,28 @@ public class AdminChatServiceImpl implements AdminChatService {
                     
                     return false;
                 })
-                .map(c -> AdminChatResponse.builder()
-                        .id(c.getId())
-                        .ten(getConversationName(c, currentUsername))
-                        .tinNhanCuoi((c.getDanhSachTinNhan() == null || c.getDanhSachTinNhan().isEmpty()) ? "" : c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1).getNoiDung())
-                        .anhDaiDien(getAvatarUrl(c, currentUsername))
-                        .thoiGian(formatTime(c.getNgayCapNhat()))
-                        .chuaDoc(0)
-                        .daChapNhan(c.getDaChapNhan())
-                        .loaiHoiThoai(c.getLoaiHoiThoai() != null ? c.getLoaiHoiThoai().name() : CuocHoiThoai.LoaiHoiThoai.CUSTOMER.name())
-                        .trangThaiHoiThoai(c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name())
-                        .build())
+                .map(c -> {
+                    int unread = 0;
+                    if (c.getId() != null) {
+                        if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
+                            unread = messageRepository.countUnreadForCustomerConv(c.getId(), ChatConstants.SENDER_TYPE_STAFF);
+                        } else {
+                            String currentNvId = currentNv != null ? currentNv.getId() : "";
+                            unread = messageRepository.countUnreadForInternalConv(c.getId(), currentNvId);
+                        }
+                    }
+                    return AdminChatResponse.builder()
+                            .id(c.getId())
+                            .ten(getConversationName(c, currentUsername))
+                            .tinNhanCuoi((c.getDanhSachTinNhan() == null || c.getDanhSachTinNhan().isEmpty()) ? "" : c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1).getNoiDung())
+                            .anhDaiDien(getAvatarUrl(c, currentUsername))
+                            .thoiGian(formatTime(c.getNgayCapNhat()))
+                            .chuaDoc(unread)
+                            .daChapNhan(c.getDaChapNhan())
+                            .loaiHoiThoai(c.getLoaiHoiThoai() != null ? c.getLoaiHoiThoai().name() : CuocHoiThoai.LoaiHoiThoai.CUSTOMER.name())
+                            .trangThaiHoiThoai(c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name())
+                            .build();
+                })
                 .collect(Collectors.toCollection(ArrayList::new));
 
         // For INTERNAL chat, we want to see ALL staff except current user (as potential new chats)
@@ -223,11 +234,12 @@ public class AdminChatServiceImpl implements AdminChatService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<TinNhanResponse> getMessagesByConversation(String id) {
         if (id.startsWith("NEW_INTERNAL_")) {
             return List.of(); 
         }
+        messageRepository.markAllAsReadByConversationId(id);
         return messageRepository.findByCuocHoiThoai_IdOrderByNgayTaoAsc(id).stream()
                 .map(m -> TinNhanResponse.builder()
                         .id(m.getId())
@@ -472,6 +484,11 @@ public class AdminChatServiceImpl implements AdminChatService {
 
         messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
 
+        Map<String, String> notification = new HashMap<>();
+        notification.put("content", "NEW_MESSAGE_" + conversation.getId());
+        notification.put("timestamp", Instant.now().toString());
+        publishNotification(notification);
+
         log.info("Checking AI Trigger: senderType={}, isAccepted={}, convType={}", 
                 senderType, conversation.getDaChapNhan(), conversation.getLoaiHoiThoai());
 
@@ -482,6 +499,22 @@ public class AdminChatServiceImpl implements AdminChatService {
             log.info("Triggering AI response for conversation: {}", conversation.getId());
             aiChatService.generateAndSendResponse(conversation, text);
         }
+    }
+
+    @Override
+    @Transactional
+    public boolean markAsRead(String id) {
+        if (id == null || id.startsWith("NEW_INTERNAL_")) {
+            return false;
+        }
+        messageRepository.markAllAsReadByConversationId(id);
+
+        Map<String, String> notification = new HashMap<>();
+        notification.put("content", "READ_CONVERSATION_" + id);
+        notification.put("timestamp", Instant.now().toString());
+        publishNotification(notification);
+
+        return true;
     }
 
     private void publishNotification(Map<String, String> notification) {

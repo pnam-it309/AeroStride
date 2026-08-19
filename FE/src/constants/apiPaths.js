@@ -63,6 +63,7 @@ export const API_CHAT = {
     MESSAGES: (id) => `${API_BASE.ADMIN}/chat/conversations/${id}/messages`,
     ACCEPT: (id) => `${API_BASE.ADMIN}/chat/conversations/${id}/accept`,
     CLOSE: (id) => `${API_BASE.ADMIN}/chat/conversations/${id}/close`,
+    READ: (id) => `${API_BASE.ADMIN}/chat/conversations/${id}/read`,
     DELETE: (id) => `${API_BASE.ADMIN}/chat/conversations/${id}`,
     SEND: `${API_BASE.ADMIN}/chat/send`,
     CUSTOMER_BASE: '/customer/chat',
