@@ -160,17 +160,48 @@ public class AdminChatServiceImpl implements AdminChatService {
                     
                     return false;
                 })
-                .map(c -> AdminChatResponse.builder()
-                        .id(c.getId())
-                        .ten(getConversationName(c, currentUsername))
-                        .tinNhanCuoi((c.getDanhSachTinNhan() == null || c.getDanhSachTinNhan().isEmpty()) ? "" : c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1).getNoiDung())
-                        .anhDaiDien(getAvatarUrl(c, currentUsername))
-                        .thoiGian(formatTime(c.getNgayCapNhat()))
-                        .chuaDoc(0)
-                        .daChapNhan(c.getDaChapNhan())
-                        .loaiHoiThoai(c.getLoaiHoiThoai() != null ? c.getLoaiHoiThoai().name() : CuocHoiThoai.LoaiHoiThoai.CUSTOMER.name())
-                        .trangThaiHoiThoai(c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name())
-                        .build())
+                .map(c -> {
+                    String role = "ROLE_NHAN_VIEN";
+                    if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
+                        NhanVien partner = null;
+                        if (c.getNhanVienNhan() != null && !c.getNhanVienNhan().getTenTaiKhoan().equals(currentUsername)) {
+                            partner = c.getNhanVienNhan();
+                        } else if (c.getNhanVien() != null) {
+                            partner = c.getNhanVien();
+                        }
+                        if (partner != null && VaiTro.isManagementRole(partner)) {
+                            role = "ROLE_QUAN_LY";
+                        }
+                    }
+                    int unreadCount = 0;
+                    if (c.getDanhSachTinNhan() != null && !c.getDanhSachTinNhan().isEmpty()) {
+                        TinNhan last = c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1);
+                        String lastSender = last.getLoaiNguoiGui();
+                        if (lastSender != null && !lastSender.equalsIgnoreCase(currentUsername) && !"staff".equalsIgnoreCase(lastSender)) {
+                            unreadCount = 1;
+                        }
+                    }
+                    Long lastMsgTimestamp = c.getNgayCapNhat() != null ? c.getNgayCapNhat() : 0L;
+                    if (c.getDanhSachTinNhan() != null && !c.getDanhSachTinNhan().isEmpty()) {
+                        TinNhan last = c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1);
+                        if (last.getNgayTao() != null) {
+                            lastMsgTimestamp = last.getNgayTao();
+                        }
+                    }
+                    return AdminChatResponse.builder()
+                            .id(c.getId())
+                            .ten(getConversationName(c, currentUsername))
+                            .tinNhanCuoi((c.getDanhSachTinNhan() == null || c.getDanhSachTinNhan().isEmpty()) ? "" : c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1).getNoiDung())
+                            .anhDaiDien(getAvatarUrl(c, currentUsername))
+                            .thoiGian(formatTime(c.getNgayCapNhat()))
+                            .chuaDoc(unreadCount)
+                            .daChapNhan(c.getDaChapNhan())
+                            .loaiHoiThoai(c.getLoaiHoiThoai() != null ? c.getLoaiHoiThoai().name() : CuocHoiThoai.LoaiHoiThoai.CUSTOMER.name())
+                            .trangThaiHoiThoai(c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name())
+                            .vaiTro(role)
+                            .timestamp(lastMsgTimestamp)
+                            .build();
+                })
                 .collect(Collectors.toCollection(ArrayList::new));
 
         // For INTERNAL chat, we want to see ALL staff except current user (as potential new chats)
@@ -192,6 +223,8 @@ public class AdminChatServiceImpl implements AdminChatService {
                         .daChapNhan(true)
                         .loaiHoiThoai(CuocHoiThoai.LoaiHoiThoai.INTERNAL.name())
                         .trangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name())
+                        .vaiTro(VaiTro.isManagementRole(nv) ? "ROLE_QUAN_LY" : "ROLE_NHAN_VIEN")
+                        .timestamp(0L)
                         .build())
                 .collect(Collectors.toList());
         

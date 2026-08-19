@@ -593,9 +593,12 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-:deep(.compact-input) .v-field__input,
-:deep(.compact-input) input,
-:deep(.compact-input) input::placeholder {
+:deep(input),
+:deep(.v-field__input),
+:deep(.v-select__selection),
+:deep(.v-select__selection-text),
+:deep(.v-field),
+:deep(input::placeholder) {
     font-size: 13px !important;
 }
 

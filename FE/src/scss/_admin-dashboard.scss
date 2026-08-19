@@ -2,6 +2,23 @@
     height: 100%;
     overflow-y: auto !important;
     background: #f6f7fb;
+
+    input,
+    .v-field__input,
+    .v-select__selection,
+    .v-select__selection-text,
+    .v-field,
+    input::placeholder {
+        font-size: 13px !important;
+    }
+}
+
+.v-overlay-container {
+    .v-list-item,
+    .v-list-item-title,
+    .v-list-item__content {
+        font-size: 13px !important;
+    }
 }
 
 .stats-shell {
