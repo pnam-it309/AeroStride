@@ -291,7 +291,7 @@ onMounted(() => loadCampaigns());
                     class="admin-btn-export mr-2"
                     @click="handleExport"
                 >
-                    Tải Excel
+                    Xuất Excel
                 </v-btn>
             </template>
             <template #row="{ item, index }">

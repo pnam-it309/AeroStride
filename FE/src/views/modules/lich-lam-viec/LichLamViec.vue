@@ -1098,7 +1098,7 @@ onMounted(() => {
                             Xếp ca tự động
                         </v-btn>
                         <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-export" @click="handleDownloadTemplate">
-                            Tải Excel
+                            Xuất Excel
                         </v-btn>
                         <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-sky" @click="handleImport">
                             Nhập Excel
