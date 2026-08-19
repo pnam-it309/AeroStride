@@ -48,7 +48,7 @@ public class AdminDanhGiaController {
     }
 
     @PutMapping("/config")
-    @PreAuthorize(VaiTro.PRE_AUTH_ADMIN)
+    @PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
     public ResponseEntity<ApiResponse<AdminDanhGiaConfigResponse>> updateConfig(@RequestBody Map<String, Boolean> payload) {
         boolean autoApprove = payload != null && Boolean.TRUE.equals(payload.get("autoApprove"));
         AdminDanhGiaConfigResponse config = service.setAutoApprove(autoApprove);
