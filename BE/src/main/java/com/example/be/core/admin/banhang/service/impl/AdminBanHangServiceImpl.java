@@ -180,10 +180,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         // Don gia luu vao hoa don chi tiet la gia sau dot giam gia tai thoi diem them vao gio.
         BigDecimal effectivePrice = getEffectiveVariantPrice(ctsp);
         BigDecimal basePrice = ctsp.getGiaBan() != null ? ctsp.getGiaBan() : effectivePrice;
-        
+
         boolean priceChanged = false;
         String priceChangeMessage = null;
-        
+
         if (!existingItems.isEmpty()) {
             java.util.Optional<HoaDonChiTiet> samePriceItem = existingItems.stream()
                     .filter(item -> item.getDonGia() != null && item.getDonGia().compareTo(effectivePrice) == 0)
@@ -198,12 +198,12 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 // Giá đã bị thay đổi: lấy giá trước đó làm giaCu và tạo bản ghi mới
                 HoaDonChiTiet previousItem = existingItems.get(existingItems.size() - 1);
                 BigDecimal oldPrice = previousItem.getDonGia();
-                
+
                 priceChanged = true;
-                priceChangeMessage = String.format("Giá sản phẩm %s đã đổi từ %s thành %s", 
+                priceChangeMessage = String.format("Giá sản phẩm %s đã đổi từ %s thành %s",
                     ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham(),
                     formatCurrencyVND(oldPrice), formatCurrencyVND(effectivePrice));
-                
+
                 HoaDonChiTiet newHdct = HoaDonChiTiet.builder()
                         .hoaDon(hoaDon)
                         .chiTietSanPham(ctsp)
@@ -370,14 +370,14 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         BigDecimal tongTienThucTe = BigDecimal.ZERO;
         for (HoaDonChiTiet detail : details) {
             ChiTietSanPham ctsp = detail.getChiTietSanPham();
-            if (ctsp == null 
-                    || Boolean.TRUE.equals(ctsp.getXoaMem()) 
+            if (ctsp == null
+                    || Boolean.TRUE.equals(ctsp.getXoaMem())
                     || (ctsp.getTrangThai() != null && ctsp.getTrangThai() != TrangThai.DANG_HOAT_DONG)) {
                 String tenSP = ctsp != null && ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : "trong giỏ hàng";
                 throw new BusinessException(String.format("Không thể thanh toán vì sản phẩm '%s' đã ngừng hoạt động.", tenSP));
             }
-            if (ctsp.getSanPham() != null 
-                    && (Boolean.TRUE.equals(ctsp.getSanPham().getXoaMem()) 
+            if (ctsp.getSanPham() != null
+                    && (Boolean.TRUE.equals(ctsp.getSanPham().getXoaMem())
                     || (ctsp.getSanPham().getTrangThai() != null && ctsp.getSanPham().getTrangThai() != TrangThai.DANG_HOAT_DONG))) {
                 throw new BusinessException(String.format("Không thể thanh toán vì sản phẩm '%s' đã ngừng hoạt động.", ctsp.getSanPham().getTen()));
             }
@@ -391,7 +391,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         if (request.getIdPhieuGiamGia() != null && !request.getIdPhieuGiamGia().isEmpty()) {
             PhieuGiamGia v = phieuGiamGiaRepository.findById(request.getIdPhieuGiamGia()).orElse(null);
             long currentTime = System.currentTimeMillis();
-            boolean isValidVoucher = v != null 
+            boolean isValidVoucher = v != null
                     && TrangThai.DANG_HOAT_DONG.equals(v.getTrangThai())
                     && (v.getNgayBatDau() == null || currentTime >= v.getNgayBatDau())
                     && (v.getNgayKetThuc() == null || currentTime <= v.getNgayKetThuc())
@@ -578,7 +578,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             diaChiRepository.save(address);
         });
 
-        DiaChi diaChi = DiaChi.builder()
+        DiaChi diaChi = DiaChi.builder  ()
                 .khachHang(hd.getKhachHang())
                 .tenNguoiNhan(tenNguoiNhan)
                 .sdtNguoiNhan(sdtNguoiNhan)
@@ -748,9 +748,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         if (total == null) total = BigDecimal.ZERO;
 
         BigDecimal eligibleDiscount = bestVoucher != null ? getPotentialDiscount(bestVoucher, total) : BigDecimal.ZERO;
-        
+
         List<PhieuGiamGia> allVouchers = phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG);
-        
+
         PhieuGiamGia nextBest = null;
         BigDecimal maxPotentialDiscount = eligibleDiscount;
         BigDecimal bestMinOrder = BigDecimal.valueOf(Long.MAX_VALUE);
@@ -827,7 +827,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     private ChiTietSanPham deductStock(String variantId, int qty, String errorMessage) {
         ChiTietSanPham ctsp = chiTietSanPhamRepository.findByIdWithPessimisticLock(variantId)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
-        
+
         if (Boolean.TRUE.equals(ctsp.getXoaMem()) || (ctsp.getTrangThai() != null && ctsp.getTrangThai() != TrangThai.DANG_HOAT_DONG)) {
             throw new BusinessException("Sản phẩm / biến thể này đã ngừng hoạt động.");
         }
@@ -852,7 +852,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     /** Cap nhat tong tien hoa don moi khi gio hang/voucher thay doi. */
     private void updateHoaDonTotals(HoaDon hd, boolean autoSelectBestVoucher) {
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
-        
+
         BigDecimal total = details.stream()
                 .map(d -> d.getDonGia().multiply(BigDecimal.valueOf(d.getSoLuong())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -992,17 +992,17 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         BigDecimal tienGiamGiaPhieu = tongTien.subtract(tongTienSauGiam);
         BigDecimal phiVanChuyen = hd.getPhiVanChuyen() != null ? hd.getPhiVanChuyen() : BigDecimal.ZERO;
         BigDecimal thanhTien = tongTienSauGiam.add(phiVanChuyen);
-        
+
         // --- VOUCHER SUGGESTION LOGIC ---
         String bestVoucherId = null;
         String voucherSuggestionText = "";
         String betterVoucherSuggestionText = "";
         Boolean canApplySuggestedVoucher = false;
-        
-        PhieuGiamGia appliedVoucher = hd.getPhieuGiamGia() != null 
-                ? phieuGiamGiaRepository.findById(hd.getPhieuGiamGia().getId()).orElse(null) 
+
+        PhieuGiamGia appliedVoucher = hd.getPhieuGiamGia() != null
+                ? phieuGiamGiaRepository.findById(hd.getPhieuGiamGia().getId()).orElse(null)
                 : null;
-        
+
         if (!chiTietList.isEmpty()) {
             PhieuGiamGia bestVoucher = getBestVoucher(hd.getId());
 
@@ -1022,7 +1022,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                     voucherSuggestionText = "Chưa có phiếu giảm giá phù hợp cho đơn hiện tại.";
                 }
             }
-            
+
             PhieuGiamGia nextBetterVoucher = getNextBetterVoucher(hd, bestVoucher);
             if (nextBetterVoucher != null) {
                 BigDecimal minVal = nextBetterVoucher.getDonHangToiThieu() != null ? nextBetterVoucher.getDonHangToiThieu() : BigDecimal.ZERO;
@@ -1082,40 +1082,40 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     public List<com.example.be.core.admin.banhang.model.response.ProductSuggestionResponse> getProductSuggestions(String idHoaDon) {
         HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
-        
+
         BigDecimal currentTotal = hoaDon.getTongTien() != null ? hoaDon.getTongTien() : BigDecimal.ZERO;
-        
+
         // Logic gợi ý sản phẩm: Tìm sản phẩm có đợt giảm giá đang hoạt động
         // mà nếu thêm vào sẽ đạt điều kiện giảm giá tốt hơn
         List<com.example.be.core.admin.banhang.model.response.ProductSuggestionResponse> suggestions = java.util.Collections.emptyList();
-        
+
         // Lấy danh sách sản phẩm có đợt giảm giá đang hoạt động
         long currentTime = System.currentTimeMillis();
         List<ChiTietDotGiamGia> activeDiscounts = chiTietDotGiamGiaRepository.findActiveDiscounts(currentTime);
-        
+
         if (activeDiscounts == null || activeDiscounts.isEmpty() || currentTotal.compareTo(BigDecimal.ZERO) == 0) {
             return suggestions;
         }
-        
+
         // Tìm sản phẩm phù hợp để gợi ý (đơn giản hóa: lấy sản phẩm đầu tiên có giảm giá)
         for (ChiTietDotGiamGia discount : activeDiscounts) {
             ChiTietSanPham variant = discount.getChiTietSanPham();
-            if (variant != null && variant.getSanPham() != null 
+            if (variant != null && variant.getSanPham() != null
                     && variant.getSanPham().getTrangThai() == TrangThai.DANG_HOAT_DONG) {
-                
+
                 BigDecimal giaBan = variant.getGiaBan();
                 DotGiamGia dotGiamGia = discount.getDotGiamGia();
-                
+
                 if (giaBan != null && dotGiamGia != null) {
                     BigDecimal soTienGiam = dotGiamGia.getSoTienGiam();
                     Integer phanTramGiam = 0;
-                    
+
                     // Tính % giảm giá dựa trên số tiền giảm
                     if (soTienGiam != null && giaBan.compareTo(BigDecimal.ZERO) > 0) {
                         phanTramGiam = soTienGiam.multiply(BigDecimal.valueOf(100))
                                 .divide(giaBan, 0, java.math.RoundingMode.HALF_UP).intValue();
                     }
-                    
+
                     if (soTienGiam != null && soTienGiam.compareTo(BigDecimal.ZERO) > 0) {
                         suggestions = java.util.Collections.singletonList(
                             com.example.be.core.admin.banhang.model.response.ProductSuggestionResponse.builder()
@@ -1131,7 +1131,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 }
             }
         }
-        
+
         return suggestions;
     }
 

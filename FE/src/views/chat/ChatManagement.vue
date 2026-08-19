@@ -619,14 +619,13 @@ const pendingCount = computed(() => stats.value.PENDING || 0);
 const closedCount = computed(() => stats.value.CLOSED || 0);
 
 
-
 // Lấy danh sách hội thoại từ Backend
 const fetchConversations = async (quiet = false) => {
     if (!quiet && customers.value.length === 0) {
         isLoading.value = true;
     }
     try {
-        const [convRes, statsRes] = await Promise.all([
+        const [convRes, allConvRes, statsRes] = await Promise.all([
             api.get(API_CHAT.CONVERSATIONS, {
                 params: {
                     type: chatType.value,
@@ -634,6 +633,7 @@ const fetchConversations = async (quiet = false) => {
                     search: searchQuery.value
                 }
             }),
+            api.get(API_CHAT.CONVERSATIONS),
             api.get(API_CHAT.CONVERSATIONS + '/stats')
         ]);
 
@@ -806,7 +806,7 @@ const sendMessage = async () => {
     }
 };
 
-const selectChat = (customer) => {
+const selectChat = async (customer) => {
     activeChat.value = customer;
     isAccepted.value = customer.isAccepted || false;
     if (customer.id.startsWith('NEW_INTERNAL_')) {
@@ -1028,10 +1028,28 @@ onMounted(() => {
                     <v-tab :value="CHAT_TYPES.CUSTOMER">
                         <v-icon icon="mdi-account" size="18" class="mr-1"></v-icon>
                         Khách hàng
+                        <v-chip
+                            v-if="totalCustomerUnread > 0"
+                            color="error"
+                            size="x-small"
+                            class="ml-1 px-1 py-0 font-weight-bold"
+                            style="height: 18px; min-width: 18px;"
+                        >
+                            {{ totalCustomerUnread > 99 ? '99+' : totalCustomerUnread }}
+                        </v-chip>
                     </v-tab>
                     <v-tab :value="CHAT_TYPES.INTERNAL">
                         <v-icon icon="mdi-account-group" size="18" class="mr-1"></v-icon>
                         Nội bộ
+                        <v-chip
+                            v-if="totalInternalUnread > 0"
+                            color="error"
+                            size="x-small"
+                            class="ml-1 px-1 py-0 font-weight-bold"
+                            style="height: 18px; min-width: 18px;"
+                        >
+                            {{ totalInternalUnread > 99 ? '99+' : totalInternalUnread }}
+                        </v-chip>
                     </v-tab>
                 </v-tabs>
 
@@ -1099,8 +1117,8 @@ onMounted(() => {
                                 <span class="status-dot-badge" :class="c.status?.toLowerCase()"></span>
                             </div>
                         </template>
-                        <v-list-item-title class="conv-name">{{ c.name }}</v-list-item-title>
-                        <v-list-item-subtitle class="conv-msg">{{ c.lastMsg || 'Bắt đầu trò chuyện...' }}</v-list-item-subtitle>
+                        <v-list-item-title :class="['conv-name', { 'unread-bold': c.unread > 0 }]">{{ c.name }}</v-list-item-title>
+                        <v-list-item-subtitle :class="['conv-msg', { 'unread-bold-msg': c.unread > 0 }]">{{ c.lastMsg || 'Bắt đầu trò chuyện...' }}</v-list-item-subtitle>
                         <template v-slot:append>
                             <div class="d-flex flex-column align-end">
                                 <span class="conv-time">{{ c.time }}</span>
@@ -2278,6 +2296,47 @@ $primary-gradient: linear-gradient(135deg, #1e257c 0%, #343fa8 100%);
     
     :deep(.v-icon) {
         color: #64748b !important;
+    }
+}
+
+/* ========== ZALO UNREAD BADGE ========== */
+.unread-bold {
+    font-weight: 700 !important;
+    color: #0f172a !important;
+}
+
+.unread-bold-msg {
+    font-weight: 600 !important;
+    color: #1e293b !important;
+}
+
+.unread-time {
+    color: #e53e3e !important;
+    font-weight: 600 !important;
+}
+
+.zalo-unread-badge {
+    background-color: #e53e3e;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    box-shadow: 0 2px 4px rgba(229, 62, 62, 0.4);
+    animation: pulse-badge 2s infinite ease-in-out;
+}
+
+@keyframes pulse-badge {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.08);
     }
 }
 </style>

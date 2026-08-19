@@ -175,7 +175,17 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
         SanPham sp = customerSanPhamRepository.findByIdNotDeleted(id)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
 
-        List<ChiTietSanPham> variants = customerSanPhamChiTietRepository.findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(id);
+        if (sp.getTrangThai() != TrangThai.DANG_HOAT_DONG) {
+            throw new ResourceNotFoundException("Sản phẩm này đã ngừng bán hoặc không khả dụng.");
+        }
+
+        List<ChiTietSanPham> variants = customerSanPhamChiTietRepository.findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(id)
+                .stream()
+                .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+                .filter(v -> v.getMauSac() != null && v.getMauSac().getTrangThai() == TrangThai.DANG_HOAT_DONG && !Boolean.TRUE.equals(v.getMauSac().getXoaMem()))
+                .filter(v -> v.getKichThuoc() != null && v.getKichThuoc().getTrangThai() == TrangThai.DANG_HOAT_DONG && !Boolean.TRUE.equals(v.getKichThuoc().getXoaMem()))
+                .toList();
+
         List<CustomerProductVariantResponse> variantResponses = mapVariants(variants);
 
         java.math.BigDecimal minPrice = null;

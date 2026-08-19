@@ -31,7 +31,7 @@ public interface CustomerSanPhamChiTietRepository extends ChiTietSanPhamReposito
 
     @Query("SELECT new com.example.be.core.customer.sanpham.model.response.CustomerProductVariantStats(" +
            "ct.sanPham.id, COUNT(ct.id), SUM(ct.soLuong), MIN(ct.giaBan), MAX(ct.giaBan)) " +
-           "FROM ChiTietSanPham ct WHERE ct.sanPham.id IN :productIds AND ct.xoaMem = false " +
+           "FROM ChiTietSanPham ct WHERE ct.sanPham.id IN :productIds AND ct.xoaMem = false AND ct.trangThai = com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG " +
            "GROUP BY ct.sanPham.id")
     List<CustomerProductVariantStats> summarizeBySanPhamIds(@Param("productIds") Collection<String> productIds);
 }

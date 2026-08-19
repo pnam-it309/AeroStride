@@ -48,6 +48,7 @@ export const router = createRouter({
         },
         {
             path: `${PATH.ORDER_SUCCESS}/:id`,
+            alias: ['/order-success/:id', '/order/success/:id'],
             name: 'OrderSuccess',
             component: () => import('@/views/pages/orders/OrderSuccessPage.vue'),
             meta: { seoTitle: 'Đặt Hàng Thành Công' }

@@ -303,11 +303,12 @@ public class AdminChatServiceImpl implements AdminChatService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<TinNhanResponse> getMessagesByConversation(String id) {
         if (id.startsWith("NEW_INTERNAL_")) {
             return List.of(); 
         }
+        messageRepository.markAllAsReadByConversationId(id);
         return messageRepository.findByCuocHoiThoai_IdOrderByNgayTaoAsc(id).stream()
                 .map(m -> TinNhanResponse.builder()
                         .id(m.getId())
@@ -575,6 +576,22 @@ public class AdminChatServiceImpl implements AdminChatService {
             log.info("Triggering AI response for conversation: {}", conversation.getId());
             aiChatService.generateAndSendResponse(conversation, text);
         }
+    }
+
+    @Override
+    @Transactional
+    public boolean markAsRead(String id) {
+        if (id == null || id.startsWith("NEW_INTERNAL_")) {
+            return false;
+        }
+        messageRepository.markAllAsReadByConversationId(id);
+
+        Map<String, String> notification = new HashMap<>();
+        notification.put("content", "READ_CONVERSATION_" + id);
+        notification.put("timestamp", Instant.now().toString());
+        publishNotification(notification);
+
+        return true;
     }
 
     private void publishNotification(Map<String, String> notification) {

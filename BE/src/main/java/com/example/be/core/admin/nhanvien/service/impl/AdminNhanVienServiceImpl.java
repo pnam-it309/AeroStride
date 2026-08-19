@@ -171,16 +171,16 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         if (request.getSdt() != null) request.setSdt(request.getSdt().trim());
         if (request.getDiaChiChiTiet() != null) request.setDiaChiChiTiet(request.getDiaChiChiTiet().trim());
 
-        if (adminNhanVienRepository.existsByMaAndIdNot(request.getMa(), id)) {
+        if (org.springframework.util.StringUtils.hasText(request.getMa()) && adminNhanVienRepository.existsByMaAndIdNot(request.getMa(), id)) {
             throw new DuplicateResourceException("Mã nhân viên đã tồn tại");
         }
-        if (adminNhanVienRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
+        if (org.springframework.util.StringUtils.hasText(request.getEmail()) && adminNhanVienRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
             throw new DuplicateResourceException("Email đã được sử dụng");
         }
-        if (adminNhanVienRepository.existsBySdtAndIdNot(request.getSdt(), id)) {
+        if (org.springframework.util.StringUtils.hasText(request.getSdt()) && adminNhanVienRepository.existsBySdtAndIdNot(request.getSdt(), id)) {
             throw new DuplicateResourceException("Số điện thoại đã được sử dụng");
         }
-        if (adminNhanVienRepository.existsByTenTaiKhoanAndIdNot(request.getTenTaiKhoan(), id)) {
+        if (org.springframework.util.StringUtils.hasText(request.getTenTaiKhoan()) && adminNhanVienRepository.existsByTenTaiKhoanAndIdNot(request.getTenTaiKhoan(), id)) {
             throw new DuplicateResourceException("Tên tài khoản đã được sử dụng");
         }
 

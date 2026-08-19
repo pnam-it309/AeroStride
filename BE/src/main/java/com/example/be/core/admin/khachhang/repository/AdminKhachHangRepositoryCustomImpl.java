@@ -40,7 +40,7 @@ public class AdminKhachHangRepositoryCustomImpl implements AdminKhachHangReposit
 
     private static final String GROUP_BY_CLAUSE =
             " GROUP BY kh.id, kh.ma, kh.ten, kh.email, kh.tenTaiKhoan," +
-            "          kh.gioiTinh, kh.sdt, kh.ngaySinh, kh.hinhAnh, kh.ghiChu," +
+            "          kh.gioiTinh, kh.sdt, kh.ngaySinh," +
             "          kh.trangThai, kh.ngayTao, kh.ngayCapNhat," +
             "          dc.diaChiChiTiet, dc.phuongXa, dc.thanhPho, dc.tinh";
 

@@ -42,7 +42,7 @@ public class KhachHang extends BaseCodeNameEntity {
     private LocalDate ngaySinh;
 
     @Lob
-    @Column(name = "hinh_anh")
+    @Column(name = "hinh_anh", columnDefinition = "LONGTEXT")
     private String hinhAnh;
 
     @Column(name = "ghi_chu")
