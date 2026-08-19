@@ -724,11 +724,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <v-container
-        fluid
-        class="pa-4 animate-fade-in font-body admin-module-page"
-        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important"
-    >
+    <v-container fluid class="pa-2 animate-fade-in font-body admin-module-page">
         <AdminBreadcrumbs
             :items="[
                 { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
@@ -737,21 +733,21 @@ onBeforeUnmount(() => {
             ]"
         />
 
-        <div class="d-flex align-center justify-space-between mb-4 mt-2">
-            <div class="d-flex align-center ga-4">
+        <div v-if="selectedProductId && selectedProductId !== 'ALL'" class="d-flex align-center justify-space-between mb-1">
+            <div class="d-flex align-center ga-2">
                 <v-btn
                     icon
                     variant="flat"
                     color="white"
-                    class="mr-3 border elevation-1 rounded-lg"
-                    size="36"
-                    style="height: 36px !important; width: 36px !important; min-height: 36px !important"
+                    class="border elevation-0 rounded-lg"
+                    size="28"
+                    style="height: 28px !important; width: 28px !important; min-height: 28px !important"
                     @click="router.push(PATH.SAN_PHAM)"
                 >
-                    <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
+                    <v-icon size="16" color="slate-700">mdi-arrow-left</v-icon>
                     <v-tooltip activator="parent" location="top" text="Quay lại danh sách sản phẩm" />
                 </v-btn>
-                <div class="text-h6 font-weight-bold text-slate-800">{{ selectedProductSummary.title }}</div>
+                <div class="text-subtitle-1 font-weight-bold text-slate-800">{{ selectedProductSummary.title }}</div>
             </div>
         </div>
 
@@ -836,8 +832,8 @@ onBeforeUnmount(() => {
                 </v-col>
 
                 <template #after>
-                    <v-col cols="12" class="mt-4 pa-0">
-                        <div class="d-flex align-center justify-space-between mb-2">
+                    <v-col cols="12" class="mt-2 pa-0">
+                        <div class="d-flex align-center justify-space-between mb-1">
                             <div class="d-flex align-center ga-2">
                                 <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
                                 <span class="filter-range-label">Khoảng giá</span>
@@ -855,7 +851,7 @@ onBeforeUnmount(() => {
                             hide-details
                             color="primary"
                             track-color="#e2e8f0"
-                            track-size="3"
+                            track-size="2"
                             thumb-size="14"
                             class="blue-range-slider"
                         />
@@ -924,7 +920,7 @@ onBeforeUnmount(() => {
             </template>
 
             <template #top>
-                <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap ga-3">
+                <div class="px-4 py-1.5 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap ga-2">
                     <div class="d-flex align-center flex-wrap ga-2">
                         <span class="text-caption font-weight-medium text-slate-500">
                             Đã chọn {{ selectedVariantIds.length }} biến thể
@@ -953,7 +949,7 @@ onBeforeUnmount(() => {
                     </td>
                     <td class="data-cell text-center">
                         <div class="product-image-container d-inline-block position-relative">
-                            <v-avatar rounded="lg" size="44" class="border bg-slate-50 elevation-1 avatar-hover">
+                            <v-avatar rounded="lg" size="36" class="border bg-slate-50 elevation-1 avatar-hover">
                                 <SafeProductImage
                                     :src="getVariantThumbnail(item)"
                                     :fallback-src="logoPlaceholder"
@@ -984,7 +980,14 @@ onBeforeUnmount(() => {
                         </div>
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-primary text-truncate" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>
+                        <div v-if="item.phanTramGiam && Number(item.phanTramGiam) > 0" class="d-flex flex-column align-center">
+                            <span class="text-caption text-slate-400 text-decoration-line-through" style="font-size: 11px; line-height: 1.1">{{ formatCurrency(item.giaGoc || item.giaBan / (1 - Number(item.phanTramGiam) / 100)) }}</span>
+                            <div class="d-flex align-center justify-center ga-1 mt-0.5">
+                                <span class="text-deep-orange font-weight-bold text-truncate" style="font-size: 13px">{{ formatCurrency(item.giaBan) }}</span>
+                                <v-chip size="x-small" color="deep-orange" variant="flat" class="font-weight-bold px-1" style="height: 16px; font-size: 10px">-{{ item.phanTramGiam }}%</v-chip>
+                            </div>
+                        </div>
+                        <div v-else class="text-primary text-truncate" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>
                     </td>
                     <td class="data-cell">
                         <v-chip

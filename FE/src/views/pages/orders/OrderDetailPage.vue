@@ -7,6 +7,7 @@ import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { dichVuDatHang } from '@/services/public/dichVuDatHang';
 import { ORDER_STATUS, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, ORDER_STATUS_ICONS } from '@/constants/hoaDonConstants';
 import defaultShoeImg from '@/assets/images/products/cat_running.jpg';
+import SafeProductImage from '@/views/modules/san-pham/components/SafeProductImage.vue';
 
 const DEFAULT_SHOE_IMAGE = defaultShoeImg || new URL('/src/assets/images/products/cat_running.jpg', import.meta.url).href;
 
@@ -90,6 +91,18 @@ const isCancelled = computed(() => order.value?.trangThai === ORDER_STATUS.DA_HU
 
 // Vị trí bước hiện tại trong luồng (-1 nếu không thuộc luồng bình thường)
 const currentStepIndex = computed(() => timelineSteps.value.indexOf(order.value?.trangThai));
+
+// Khử trùng lặp lịch sử trạng thái đơn hàng (nếu có từ server hoặc multiple fetches)
+const uniqueOrderStatusHistories = computed(() => {
+    const list = order.value?.lichSuTrangThai || [];
+    const seen = new Set();
+    return list.filter((item) => {
+        const key = `${item.trangThai || ''}_${item.thoiGian || ''}_${(item.ghiChu || '').trim()}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+});
 
 const isPriceChanged = (item) => item.giaHienTai != null && Number(item.giaHienTai) !== Number(item.donGia);
 
@@ -235,6 +248,28 @@ const handleCancel = async () => {
     }
 };
 
+import { useCartStore } from '@/stores/cartStore';
+const cartStore = useCartStore();
+const reorderLoading = ref(false);
+
+const handleClientReorder = async () => {
+    if (!order.value?.items?.length) return;
+    reorderLoading.value = true;
+    try {
+        for (const item of order.value.items) {
+            if (item.idChiTietSanPham) {
+                await cartStore.addToCart(item.idChiTietSanPham, item.soLuong || 1);
+            }
+        }
+        router.push('/checkout');
+    } catch (e) {
+        console.error('Lỗi khi đặt lại đơn hàng:', e);
+        router.push('/cart');
+    } finally {
+        reorderLoading.value = false;
+    }
+};
+
 onMounted(async () => {
     await fetchOrder();
     await handleVnPayReturn();
@@ -321,9 +356,24 @@ onMounted(async () => {
                     </div>
                 </div>
                 <!-- Trạng thái bất thường -->
-                <div v-else-if="isCancelled" class="cancelled-banner section-block mb-8">
-                    <v-icon size="22" class="mr-3" color="#991b1b">{{ statusIcon(order.trangThai) }}</v-icon>
-                    <span>Đơn hàng đã {{ statusLabel(order.trangThai).toLowerCase() }}</span>
+                <div v-else-if="isCancelled" class="cancelled-banner section-block mb-8 d-flex align-center justify-space-between flex-wrap ga-3">
+                    <div class="d-flex align-center">
+                        <v-icon size="22" class="mr-3" color="#991b1b">{{ statusIcon(order.trangThai) }}</v-icon>
+                        <span>Đơn hàng đã {{ statusLabel(order.trangThai).toLowerCase() }}</span>
+                    </div>
+                    <v-btn
+                        v-if="order.trangThai === ORDER_STATUS.DA_HUY"
+                        variant="flat"
+                        size="small"
+                        rounded="pill"
+                        class="text-none font-weight-bold"
+                        style="background: #1e257c; color: white"
+                        :loading="reorderLoading"
+                        @click="handleClientReorder"
+                    >
+                        <v-icon size="16" class="mr-1">mdi-refresh</v-icon>
+                        Đặt lại đơn hàng
+                    </v-btn>
                 </div>
 
                 <v-row class="content-grid">
@@ -384,14 +434,13 @@ onMounted(async () => {
                                 class="detail-product d-flex align-center ga-4 py-4"
                                 :class="{ 'border-top': i > 0 }"
                             >
-                                <div class="detail-thumb-wrapper">
-                                    <v-img
-                                        :src="item.hinhAnh || DEFAULT_SHOE_IMAGE"
-                                        cover
-                                        width="76"
-                                        height="76"
-                                        class="rounded-xl"
-                                    ></v-img>
+                                <div class="detail-thumb-wrapper rounded-xl overflow-hidden" style="width: 76px; height: 76px">
+                                    <SafeProductImage
+                                        :src="item.hinhAnh"
+                                        :fallbackSrc="DEFAULT_SHOE_IMAGE"
+                                        :alt="item.tenSanPham"
+                                        :iconSize="32"
+                                    />
                                 </div>
                                 <div class="flex-grow-1 min-w-0">
                                     <p class="text-body-1 font-weight-bold mb-1 text-truncate">{{ item.tenSanPham }}</p>
@@ -436,7 +485,10 @@ onMounted(async () => {
                                         </div>
                                         <span v-else class="text-caption text-grey">x{{ item.soLuong }}</span>
                                     </div>
-                                    <p class="text-caption text-grey mt-1">{{ formatPrice(item.donGia) }} / sản phẩm</p>
+                                    <div class="d-flex align-center ga-2 mt-1">
+                                        <p class="text-caption text-grey mb-0">{{ formatPrice(item.donGia) }} / sản phẩm</p>
+                                        <v-chip v-if="item.phanTramGiam && item.phanTramGiam > 0" size="x-small" color="error" variant="flat" class="font-weight-bold px-1" style="height: 16px; font-size: 10px">-{{ item.phanTramGiam }}%</v-chip>
+                                    </div>
                                     <div
                                         v-if="isPriceChanged(item)"
                                         class="price-change-note d-flex align-center ga-2 mt-1 pa-2 rounded-lg"
@@ -453,43 +505,47 @@ onMounted(async () => {
                         </div>
 
                         <!-- Status Timeline -->
-                        <div v-if="order.lichSuTrangThai?.length" class="section-block pa-6">
-                            <div class="d-flex align-center mb-6">
-                                <div class="card-icon mr-4" style="background: #f0f4ff">
-                                    <v-icon style="color: #1e257c" size="22">mdi-timeline-clock-outline</v-icon>
-                                </div>
-                                <div>
-                                    <h3 class="text-subtitle-1 font-weight-bold mb-0" style="color: #1e257c">Lịch sử đơn hàng</h3>
-                                    <p class="text-caption mb-0">Các cập nhật mới nhất về đơn hàng</p>
+                        <div v-if="uniqueOrderStatusHistories.length" class="section-block pa-6">
+                            <div class="d-flex align-center justify-space-between mb-4">
+                                <div class="d-flex align-center">
+                                    <div class="card-icon mr-4" style="background: #f0f4ff">
+                                        <v-icon style="color: #1e257c" size="22">mdi-timeline-clock-outline</v-icon>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-subtitle-1 font-weight-bold mb-0" style="color: #1e257c">Lịch sử đơn hàng</h3>
+                                        <p class="text-caption mb-0 text-grey">Các cập nhật trạng thái đơn hàng ({{ uniqueOrderStatusHistories.length }})</p>
+                                    </div>
                                 </div>
                             </div>
-                            <v-timeline density="compact" side="end" class="timeline-modern">
-                                <v-timeline-item
-                                    v-for="(ls, i) in order.lichSuTrangThai"
-                                    :key="i"
-                                    size="small"
-                                    dot-color="#1e257c"
-                                    :icon="statusIcon(ls.trangThai)"
-                                    icon-color="white"
-                                    class="timeline-item-custom"
-                                >
-                                    <div>
-                                        <p class="text-body-2 font-weight-bold mb-0">{{ statusLabel(ls.trangThai) }}</p>
-                                        <p class="text-caption text-grey mb-1 d-flex align-center">
-                                            <v-icon size="12" class="mr-1">mdi-clock-outline</v-icon>
-                                            {{ formatDateFull(ls.thoiGian) }}
-                                        </p>
-                                        <p
-                                            v-if="ls.ghiChu"
-                                            class="text-caption text-grey-darken-1 mb-0 pa-3 rounded-lg mt-1"
-                                            style="background: #f5f7ff"
-                                        >
-                                            <v-icon size="12" class="mr-1">mdi-comment-text-outline</v-icon>
-                                            {{ ls.ghiChu }}
-                                        </p>
-                                    </div>
-                                </v-timeline-item>
-                            </v-timeline>
+                            <div class="timeline-scroll-container">
+                                <v-timeline density="compact" side="end" class="timeline-modern">
+                                    <v-timeline-item
+                                        v-for="(ls, i) in uniqueOrderStatusHistories"
+                                        :key="i"
+                                        size="small"
+                                        dot-color="#1e257c"
+                                        :icon="statusIcon(ls.trangThai)"
+                                        icon-color="white"
+                                        class="timeline-item-custom"
+                                    >
+                                        <div>
+                                            <p class="text-body-2 font-weight-bold mb-0">{{ statusLabel(ls.trangThai) }}</p>
+                                            <p class="text-caption text-grey mb-1 d-flex align-center">
+                                                <v-icon size="12" class="mr-1">mdi-clock-outline</v-icon>
+                                                {{ formatDateFull(ls.thoiGian) }}
+                                            </p>
+                                            <p
+                                                v-if="ls.ghiChu"
+                                                class="text-caption text-grey-darken-1 mb-0 pa-3 rounded-lg mt-1"
+                                                style="background: #f5f7ff"
+                                            >
+                                                <v-icon size="12" class="mr-1">mdi-comment-text-outline</v-icon>
+                                                {{ ls.ghiChu }}
+                                            </p>
+                                        </div>
+                                    </v-timeline-item>
+                                </v-timeline>
+                            </div>
                         </div>
                     </v-col>
 
@@ -832,6 +888,28 @@ onMounted(async () => {
 
 .timeline-modern :deep(.v-timeline-item__body) {
     padding-top: 4px;
+}
+
+.timeline-scroll-container {
+    max-height: 340px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
 }
 
 .timeline-dot {

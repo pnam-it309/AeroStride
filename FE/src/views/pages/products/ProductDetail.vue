@@ -571,8 +571,9 @@ const addToCart = async () => {
             tenSanPham: product.value?.ten || product.value?.tenSanPham || '',
             hinhAnh: variant.images?.[0]?.duongDanAnh || product.value?.hinhAnh || '',
             tenMauSac: variant.tenMauSac || selectedColor.value || '',
-            tenKichThuoc: variant.tenKichThuoc || selectedSize.value || '',
-            giaBan: variant.giaBan || displayPrice.value || 0,
+            giaBan: currentPrice.value || variant.giaBan || displayPrice.value || 0,
+            giaGoc: oldPrice.value || variant.giaBan || 0,
+            phanTramGiam: discountPercent.value || 0,
             soLuongTonKho: variant.soLuong || 0
         });
         if (result?.success) {

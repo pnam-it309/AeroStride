@@ -190,85 +190,6 @@ const confirmHoanPhi = () => {
     };
 };
 
-// --- Chỉnh sửa số lượng sản phẩm trong hóa đơn ---
-const editingProducts = ref(false);
-const savingProducts = ref(false);
-const editQtyMap = ref({}); // { [idHdct]: soLuong }
-
-const startEditProducts = () => {
-    const map = {};
-    (order.value.listsHoaDonChiTiet || []).forEach((it) => {
-        map[it.id] = it.soLuong;
-    });
-    editQtyMap.value = map;
-    editingProducts.value = true;
-};
-
-const cancelEditProducts = () => {
-    editingProducts.value = false;
-    editQtyMap.value = {};
-};
-
-const changeProductQty = (item, delta) => {
-    const current = editQtyMap.value[item.id] || 1;
-    const next = current + delta;
-    if (next < 1) return; // tối thiểu 1
-    editQtyMap.value[item.id] = next;
-};
-
-const saveProducts = async () => {
-    const items = order.value.listsHoaDonChiTiet || [];
-    const changed = items.filter((it) => (editQtyMap.value[it.id] ?? it.soLuong) !== it.soLuong);
-    if (!changed.length) {
-        editingProducts.value = false;
-        return;
-    }
-    savingProducts.value = true;
-    try {
-        for (const it of changed) {
-            await dichVuHoaDon.capNhatSanPhamHoaDon(order.value.id, {
-                idChiTietSanPham: it.idCtsp,
-                soLuong: editQtyMap.value[it.id]
-            });
-        }
-        addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật số lượng sản phẩm', color: 'success' });
-        editingProducts.value = false;
-        await loadOrderDetail();
-    } catch (error) {
-        addNotification({ title: 'Lỗi', subtitle: error?.response?.data?.message || 'Cập nhật sản phẩm thất bại', color: 'error' });
-    } finally {
-        savingProducts.value = false;
-    }
-};
-
-const removeProduct = (item) => {
-    if ((order.value.listsHoaDonChiTiet || []).length <= 1) {
-        addNotification({ title: 'Không thể xóa', subtitle: 'Đơn hàng phải còn ít nhất 1 sản phẩm', color: 'warning' });
-        return;
-    }
-    confirmDialog.value = {
-        show: true,
-        title: 'Xóa sản phẩm',
-        message: `Xóa "${item.tenSanPham}" khỏi đơn hàng?`,
-        color: 'error',
-        showInput: false,
-        inputLabel: '',
-        inputRequired: false,
-        action: async () => {
-            confirmDialog.value.loading = true;
-            try {
-                await dichVuHoaDon.xoaSanPhamHoaDon(order.value.id, item.id);
-                addNotification({ title: 'Thành công', subtitle: 'Đã xóa sản phẩm khỏi đơn hàng', color: 'success' });
-                await loadOrderDetail();
-                confirmDialog.value.show = false;
-            } catch (error) {
-                addNotification({ title: 'Lỗi', subtitle: error?.response?.data?.message || 'Xóa sản phẩm thất bại', color: 'error' });
-            } finally {
-                confirmDialog.value.loading = false;
-            }
-        }
-    };
-};
 
 // --- Đổi giá sản phẩm: phát hiện & áp giá mới ---
 const isPriceChanged = (item) => item.giaHienTai != null && Number(item.giaHienTai) !== Number(item.donGia);
@@ -379,7 +300,6 @@ const orderStatusLabel = computed(() => getStatusLabel(order.value.trangThai));
 const orderStatusTone = computed(() => getStatusTone(order.value.trangThai));
 const showStatusChip = computed(() => loaded.value && getOrderStatusMeta(order.value.trangThai));
 const canUpdateStatus = computed(() => order.value && getOrderStatus() !== null && getOrderStatus() < ORDER_STATUS_ORDINALS.HOAN_THANH);
-const isOrderEditable = computed(() => order.value.trangThai === ORDER_STATUS.CHO_XAC_NHAN || getOrderStatus() < ORDER_STATUS_ORDINALS.CHO_GIAO);
 
 // Xác định xem đơn hàng có cần nút "Xác nhận hoàn phí" không:
 // Áp dụng cho các đơn bị hủy (DA_HUY) đặt trực tuyến (ONLINE) hoặc có thanh toán trước mà chưa hoàn phí
@@ -554,9 +474,7 @@ const allowedStatuses = computed(() => {
             case ORDER_STATUS.CHO_GIAO:
                 return (
                     item.value === ORDER_STATUS.DANG_GIAO ||
-                    item.value === ORDER_STATUS.DA_HUY ||
-                    item.value === ORDER_STATUS.GIAO_THAT_BAI ||
-                    item.value === ORDER_STATUS.KHACH_KHONG_NHAN
+                    item.value === ORDER_STATUS.DA_HUY
                 );
             case ORDER_STATUS.DANG_GIAO:
                 return (
@@ -572,8 +490,9 @@ const allowedStatuses = computed(() => {
                     item.value === ORDER_STATUS.HOAN_THANH ||
                     item.value === ORDER_STATUS.DA_HUY
                 );
-            case ORDER_STATUS.HOAN_THANH:
             case ORDER_STATUS.DA_HUY:
+                return item.value === ORDER_STATUS.CHO_XAC_NHAN;
+            case ORDER_STATUS.HOAN_THANH:
             default:
                 return false;
         }
@@ -766,7 +685,39 @@ const requestStatusUpdate = (status) => {
     };
 };
 
+const handleReorder = () => {
+    confirmDialog.value = {
+        show: true,
+        title: 'Đặt lại đơn hàng',
+        message: `Bạn có chắc chắn muốn đặt lại đơn hàng #${order.value.ma || ''}? Đơn hàng sẽ được chuyển về trạng thái [Chờ xác nhận].`,
+        color: 'success',
+        showInput: true,
+        inputLabel: 'Ghi chú đặt lại',
+        inputRequired: false,
+        action: async (note) => {
+            confirmDialog.value.loading = true;
+            try {
+                await dichVuHoaDon.capNhatTrangThaiHoaDon(
+                    order.value.id,
+                    ORDER_STATUS_ORDINALS.CHO_XAC_NHAN,
+                    note || 'Đặt lại đơn hàng đã hủy'
+                );
+                addNotification({ title: 'Thành công', subtitle: 'Đã đặt lại đơn hàng về Chờ xác nhận', color: 'success' });
+                await loadOrderDetail();
+                confirmDialog.value.show = false;
+            } catch (error) {
+                addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Đặt lại đơn hàng thất bại', color: 'error' });
+            } finally {
+                confirmDialog.value.loading = false;
+            }
+        }
+    };
+};
+
 const openEditModal = () => {
+    if (order.value.trangThai === ORDER_STATUS.HOAN_THANH || order.value.trangThai === ORDER_STATUS.DA_HUY || order.value.trangThai === ORDER_STATUS.HOAN_DON) {
+        return;
+    }
     activeTab.value = 0;
     editForm.value = {
         trangThai: order.value.trangThai,
@@ -1337,8 +1288,8 @@ onMounted(() => {
                         <span class="text-success font-weight-bold">Đã hoàn phí cho khách</span>
                     </div>
 
-                    <!-- 2 Nút thao tác nhanh trực tiếp: Giao thất bại & Khách không nhận -->
-                    <template v-if="order.trangThai !== ORDER_STATUS.HOAN_THANH && order.trangThai !== ORDER_STATUS.DA_HUY && order.trangThai !== ORDER_STATUS.GIAO_THAT_BAI && order.trangThai !== ORDER_STATUS.KHACH_KHONG_NHAN">
+                    <!-- 2 Nút thao tác nhanh trực tiếp: Giao thất bại & Khách không nhận (Chỉ hiển thị khi Đang giao hàng) -->
+                    <template v-if="order.trangThai === ORDER_STATUS.DANG_GIAO">
                         <v-btn
                             color="warning"
                             variant="flat"
@@ -1363,7 +1314,20 @@ onMounted(() => {
                             </template>
                             Khách không nhận
                         </v-btn>
-                    </template>
+                    <!-- Nút Đặt lại đơn hàng khi đơn đã bị hủy -->
+                    <v-btn
+                        v-if="order.trangThai === ORDER_STATUS.DA_HUY"
+                        color="success"
+                        variant="flat"
+                        class="rounded-lg px-6"
+                        height="44"
+                        @click="handleReorder"
+                    >
+                        <template v-slot:prepend>
+                            <v-icon size="18" class="mr-1">mdi-refresh</v-icon>
+                        </template>
+                        Đặt lại đơn hàng
+                    </v-btn>
 
                     <v-btn variant="flat" color="primary" class="rounded-lg px-6" height="44" @click="printInvoice">
                         <template v-slot:prepend>
@@ -1371,7 +1335,14 @@ onMounted(() => {
                         </template>
                         In hóa đơn
                     </v-btn>
-                    <v-btn color="primary" variant="flat" class="rounded-lg px-6" height="44" @click="openEditModal">
+                    <v-btn
+                        v-if="order.trangThai !== ORDER_STATUS.HOAN_THANH && order.trangThai !== ORDER_STATUS.DA_HUY && order.trangThai !== ORDER_STATUS.HOAN_DON"
+                        color="primary"
+                        variant="flat"
+                        class="rounded-lg px-6"
+                        height="44"
+                        @click="openEditModal"
+                    >
                         <template v-slot:prepend>
                             <PencilIcon size="18" class="mr-2" />
                         </template>
@@ -1386,39 +1357,6 @@ onMounted(() => {
                 <div class="d-flex align-center">
                     <LayoutGridIcon size="20" class="mr-3 text-primary" />
                     <span class="text-slate-800">Sản phẩm đã đặt</span>
-                </div>
-                <div v-if="isOrderEditable" class="d-flex align-center ga-2">
-                    <v-btn
-                        v-if="!editingProducts"
-                        variant="tonal"
-                        color="primary"
-                        size="small"
-                        class="rounded-lg"
-                        @click="startEditProducts"
-                    >
-                        <PencilIcon size="16" class="mr-1" /> Sửa số lượng
-                    </v-btn>
-                    <template v-else>
-                        <v-btn
-                            variant="text"
-                            color="slate-500"
-                            size="small"
-                            class="rounded-lg"
-                            :disabled="savingProducts"
-                            @click="cancelEditProducts"
-                            >Hủy</v-btn
-                        >
-                        <v-btn
-                            variant="flat"
-                            color="primary"
-                            size="small"
-                            class="rounded-lg"
-                            :loading="savingProducts"
-                            @click="saveProducts"
-                        >
-                            <CheckIcon size="16" class="mr-1" /> Lưu
-                        </v-btn>
-                    </template>
                 </div>
             </div>
 
@@ -1514,9 +1452,8 @@ onMounted(() => {
                 <template #row="{ item }">
                     <tr class="hover-row" :class="{ 'price-changed-cell': isPriceChanged(item) }">
                         <td class="py-4">
-                            <v-avatar size="60" class="rounded-lg border bg-slate-50 elevation-1 overflow-hidden">
-                                <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover />
-                                <v-icon v-else size="32" color="grey-lighten-1">mdi-package-variant-closed</v-icon>
+                            <v-avatar size="52" class="rounded-lg border bg-slate-50 elevation-1 overflow-hidden">
+                                <SafeProductImage :src="item.hinhAnh" :alt="item.tenSanPham" :iconSize="26" />
                             </v-avatar>
                         </td>
                         <td class="py-4">
@@ -1536,46 +1473,27 @@ onMounted(() => {
                             </span>
                         </td>
                         <td class="py-4">
-                            <div v-if="editingProducts" class="d-flex align-center justify-center ga-1">
-                                <v-btn
-                                    icon
-                                    size="x-small"
-                                    variant="tonal"
-                                    color="primary"
-                                    :disabled="(editQtyMap[item.id] || 1) <= 1"
-                                    @click="changeProductQty(item, -1)"
-                                >
-                                    <v-icon size="16">mdi-minus</v-icon>
-                                </v-btn>
-                                <span
-                                    class="text-body-2 text-slate-800 mx-1"
-                                    style="min-width: 24px; display: inline-block; text-align: center"
-                                    >{{ editQtyMap[item.id] }}</span
-                                >
-                                <v-btn icon size="x-small" variant="tonal" color="primary" @click="changeProductQty(item, 1)">
-                                    <v-icon size="16">mdi-plus</v-icon>
-                                </v-btn>
-                            </div>
-                            <span v-else class="text-body-2 text-slate-800">{{ item.soLuong }}</span>
+                            <span class="text-body-2 text-slate-800">{{ item.soLuong }}</span>
                         </td>
                         <td class="py-4 text-slate-700">
                             <template v-if="isPriceChanged(item)">
                                 <span class="text-decoration-line-through text-slate-400 mr-1">{{ formatCurrency(item.donGia) }}</span>
                                 <span class="text-warning font-weight-bold">{{ formatCurrency(item.giaHienTai) }}</span>
                             </template>
+                            <template v-else-if="item.phanTramGiam && item.phanTramGiam > 0">
+                                <div class="d-flex flex-column align-center">
+                                    <div class="d-flex align-center justify-center ga-1">
+                                        <span class="text-decoration-line-through text-slate-400 text-caption">{{ formatCurrency(item.giaGoc) }}</span>
+                                        <v-chip size="x-small" color="error" variant="flat" class="font-weight-bold px-1" style="height: 16px; font-size: 10px">-{{ item.phanTramGiam }}%</v-chip>
+                                    </div>
+                                    <span class="font-weight-medium text-slate-900">{{ formatCurrency(item.donGia) }}</span>
+                                    <span v-if="item.tenDotGiamGia" class="text-caption text-primary font-weight-medium" style="font-size: 11px">{{ item.tenDotGiamGia }}</span>
+                                </div>
+                            </template>
                             <template v-else>{{ formatCurrency(item.donGia) }}</template>
                         </td>
                         <td class="py-4 text-primary text-body-2">
-                            <div class="d-flex align-center justify-center ga-2">
-                                <span>{{
-                                    formatCurrency(
-                                        Number(editingProducts ? editQtyMap[item.id] || item.soLuong : item.soLuong) * Number(item.donGia)
-                                    )
-                                }}</span>
-                                <v-btn v-if="editingProducts" icon size="x-small" variant="text" color="error" @click="removeProduct(item)">
-                                    <TrashIcon size="16" />
-                                </v-btn>
-                            </div>
+                            <span>{{ formatCurrency(Number(item.soLuong) * Number(item.donGia)) }}</span>
                         </td>
                     </tr>
                 </template>

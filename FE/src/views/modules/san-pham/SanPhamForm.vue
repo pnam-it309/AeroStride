@@ -597,7 +597,21 @@ const comboboxProps = {
 };
 
 const removeDraftVariantByObject = (variant) => {
-    variantItems.value = variantItems.value.filter((item) => item !== variant);
+    const sizeLabel = getVariantSizeLabel(variant.idKichThuoc);
+    const colorLabel = getVariantColorLabel(variant.idMauSac);
+    const variantDesc = sizeLabel && colorLabel ? `[${colorLabel} - ${sizeLabel}]` : '';
+
+    confirmDialog.value = {
+        show: true,
+        title: 'Xóa biến thể',
+        message: `Bạn có chắc chắn muốn xóa biến thể ${variantDesc} này khỏi danh sách không?`,
+        color: 'warning',
+        action: async () => {
+            variantItems.value = variantItems.value.filter((item) => item !== variant);
+            addNotification({ title: 'Thành công', subtitle: `Đã xóa biến thể ${variantDesc}`, color: 'success' });
+            confirmDialog.value.show = false;
+        }
+    };
 };
 
 const normalizeAttributeText = (value) => {
@@ -1254,12 +1268,22 @@ const applyBulkColorVariants = (colorId) => {
 };
 
 const clearAllDraftVariants = () => {
-    variantItems.value = [];
-    selectedColors.value = [];
-    selectedSizes.value = [];
-    colorImageState.value = {};
-    bulkAllForm.value = { soLuong: '', giaBan: '' };
-    bulkByColorForms.value = {};
+    confirmDialog.value = {
+        show: true,
+        title: 'Xóa tất cả biến thể',
+        message: 'Bạn có chắc chắn muốn xóa toàn bộ danh sách biến thể đang chọn không?',
+        color: 'error',
+        action: async () => {
+            variantItems.value = [];
+            selectedColors.value = [];
+            selectedSizes.value = [];
+            colorImageState.value = {};
+            bulkAllForm.value = { soLuong: '', giaBan: '' };
+            bulkByColorForms.value = {};
+            addNotification({ title: 'Thành công', subtitle: 'Đã xóa toàn bộ biến thể', color: 'success' });
+            confirmDialog.value.show = false;
+        }
+    };
 };
 
 const removeColorGroup = (colorId) => {

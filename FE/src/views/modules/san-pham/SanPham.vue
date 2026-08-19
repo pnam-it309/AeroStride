@@ -528,8 +528,7 @@ onBeforeUnmount(() => {
 <template>
     <v-container
         fluid
-        class="pa-4 animate-fade-in font-body admin-module-page"
-        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important"
+        class="pa-2 animate-fade-in font-body admin-module-page"
     >
         <AdminBreadcrumbs
             :items="[
@@ -537,8 +536,6 @@ onBeforeUnmount(() => {
                 { title: 'Danh sách sản phẩm', disabled: true }
             ]"
         />
-
-        <div class="mb-2"></div>
 
         <div class="filter-shell">
             <AdminFilter @refresh="handleRefresh" :loading="isRefreshing">
@@ -581,7 +578,7 @@ onBeforeUnmount(() => {
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select
                         v-model="filters.trangThai"
-                        :items="STATUS_OPTIONS"
+                        :items="STATUS_OPTIONS.ADMIN_FILTER"
                         variant="outlined"
                         density="compact"
                         hide-details
@@ -591,8 +588,8 @@ onBeforeUnmount(() => {
                     />
                 </v-col>
                 <template #after>
-                    <v-col cols="12" class="mt-4 pa-0">
-                        <div class="d-flex align-center justify-space-between mb-2">
+                    <v-col cols="12" class="mt-2 pa-0">
+                        <div class="d-flex align-center justify-space-between mb-1">
                             <div class="d-flex align-center ga-2">
                                 <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
                                 <span class="filter-range-label">Khoảng giá</span>
@@ -655,7 +652,7 @@ onBeforeUnmount(() => {
             </template>
 
             <template #top>
-                <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap ga-3">
+                <div class="px-4 py-1.5 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap ga-2">
                     <div class="d-flex align-center flex-wrap ga-2">
                         <span class="text-caption font-weight-medium text-slate-500">
                             Đã chọn {{ selectedProductIds.length }} sản phẩm

@@ -10,6 +10,7 @@
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
+    padding: 10px 14px !important;
 }
 
 /* Root của AdminTable: nối chuỗi flex để table chiếm hết chiều cao còn lại
@@ -30,7 +31,7 @@
     border-radius: $border-radius-root !important;
     overflow: hidden;
     box-shadow: $box-shadow-premium !important;
-    margin: 16px;
+    margin: 8px 0 0 0 !important;
 }
 
 /* Vùng cuộn của bảng: chỉ thân bảng cuộn dọc, header dính ở trên (.header-cell đã sticky),
@@ -54,23 +55,24 @@
         z-index: 10;
         background: #f8fafc;
         color: #1d2025 !important;
-        padding: 14px 12px !important;
+        padding: 8px 10px !important;
         font-size: 13px !important;
         font-weight: 700 !important;
         border-bottom: 2px solid #e2e8f0;
         text-align: center;
         white-space: nowrap !important;
+        height: 38px !important;
     }
 
     .data-cell {
-        padding: 12px 16px !important;
+        padding: 6px 10px !important;
         font-size: 13px !important;
         color: #1d2025 !important;
         vertical-align: middle;
         border-bottom: 1px solid #f1f5f9;
         background: white;
         text-align: center;
-        height: 70px !important;
+        height: 48px !important;
     }
 
     .data-row:hover .data-cell {
@@ -81,7 +83,7 @@
 .pagination-footer {
     flex: none !important;
     background: #ffffff;
-    padding: 12px 20px;
+    padding: 8px 16px !important;
     border-top: 1px solid #f1f5f9;
     display: flex;
     align-items: center;
@@ -92,7 +94,7 @@
     background: #ffffff;
     border-radius: $border-radius-root !important;
     box-shadow: $box-shadow-premium !important;
-    padding: 16px;
-    margin: 16px 16px 0 16px;
+    padding: 0 !important;
+    margin: 0 !important;
     flex-shrink: 0 !important;
 }

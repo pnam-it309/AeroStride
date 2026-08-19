@@ -16,8 +16,15 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -27,12 +34,22 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username:}")
     private String fromEmail;
 
     @Value("${app.frontend_url}")
     private String frontendUrl;
+
+    @Value("${resend.api_key:}")
+    private String resendApiKey;
+
+    @Value("${resend.from:AeroStride <onboarding@resend.dev>}")
+    private String resendFrom;
 
     @Async("mailExecutor")
     @Override
@@ -40,13 +57,6 @@ public class EmailServiceImpl implements EmailService {
         try {
             log.info("Starting to send async email to: {}", request.getTo());
             
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(
-                    message, 
-                    MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, 
-                    StandardCharsets.UTF_8.name()
-            );
-
             Map<String, Object> vars = request.getVariables() != null ? new HashMap<>(request.getVariables()) : new HashMap<>();
             vars.putIfAbsent("baseUrl", frontendUrl);
             vars.putIfAbsent("frontendUrl", frontendUrl);
@@ -56,17 +66,77 @@ public class EmailServiceImpl implements EmailService {
 
             String html = templateEngine.process("email/" + request.getTemplateName(), context);
 
-            helper.setFrom(fromEmail);
-            helper.setTo(request.getTo());
-            helper.setSubject(request.getSubject());
-            helper.setText(html, true);
+            // 1. Ưu tiên gửi qua Resend HTTP API (cổng 443 HTTPS - hoàn toàn không bị chặn trên Render/Cloud)
+            if (resendApiKey != null && !resendApiKey.isBlank()) {
+                boolean sent = sendViaResend(request.getTo(), request.getSubject(), html);
+                if (sent) {
+                    return;
+                }
+                log.warn("Resend API failed, attempting SMTP fallback...");
+            }
 
-            mailSender.send(message);
-            log.info("Email sent successfully to: {}", request.getTo());
+            // 2. Fallback sang JavaMailSender (SMTP) nếu Resend chưa cấu hình hoặc thất bại
+            if (fromEmail != null && !fromEmail.isBlank()) {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(
+                        message, 
+                        MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, 
+                        StandardCharsets.UTF_8.name()
+                );
+
+                try {
+                    helper.setFrom(fromEmail, "AeroStride");
+                } catch (Exception e) {
+                    helper.setFrom(fromEmail);
+                }
+                helper.setTo(request.getTo());
+                helper.setSubject(request.getSubject());
+                helper.setText(html, true);
+
+                mailSender.send(message);
+                log.info("Email sent successfully via SMTP to: {}", request.getTo());
+            } else {
+                log.warn("Không thể gửi email đến {}: Chưa cấu hình RESEND_API_KEY hoặc MAIL_USERNAME.", request.getTo());
+            }
             
         } catch (MessagingException | MailException e) {
             log.error("Failed to send email to: {}. Error: {}", request.getTo(), e.getMessage());
             // Log but do not throw to prevent transaction rollback in caller
+        }
+    }
+
+    private boolean sendViaResend(String to, String subject, String html) {
+        try {
+            log.info("Sending email to {} via Resend HTTP API...", to);
+            
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("from", resendFrom != null && !resendFrom.isBlank() ? resendFrom : "AeroStride <onboarding@resend.dev>");
+            payload.put("to", List.of(to));
+            payload.put("subject", subject);
+            payload.put("html", html);
+
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.resend.com/emails"))
+                    .header("Authorization", "Bearer " + resendApiKey.trim())
+                    .header("Content-Type", "application/json")
+                    .header("User-Agent", "AeroStride-Backend")
+                    .timeout(Duration.ofSeconds(15))
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                log.info("Email sent successfully via Resend to: {}, Response: {}", to, response.body());
+                return true;
+            } else {
+                log.error("Resend API returned error {}: {}", response.statusCode(), response.body());
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("Exception during Resend API email sending to {}: {}", to, e.getMessage());
+            return false;
         }
     }
 

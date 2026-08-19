@@ -5,6 +5,7 @@ import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import { PATH } from '@/router/routePaths';
+import SafeProductImage from '@/views/modules/san-pham/components/SafeProductImage.vue';
 
 const router = useRouter();
 const cartStore = useCartStore();
@@ -163,18 +164,12 @@ const handleCheckout = () => {
                     <div v-for="item in cartStore.cartItems" :key="item.idChiTietSanPham" class="cart-item px-6 py-4">
                         <div class="d-flex ga-4">
                             <!-- Product Image -->
-                            <div class="cart-item-image position-relative">
-                                <v-img
-                                    v-if="item.hinhAnh"
-                                    :src="resolveImg(item.hinhAnh)"
-                                    cover
-                                    class="rounded-xl"
-                                    width="90"
-                                    height="90"
-                                ></v-img>
-                                <div v-else class="image-placeholder rounded-xl">
-                                    <v-icon size="36" color="grey-lighten-2">mdi-shoe-sneaker</v-icon>
-                                </div>
+                            <div class="cart-item-image position-relative rounded-xl overflow-hidden" style="width: 90px; height: 90px; flex-shrink: 0">
+                                <SafeProductImage
+                                    :src="item.hinhAnh"
+                                    :alt="item.tenSanPham"
+                                    :iconSize="32"
+                                />
                                 <span class="qty-circle">{{ item.soLuong }}</span>
                             </div>
 
@@ -187,7 +182,13 @@ const handleCheckout = () => {
                                     <v-icon size="12" class="mr-1">mdi-ruler</v-icon>{{ item.tenKichThuoc }}
                                 </p>
                                 <div class="mt-auto">
-                                    <p class="cart-item-price text-body-1 font-weight-bold mb-2">{{ formatPrice(item.giaBan) }}</p>
+                                    <div class="d-flex align-center flex-wrap ga-2 mb-2">
+                                        <p class="cart-item-price text-body-1 font-weight-bold mb-0" :style="{ color: item.phanTramGiam > 0 ? '#dc2626' : '#1e257c' }">{{ formatPrice(item.giaBan) }}</p>
+                                        <template v-if="item.phanTramGiam > 0">
+                                            <span class="text-caption text-grey text-decoration-line-through">{{ formatPrice(item.giaGoc || item.giaBan / (1 - item.phanTramGiam / 100)) }}</span>
+                                            <v-chip size="x-small" color="error" variant="flat" class="font-weight-bold px-1" style="height: 16px; font-size: 10px">-{{ item.phanTramGiam }}%</v-chip>
+                                        </template>
+                                    </div>
 
                                     <!-- Quantity Controls -->
                                     <div class="d-flex align-center justify-space-between">

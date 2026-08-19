@@ -18,15 +18,12 @@ import { dichVuDanhGia } from '@/services/admin/dichVuDanhGia';
 import {
     SparklesIcon,
     PhotoIcon,
-    CheckIcon,
-    XIcon,
-    BanIcon,
-    TrashIcon,
     EyeIcon
 } from 'vue-tabler-icons';
 
 // Centralized Admin Icons
 import { ADMIN_ICONS } from '@/constants/adminIcons';
+import SafeProductImage from '@/views/modules/san-pham/components/SafeProductImage.vue';
 
 // Common Admin Components
 import {
@@ -169,14 +166,14 @@ const tableHeaders = [
 const getStatusChip = (status) => {
     switch (status) {
         case 'APPROVED':
-            return { color: 'success', text: 'Đã duyệt', icon: 'mdi-check-circle', chipClass: 'status-chip-active' };
+            return { text: 'Đã duyệt', icon: 'mdi-check-circle', chipClass: 'status-chip-active' };
         case 'REJECTED':
-            return { color: 'error', text: 'Từ chối', icon: 'mdi-close-circle', chipClass: 'status-chip-inactive' };
+            return { text: 'Từ chối', icon: 'mdi-close-circle', chipClass: 'status-chip-inactive' };
         case 'SPAM':
-            return { color: 'grey-darken-1', text: 'Spam', icon: 'mdi-alert-circle', chipClass: 'status-chip-draft' };
+            return { text: 'Spam', icon: 'mdi-alert-circle', chipClass: 'status-chip-draft' };
         case 'PENDING':
         default:
-            return { color: 'warning', text: 'Chờ duyệt', icon: 'mdi-clock-outline', chipClass: 'status-chip-warning' };
+            return { text: 'Chờ duyệt', icon: 'mdi-clock-outline', chipClass: 'status-chip-pending' };
     }
 };
 
@@ -410,9 +407,8 @@ onMounted(async () => {
                         <!-- 3. Sản phẩm -->
                         <td class="data-cell text-left px-3">
                             <div class="d-flex align-center ga-3 my-1">
-                                <v-avatar size="44" rounded="lg" class="border bg-slate-50 flex-shrink-0">
-                                    <v-img v-if="item.hinhAnhSanPham" :src="item.hinhAnhSanPham" cover></v-img>
-                                    <PhotoIcon v-else size="20" class="text-slate-400" />
+                                <v-avatar size="44" rounded="lg" class="border bg-slate-50 flex-shrink-0 overflow-hidden">
+                                    <SafeProductImage :src="item.hinhAnhSanPham" :alt="item.tenSanPham" :iconSize="20" />
                                 </v-avatar>
                                 <div class="d-flex flex-column text-truncate" style="max-width: 165px">
                                     <span
@@ -480,9 +476,8 @@ onMounted(async () => {
                             <v-chip
                                 size="small"
                                 variant="flat"
-                                :color="getStatusChip(item.trangThai).color"
                                 class="font-weight-medium px-3 text-none justify-center"
-                                :class="getStatusChip(item.trangThai).chipClass"
+                                :class="['status-chip', getStatusChip(item.trangThai).chipClass]"
                             >
                                 <v-icon start size="13" :icon="getStatusChip(item.trangThai).icon"></v-icon>
                                 {{ getStatusChip(item.trangThai).text }}
@@ -505,52 +500,40 @@ onMounted(async () => {
                                 <!-- Duyệt -->
                                 <v-btn
                                     v-if="item.trangThai !== 'APPROVED'"
-                                    icon
                                     variant="text"
-                                    size="28"
-                                    class="rounded-lg action-icon-btn"
-                                    color="success"
+                                    class="action-icon-btn"
                                     @click.stop="handleUpdateStatus(item.id, 'APPROVED', 'Phê duyệt đánh giá', 'Bạn có chắc chắn muốn phê duyệt đánh giá này để hiển thị công khai trên cửa hàng?')"
                                 >
-                                    <CheckIcon size="15" />
+                                    <component :is="ADMIN_ICONS.ACTION.APPROVE" size="15" />
                                     <v-tooltip activator="parent" location="top">Phê duyệt</v-tooltip>
                                 </v-btn>
 
                                 <!-- Từ chối -->
                                 <v-btn
                                     v-if="item.trangThai !== 'REJECTED'"
-                                    icon
                                     variant="text"
-                                    size="28"
-                                    class="rounded-lg action-icon-btn"
-                                    color="error"
+                                    class="action-icon-btn"
                                     @click.stop="handleUpdateStatus(item.id, 'REJECTED', 'Từ chối đánh giá', 'Bạn có chắc chắn muốn từ chối và ẩn đánh giá này khỏi cửa hàng?')"
                                 >
-                                    <XIcon size="15" />
+                                    <component :is="ADMIN_ICONS.ACTION.REJECT" size="15" />
                                     <v-tooltip activator="parent" location="top">Từ chối</v-tooltip>
                                 </v-btn>
 
                                 <!-- Đánh dấu Spam -->
                                 <v-btn
                                     v-if="item.trangThai !== 'SPAM'"
-                                    icon
                                     variant="text"
-                                    size="28"
-                                    class="rounded-lg action-icon-btn"
-                                    color="warning"
+                                    class="action-icon-btn"
                                     @click.stop="handleUpdateStatus(item.id, 'SPAM', 'Đánh dấu Spam', 'Bạn có chắc chắn muốn đánh dấu đánh giá này là SPAM rác?')"
                                 >
-                                    <BanIcon size="15" />
+                                    <component :is="ADMIN_ICONS.ACTION.SPAM" size="15" />
                                     <v-tooltip activator="parent" location="top">Đánh dấu Spam</v-tooltip>
                                 </v-btn>
 
                                 <!-- Xóa vĩnh viễn -->
                                 <v-btn
-                                    icon
                                     variant="text"
-                                    size="28"
-                                    class="rounded-lg action-icon-btn"
-                                    color="error"
+                                    class="action-icon-btn"
                                     @click.stop="handleDelete(item.id)"
                                 >
                                     <component :is="ADMIN_ICONS.ACTION.DELETE" size="15" />

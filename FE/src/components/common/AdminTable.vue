@@ -26,10 +26,10 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
     <div v-bind="$attrs" class="admin-table-main-root">
         <v-card class="admin-table-container elevation-0" elevation="0">
             <!-- Toolbar Area -->
-            <div v-if="!hideToolbar" class="table-toolbar d-flex align-center justify-space-between pa-3">
+            <div v-if="!hideToolbar" class="table-toolbar d-flex align-center justify-space-between px-3 py-2">
                 <div class="d-flex align-center">
-                    <LayoutGridIcon size="20" class="text-primary mr-3" />
-                    <h3 class="text-h6 font-weight-bold text-black tracking-tight">{{ title }}</h3>
+                    <LayoutGridIcon size="18" class="text-primary mr-2" />
+                    <h3 class="text-subtitle-1 font-weight-bold text-black tracking-tight" style="font-size: 15px !important">{{ title }}</h3>
                 </div>
                 <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions">
                     <v-btn

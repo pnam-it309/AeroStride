@@ -706,7 +706,23 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             if (ctsp != null) {
                 tenSanPham = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : "";
                 if (ctsp.getAnhChiTietSanPhams() != null && !ctsp.getAnhChiTietSanPhams().isEmpty()) {
-                    hinhAnh = ctsp.getAnhChiTietSanPhams().iterator().next().getDuongDanAnh();
+                    for (AnhChiTietSanPham img : ctsp.getAnhChiTietSanPhams()) {
+                        if (Boolean.TRUE.equals(img.getHinhAnhDaiDien()) && !Boolean.TRUE.equals(img.getXoaMem()) && img.getDuongDanAnh() != null && !img.getDuongDanAnh().trim().isEmpty()) {
+                            hinhAnh = img.getDuongDanAnh();
+                            break;
+                        }
+                    }
+                    if (hinhAnh.isEmpty()) {
+                        for (AnhChiTietSanPham img : ctsp.getAnhChiTietSanPhams()) {
+                            if (!Boolean.TRUE.equals(img.getXoaMem()) && img.getDuongDanAnh() != null && !img.getDuongDanAnh().trim().isEmpty()) {
+                                hinhAnh = img.getDuongDanAnh();
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (hinhAnh.isEmpty() && ctsp.getSanPham() != null && ctsp.getSanPham().getHinhAnh() != null && !ctsp.getSanPham().getHinhAnh().trim().isEmpty()) {
+                    hinhAnh = ctsp.getSanPham().getHinhAnh();
                 }
                 tenMauSac = ctsp.getMauSac() != null ? ctsp.getMauSac().getTen() : "";
                 tenKichThuoc = ctsp.getKichThuoc() != null ? ctsp.getKichThuoc().getTen() : "";
@@ -737,13 +753,20 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                     .build();
         }).collect(Collectors.toList());
 
-        // Lịch sử trạng thái
+        // Lịch sử trạng thái (Truy vấn trực tiếp từ repository và khử trùng lặp)
         List<CustomerOrderResponse.OrderStatusHistory> lichSuList = new ArrayList<>();
-        if (hoaDon.getListsLichSuHoaDon() != null) {
-            lichSuList = hoaDon.getListsLichSuHoaDon().stream()
+        List<LichSuTrangThaiHoaDon> dbHistories = lichSuRepository.findAllByHoaDonOrderByNgayTaoDesc(hoaDon);
+        if (dbHistories != null && !dbHistories.isEmpty()) {
+            java.util.Set<String> seenKeys = new java.util.HashSet<>();
+            lichSuList = dbHistories.stream()
+                    .filter(ls -> ls.getTrangThaiMoi() != null && ls.getTrangThaiMoi() >= 0 && ls.getTrangThaiMoi() < OrderStatus.values().length)
+                    .filter(ls -> {
+                        String key = ls.getTrangThaiMoi() + "_" + (ls.getNgayTao() != null ? ls.getNgayTao() : "") + "_" + (ls.getGhiChu() != null ? ls.getGhiChu().trim() : "");
+                        return seenKeys.add(key);
+                    })
                     .map(ls -> CustomerOrderResponse.OrderStatusHistory.builder()
-                            .trangThai(ls.getTrangThaiMoi() != null ? OrderStatus.values()[ls.getTrangThaiMoi()].name() : "")
-                            .trangThaiDisplay(ls.getTrangThaiMoi() != null ? CustomerOrderResponse.mapTrangThaiDisplay(OrderStatus.values()[ls.getTrangThaiMoi()].name()) : "")
+                            .trangThai(OrderStatus.values()[ls.getTrangThaiMoi()].name())
+                            .trangThaiDisplay(CustomerOrderResponse.mapTrangThaiDisplay(OrderStatus.values()[ls.getTrangThaiMoi()].name()))
                             .thoiGian(ls.getNgayTao())
                             .ghiChu(ls.getGhiChu())
                             .build())

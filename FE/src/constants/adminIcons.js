@@ -21,7 +21,10 @@ import {
     HistoryIcon,
     SettingsIcon,
     FileSpreadsheetIcon,
-    MapPinIcon
+    MapPinIcon,
+    CheckIcon,
+    XIcon,
+    BanIcon
 } from 'vue-tabler-icons';
 
 export const ADMIN_ICONS = {
@@ -33,7 +36,10 @@ export const ADMIN_ICONS = {
         ADD: PlusIcon,
         DETAILS: EyeIcon,
         MORE: DotsVerticalIcon,
-        MAP: MapPinIcon
+        MAP: MapPinIcon,
+        APPROVE: CheckIcon,
+        REJECT: XIcon,
+        SPAM: BanIcon
     },
 
     // Feature Icons

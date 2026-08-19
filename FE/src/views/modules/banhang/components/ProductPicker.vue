@@ -8,6 +8,7 @@ import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
 import { formatCurrency } from '@/utils/formatters';
 import { useBanHangStore } from '@/stores/banHangStore';
+import SafeProductImage from '@/views/modules/san-pham/components/SafeProductImage.vue';
 
 const emit = defineEmits(['add-product']);
 const props = defineProps({
@@ -532,9 +533,8 @@ onUnmounted(() => {
                             <div class="d-flex justify-space-between w-100 align-start">
                                 <!-- Left info block -->
                                 <div class="d-flex align-start flex-grow-1">
-                                    <v-avatar rounded="lg" size="48" class="mr-3 bg-grey-lighten-4 border flex-shrink-0">
-                                        <v-img v-if="variant.hinhAnh" :src="variant.hinhAnh" cover />
-                                        <BoxIcon v-else size="20" class="text-grey" />
+                                    <v-avatar rounded="lg" size="48" class="mr-3 bg-grey-lighten-4 border flex-shrink-0 overflow-hidden">
+                                        <SafeProductImage :src="variant.hinhAnh" :alt="variant.tenSanPham" :iconSize="24" />
                                     </v-avatar>
                                     <div class="d-flex flex-column" style="gap: 8px !important">
                                         <div class="text-slate-700" style="font-size: 13.5px !important; line-height: 1.3">
@@ -565,22 +565,17 @@ onUnmounted(() => {
                                 </div>
 
                                 <!-- Right info block -->
-                                <div class="text-right flex-shrink-0 pl-3">
+                                <div class="text-right flex-shrink-0 pl-3 d-flex flex-column align-end justify-center">
                                     <template v-if="variant.phanTramGiam > 0">
-                                        <div class="price-text">{{ formatCurrency(variant.giaBan) }}</div>
+                                        <div class="d-flex align-center ga-1">
+                                            <span class="price-text font-weight-bold" style="color: #dc2626 !important">{{ formatCurrency(variant.giaBan) }}</span>
+                                            <v-chip size="x-small" color="error" variant="flat" class="font-weight-bold px-1" style="height: 16px; font-size: 10px">-{{ variant.phanTramGiam }}%</v-chip>
+                                        </div>
                                         <span
-                                            style="
-                                                text-decoration: line-through;
-                                                text-decoration-color: #94a3b8;
-                                                -webkit-text-decoration-color: #94a3b8;
-                                                color: #c92c04 !important;
-                                                font-size: 11px !important;
-                                                font-weight: normal;
-                                                display: block;
-                                                margin-top: 2px;
-                                            "
+                                            class="text-caption text-slate-400 text-decoration-line-through"
+                                            style="font-size: 11px !important; margin-top: 1px"
                                         >
-                                            {{ formatCurrency(variant.giaBan / (1 - variant.phanTramGiam / 100)) }}
+                                            {{ formatCurrency(variant.giaGoc || variant.giaBan / (1 - variant.phanTramGiam / 100)) }}
                                         </span>
                                     </template>
                                     <template v-else>

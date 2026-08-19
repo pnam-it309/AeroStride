@@ -25,7 +25,8 @@
                         maxlength="100"
                         prepend-inner-icon="mdi-magnify"
                         class="navy-input-field flex-grow-1"
-                        @focus="showCustomerSuggestions = true"
+                        @focus="onFocusCustomerSearch"
+                        @click="onFocusCustomerSearch"
                         autocomplete="off"
                     />
 
@@ -43,10 +44,11 @@
 
                     <!-- CUSTOMER SEARCH SUGGESTIONS POPOVER -->
                     <div
-                        v-if="showCustomerSuggestions && customerSearch.length > 0"
+                        v-if="showCustomerSuggestions"
                         class="suggestion-popover overflow-y-auto"
                         v-click-outside="() => (showCustomerSuggestions = false)"
                     >
+                        <!-- Khi có kết quả tìm kiếm -->
                         <div v-if="customerResults.length > 0" class="d-flex flex-column">
                             <div
                                 v-for="c in customerResults"
@@ -62,9 +64,28 @@
                                     {{ c.sdt }}
                                 </div>
                             </div>
+
+                            <!-- Nút thêm nhanh luôn hiển thị ở dưới danh sách khi có kết quả -->
+                            <div class="pa-2 border-t bg-slate-50">
+                                <v-btn
+                                    size="small"
+                                    variant="flat"
+                                    color="#2563eb"
+                                    class="text-white text-none font-weight-bold w-100 rounded-lg py-2"
+                                    style="height: 34px !important"
+                                    @click="quickCreateCustomer"
+                                >
+                                    <v-icon size="16" class="mr-1">mdi-plus</v-icon>
+                                    {{ customerSearch.trim() ? `Thêm nhanh: "${customerSearch.trim()}"` : 'Thêm khách hàng mới' }}
+                                </v-btn>
+                            </div>
                         </div>
-                        <div v-else class="pa-4 text-center">
-                            <div class="text-slate-500 text-caption mb-3">Không tìm thấy khách hàng phù hợp</div>
+
+                        <!-- Khi không có kết quả tìm kiếm -->
+                        <div v-else-if="!isLoadingCustomerSearch" class="pa-4 text-center">
+                            <div class="text-slate-500 text-caption mb-3">
+                                {{ customerSearch.trim() ? 'Không tìm thấy khách hàng phù hợp' : 'Chưa có gợi ý khách hàng' }}
+                            </div>
                             <v-btn
                                 size="small"
                                 variant="flat"
@@ -74,8 +95,14 @@
                                 @click="quickCreateCustomer"
                             >
                                 <v-icon size="16" class="mr-1">mdi-plus</v-icon>
-                                Thêm nhanh: "{{ customerSearch }}"
+                                {{ customerSearch.trim() ? `Thêm nhanh: "${customerSearch.trim()}"` : 'Thêm khách hàng mới' }}
                             </v-btn>
+                        </div>
+
+                        <!-- Khi đang tải -->
+                        <div v-else class="pa-4 text-center text-caption text-slate-500 d-flex align-center justify-center">
+                            <v-progress-circular indeterminate size="18" width="2" color="primary" class="mr-2" />
+                            Đang tìm kiếm...
                         </div>
                     </div>
                 </div>
@@ -138,7 +165,7 @@
                             class="text-none font-weight-bold rounded-lg px-2"
                             @click="showAddressModal = true"
                         >
-                            <v-icon size="14" class="mr-1">mdi-book-location-outline</v-icon>
+                            <v-icon size="15" class="mr-1">mdi-book-account-outline</v-icon>
                             Sổ địa chỉ
                         </v-btn>
                     </div>
@@ -496,21 +523,34 @@ watch(isDifferentRecipient, (val) => {
     }
 });
 
+const isLoadingCustomerSearch = ref(false);
+
+const performCustomerSearch = async (kw = '') => {
+    isLoadingCustomerSearch.value = true;
+    try {
+        const res = await dichVuDonHang.searchKhachHang(kw ? kw.trim() : '');
+        customerResults.value = res || [];
+    } catch (error) {
+        console.error('Lỗi tìm khách hàng:', error);
+        customerResults.value = [];
+    } finally {
+        isLoadingCustomerSearch.value = false;
+    }
+};
+
+const onFocusCustomerSearch = async () => {
+    showCustomerSuggestions.value = true;
+    if (customerResults.value.length === 0) {
+        await performCustomerSearch(customerSearch.value);
+    }
+};
+
 let searchTimeout = null;
 watch(customerSearch, (newVal) => {
     if (searchTimeout) clearTimeout(searchTimeout);
-    if (!newVal || newVal.length < 2) {
-        customerResults.value = [];
-        return;
-    }
     searchTimeout = setTimeout(async () => {
-        try {
-            const res = await dichVuDonHang.searchKhachHang(newVal);
-            customerResults.value = res || [];
-        } catch (error) {
-            console.error('Lỗi tìm khách hàng:', error);
-        }
-    }, 300);
+        await performCustomerSearch(newVal);
+    }, 200);
 });
 
 const onSelectSuggestedCustomer = (c) => {

@@ -2,12 +2,13 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { PATH } from '@/router/routePaths';
-import { AdminFilter, AdminTable, AdminBreadcrumbs, AdminPagination, TableEmptyState } from '@/components/common';
+import { AdminFilter, AdminTable, AdminBreadcrumbs, AdminPagination, TableEmptyState, AdminConfirm } from '@/components/common';
 import AppDatePicker from '@/components/common/AppDatePicker.vue';
 import { CalendarIcon, LayoutGridIcon } from 'vue-tabler-icons';
 import apiService from '@/services/apiService';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useNotifications } from '@/services/notificationService';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
 import { useRoleAccess } from '@/composables/useRoleAccess';
@@ -16,6 +17,7 @@ import { isManagementRole } from '@/constants/appConstants';
 const router = useRouter();
 const { addNotification } = useNotifications();
 const { currentUser, isStaff, canManageSchedule } = useRoleAccess();
+const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 
 const loading = ref(true);
 const isRefreshing = ref(false);
@@ -902,34 +904,38 @@ const handleAddForCellAndShift = (dateStr, shiftName) => {
     showAddDialog.value = true;
 };
 
-const handleDeleteCellSchedule = async (schedule) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa lịch làm việc của nhân viên "${schedule.nhanVien}" không?`)) {
-        return;
-    }
-    loading.value = true;
-    try {
-        const res = await apiService.delete(`${API_LICH_LAM_VIEC.BASE}/schedules/${schedule.id}`);
-        if (res.data.success) {
-            addNotification({
-                title: 'Thành công',
-                subtitle: 'Xóa lịch thành công!',
-                icon: 'CircleCheckIcon',
-                color: 'success'
-            });
-            selectedCellSchedules.value = selectedCellSchedules.value.filter((item) => item.id !== schedule.id);
-            await loadData();
+const handleDeleteCellSchedule = (schedule) => {
+    setConfirm({
+        title: 'Xóa lịch làm việc',
+        message: `Bạn có chắc chắn muốn xóa lịch làm việc của nhân viên "${schedule.nhanVien}" không?`,
+        color: 'warning',
+        action: async () => {
+            loading.value = true;
+            try {
+                const res = await apiService.delete(`${API_LICH_LAM_VIEC.BASE}/schedules/${schedule.id}`);
+                if (res.data.success) {
+                    addNotification({
+                        title: 'Thành công',
+                        subtitle: 'Xóa lịch làm việc thành công!',
+                        icon: 'CircleCheckIcon',
+                        color: 'success'
+                    });
+                    selectedCellSchedules.value = selectedCellSchedules.value.filter((item) => item.id !== schedule.id);
+                    await loadData();
+                }
+            } catch (error) {
+                console.error('Delete schedule error:', error);
+                addNotification({
+                    title: 'Lỗi',
+                    subtitle: 'Có lỗi xảy ra khi xóa lịch làm việc!',
+                    icon: 'CircleXIcon',
+                    color: 'error'
+                });
+            } finally {
+                loading.value = false;
+            }
         }
-    } catch (error) {
-        console.error('Delete schedule error:', error);
-        addNotification({
-            title: 'Lỗi',
-            subtitle: 'Có lỗi xảy ra khi xóa lịch làm việc!',
-            icon: 'CircleXIcon',
-            color: 'error'
-        });
-    } finally {
-        loading.value = false;
-    }
+    });
 };
 
 // Navigate backward in time
@@ -1694,6 +1700,17 @@ onMounted(() => {
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <!-- Shared Confirm Dialog -->
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)"
+        />
     </v-container>
 </template>
 

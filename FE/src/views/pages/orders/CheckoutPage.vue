@@ -13,6 +13,7 @@ import { dichVuVnPay } from '@/views/modules/banhang/composables/dichVuVnPay';
 import { PATH } from '@/router/routePaths';
 import { useLocation } from '@/composables/useLocation';
 import defaultShoeImg from '@/assets/images/products/cat_running.jpg';
+import SafeProductImage from '@/views/modules/san-pham/components/SafeProductImage.vue';
 
 const DEFAULT_SHOE_IMAGE = defaultShoeImg || new URL('/src/assets/images/products/cat_running.jpg', import.meta.url).href;
 
@@ -924,14 +925,13 @@ onUnmounted(() => {
                                         :key="item.idChiTietSanPham"
                                         class="product-item d-flex ga-4 py-4"
                                     >
-                                        <div class="product-img-wrapper position-relative flex-shrink-0">
-                                            <v-img
-                                                :src="item.hinhAnh || DEFAULT_SHOE_IMAGE"
-                                                cover
-                                                width="72"
-                                                height="72"
-                                                class="bg-grey-lighten-4"
-                                            ></v-img>
+                                        <div class="product-img-wrapper position-relative flex-shrink-0 rounded-lg overflow-hidden" style="width: 72px; height: 72px">
+                                            <SafeProductImage
+                                                :src="item.hinhAnh"
+                                                :fallbackSrc="DEFAULT_SHOE_IMAGE"
+                                                :alt="item.tenSanPham"
+                                                :iconSize="28"
+                                            />
                                             <span class="product-qty-badge">{{ item.soLuong }}</span>
                                             <div v-if="item.phanTramGiam > 0" class="cart-discount-badge">-{{ item.phanTramGiam }}%</div>
                                         </div>

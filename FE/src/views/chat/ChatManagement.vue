@@ -17,8 +17,8 @@ const customers = ref([]);
 const activeChat = ref(null);
 const chatMessages = ref([]);
 
-// Trạng thái hiển thị panel thông tin chi tiết
-const showDetailPanel = ref(true);
+// Trạng thái hiển thị panel thông tin chi tiết (mặc định đóng, chỉ mở khi người dùng bấm nút)
+const showDetailPanel = ref(false);
 const toggleDetailPanel = () => {
     showDetailPanel.value = !showDetailPanel.value;
 };
@@ -42,19 +42,6 @@ onMounted(() => {
 const activeNote = computed({
     get: () => {
         if (!activeChat.value) return '';
-        // If it's the mock conversation and no notes are saved yet, pre-populate with the mockup note!
-        if (isMockConversation(activeChat.value.id) && !customerNotes.value[activeChat.value.id]) {
-            if (activeChat.value.id === 'MOCK_NGUYEN_MINH_ANH') {
-                return 'Khách hàng thân thiết, hay mua giày sneaker. Ưu tiên tư vấn size và sản phẩm mới. Giao hàng nhanh khi có thể.';
-            }
-            if (activeChat.value.id === 'MOCK_TRAN_QUOC_HUY') {
-                return 'Khách hàng hỏi size 42 Air Jordan. Quan tâm chính sách ship COD Hải Phòng.';
-            }
-            if (activeChat.value.id === 'MOCK_LE_THI_MAI') {
-                return 'Khách hàng nữ mới, đang cần tư vấn giày hot trend.';
-            }
-            return 'Khách hàng giả lập hỗ trợ chăm sóc.';
-        }
         return customerNotes.value[activeChat.value.id] || '';
     },
     set: (val) => {
@@ -64,24 +51,14 @@ const activeNote = computed({
     }
 });
 
-// Helper check for mock conversations
-const isMockConversation = (id) => {
-    return id && id.startsWith('MOCK_');
-};
-
 const isUnread = (c) => {
     if (!c) return false;
-    if (isMockConversation(c.id)) {
-        return c.unread > 0;
-    }
-    return notificationStore.unreadChatConvIds.includes(c.id);
+    return (c.chuaDoc > 0) || notificationStore.unreadChatConvIds.includes(c.id);
 };
 
 const getUnreadCount = (c) => {
     if (!c) return 0;
-    if (isMockConversation(c.id)) {
-        return c.unread;
-    }
+    if (c.chuaDoc > 0) return c.chuaDoc;
     return notificationStore.unreadChatConvIds.includes(c.id) ? 1 : 0;
 };
 
@@ -98,260 +75,40 @@ const sortedCustomers = computed(() => {
     });
 });
 
-// 5 Mock conversations definition for high fidelity rendering
-const mockConversations = ref([
-    {
-        id: 'MOCK_NGUYEN_MINH_ANH',
-        name: 'Nguyễn Minh Anh',
-        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-        type: CHAT_TYPES.CUSTOMER,
-        status: 'ACTIVE',
-        lastMsg: 'Dạ vâng, đơn hàng đã được tạo thành công. Shop sẽ xác nhận...',
-        time: '10:28',
-        unread: 0,
-        isAccepted: true,
-        timestamp: Date.now() - 5 * 60 * 1000
-    },
-    {
-        id: 'MOCK_TRAN_QUOC_HUY',
-        name: 'Trần Quốc Huy',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-        type: CHAT_TYPES.CUSTOMER,
-        status: 'ACTIVE',
-        lastMsg: 'Shop có ship COD ra Hải Phòng không ạ?',
-        time: '10:15',
-        unread: 1,
-        isAccepted: true,
-        timestamp: Date.now() - 15 * 60 * 1000
-    },
-    {
-        id: 'MOCK_LE_THI_MAI',
-        name: 'Lê Thị Mai',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        type: CHAT_TYPES.CUSTOMER,
-        status: 'PENDING',
-        lastMsg: 'Tư vấn cho mình size giày nữ mẫu mới nhất với.',
-        time: '09:40',
-        unread: 1,
-        isAccepted: false,
-        timestamp: Date.now() - 50 * 60 * 1000
-    },
-    {
-        id: 'MOCK_PHAM_MINH_DUC',
-        name: 'Phạm Minh Đức',
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-        type: CHAT_TYPES.CUSTOMER,
-        status: 'ACTIVE',
-        lastMsg: 'Cảm ơn shop đã hỗ trợ nhiệt tình.',
-        time: 'Hôm qua',
-        unread: 1,
-        isAccepted: true,
-        timestamp: Date.now() - 24 * 60 * 60 * 1000
-    },
-    {
-        id: 'MOCK_HOANG_THUY_LINH',
-        name: 'Hoàng Thùy Linh',
-        avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
-        type: CHAT_TYPES.CUSTOMER,
-        status: 'CLOSED',
-        lastMsg: 'Đã nhận được hàng.',
-        time: '18/08',
-        unread: 1,
-        isAccepted: true,
-        timestamp: Date.now() - 48 * 60 * 60 * 1000
-    }
-]);
-
-const mockMessagesMap = ref({
-    'MOCK_NGUYEN_MINH_ANH': [
-        {
-            id: 'msg1',
-            conversationId: 'MOCK_NGUYEN_MINH_ANH',
-            text: 'Shop ơi, mẫu Nike Air Force 1 này em mang size 38.5 thì nên chọn size nào ạ?',
-            sender: 'Nguyễn Minh Anh',
-            time: '10:22'
-        },
-        {
-            id: 'msg2',
-            conversationId: 'MOCK_NGUYEN_MINH_ANH',
-            text: 'Chào anh/chị Minh Anh! Dạ mẫu này form chuẩn chị mang size 38.5 nhé. Nếu bàn chân hơi bè chị có thể chọn 39 để thoải mái hơn ạ.',
-            sender: authStore.user?.username || 'STAFF',
-            time: '10:23'
-        },
-        {
-            id: 'msg3',
-            conversationId: 'MOCK_NGUYEN_MINH_ANH',
-            text: 'Dạ vâng, vậy cho em đặt size 39 màu trắng ạ. Shop còn hàng không?',
-            sender: 'Nguyễn Minh Anh',
-            time: '10:24'
-        },
-        {
-            id: 'msg4',
-            conversationId: 'MOCK_NGUYEN_MINH_ANH',
-            text: '[PRODUCT:AF1]',
-            sender: authStore.user?.username || 'STAFF',
-            time: '10:25'
-        },
-        {
-            id: 'msg5',
-            conversationId: 'MOCK_NGUYEN_MINH_ANH',
-            text: 'Dạ em đặt luôn 1 đôi ạ. Gửi về địa chỉ cũ giúp em nhé.',
-            sender: 'Nguyễn Minh Anh',
-            time: '10:26'
-        },
-        {
-            id: 'msg6',
-            conversationId: 'MOCK_NGUYEN_MINH_ANH',
-            text: '[ORDER:SHO72638]',
-            sender: authStore.user?.username || 'STAFF',
-            time: '10:27'
-        },
-        {
-            id: 'msg7',
-            conversationId: 'MOCK_NGUYEN_MINH_ANH',
-            text: 'Dạ vâng, đơn hàng đã được tạo thành công. Shop sẽ xác nhận và gửi hàng cho mình trong ngày hôm nay ạ! 🥰',
-            sender: authStore.user?.username || 'STAFF',
-            time: '10:28'
-        }
-    ],
-    'MOCK_TRAN_QUOC_HUY': [
-        {
-            id: 'msg_h1',
-            conversationId: 'MOCK_TRAN_QUOC_HUY',
-            text: 'Chào shop, mình muốn hỏi đôi sneaker Air Jordan size 42 còn hàng không?',
-            sender: 'Trần Quốc Huy',
-            time: '10:10'
-        },
-        {
-            id: 'msg_h2',
-            conversationId: 'MOCK_TRAN_QUOC_HUY',
-            text: 'Chào bạn Huy, mẫu Air Jordan 1 High bên mình còn sẵn size 42 nha.',
-            sender: authStore.user?.username || 'STAFF',
-            time: '10:12'
-        },
-        {
-            id: 'msg_h3',
-            conversationId: 'MOCK_TRAN_QUOC_HUY',
-            text: 'Shop có ship COD ra Hải Phòng không ạ?',
-            sender: 'Trần Quốc Huy',
-            time: '10:15'
-        }
-    ],
-    'MOCK_LE_THI_MAI': [
-        {
-            id: 'msg_m1',
-            conversationId: 'MOCK_LE_THI_MAI',
-            text: 'Tư vấn cho mình size giày nữ mẫu mới nhất với.',
-            sender: 'Lê Thị Mai',
-            time: '09:40'
-        }
-    ],
-    'MOCK_PHAM_MINH_DUC': [
-        {
-            id: 'msg_d1',
-            conversationId: 'MOCK_PHAM_MINH_DUC',
-            text: 'Giày đi êm lắm shop ơi.',
-            sender: 'Phạm Minh Đức',
-            time: 'Hôm qua'
-        },
-        {
-            id: 'msg_d2',
-            conversationId: 'MOCK_PHAM_MINH_DUC',
-            text: 'Dạ cảm ơn anh đã phản hồi tốt về sản phẩm ạ!',
-            sender: authStore.user?.username || 'STAFF',
-            time: 'Hôm qua'
-        },
-        {
-            id: 'msg_d3',
-            conversationId: 'MOCK_PHAM_MINH_DUC',
-            text: 'Cảm ơn shop đã hỗ trợ nhiệt tình.',
-            sender: 'Phạm Minh Đức',
-            time: 'Hôm qua'
-        }
-    ],
-    'MOCK_HOANG_THUY_LINH': [
-        {
-            id: 'msg_l1',
-            conversationId: 'MOCK_HOANG_THUY_LINH',
-            text: 'Gửi cho mình link tracking đơn hàng.',
-            sender: 'Hoàng Thùy Linh',
-            time: '17/08'
-        },
-        {
-            id: 'msg_l2',
-            conversationId: 'MOCK_HOANG_THUY_LINH',
-            text: 'Dạ mã vận đơn của mình là VN20398402, shop gửi link theo dõi cho mình nhé.',
-            sender: authStore.user?.username || 'STAFF',
-            time: '17/08'
-        },
-        {
-            id: 'msg_l3',
-            conversationId: 'MOCK_HOANG_THUY_LINH',
-            text: 'Đã nhận được hàng.',
-            sender: 'Hoàng Thùy Linh',
-            time: '18/08'
-        }
-    ]
-});
-
-// Giả lập Email và SĐT dựa trên dữ liệu khách hàng
+// Email và SĐT dựa trên dữ liệu khách hàng
 const customerEmail = computed(() => {
     if (!activeChat.value) return '';
-    if (isMockConversation(activeChat.value.id)) {
-        if (activeChat.value.id === 'MOCK_NGUYEN_MINH_ANH') return 'minhanh.nguyen@gmail.com';
-        if (activeChat.value.id === 'MOCK_TRAN_QUOC_HUY') return 'huy.tran@gmail.com';
-        if (activeChat.value.id === 'MOCK_LE_THI_MAI') return 'mai.le@gmail.com';
-        if (activeChat.value.id === 'MOCK_PHAM_MINH_DUC') return 'duc.pham@gmail.com';
-        if (activeChat.value.id === 'MOCK_HOANG_THUY_LINH') return 'linh.hoang@gmail.com';
-    }
     if (activeChat.value.email) return activeChat.value.email;
-    const cleanName = activeChat.value.name
+    const cleanName = (activeChat.value.name || 'khachhang')
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/\s+/g, '.');
-    return `${cleanName}@aerostride.vn`;
+    return `${cleanName}@gmail.com`;
 });
 
 const customerPhone = computed(() => {
     if (!activeChat.value) return '';
-    if (isMockConversation(activeChat.value.id)) {
-        if (activeChat.value.id === 'MOCK_NGUYEN_MINH_ANH') return '0987 654 321';
-        if (activeChat.value.id === 'MOCK_TRAN_QUOC_HUY') return '0912 345 678';
-        if (activeChat.value.id === 'MOCK_LE_THI_MAI') return '0903 111 222';
-        if (activeChat.value.id === 'MOCK_PHAM_MINH_DUC') return '0945 888 999';
-        if (activeChat.value.id === 'MOCK_HOANG_THUY_LINH') return '0978 444 555';
-    }
-    if (activeChat.value.phone) return activeChat.value.phone;
-    const idHash = activeChat.value.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    if (activeChat.value.phone || activeChat.value.sdt) return activeChat.value.phone || activeChat.value.sdt;
+    const idHash = (activeChat.value.id || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return `098${(idHash % 9000000) + 1000000}`;
 });
 
 const customerAddress = computed(() => {
     if (!activeChat.value) return '';
-    if (isMockConversation(activeChat.value.id)) {
-        if (activeChat.value.id === 'MOCK_NGUYEN_MINH_ANH') return 'Hà Nội, Việt Nam';
-        if (activeChat.value.id === 'MOCK_TRAN_QUOC_HUY') return 'Hải Phòng, Việt Nam';
-        if (activeChat.value.id === 'MOCK_LE_THI_MAI') return 'Đà Nẵng, Việt Nam';
-        if (activeChat.value.id === 'MOCK_PHAM_MINH_DUC') return 'TP. Hồ Chí Minh, Việt Nam';
-        if (activeChat.value.id === 'MOCK_HOANG_THUY_LINH') return 'Cần Thơ, Việt Nam';
-    }
-    const hash = activeChat.value.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    if (activeChat.value.diaChi) return activeChat.value.diaChi;
+    const hash = (activeChat.value.id || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const cities = ['Hà Nội, Việt Nam', 'TP. Hồ Chí Minh, Việt Nam', 'Đà Nẵng, Việt Nam', 'Hải Phòng, Việt Nam'];
     return cities[hash % cities.length];
 });
 
 const customerJoined = computed(() => {
     if (!activeChat.value) return '';
-    if (isMockConversation(activeChat.value.id)) {
-        if (activeChat.value.id === 'MOCK_NGUYEN_MINH_ANH') return '12/01/2023';
-        if (activeChat.value.id === 'MOCK_TRAN_QUOC_HUY') return '24/05/2023';
-        if (activeChat.value.id === 'MOCK_LE_THI_MAI') return '08/09/2023';
-        if (activeChat.value.id === 'MOCK_PHAM_MINH_DUC') return '15/12/2022';
-        if (activeChat.value.id === 'MOCK_HOANG_THUY_LINH') return '30/03/2024';
+    if (activeChat.value.ngayTao) {
+        return new Date(activeChat.value.ngayTao).toLocaleDateString('vi-VN');
     }
-    const hash = activeChat.value.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const years = [2021, 2022, 2023, 2024];
+    const hash = (activeChat.value.id || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const years = [2022, 2023, 2024, 2025];
     const month = String((hash % 12) + 1).padStart(2, '0');
     const day = String((hash % 28) + 1).padStart(2, '0');
     return `${day}/${month}/${years[hash % years.length]}`;
@@ -362,7 +119,7 @@ const activeChatRoleLabel = computed(() => {
     if (activeChat.value.type === CHAT_TYPES.CUSTOMER) return 'Khách hàng';
     
     // Check role from various properties
-    const roleField = activeChat.value.role || activeChat.value.roleCode || activeChat.value.roleName || activeChat.value.chucVu || activeChat.value.authority;
+    const roleField = activeChat.value.role || activeChat.value.roleCode || activeChat.value.roleName || activeChat.value.chucVu || activeChat.value.authority || activeChat.value.vaiTro;
     if (roleField) {
         const rStr = String(roleField).toUpperCase();
         if (
@@ -392,48 +149,7 @@ const activeChatRoleColor = computed(() => {
 
 const customerOrder = computed(() => {
     if (!activeChat.value || activeChat.value.type !== CHAT_TYPES.CUSTOMER) return null;
-    if (isMockConversation(activeChat.value.id)) {
-        if (activeChat.value.id === 'MOCK_NGUYEN_MINH_ANH') {
-            return {
-                code: '#SHO72638',
-                status: 'Chờ xác nhận',
-                statusColor: 'amber-darken-2',
-                total: '2.490.000đ',
-                time: '10:27 - 24/05/2024'
-            };
-        }
-        if (activeChat.value.id === 'MOCK_TRAN_QUOC_HUY') {
-            return {
-                code: '#SHO91024',
-                status: 'Chờ xác nhận',
-                statusColor: 'amber-darken-2',
-                total: '3.150.000đ',
-                time: '10:15 - 19/08/2026'
-            };
-        }
-        if (activeChat.value.id === 'MOCK_LE_THI_MAI') {
-            return null; // Chưa có đơn hàng
-        }
-        if (activeChat.value.id === 'MOCK_PHAM_MINH_DUC') {
-            return {
-                code: '#SHO88310',
-                status: 'Đang giao',
-                statusColor: 'info',
-                total: '1.890.000đ',
-                time: '14:20 - 18/08/2026'
-            };
-        }
-        if (activeChat.value.id === 'MOCK_HOANG_THUY_LINH') {
-            return {
-                code: '#SHO55291',
-                status: 'Đã hoàn thành',
-                statusColor: 'success',
-                total: '1.250.000đ',
-                time: '09:05 - 18/08/2026'
-            };
-        }
-    }
-    const hash = activeChat.value.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const hash = (activeChat.value.id || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const orderNum = (hash % 90000) + 10000;
     const day = String((hash % 28) + 1).padStart(2, '0');
     const month = String((hash % 12) + 1).padStart(2, '0');
@@ -451,44 +167,7 @@ const customerOrder = computed(() => {
 
 const purchaseOverview = computed(() => {
     if (!activeChat.value || activeChat.value.type !== CHAT_TYPES.CUSTOMER) return null;
-    if (isMockConversation(activeChat.value.id)) {
-        if (activeChat.value.id === 'MOCK_NGUYEN_MINH_ANH') {
-            return {
-                totalOrders: 12,
-                totalSpend: '18.750.000đ',
-                lastOrder: '#SHO72638 - 24/05/2024'
-            };
-        }
-        if (activeChat.value.id === 'MOCK_TRAN_QUOC_HUY') {
-            return {
-                totalOrders: 4,
-                totalSpend: '8.400.000đ',
-                lastOrder: '#SHO91024 - 19/08/2026'
-            };
-        }
-        if (activeChat.value.id === 'MOCK_LE_THI_MAI') {
-            return {
-                totalOrders: 0,
-                totalSpend: '0đ',
-                lastOrder: 'Chưa mua hàng'
-            };
-        }
-        if (activeChat.value.id === 'MOCK_PHAM_MINH_DUC') {
-            return {
-                totalOrders: 18,
-                totalSpend: '34.200.000đ',
-                lastOrder: '#SHO88310 - 18/08/2026'
-            };
-        }
-        if (activeChat.value.id === 'MOCK_HOANG_THUY_LINH') {
-            return {
-                totalOrders: 1,
-                totalSpend: '1.250.000đ',
-                lastOrder: '#SHO55291 - 18/08/2026'
-            };
-        }
-    }
-    const hash = activeChat.value.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const hash = (activeChat.value.id || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const totalOrders = (hash % 15) + 3;
     const totalSpend = (totalOrders * 1250000 + (hash % 500) * 1000).toLocaleString('vi-VN') + 'đ';
     const day = String((hash % 28) + 1).padStart(2, '0');
@@ -512,35 +191,6 @@ const noteUpdatedTime = computed(() => {
 const noteUpdatedBy = computed(() => {
     return authStore.user?.fullName || authStore.user?.username || 'Bùi Thị Yến';
 });
-
-// Parse message to detect inline attachments
-const parseMessage = (m) => {
-    const text = m.text || '';
-    if (text.includes('[PRODUCT:AF1]') || (text.includes('Nike Air Force 1') && text.includes('CW2288-111'))) {
-        return {
-            type: 'product',
-            name: "Nike Air Force 1 '07 White",
-            code: "CW2288-111",
-            specs: "Màu sắc: Trắng | Size: 39",
-            price: "2.490.000đ",
-            status: "Còn hàng",
-            imageUrl: "https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/b7d3c21a-4668-450f-b47e-d3d66257474f/air-force-1-07-shoes-Wr0Sp1.png"
-        };
-    }
-    if (text.includes('[ORDER:SHO72638]') || text.includes('Đơn hàng #SHO72638')) {
-        return {
-            type: 'order',
-            code: "#SHO72638",
-            status: "Chờ xác nhận",
-            total: "2.490.000đ",
-            payment: "COD"
-        };
-    }
-    return {
-        type: 'text',
-        text: text
-    };
-};
 
 // Filter out system messages for admin view
 const displayMessages = computed(() => {
@@ -650,33 +300,8 @@ const fetchConversations = async (quiet = false) => {
         ]);
 
         allConversations.value = allConvRes.data?.data || [];
-
-        let backendConvs = convRes.data?.data || [];
-        
-        // Remove duplicates if backend returns any name matching the mock names
-        const mockNames = mockConversations.value.map(c => c.name);
-        backendConvs = backendConvs.filter((c) => !mockNames.includes(c.name));
-
-        // Filter and matches for our mock conversations
-        const matchedMockConvs = mockConversations.value.filter(c => {
-            const matchesType = chatType.value === c.type;
-            const matchesStatus = chatStatus.value === 'ALL' || chatStatus.value === c.status;
-            const matchesSearch = !searchQuery.value || c.name.toLowerCase().includes(searchQuery.value.toLowerCase());
-            return matchesType && matchesStatus && matchesSearch;
-        });
-
-        customers.value = [...matchedMockConvs, ...backendConvs];
-
+        customers.value = convRes.data?.data || [];
         stats.value = statsRes.data?.data || { ACTIVE: 0, PENDING: 0, CLOSED: 0 };
-
-        // Adjust stats to include mock conversations count
-        mockConversations.value.forEach(c => {
-            if (c.type === chatType.value) {
-                if (c.status === 'ACTIVE') stats.value.ACTIVE = (stats.value.ACTIVE || 0) + 1;
-                else if (c.status === 'PENDING') stats.value.PENDING = (stats.value.PENDING || 0) + 1;
-                else if (c.status === 'CLOSED') stats.value.CLOSED = (stats.value.CLOSED || 0) + 1;
-            }
-        });
 
         if (activeChat.value) {
             const updatedChat = customers.value.find((c) => c.id === activeChat.value.id);
@@ -714,16 +339,6 @@ watch([chatType, chatStatus, searchQuery], () => {
 
 // Lấy lịch sử tin nhắn của hội thoại đang chọn
 const fetchMessages = async (conversationId) => {
-    if (isMockConversation(conversationId)) {
-        isMessagesLoading.value = true;
-        setTimeout(() => {
-            chatMessages.value = [...(mockMessagesMap.value[conversationId] || [])];
-            isMessagesLoading.value = false;
-            scrollToBottom();
-        }, 150);
-        return;
-    }
-
     isMessagesLoading.value = true;
     try {
         const response = await api.get(API_CHAT.MESSAGES(conversationId));
@@ -741,36 +356,6 @@ const sendMessage = async () => {
     if (isSendingMessage.value) return;
     if (!newMessage.value.trim() && !imagePreview.value) return;
     if (!activeChat.value) return;
-    // Phiên đã đóng thì khóa chat, không cho gửi
-    if (activeChat.value.status === 'CLOSED') return;
-
-    isSendingMessage.value = true;
-    if (isMockConversation(activeChat.value.id)) {
-        const newMsg = {
-            id: 'msg_new_' + Date.now(),
-            conversationId: activeChat.value.id,
-            text: newMessage.value,
-            sender: authStore.user?.username || 'STAFF',
-            time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-        };
-        if (!mockMessagesMap.value[activeChat.value.id]) {
-            mockMessagesMap.value[activeChat.value.id] = [];
-        }
-        mockMessagesMap.value[activeChat.value.id].push(newMsg);
-        chatMessages.value.push(newMsg);
-        
-        // Cập nhật tin nhắn cuối cùng trong danh sách
-        const found = mockConversations.value.find(c => c.id === activeChat.value.id);
-        if (found) {
-            found.lastMsg = newMessage.value;
-            found.time = newMsg.time;
-            found.timestamp = Date.now();
-        }
-
-        newMessage.value = '';
-        scrollToBottom();
-        return;
-    }
 
     // Chuẩn bị payload: base64 thuần (bỏ header "data:image/...;base64," nếu có)
     let base64Image = null;
@@ -781,6 +366,13 @@ const sendMessage = async () => {
 
     const textToSend = newMessage.value ? newMessage.value.trim() : null;
     const currentUsername = authStore.user?.username || 'STAFF';
+
+    // Tự động chuyển trạng thái cuộc hội thoại sang ACTIVE khi nhân viên gửi tin
+    if (activeChat.value.type !== CHAT_TYPES.INTERNAL && (activeChat.value.status === 'PENDING' || activeChat.value.status === 'CLOSED')) {
+        activeChat.value.status = 'ACTIVE';
+        activeChat.value.isAccepted = true;
+        isAccepted.value = true;
+    }
 
     // Đẩy tin nhắn optimistic lên UI ngay lập tức để hiển thị tức thì cả ảnh và chữ
     const tempId = 'temp_' + Date.now();
@@ -829,28 +421,10 @@ const selectChat = async (customer) => {
         fetchMessages(customer.id);
     }
     notificationStore.markChatRead(customer.id);
-    if (isMockConversation(customer.id)) {
-        customer.unread = 0;
-        const found = mockConversations.value.find(c => c.id === customer.id);
-        if (found) found.unread = 0;
-    }
-    fetchMessages(customer.id);
 };
 
 const acceptChat = async () => {
     if (!activeChat.value) return;
-
-    if (isMockConversation(activeChat.value.id)) {
-        activeChat.value.status = 'ACTIVE';
-        activeChat.value.isAccepted = true;
-        isAccepted.value = true;
-        const found = mockConversations.value.find(c => c.id === activeChat.value.id);
-        if (found) {
-            found.status = 'ACTIVE';
-            found.isAccepted = true;
-        }
-        return;
-    }
 
     try {
         const response = await api.post(API_CHAT.ACCEPT(activeChat.value.id));
@@ -865,29 +439,27 @@ const acceptChat = async () => {
     }
 };
 
-const closeChat = async () => {
+const closeChat = () => {
     if (!activeChat.value) return;
-
-    if (isMockConversation(activeChat.value.id)) {
-        activeChat.value.status = 'CLOSED';
-        const found = mockConversations.value.find(c => c.id === activeChat.value.id);
-        if (found) {
-            found.status = 'CLOSED';
+    const target = activeChat.value;
+    setConfirm({
+        title: 'Đóng phiên chat',
+        message: `Bạn có chắc chắn muốn kết thúc phiên trò chuyện với "${target.name}"?`,
+        color: 'warning',
+        action: async () => {
+            try {
+                const response = await api.post(API_CHAT.CLOSE(target.id));
+                if (response.data?.success) {
+                    target.status = 'CLOSED';
+                    fetchConversations(true);
+                }
+            } catch (error) {
+                console.error('Lỗi khi kết thúc cuộc trò chuyện:', error);
+            }
         }
-        return;
-    }
-
-    try {
-        const response = await api.post(API_CHAT.CLOSE(activeChat.value.id));
-        if (response.data?.success) {
-            activeChat.value.status = 'CLOSED';
-            fetchConversations(true);
-        }
-    } catch (error) {
-        console.error('Lỗi khi đóng cuộc trò chuyện:', error);
-    }
+    });
 };
-
+     
 const isSummarizing = ref(false);
 const showSummaryModal = ref(false);
 const chatSummary = ref('');
@@ -1085,7 +657,7 @@ onMounted(() => {
                         <v-btn icon="mdi-filter-variant" variant="outlined" color="#64748b" class="rounded-lg" size="small" style="height: 40px; width: 40px; border-color: #e2e8f0;"></v-btn>
                     </div>
 
-                    <v-chip-group v-model="chatStatus" mandatory selected-class="chip-active" class="status-chips mt-3">
+                    <v-chip-group v-if="chatType === CHAT_TYPES.CUSTOMER" v-model="chatStatus" mandatory selected-class="chip-active" class="status-chips mt-3">
                         <v-chip value="ALL" size="small" variant="outlined" color="#1e257c">
                             Tất cả
                         </v-chip>
@@ -1129,7 +701,7 @@ onMounted(() => {
                                         alt="avatar"
                                     ></v-img>
                                 </v-avatar>
-                                <span class="status-dot-badge" :class="c.status?.toLowerCase()"></span>
+                                <span class="status-dot-badge" :class="c.type === CHAT_TYPES.INTERNAL ? 'active' : c.status?.toLowerCase()"></span>
                             </div>
                         </template>
                         <v-list-item-title :class="['conv-name', { 'unread-bold': c.unread > 0 }]">{{ c.name }}</v-list-item-title>
@@ -1167,21 +739,27 @@ onMounted(() => {
                                         alt="avatar"
                                     ></v-img>
                                 </v-avatar>
-                                <span class="status-dot-badge header-badge" :class="activeChat.status?.toLowerCase()"></span>
+                                <span class="status-dot-badge header-badge" :class="activeChat.type === CHAT_TYPES.INTERNAL ? 'active' : activeChat.status?.toLowerCase()"></span>
                             </div>
                             <div>
                                 <div class="main-chat-name">{{ activeChat.name }}</div>
                                 <div class="d-flex align-center">
-                                    <span class="status-indicator" :class="activeChat.status.toLowerCase()"></span>
-                                    <span class="status-label" :class="activeChat.status.toLowerCase()">
-                                        {{
-                                            activeChat.status === 'ACTIVE'
-                                                ? 'Đang hoạt động'
-                                                : activeChat.status === 'PENDING'
-                                                   ? 'Chờ tiếp nhận'
-                                                   : 'Đã đóng'
-                                        }}
-                                    </span>
+                                    <template v-if="activeChat.type !== CHAT_TYPES.INTERNAL">
+                                        <span class="status-indicator" :class="activeChat.status.toLowerCase()"></span>
+                                        <span class="status-label" :class="activeChat.status.toLowerCase()">
+                                            {{
+                                                activeChat.status === 'ACTIVE'
+                                                    ? 'Đang hoạt động'
+                                                    : activeChat.status === 'PENDING'
+                                                       ? 'Chờ tiếp nhận'
+                                                       : 'Đã đóng'
+                                            }}
+                                        </span>
+                                    </template>
+                                    <template v-else>
+                                        <span class="status-indicator active"></span>
+                                        <span class="status-label active">Trò chuyện nội bộ</span>
+                                    </template>
                                 </div>
                             </div>
                         </div>
@@ -1252,9 +830,7 @@ onMounted(() => {
                                         m.sender === authStore.user?.username || m.sender === 'bot' || m.sender === 'SYSTEM'
                                             ? 'bubble-mine'
                                             : 'bubble-other',
-                                        (parseMessage(m).type === 'product' || parseMessage(m).type === 'order' || (m.imageUrl && !m.text))
-                                            ? 'bubble-card'
-                                            : ''
+                                        m.imageUrl && !m.text ? 'bubble-card' : ''
                                     ]"
                                 >
                                     <!-- Hiển thị ảnh nếu tin nhắn có ảnh -->
@@ -1266,59 +842,17 @@ onMounted(() => {
                                         />
                                     </div>
 
-                                    <!-- Render Product Card -->
-                                    <div v-if="parseMessage(m).type === 'product'" class="bubble-product-card mb-1">
-                                        <div class="d-flex ga-3">
-                                            <v-img :src="parseMessage(m).imageUrl" width="70" height="70" class="rounded-lg bg-grey-lighten-4 flex-shrink-0" cover></v-img>
-                                            <div class="flex-grow-1 d-flex flex-column justify-space-between">
-                                                <div>
-                                                    <div class="d-flex align-center justify-space-between ga-2">
-                                                        <span class="product-card-name font-weight-bold text-caption text-truncate" style="max-width: 130px; display: inline-block;">{{ parseMessage(m).name }}</span>
-                                                        <v-chip size="x-small" color="success" variant="flat" class="font-weight-black flex-shrink-0 px-1 py-0" style="height: 16px; font-size: 8px;">{{ parseMessage(m).status }}</v-chip>
-                                                    </div>
-                                                    <div class="text-caption text-grey-darken-1" style="font-size: 10px !important;">{{ parseMessage(m).code }}</div>
-                                                    <div class="text-caption text-grey-darken-2 mt-0.5" style="font-size: 11px !important;">{{ parseMessage(m).specs }}</div>
-                                                </div>
-                                                <div class="d-flex align-center justify-end">
-                                                    <span class="product-card-price font-weight-black text-caption" style="color: #1e257c;">{{ parseMessage(m).price }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Render Order Card -->
-                                    <div v-else-if="parseMessage(m).type === 'order'" class="bubble-order-card mb-1">
-                                        <div class="d-flex align-center ga-3 mb-2">
-                                            <div class="order-icon-wrap rounded-lg d-flex align-center justify-center bg-blue-lighten-5" style="width: 36px; height: 36px; flex-shrink: 0;">
-                                                <v-icon color="#1e257c" size="20">mdi-shopping</v-icon>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <div class="d-flex align-center justify-space-between ga-2">
-                                                    <span class="order-card-title font-weight-black text-caption">Đơn hàng {{ parseMessage(m).code }}</span>
-                                                    <v-chip size="x-small" color="amber-darken-2" variant="flat" class="font-weight-black flex-shrink-0 px-1" style="height: 16px; font-size: 8px;">{{ parseMessage(m).status }}</v-chip>
-                                                </div>
-                                                <div class="text-caption text-grey-darken-1" style="font-size: 11px !important; margin-top: 2px;">Tạm tính: {{ parseMessage(m).total }}</div>
-                                            </div>
-                                        </div>
-                                        <v-btn block size="x-small" variant="outlined" color="#1e257c" class="rounded-lg text-none font-weight-bold text-caption py-1" style="height: 24px;">Xem chi tiết đơn hàng</v-btn>
-                                    </div>
-
-                                    <!-- Render Text/Image -->
-                                    <template v-else>
-                                        <div v-if="m.imageUrl" class="bubble-image-wrap mb-1">
-                                            <img :src="m.imageUrl" class="bubble-image" @click="openImage(m.imageUrl)" />
-                                        </div>
-                                        <div v-if="m.text" class="bubble-text">{{ m.text }}</div>
-                                    </template>
+                                    <!-- Render Text -->
+                                    <div v-if="m.text || m.noiDung" class="bubble-text">{{ m.text || m.noiDung }}</div>
 
                                     <div class="bubble-meta">
                                         <span class="bubble-time">{{ m.time }}</span>
                                         <v-icon
                                             v-if="m.sender === authStore.user?.username || m.sender === 'bot' || m.sender === 'SYSTEM'"
                                             size="14"
-                                            :color="(parseMessage(m).type === 'product' || parseMessage(m).type === 'order' || (m.imageUrl && !m.text)) ? 'grey-darken-1' : 'rgba(255,255,255,0.7)'"
+                                            color="rgba(255,255,255,0.7)"
                                             class="ml-1"
-                                            >mdi-check-all</v-icon>
+                                        >mdi-check-all</v-icon>
                                     </div>
                                 </div>
                             </div>
@@ -1326,24 +860,54 @@ onMounted(() => {
                     </div>
 
                     <!-- Input Area -->
-                    <div class="input-area">
-                        <div v-if="activeChat.status === 'PENDING'" class="lock-overlay">
-                            <v-icon color="#1e257c" size="32" class="mb-2">mdi-shield-lock-outline</v-icon>
-                            <div class="lock-title">Vui lòng tiếp nhận cuộc trò chuyện</div>
-                            <div class="lock-sub">Bạn cần tiếp nhận để bắt đầu gửi tin nhắn</div>
-                        </div>
-
-                        <div v-else-if="activeChat.status === 'CLOSED'" class="lock-overlay">
-                            <v-icon color="#94a3b8" size="32" class="mb-2">mdi-lock-outline</v-icon>
-                            <div class="lock-title">Phiên trò chuyện đã đóng</div>
-                            <div class="lock-sub">Cuộc trò chuyện đã kết thúc, không thể gửi tin nhắn</div>
-                        </div>
-
-                        <v-row
-                            no-gutters
-                            align="center"
-                            :class="{ 'input-blur': activeChat.status === 'PENDING' || activeChat.status === 'CLOSED' }"
+                    <div class="input-area position-relative">
+                        <!-- Banner tiếp nhận khi cuộc trò chuyện đang chờ (chỉ hiện với khách hàng) -->
+                        <div
+                            v-if="activeChat.status === 'PENDING' && activeChat.type !== CHAT_TYPES.INTERNAL"
+                            class="status-action-banner d-flex align-center justify-space-between px-4 py-2 mb-2 rounded-xl"
+                            style="background: #eef2ff; border: 1px solid #c7d2fe;"
                         >
+                            <div class="d-flex align-center">
+                                <v-icon color="#1e257c" size="20" class="mr-2">mdi-account-clock-outline</v-icon>
+                                <span style="font-size: 0.85rem; font-weight: 600; color: #1e257c;">
+                                    Cuộc trò chuyện đang chờ tiếp nhận
+                                </span>
+                            </div>
+                            <v-btn
+                                color="#1e257c"
+                                size="small"
+                                class="text-white text-none font-weight-bold rounded-pill px-3"
+                                elevation="0"
+                                @click="acceptChat"
+                            >
+                                <v-icon size="16" class="mr-1">mdi-check</v-icon> Tiếp nhận ngay
+                            </v-btn>
+                        </div>
+
+                        <!-- Banner khi phiên trò chuyện đã đóng (chỉ hiện với khách hàng) -->
+                        <div
+                            v-else-if="activeChat.status === 'CLOSED' && activeChat.type !== CHAT_TYPES.INTERNAL"
+                            class="status-action-banner d-flex align-center justify-space-between px-4 py-2 mb-2 rounded-xl"
+                            style="background: #f8fafc; border: 1px solid #e2e8f0;"
+                        >
+                            <div class="d-flex align-center">
+                                <v-icon color="#64748b" size="20" class="mr-2">mdi-lock-outline</v-icon>
+                                <span style="font-size: 0.85rem; font-weight: 600; color: #64748b;">
+                                    Phiên trò chuyện đã đóng
+                                </span>
+                            </div>
+                            <v-btn
+                                color="#1e257c"
+                                variant="outlined"
+                                size="small"
+                                class="text-none font-weight-bold rounded-pill px-3"
+                                @click="acceptChat"
+                            >
+                                <v-icon size="16" class="mr-1">mdi-refresh</v-icon> Mở lại trò chuyện
+                            </v-btn>
+                        </div>
+
+                        <v-row no-gutters align="center">
                             <!-- Input ẩn để chọn file ảnh -->
                             <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleImageUpload" />
 
@@ -1367,7 +931,7 @@ onMounted(() => {
                                 </div>
                                 <v-textarea
                                     v-model="newMessage"
-                                    placeholder="Nhập tin nhắn..."
+                                    :placeholder="activeChat.status === 'PENDING' && activeChat.type !== CHAT_TYPES.INTERNAL ? 'Nhập tin nhắn để tự động tiếp nhận...' : (activeChat.status === 'CLOSED' && activeChat.type !== CHAT_TYPES.INTERNAL ? 'Nhập tin nhắn để mở lại cuộc trò chuyện...' : 'Nhập tin nhắn...')"
                                     rows="1"
                                     auto-grow
                                     variant="solo"
@@ -1377,7 +941,6 @@ onMounted(() => {
                                     density="comfortable"
                                     class="rounded-xl input-textarea"
                                     @keyup.enter.exact.prevent="sendMessage"
-                                    :disabled="activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"
                                 ></v-textarea>
                             </v-col>
 
@@ -1388,7 +951,6 @@ onMounted(() => {
                                 color="#1e257c"
                                 class="ml-2"
                                 @click="triggerImageUpload"
-                                :disabled="activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"
                                 title="Gửi ảnh"
                             ></v-btn>
 
@@ -1400,11 +962,7 @@ onMounted(() => {
                                 class="ml-2 rounded-xl text-white"
                                 @click="sendMessage"
                                 :loading="isSendingImage"
-                                :disabled="
-                                    (!newMessage.trim() && !imagePreview) ||
-                                    activeChat.status === 'PENDING' ||
-                                    activeChat.status === 'CLOSED'
-                                "
+                                :disabled="!newMessage.trim() && !imagePreview"
                             ></v-btn>
                         </v-row>
                     </div>
@@ -1433,7 +991,7 @@ onMounted(() => {
                             <v-avatar size="80" class="border">
                                 <v-img :src="!activeChat.avatar || activeChat.avatar.length <= 2 ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : activeChat.avatar" alt="avatar"></v-img>
                             </v-avatar>
-                            <span class="status-dot-badge" :class="activeChat.status?.toLowerCase()" style="width: 16px; height: 16px; border-width: 3px;"></span>
+                            <span class="status-dot-badge" :class="activeChat.type === CHAT_TYPES.INTERNAL ? 'active' : activeChat.status?.toLowerCase()" style="width: 16px; height: 16px; border-width: 3px;"></span>
                         </div>
                         <div class="font-weight-black text-subtitle-1" style="color: #0f172a; line-height: 1.2">{{ activeChat.name }}</div>
                         <v-chip size="x-small" class="mt-2 font-weight-bold" :color="activeChatRoleColor" variant="flat">
@@ -1481,23 +1039,26 @@ onMounted(() => {
                                 :loading="isSummarizing"
                             >AI Tóm tắt hội thoại</v-btn>
                             
-                            <v-btn
-                                v-if="activeChat.status === 'PENDING'"
-                                block
-                                variant="flat"
-                                prepend-icon="mdi-check-circle"
-                                @click="acceptChat"
-                                class="rounded-lg text-none font-weight-bold text-caption btn-pastel-green"
-                            >Tiếp nhận cuộc chat</v-btn>
-                            
-                            <v-btn
-                                v-if="activeChat.status === 'PENDING' || activeChat.status === 'ACTIVE'"
-                                block
-                                variant="flat"
-                                prepend-icon="mdi-close-circle"
-                                @click="closeChat"
-                                class="rounded-lg text-none font-weight-bold text-caption btn-pastel-orange"
-                            >Đóng phiên chat</v-btn>
+                            <!-- Chỉ hiển thị Tiếp nhận / Đóng phiên đối với cuộc trò chuyện với Khách hàng -->
+                            <template v-if="activeChat.type !== CHAT_TYPES.INTERNAL">
+                                <v-btn
+                                    v-if="activeChat.status === 'PENDING'"
+                                    block
+                                    variant="flat"
+                                    prepend-icon="mdi-check-circle"
+                                    @click="acceptChat"
+                                    class="rounded-lg text-none font-weight-bold text-caption btn-pastel-green"
+                                >Tiếp nhận cuộc chat</v-btn>
+                                
+                                <v-btn
+                                    v-if="activeChat.status === 'PENDING' || activeChat.status === 'ACTIVE'"
+                                    block
+                                    variant="flat"
+                                    prepend-icon="mdi-close-circle"
+                                    @click="closeChat"
+                                    class="rounded-lg text-none font-weight-bold text-caption btn-pastel-orange"
+                                >Đóng phiên chat</v-btn>
+                            </template>
                         </div>
                     </div>
 
@@ -2213,41 +1774,6 @@ $primary-gradient: linear-gradient(135deg, #1e257c 0%, #343fa8 100%);
         opacity: 0.9;
         transform: scale(1.01);
     }
-}
-
-/* ========== ATTACHMENTS & MOCKUP CUSTOMS ========== */
-.bubble-product-card {
-    background: #ffffff;
-    border: 1px solid #edf2f7;
-    border-radius: 12px;
-    padding: 10px;
-    margin-top: 4px;
-    margin-bottom: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-    min-width: 240px;
-    max-width: 280px;
-
-    .product-card-name {
-        color: #0f172a;
-        font-weight: 700;
-    }
-    
-    .product-card-price {
-        font-size: 0.85rem;
-        letter-spacing: -0.01em;
-    }
-}
-
-.bubble-order-card {
-    background: #ffffff;
-    border: 1px solid #edf2f7;
-    border-radius: 12px;
-    padding: 12px;
-    margin-top: 4px;
-    margin-bottom: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-    min-width: 240px;
-    max-width: 280px;
 }
 
 .note-display-box {

@@ -6,6 +6,7 @@ import CustomerChat from '@/components/shared/CustomerChat.vue';
 
 import { dichVuDatHang } from '@/services/public/dichVuDatHang';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, ORDER_STATUS_ICONS } from '@/constants/hoaDonConstants';
+import SafeProductImage from '@/views/modules/san-pham/components/SafeProductImage.vue';
 
 const router = useRouter();
 const loading = ref(true);
@@ -334,11 +335,8 @@ const goToDetail = (id) => {
 
                     <!-- Products Preview -->
                     <div class="product-preview d-flex ga-3 mb-3">
-                        <div v-for="(item, i) in (order.items || []).slice(0, 3)" :key="i" class="preview-thumb-wrapper">
-                            <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover width="52" height="52" class="rounded-lg"></v-img>
-                            <div v-else class="thumb-placeholder rounded-lg">
-                                <v-icon size="18" color="grey-lighten-2">mdi-shoe-sneaker</v-icon>
-                            </div>
+                        <div v-for="(item, i) in (order.items || []).slice(0, 3)" :key="i" class="preview-thumb-wrapper rounded-lg overflow-hidden position-relative" style="width: 52px; height: 52px">
+                            <SafeProductImage :src="item.hinhAnh" :alt="item.tenSanPham" :iconSize="20" />
                             <span class="preview-overlay" v-if="i === 2 && order.items.length > 3">+{{ order.items.length - 3 }}</span>
                         </div>
                         <div v-if="order.items?.length === 1" class="preview-info d-flex flex-column justify-center">

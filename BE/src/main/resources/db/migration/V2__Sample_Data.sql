@@ -252,10 +252,46 @@ INSERT INTO lich_su_hoat_dong (id, hanh_dong, doi_tuong, nguoi_tao, ngay_tao) VA
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 
--- update id_dia_chi
--- UPDATE dia_chi SET id_khach_hang = 'kh1' WHERE id = 'dc1';
--- UPDATE dia_chi SET id_khach_hang = 'kh2' WHERE id = 'dc2';
--- UPDATE dia_chi SET id_khach_hang = 'kh3' WHERE id = 'dc3';
--- UPDATE dia_chi SET id_khach_hang = 'kh4' WHERE id = 'dc4';
--- UPDATE dia_chi SET id_khach_hang = 'kh5' WHERE id = 'dc5';
+-- 26. Bảng Cuộc Hội Thoại (cuoc_hoi_thoai)
+INSERT INTO cuoc_hoi_thoai (id, id_khach_hang, id_nhan_vien, id_nhan_vien_nhan, ma_phien, da_chap_nhan, loai_hoi_thoai, trang_thai_hoi_thoai, danh_gia_chat, phan_hoi_chat, ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat) VALUES
+('chth1', 'kh1', 'nv1', 'nv1', 'SS_KH001', 1, 'CUSTOMER', 'ACTIVE', 5, 'Dịch vụ rất nhiệt tình chu đáo', 1711814400000, 1711814760000, 'kh1', 'nv1'),
+('chth2', 'kh2', 'nv1', 'nv1', 'SS_KH002', 1, 'CUSTOMER', 'ACTIVE', NULL, NULL, 1711815000000, 1711815300000, 'kh2', 'nv1'),
+('chth3', 'kh3', NULL, NULL, 'SS_KH003', 0, 'CUSTOMER', 'PENDING', NULL, NULL, 1711815400000, 1711815400000, 'kh3', NULL),
+('chth4', 'kh4', 'nv2', 'nv2', 'SS_KH004', 1, 'CUSTOMER', 'ACTIVE', 5, 'Tư vấn nhiệt tình', 1711728000000, 1711728200000, 'kh4', 'nv2'),
+('chth5', 'kh5', 'nv1', 'nv1', 'SS_KH005', 1, 'CUSTOMER', 'CLOSED', 4, 'Đã nhận được hàng', 1711641600000, 1711641800000, 'kh5', 'nv1'),
+('chth_nb1', NULL, 'nv1', 'nv2', 'INTERNAL_NV1_NV2', 1, 'INTERNAL', 'ACTIVE', NULL, NULL, 1711814400000, 1711814500000, 'nv1', 'nv2'),
+('chth_nb2', NULL, 'nv1', 'nv3', 'INTERNAL_NV1_NV3', 1, 'INTERNAL', 'ACTIVE', NULL, NULL, 1711814400000, 1711814600000, 'nv1', 'nv3')
+ON DUPLICATE KEY UPDATE id = VALUES(id);
+
+-- 27. Bảng Tin Nhắn (tin_nhan)
+INSERT INTO tin_nhan (id, id_cuoc_hoi_thoai, loai_nguoi_gui, id_nguoi_gui, ten_nguoi_gui, noi_dung, hinh_anh, ngay_tao, ngay_cap_nhat, nguoi_tao, nguoi_cap_nhat) VALUES
+('tn1', 'chth1', 'CUSTOMER', 'kh1', 'Nguyễn Khách 1', 'Shop ơi, mẫu Nike Air Force 1 này em mang size 38.5 thì nên chọn size nào ạ?', NULL, 1711814400000, 1711814400000, 'kh1', NULL),
+('tn2', 'chth1', 'STAFF', 'nv1', 'Hoàng Phương Nam', 'Chào anh/chị! Dạ mẫu này form chuẩn chị mang size 38.5 nhé. Nếu bàn chân hơi bè chị có thể chọn 39 để thoải mái hơn ạ.', NULL, 1711814460000, 1711814460000, 'nv1', NULL),
+('tn3', 'chth1', 'CUSTOMER', 'kh1', 'Nguyễn Khách 1', 'Dạ vâng, vậy cho em đặt size 39 màu trắng ạ. Shop còn hàng không?', NULL, 1711814520000, 1711814520000, 'kh1', NULL),
+('tn4', 'chth1', 'STAFF', 'nv1', 'Hoàng Phương Nam', 'Dạ mẫu Nike Air Force 1 size 39 màu trắng bên em đang có sẵn hàng giá 2.490.000đ nhé ạ.', NULL, 1711814580000, 1711814580000, 'nv1', NULL),
+('tn5', 'chth1', 'CUSTOMER', 'kh1', 'Nguyễn Khách 1', 'Dạ em đặt luôn 1 đôi ạ. Gửi về địa chỉ cũ giúp em nhé.', NULL, 1711814640000, 1711814640000, 'kh1', NULL),
+('tn6', 'chth1', 'STAFF', 'nv1', 'Hoàng Phương Nam', 'Dạ em đã tạo đơn hàng thành công cho mình với mã HD001 rồi ạ.', NULL, 1711814700000, 1711814700000, 'nv1', NULL),
+('tn7', 'chth1', 'STAFF', 'nv1', 'Hoàng Phương Nam', 'Dạ vâng, đơn hàng đã được tạo thành công. Shop sẽ xác nhận và gửi hàng cho mình trong ngày hôm nay ạ! 🥰', NULL, 1711814760000, 1711814760000, 'nv1', NULL),
+
+('tn8', 'chth2', 'CUSTOMER', 'kh2', 'Trần Anh Khách', 'Chào shop, mình muốn hỏi đôi sneaker Air Jordan size 42 còn hàng không?', NULL, 1711815000000, 1711815000000, 'kh2', NULL),
+('tn9', 'chth2', 'STAFF', 'nv1', 'Hoàng Phương Nam', 'Chào bạn, mẫu Air Jordan 1 High bên mình còn sẵn size 42 nha.', NULL, 1711815120000, 1711815120000, 'nv1', NULL),
+('tn10', 'chth2', 'CUSTOMER', 'kh2', 'Trần Anh Khách', 'Shop có ship COD ra Hải Phòng không ạ?', NULL, 1711815300000, 1711815300000, 'kh2', NULL),
+
+('tn11', 'chth3', 'CUSTOMER', 'kh3', 'Lê Khách 3', 'Tư vấn cho mình size giày nữ mẫu mới nhất với.', NULL, 1711815400000, 1711815400000, 'kh3', NULL),
+
+('tn12', 'chth4', 'CUSTOMER', 'kh4', 'Phạm Khách 4', 'Giày đi êm lắm shop ơi.', NULL, 1711728000000, 1711728000000, 'kh4', NULL),
+('tn13', 'chth4', 'STAFF', 'nv2', 'Phí Thu Trang', 'Dạ cảm ơn anh đã phản hồi tốt về sản phẩm ạ!', NULL, 1711728100000, 1711728100000, 'nv2', NULL),
+('tn14', 'chth4', 'CUSTOMER', 'kh4', 'Phạm Khách 4', 'Cảm ơn shop đã hỗ trợ nhiệt tình.', NULL, 1711728200000, 1711728200000, 'kh4', NULL),
+
+('tn15', 'chth5', 'CUSTOMER', 'kh5', 'Hoàng Khách 5', 'Gửi cho mình link tracking đơn hàng.', NULL, 1711641600000, 1711641600000, 'kh5', NULL),
+('tn16', 'chth5', 'STAFF', 'nv1', 'Hoàng Phương Nam', 'Dạ mã vận đơn của mình là VN20398402, shop gửi link theo dõi cho mình nhé.', NULL, 1711641700000, 1711641700000, 'nv1', NULL),
+('tn17', 'chth5', 'CUSTOMER', 'kh5', 'Hoàng Khách 5', 'Đã nhận được hàng.', NULL, 1711641800000, 1711641800000, 'kh5', NULL),
+
+('tn18', 'chth_nb1', 'STAFF', 'nv2', 'Phí Thu Trang', 'Anh Nam ơi, đơn hàng HD002 khách cần đổi sang size 41 anh duyệt giúp em với nhé!', NULL, 1711814400000, 1711814400000, 'nv2', NULL),
+('tn19', 'chth_nb1', 'STAFF', 'nv1', 'Hoàng Phương Nam', 'Ok em, anh vừa cập nhật trên hệ thống rồi nhé.', NULL, 1711814500000, 1711814500000, 'nv1', NULL),
+
+('tn20', 'chth_nb2', 'STAFF', 'nv3', 'Lê Thị Thu Huyền', 'Anh kiểm tra giúp em lô hàng mới về sáng nay đã nhập kho chưa ạ?', NULL, 1711814400000, 1711814400000, 'nv3', NULL),
+('tn21', 'chth_nb2', 'STAFF', 'nv1', 'Hoàng Phương Nam', 'Đã nhập kho đủ 50 đôi rồi em nhé.', NULL, 1711814600000, 1711814600000, 'nv1', NULL)
+ON DUPLICATE KEY UPDATE id = VALUES(id);
+
 SET FOREIGN_KEY_CHECKS = 1;

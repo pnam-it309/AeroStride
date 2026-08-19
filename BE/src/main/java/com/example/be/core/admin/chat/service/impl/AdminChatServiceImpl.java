@@ -229,9 +229,9 @@ public class AdminChatServiceImpl implements AdminChatService {
                             .anhDaiDien(getAvatarUrl(c, currentUsername))
                             .thoiGian(formatTime(c.getNgayCapNhat()))
                             .chuaDoc(0)
-                            .daChapNhan(c.getDaChapNhan())
+                            .daChapNhan(c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL ? true : c.getDaChapNhan())
                             .loaiHoiThoai(c.getLoaiHoiThoai() != null ? c.getLoaiHoiThoai().name() : CuocHoiThoai.LoaiHoiThoai.CUSTOMER.name())
-                            .trangThaiHoiThoai(c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name())
+                            .trangThaiHoiThoai(c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL ? CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name() : (c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name()))
                             .idNhanVien(c.getNhanVien() != null ? c.getNhanVien().getId() : null)
                             .tenTaiKhoanNhanVien(c.getNhanVien() != null ? c.getNhanVien().getTenTaiKhoan() : null)
                             .idNhanVienNhan(c.getNhanVienNhan() != null ? c.getNhanVienNhan().getId() : null)
@@ -239,9 +239,6 @@ public class AdminChatServiceImpl implements AdminChatService {
                             .idNhanVienDoiTac(partnerStaffId)
                             .tenTaiKhoanDoiTac(partnerUsername)
                             .chuaDoc(unreadCount)
-                            .daChapNhan(c.getDaChapNhan())
-                            .loaiHoiThoai(c.getLoaiHoiThoai() != null ? c.getLoaiHoiThoai().name() : CuocHoiThoai.LoaiHoiThoai.CUSTOMER.name())
-                            .trangThaiHoiThoai(c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name())
                             .vaiTro(role)
                             .timestamp(lastMsgTimestamp)
                             .build();
@@ -526,9 +523,17 @@ public class AdminChatServiceImpl implements AdminChatService {
             conversation = conversationRepository.save(conversation);
         }
 
-        // Kiểm tra nếu là nhân viên gửi thì cuộc trò chuyện phải được tiếp nhận
-        if (ChatConstants.SENDER_TYPE_STAFF.equals(senderType) && Boolean.FALSE.equals(conversation.getDaChapNhan()) && conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
-            throw new RuntimeException(ChatConstants.ERR_CONVERSATION_NOT_ACCEPTED);
+        // Nếu là nhân viên gửi, tự động tiếp nhận / mở lại cuộc trò chuyện
+        if (ChatConstants.SENDER_TYPE_STAFF.equals(senderType) && conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
+            if (Boolean.FALSE.equals(conversation.getDaChapNhan()) || conversation.getTrangThaiHoiThoai() != CuocHoiThoai.TrangThaiHoiThoai.ACTIVE) {
+                conversation.setDaChapNhan(true);
+                conversation.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.ACTIVE);
+                String staffUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+                if (staffUsername != null && !staffUsername.isBlank()) {
+                    nhanVienRepository.findByTenTaiKhoan(staffUsername).ifPresent(conversation::setNhanVien);
+                }
+                conversation = conversationRepository.save(conversation);
+            }
         }
 
         // Xử lý ảnh: lưu data URI bền vững vào database

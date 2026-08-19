@@ -6,6 +6,7 @@ import { formatCurrency } from '@/utils/formatters';
 import TableEmptyState from '@/components/common/TableEmptyState.vue';
 import FormattedPercentField from '@/components/common/FormattedPercentField.vue';
 import { getColorHexByName } from '@/utils/colorDictionary';
+import SafeProductImage from '@/views/modules/san-pham/components/SafeProductImage.vue';
 
 const props = defineProps({
     modelValue: { type: Boolean, default: false }
@@ -341,13 +342,13 @@ const handleSave = async () => {
                     </div>
                     <v-text-field
                         v-model="searchProduct"
-                        placeholder="Tìm theo tên giày, size, màu..."
+                        placeholder="Tìm theo mã SP, tên sản phẩm, size, màu..."
                         prepend-inner-icon="mdi-magnify"
                         variant="outlined"
                         density="compact"
                         hide-details
                         clearable
-                        style="max-width: 280px;"
+                        style="max-width: 320px;"
                     />
                 </div>
 
@@ -396,16 +397,23 @@ const handleSave = async () => {
                                     />
                                 </td>
                                 <td class="py-2">
-                                    <div class="font-weight-bold text-body-2 text-slate-900">{{ item.tenSanPham }}</div>
-                                    <div class="text-caption text-slate-500 d-inline-flex align-center ga-1 mt-1">
-                                        <span
-                                            class="color-dot"
-                                            :style="{
-                                                backgroundColor: getColorHexByName(item.tenMauSac) || item.maMauHex || '#cbd5e1',
-                                                border: '1px solid rgba(0, 0, 0, 0.15)'
-                                            }"
-                                        ></span>
-                                        <span>Màu: {{ item.tenMauSac || 'N/A' }} | Size: {{ item.tenKichThuoc || 'N/A' }}</span>
+                                    <div class="d-flex align-center ga-3">
+                                        <v-avatar rounded="lg" size="40" class="border bg-slate-50 flex-shrink-0 overflow-hidden">
+                                            <SafeProductImage :src="item.hinhAnh" :alt="item.tenSanPham" :iconSize="20" />
+                                        </v-avatar>
+                                        <div>
+                                            <div class="font-weight-bold text-body-2 text-slate-900">{{ item.tenSanPham }}</div>
+                                            <div class="text-caption text-slate-500 d-inline-flex align-center ga-1 mt-0.5">
+                                                <span
+                                                    class="color-dot"
+                                                    :style="{
+                                                        backgroundColor: getColorHexByName(item.tenMauSac) || item.maMauHex || '#cbd5e1',
+                                                        border: '1px solid rgba(0, 0, 0, 0.15)'
+                                                    }"
+                                                ></span>
+                                                <span>Màu: {{ item.tenMauSac || 'N/A' }} | Size: {{ item.tenKichThuoc || 'N/A' }}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="text-center py-2">

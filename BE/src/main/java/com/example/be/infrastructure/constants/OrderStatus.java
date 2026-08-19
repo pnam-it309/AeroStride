@@ -21,7 +21,8 @@ public enum OrderStatus {
             case DANG_GIAO -> nextStatus == HOAN_THANH || nextStatus == GIAO_THAT_BAI || nextStatus == KHACH_KHONG_NHAN || nextStatus == HOAN_DON;
             case GIAO_THAT_BAI, KHACH_KHONG_NHAN -> nextStatus == HOAN_DON || nextStatus == HOAN_THANH || nextStatus == DANG_GIAO;
             case HOAN_THANH -> nextStatus == HOAN_DON;
-            case DA_HUY, HOAN_DON -> false;
+            case DA_HUY -> nextStatus == CHO_XAC_NHAN;
+            case HOAN_DON -> false;
         };
     }
 }

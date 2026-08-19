@@ -37,6 +37,9 @@ public interface AdminHoaDonMapper {
     @Mapping(target = "mauSac", source = "chiTietSanPham.mauSac.ten")
     @Mapping(target = "kichThuoc", source = "chiTietSanPham.kichThuoc.ten")
     @Mapping(target = "giaHienTai", source = "chiTietSanPham.giaBan")
+    @Mapping(target = "giaGoc", expression = "java(detail.getChiTietSanPham() != null ? detail.getChiTietSanPham().getGiaBan() : null)")
+    @Mapping(target = "phanTramGiam", expression = "java(calculatePhanTramGiam(detail))")
+    @Mapping(target = "tenDotGiamGia", expression = "java(getTenDotGiamGia(detail))")
     @Mapping(target = "hinhAnh", source = "chiTietSanPham", qualifiedByName = "getThumbnail")
     AdminHoaDonChiTietResponse toChiTietResponse(HoaDonChiTiet detail);
 
@@ -99,5 +102,30 @@ public interface AdminHoaDonMapper {
             }
         }
         return false;
+    }
+
+    default Integer calculatePhanTramGiam(HoaDonChiTiet detail) {
+        if (detail == null || detail.getChiTietSanPham() == null || detail.getChiTietSanPham().getGiaBan() == null || detail.getDonGia() == null) {
+            return null;
+        }
+        java.math.BigDecimal giaGoc = detail.getChiTietSanPham().getGiaBan();
+        java.math.BigDecimal donGia = detail.getDonGia();
+        if (giaGoc.compareTo(donGia) > 0 && giaGoc.compareTo(java.math.BigDecimal.ZERO) > 0) {
+            return giaGoc.subtract(donGia)
+                    .multiply(java.math.BigDecimal.valueOf(100))
+                    .divide(giaGoc, java.math.RoundingMode.HALF_UP)
+                    .intValue();
+        }
+        return null;
+    }
+
+    default String getTenDotGiamGia(HoaDonChiTiet detail) {
+        if (detail == null || detail.getChiTietSanPham() == null) {
+            return null;
+        }
+        if (detail.getChiTietSanPham().getChiTietDotGiamGias() != null && !detail.getChiTietSanPham().getChiTietDotGiamGias().isEmpty()) {
+            return com.example.be.utils.DiscountPriceUtils.getActiveDiscountName(detail.getChiTietSanPham().getChiTietDotGiamGias());
+        }
+        return null;
     }
 }

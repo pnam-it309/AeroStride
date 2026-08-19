@@ -6,6 +6,7 @@
  */
 import { ShoppingCartIcon, TrashIcon, MinusIcon, PlusIcon, BoxIcon } from 'vue-tabler-icons';
 import { formatCurrency } from '@/utils/formatters';
+import SafeProductImage from '@/views/modules/san-pham/components/SafeProductImage.vue';
 
 const props = defineProps(['items']);
 const emit = defineEmits(['update-qty', 'remove']);
@@ -86,8 +87,9 @@ const handleDirectInput = (item, event) => {
                                 size="34"
                                 class="cart-product-avatar border position-relative overflow-visible"
                             >
-                                <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover />
-                                <BoxIcon v-else size="18" class="text-grey" />
+                                <div class="w-100 h-100 rounded-lg overflow-hidden">
+                                    <SafeProductImage :src="item.hinhAnh" :alt="item.tenSanPham" :iconSize="18" />
+                                </div>
                                 <div v-if="item.phanTramGiam > 0" class="cart-discount-badge-small d-flex align-center justify-center">
                                     <span class="text-white font-weight-bold" style="font-size: 9px !important"
                                         >-{{ item.phanTramGiam }}%</span

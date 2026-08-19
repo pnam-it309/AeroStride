@@ -210,6 +210,11 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             }
         }
 
+        if (oldStatus == OrderStatus.DA_HUY && newStatus == OrderStatus.CHO_XAC_NHAN) {
+            hd.setPhiHoanHang(null);
+            hd.setDaHoanPhi(false);
+        }
+
         if (newStatus == OrderStatus.DA_HUY || newStatus == OrderStatus.HOAN_DON 
                 || newStatus == OrderStatus.GIAO_THAT_BAI || newStatus == OrderStatus.KHACH_KHONG_NHAN) {
             if ((newStatus == OrderStatus.HOAN_DON || newStatus == OrderStatus.GIAO_THAT_BAI || newStatus == OrderStatus.KHACH_KHONG_NHAN) 

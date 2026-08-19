@@ -20,6 +20,7 @@ import { PATH } from '@/router/routePaths';
 import { getNameRules } from '@/utils/validators';
 import { SYSTEM_STATUS } from '@/constants/statusConstants';
 import { MESSAGES } from '@/constants/messages';
+import SafeProductImage from '@/views/modules/san-pham/components/SafeProductImage.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -92,7 +93,7 @@ const normalizeVariant = (v, fallbackProduct = {}) => {
         v.anhMauc ||
         (v.images?.length > 0 ? v.images[0].duongDanAnh : null) ||
         fallbackProduct.hinhAnh ||
-        'https://via.placeholder.com/40';
+        '';
     const maMauHex = v.maMauHex || v.maMau || (v.mauSac ? (v.mauSac.maMauHex || v.mauSac.maMau) : '') || getColorHexByName(color) || '#cbd5e1';
 
     return {
@@ -342,9 +343,15 @@ const filteredSelectedDetails = computed(() => {
     const filters = detailFilters.value;
 
     if (filters.timKiem) {
-        const query = filters.timKiem.toLowerCase();
+        const query = filters.timKiem.toLowerCase().trim();
         result = result.filter(
-            (p) => (p.tenSanPham && p.tenSanPham.toLowerCase().includes(query)) || (p.ma && p.ma.toLowerCase().includes(query))
+            (p) =>
+                (p.tenSanPham && p.tenSanPham.toLowerCase().includes(query)) ||
+                (p.tenSanPhamDayDu && p.tenSanPhamDayDu.toLowerCase().includes(query)) ||
+                (p.maSanPham && p.maSanPham.toLowerCase().includes(query)) ||
+                (p.ma && p.ma.toLowerCase().includes(query)) ||
+                (p.maChiTietSanPham && p.maChiTietSanPham.toLowerCase().includes(query)) ||
+                (p.ten && p.ten.toLowerCase().includes(query))
         );
     }
     if (filters.thuongHieu) result = result.filter((p) => p.thuongHieu === filters.thuongHieu);
@@ -765,11 +772,12 @@ onMounted(init);
                             <v-text-field
                                 v-model="searchQuery"
                                 prepend-inner-icon="mdi-magnify"
-                                placeholder="Tìm theo tên hoặc mã SKU..."
+                                placeholder="Tìm kiếm theo mã sản phẩm, tên sản phẩm..."
                                 variant="outlined"
                                 density="compact"
                                 maxlength="255"
                                 hide-details
+                                clearable
                                 class="compact-input flex-grow-1"
                             ></v-text-field>
                             <v-btn variant="outlined" color="primary" class="reset-btn" @click="handleRefreshSearch">
@@ -959,10 +967,11 @@ onMounted(init);
                                 <v-text-field
                                     v-model="detailFilters.timKiem"
                                     prepend-inner-icon="mdi-magnify"
-                                    placeholder="Tìm theo mã, tên"
+                                    placeholder="Tìm theo mã SP, tên SP..."
                                     variant="outlined"
                                     density="compact"
                                     hide-details
+                                    clearable
                                     class="compact-input"
                                 ></v-text-field>
                             </v-col>
@@ -1103,8 +1112,8 @@ onMounted(init);
                                         </td>
                                         <td class="data-cell text-center py-2">
                                             <div class="product-image-container d-inline-block position-relative">
-                                                <v-avatar rounded="lg" size="44" class="border">
-                                                    <v-img :src="item.anhMauc" cover></v-img>
+                                                <v-avatar rounded="lg" size="44" class="border overflow-hidden">
+                                                    <SafeProductImage :src="item.anhMauc || item.hinhAnh" :alt="item.tenSanPham" :iconSize="22" />
                                                 </v-avatar>
                                                 <div v-if="form.soTienGiam > 0" class="discount-badge">-{{ form.soTienGiam }}%</div>
                                             </div>
