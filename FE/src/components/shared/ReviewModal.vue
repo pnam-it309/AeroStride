@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
-import { useNotificationStore } from '@/stores/notificationStore';
+import { useToastStore } from '@/stores/toastStore';
 import api from '@/services/apiService';
 
 const props = defineProps({
@@ -9,7 +9,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:show', 'review-success']);
-const notification = useNotificationStore();
+const notification = useToastStore();
 
 const showModal = computed({
     get: () => props.show,
