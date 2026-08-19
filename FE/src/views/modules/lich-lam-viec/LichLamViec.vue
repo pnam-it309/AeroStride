@@ -11,6 +11,7 @@ import { useNotifications } from '@/services/notificationService';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
 import { useRoleAccess } from '@/composables/useRoleAccess';
+import { isManagementRole } from '@/constants/appConstants';
 
 const router = useRouter();
 const { addNotification } = useNotifications();
@@ -78,6 +79,7 @@ const importPreviewData = ref([]);
 
 // Auto Schedule State
 const showAutoScheduleDialog = ref(false);
+const selectedAutoScheduleWeek = ref('current');
 
 const breadcrumbs = [
     { title: 'Quản lý lịch', disabled: false, href: '#' },
@@ -103,6 +105,18 @@ const tableHeaders = computed(() => {
 const filteredItems = computed(() => {
     if (!items.value) return [];
     let list = [...items.value];
+
+    // Filter out schedules of admins/managers
+    if (employeeOptions.value && employeeOptions.value.length > 0) {
+        list = list.filter((item) => {
+            return employeeOptions.value.some(
+                (emp) =>
+                    emp.id === item.nhanVienId ||
+                    (emp.ma && item.maNhanVien && emp.ma.toLowerCase() === item.maNhanVien.toLowerCase()) ||
+                    (emp.ten && item.nhanVien && emp.ten.toLowerCase() === item.nhanVien.toLowerCase())
+            );
+        });
+    }
 
     // If logged in user is Staff (ROLE_NHAN_VIEN), ONLY show their own schedule
     if (isStaff.value) {
@@ -223,11 +237,11 @@ const loadData = async () => {
         if (empRes.data.success) {
             const rawContent = empRes.data.data.content || empRes.data.data;
             const content = Array.isArray(rawContent) ? rawContent : [];
-            // Remove duplicates by ID
+            // Remove duplicates by ID and filter out management/admin roles
             const uniqueEmp = [];
             const seenIds = new Set();
             content.forEach((emp) => {
-                if (emp.id && !seenIds.has(emp.id)) {
+                if (emp.id && !seenIds.has(emp.id) && !isManagementRole(emp)) {
                     uniqueEmp.push(emp);
                     seenIds.add(emp.id);
                 }
@@ -417,12 +431,56 @@ const autoSchedulePeriodStr = computed(() => {
 const MonStrIndex = () => 0;
 const SunStrIndex = () => 6;
 
+const getWeekDays = (baseDate) => {
+    const today = new Date(baseDate);
+    const day = today.getDay(); // 0 is Sunday, 1 is Monday, ..., 6 is Saturday
+    const mondayDiff = day === 0 ? -6 : 1 - day;
+
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + mondayDiff);
+
+    const result = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        result.push(dateStr);
+    }
+    return result;
+};
+
+const currentWeekDays = computed(() => {
+    return getWeekDays(new Date());
+});
+
+const nextWeekDays = computed(() => {
+    const nextWeekDate = new Date();
+    nextWeekDate.setDate(nextWeekDate.getDate() + 7);
+    return getWeekDays(nextWeekDate);
+});
+
+const currentWeekStr = computed(() => getWeekRangeStr(currentWeekDays.value));
+const nextWeekStr = computed(() => getWeekRangeStr(nextWeekDays.value));
+
+const getWeekRangeStr = (days) => {
+    if (!days || days.length < 7) return '';
+    return `${formatDateDDMMYYYY(days[0])} - ${formatDateDDMMYYYY(days[6])}`;
+};
+
 const openAutoScheduleDialog = () => {
+    selectedAutoScheduleWeek.value = 'current';
     showAutoScheduleDialog.value = true;
 };
 
 const executeAutoSchedule = async () => {
-    if (!tableWeekDays.value || tableWeekDays.value.length < 7) {
+    let targetDays = [];
+    if (selectedAutoScheduleWeek.value === 'current') {
+        targetDays = currentWeekDays.value;
+    } else {
+        targetDays = nextWeekDays.value;
+    }
+
+    if (!targetDays || targetDays.length < 7) {
         addNotification({ title: 'Lỗi', subtitle: 'Không xác định được khoảng thời gian tuần!', color: 'error' });
         return;
     }
@@ -432,8 +490,8 @@ const executeAutoSchedule = async () => {
     
     try {
         const res = await apiService.post(API_LICH_LAM_VIEC.AUTO_SCHEDULE, {
-            startDate: tableWeekDays.value[0],
-            endDate: tableWeekDays.value[6]
+            startDate: targetDays[0],
+            endDate: targetDays[6]
         });
         
         if (res.data.success) {
@@ -1315,17 +1373,17 @@ onMounted(() => {
                                     <div
                                         v-for="s in dayObj.schedules"
                                         :key="s.id"
-                                        class="schedule-item-card py-1 px-2"
+                                        :class="['schedule-item-card py-1 px-2', getCellCardClass(s.ca)]"
                                         style="font-size: 11px; padding: 4px 6px !important"
                                         @click.stop="canManageSchedule ? handleEditSchedule(s) : null"
                                     >
                                         <div class="d-flex align-center justify-space-between w-100 text-truncate" style="gap: 4px">
-                                            <span class="font-weight-bold" style="color: #475569; font-size: 9px">
+                                            <span class="shift-time font-weight-bold" style="font-size: 9px">
                                                 {{ getShiftTimeRange(s.ca) }}
                                             </span>
-                                            <span class="text-truncate font-weight-black text-slate-800" style="flex: 1">{{
-                                                s.nhanVien
-                                            }}</span>
+                                            <span class="text-truncate font-weight-black shift-employee" style="flex: 1">
+                                                {{ s.nhanVien }}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -1604,11 +1662,29 @@ onMounted(() => {
                     Xác nhận xếp ca tự động
                 </v-card-title>
                 <v-card-text class="py-2">
-                    <p class="text-slate-700 mb-3" style="font-size: 14px;">
-                        Bạn có chắc chắn muốn xếp ca tự động cho tuần: <strong class="text-primary">{{ autoSchedulePeriodStr }}</strong>?
+                    <p class="text-slate-700 mb-1" style="font-size: 14px;">
+                        Chọn khoảng thời gian muốn xếp ca tự động:
                     </p>
+                    <v-radio-group v-model="selectedAutoScheduleWeek" column hide-details class="mt-2 mb-4">
+                        <v-radio value="current" color="primary" class="mb-2">
+                            <template v-slot:label>
+                                <div>
+                                    <div class="font-weight-bold text-slate-800" style="font-size: 13px;">Tuần này</div>
+                                    <div class="text-caption text-slate-500">{{ currentWeekStr }}</div>
+                                </div>
+                            </template>
+                        </v-radio>
+                        <v-radio value="next" color="primary">
+                            <template v-slot:label>
+                                <div>
+                                    <div class="font-weight-bold text-slate-800" style="font-size: 13px;">Tuần sau</div>
+                                    <div class="text-caption text-slate-500">{{ nextWeekStr }}</div>
+                                </div>
+                            </template>
+                        </v-radio>
+                    </v-radio-group>
                     <v-alert type="warning" variant="tonal" density="compact" class="text-caption rounded-lg">
-                        <strong>Cảnh báo:</strong> Hành động này sẽ <strong>XÓA và GHI ĐÈ</strong> toàn bộ lịch làm việc hiện tại trong tuần này. Dữ liệu cũ sẽ không thể khôi phục.
+                        <strong>Cảnh báo:</strong> Hành động này sẽ <strong>XÓA và GHI ĐÈ</strong> toàn bộ lịch làm việc hiện tại trong tuần được chọn. Dữ liệu cũ sẽ không thể khôi phục.
                     </v-alert>
                 </v-card-text>
                 <v-card-actions class="pa-4">
@@ -1826,15 +1902,30 @@ onMounted(() => {
 }
 
 .month-day-cell.today-cell {
-    border: 2px solid #1e257c;
-    background: #f0f1ff;
+    border: 2px solid #1e257c !important;
+    background: #f0f1ff !important;
 }
 
 .month-day-cell.empty-cell {
-    background: #ffffff;
+    background: #f8fafc !important;
     border-style: dashed;
     opacity: 0.4;
     cursor: default;
+}
+
+/* Differentiate Saturday/Sunday columns in the month grid */
+.calendar-grid-month .month-day-cell:nth-child(7n+6) {
+    background-color: #f0f9ff;
+}
+.calendar-grid-month .month-day-cell:nth-child(7n+6):hover {
+    background-color: #e0f2fe;
+}
+
+.calendar-grid-month .month-day-cell:nth-child(7n) {
+    background-color: #fffafb;
+}
+.calendar-grid-month .month-day-cell:nth-child(7n):hover {
+    background-color: #ffeef1;
 }
 
 .month-day-header {
@@ -1867,6 +1958,59 @@ onMounted(() => {
     max-height: 75px;
 }
 
+/* Styling for schedule item cards in Month View with shift variations */
+.schedule-item-card.card-green {
+    border-color: #a7f3d0 !important;
+    background-color: #f0fdf4 !important;
+    color: #065f46 !important;
+}
+.schedule-item-card.card-green .shift-time {
+    color: #047857 !important;
+    opacity: 0.85;
+}
+.schedule-item-card.card-green .shift-employee {
+    color: #065f46 !important;
+}
+
+.schedule-item-card.card-orange {
+    border-color: #fde68a !important;
+    background-color: #fffbeb !important;
+    color: #92400e !important;
+}
+.schedule-item-card.card-orange .shift-time {
+    color: #b45309 !important;
+    opacity: 0.85;
+}
+.schedule-item-card.card-orange .shift-employee {
+    color: #92400e !important;
+}
+
+.schedule-item-card.card-purple {
+    border-color: #c7d2fe !important;
+    background-color: #e0e7ff !important;
+    color: #3730a3 !important;
+}
+.schedule-item-card.card-purple .shift-time {
+    color: #4f46e5 !important;
+    opacity: 0.85;
+}
+.schedule-item-card.card-purple .shift-employee {
+    color: #3730a3 !important;
+}
+
+.schedule-item-card.card-slate {
+    border-color: #e2e8f0 !important;
+    background-color: #f8fafc !important;
+    color: #334155 !important;
+}
+.schedule-item-card.card-slate .shift-time {
+    color: #475569 !important;
+    opacity: 0.85;
+}
+.schedule-item-card.card-slate .shift-employee {
+    color: #334155 !important;
+}
+
 .calendar-container {
     display: flex;
     flex-direction: column;
@@ -1883,8 +2027,25 @@ onMounted(() => {
     font-size: 12px;
     font-weight: 700;
     color: #1e257c;
-    padding: 8px;
+    padding: 10px 8px;
     text-transform: uppercase;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+/* Style for Saturday and Sunday headers */
+.day-header:nth-child(6) {
+    background-color: #e0f2fe;
+    color: #0284c7;
+    border-color: #bae6fd;
+}
+
+.day-header:nth-child(7) {
+    background-color: #ffeef1;
+    color: #dc2626;
+    border-color: #fecaca;
 }
 
 /* ===== MATRIX WEEK TABLE ===== */

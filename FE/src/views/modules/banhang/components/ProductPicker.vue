@@ -522,12 +522,12 @@ onUnmounted(() => {
                     class="position-absolute mt-1 elevation-4 border rounded-lg overflow-y-auto product-dropdown-card"
                     style="max-height: 495px !important; z-index: 1000; width: 100%"
                 >
-                    <v-list class="pa-0">
+                    <v-list class="pa-2" style="background-color: #f8fafc">
                         <v-list-item
                             v-for="variant in filteredProductSearchResults"
                             :key="variant.id"
                             @mousedown="selectProductFromSearch(variant)"
-                            class="border-b py-3 hover-autocomplete-item pointer"
+                            class="product-search-item pointer"
                         >
                             <div class="d-flex justify-space-between w-100 align-start">
                                 <!-- Left info block -->
@@ -664,8 +664,21 @@ onUnmounted(() => {
     height: 30px !important;
 }
 
-.hover-autocomplete-item:hover {
-    background-color: #f8fafc;
+.product-search-item {
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    margin: 6px 4px !important;
+    padding: 10px 14px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+.product-search-item:hover {
+    border-color: #3b82f6 !important;
+    background-color: #f8fafc !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.06) !important;
 }
 .sp-badge,
 .sku-badge {

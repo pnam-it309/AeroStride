@@ -5,6 +5,7 @@ import { useUIStore } from '@/stores/ui';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import { useNotifications } from '@/services/notificationService';
+import { isManagementRole } from '@/constants/appConstants';
 import { formatCurrency, formatDateTime, readMoneyInVietnameseWords, formatNumberWithDots, parseNumberFromDots } from '@/utils/formatters';
 import {
     BuildingStoreIcon,
@@ -185,7 +186,8 @@ const fetchEmployees = async () => {
     try {
         const res = await dichVuNhanVien.layTatCaNhanVien();
         const content = res?.data?.content || res?.data || res || [];
-        listNhanVien.value = Array.isArray(content) ? content : [];
+        const rawList = Array.isArray(content) ? content : [];
+        listNhanVien.value = rawList.filter((emp) => !isManagementRole(emp));
     } catch (e) {
         console.error(e);
     }

@@ -7,7 +7,7 @@ export const useNotificationStore = defineStore('notification', {
         notifications: [],
         // Danh sách id các cuộc hội thoại có tin nhắn chưa đọc (đếm theo CUỘC, không theo từng tin nhắn)
         // -> badge khớp với số cuộc hội thoại ở các tab (Hoạt động/Chờ/Đóng).
-        unreadChatConvIds: [],
+        unreadChatConvIds: JSON.parse(localStorage.getItem('unread_chat_conv_ids') || '[]'),
         isConnected: false
     }),
 
@@ -123,6 +123,14 @@ export const useNotificationStore = defineStore('notification', {
         markChatUnread(conversationId) {
             if (conversationId && !this.unreadChatConvIds.includes(conversationId)) {
                 this.unreadChatConvIds.push(conversationId);
+                localStorage.setItem('unread_chat_conv_ids', JSON.stringify(this.unreadChatConvIds));
+            }
+        },
+
+        markChatRead(conversationId) {
+            if (conversationId) {
+                this.unreadChatConvIds = this.unreadChatConvIds.filter(id => id !== conversationId);
+                localStorage.setItem('unread_chat_conv_ids', JSON.stringify(this.unreadChatConvIds));
             }
         },
 
@@ -133,6 +141,7 @@ export const useNotificationStore = defineStore('notification', {
 
         resetUnreadChat() {
             this.unreadChatConvIds = [];
+            localStorage.removeItem('unread_chat_conv_ids');
         },
 
         disconnect() {

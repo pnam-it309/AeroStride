@@ -9,6 +9,7 @@ import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import apexchart from 'vue3-apexcharts';
 
 const loading = ref(true);
+const isFirstLoad = ref(true);
 
 const padDatePart = (value) => String(value).padStart(2, '0');
 
@@ -28,14 +29,14 @@ const endDate = ref(formatDateInput(defaultEndDate));
 const onStartDateChange = (val) => {
     startDate.value = val ? formatDateInput(new Date(val)) : null;
     if (startDate.value && endDate.value) {
-        loadStatistics();
+        loadStatistics(true);
     }
 };
 
 const onEndDateChange = (val) => {
     endDate.value = val ? formatDateInput(new Date(val)) : null;
     if (startDate.value && endDate.value) {
-        loadStatistics();
+        loadStatistics(true);
     }
 };
 
@@ -718,7 +719,197 @@ const fetchProductStats = async () => {
     }
 };
 
-const loadStatistics = async () => {
+const loadStatistics = async (forceReal = false) => {
+    if (isFirstLoad.value && !forceReal) {
+        loading.value = true;
+        try {
+            // Fake data for revenue stats (overview)
+            revenueStats.value = {
+                totalRevenue: 1254300000,
+                totalOrders: 842,
+                averageOrderValue: 1489667,
+                growthRate: 15.4,
+                donHangHoanThanh: 750,
+                donHangChoXacNhan: 32,
+                donHangDangGiao: 45,
+                donHangDaHuy: 15,
+                donHangHoan: 5,
+                tongKhachHang: 620,
+                tongSanPham: 150,
+                sanPhamDaBan: 1240,
+                doanhThuTaiQuay: 748600000,
+                doanhThuTrucTuyen: 505700000,
+                donTaiQuay: 490,
+                donTrucTuyen: 352,
+                sanPhamSapHet: 8,
+                doanhThuChoXacNhan: 48000000,
+                doanhThuDangGiao: 68000000,
+                doanhThuDaHuy: 22000000
+            };
+
+            // Fake data for yearly stats
+            yearlyRevenueStats.value = {
+                totalRevenue: 15430000000,
+                totalOrders: 10420,
+                averageOrderValue: 1480806,
+                growthRate: 18.2,
+                donHangHoanThanh: 9800,
+                donHangChoXacNhan: 150,
+                donHangDangGiao: 220,
+                donHangDaHuy: 200,
+                donHangHoan: 50,
+                tongKhachHang: 5400,
+                tongSanPham: 150,
+                sanPhamDaBan: 14800,
+                doanhThuTaiQuay: 9480000000,
+                doanhThuTrucTuyen: 5950000000,
+                donTaiQuay: 6200,
+                donTrucTuyen: 4220,
+                sanPhamSapHet: 8,
+                doanhThuChoXacNhan: 220000000,
+                doanhThuDangGiao: 310000000,
+                doanhThuDaHuy: 280000000
+            };
+
+            // Fake data for top products
+            topProducts.value = [
+                { maSanPham: 'SP001', name: 'Giày Chạy Bộ Nike Air Zoom Pegasus 40', thuongHieu: 'Nike', revenue: 245000000, quantity: 120, growth: 12.5 },
+                { maSanPham: 'SP002', name: 'Giày Adidas Ultraboost Light', thuongHieu: 'Adidas', revenue: 189000000, quantity: 85, growth: 8.3 },
+                { maSanPham: 'SP003', name: 'Giày Jordan 1 Retro High OG', thuongHieu: 'Jordan', revenue: 154000000, quantity: 50, growth: -2.4 },
+                { maSanPham: 'SP004', name: 'Giày Puma Velocity Nitro 2', thuongHieu: 'Puma', revenue: 98000000, quantity: 65, growth: 5.1 },
+                { maSanPham: 'SP005', name: 'Giày MLB Bigball Chunky A', thuongHieu: 'MLB', revenue: 76000000, quantity: 48, growth: 10.2 }
+            ];
+
+            // Donut chart brand shares
+            donutChartSeries.value = [245000000, 189000000, 154000000, 98000000, 76000000];
+            donutChartOptions.value = {
+                ...donutChartOptions.value,
+                labels: ['Nike', 'Adidas', 'Jordan', 'Puma', 'MLB']
+            };
+            donutChartKey.value += 1;
+
+            // Fake top customers
+            customerPurchaseStats.value = [
+                { tenKhachHang: 'Nguyễn Văn A', tongChi: 45000000, tongSanPham: 15, donThanhCong: 10, donHoan: 0 },
+                { tenKhachHang: 'Trần Thị B', tongChi: 38500000, tongSanPham: 12, donThanhCong: 8, donHoan: 1 },
+                { tenKhachHang: 'Lê Hoàng C', tongChi: 32000000, tongSanPham: 10, donThanhCong: 7, donHoan: 0 },
+                { tenKhachHang: 'Phạm Minh D', tongChi: 29000000, tongSanPham: 9, donThanhCong: 6, donHoan: 0 },
+                { tenKhachHang: 'Hoàng Văn E', tongChi: 25000000, tongSanPham: 8, donThanhCong: 5, donHoan: 0 }
+            ];
+
+            // Fake top employees
+            employeePurchaseStats.value = [
+                { maNhanVien: 'NV001', tenNhanVien: 'Nguyễn Bán Hàng A', tongChi: 545000000, tongSanPham: 360, tongDonHang: 350 },
+                { maNhanVien: 'NV002', tenNhanVien: 'Trần Bán Hàng B', tongChi: 420000000, tongSanPham: 280, tongDonHang: 270 },
+                { maNhanVien: 'NV003', tenNhanVien: 'Lê Bán Hàng C', tongChi: 289300000, tongSanPham: 190, tongDonHang: 180 }
+            ];
+
+            // Fake revenue cycles
+            revenueCycles.value = [
+                { tenChuKy: 'Chu kỳ 1 (01/08 - 07/08)', doanhThu: 310000000, soDon: 210, trungBinhDon: 1476190 },
+                { tenChuKy: 'Chu kỳ 2 (08/08 - 14/08)', doanhThu: 345000000, soDon: 235, trungBinhDon: 1468085 },
+                { tenChuKy: 'Chu kỳ 3 (15/08 - 21/08)', doanhThu: 320000000, soDon: 215, trungBinhDon: 1488372 },
+                { tenChuKy: 'Chu kỳ 4 (22/08 - 28/08)', doanhThu: 279300000, soDon: 182, trungBinhDon: 1534615 }
+            ];
+
+            // Fake monthly revenue trend
+            const fakeMonths = [
+                { month: 'Tháng 1', revenue: 980000000, customers: 650 },
+                { month: 'Tháng 2', revenue: 1050000000, customers: 710 },
+                { month: 'Tháng 3', revenue: 1200000000, customers: 800 },
+                { month: 'Tháng 4', revenue: 1150000000, customers: 760 },
+                { month: 'Tháng 5', revenue: 1300000000, customers: 850 },
+                { month: 'Tháng 6', revenue: 1450000000, customers: 980 },
+                { month: 'Tháng 7', revenue: 1400000000, customers: 920 },
+                { month: 'Tháng 8', revenue: 1550000000, customers: 1050 },
+                { month: 'Tháng 9', revenue: 1600000000, customers: 1100 },
+                { month: 'Tháng 10', revenue: 1750000000, customers: 1180 },
+                { month: 'Tháng 11', revenue: 1900000000, customers: 1250 },
+                { month: 'Tháng 12', revenue: 2100000000, customers: 1400 }
+            ];
+            monthlyRevenue.value = fakeMonths;
+
+            if (areaChartOptions.value.yaxis && areaChartOptions.value.yaxis[1]) {
+                areaChartOptions.value.yaxis[1].max = 1400;
+            }
+
+            areaChartSeries.value = [
+                {
+                    name: 'Doanh thu',
+                    type: 'line',
+                    data: fakeMonths.map((m) => m.revenue)
+                },
+                {
+                    name: 'Khách hàng',
+                    type: 'line',
+                    data: fakeMonths.map((m) => m.customers)
+                }
+            ];
+
+            // Fake hourly comparison data
+            startDailyTotalRevenue.value = 168000000;
+            endDailyTotalRevenue.value = 195000000;
+
+            const start3HourData = {
+                revenue: [15000000, 35000000, 48000000, 24000000, 18000000, 12000000, 9000000, 7000000],
+                customers: [10, 24, 32, 16, 12, 8, 6, 4]
+            };
+            const end3HourData = {
+                revenue: [18000000, 42000000, 55000000, 28000000, 22000000, 15000000, 10000000, 5000000],
+                customers: [12, 28, 38, 19, 15, 10, 7, 3]
+            };
+
+            startHourlyMax.value = Math.max(...start3HourData.revenue);
+            endHourlyMax.value = Math.max(...end3HourData.revenue);
+            startHourlyCustomerMax.value = Math.max(...start3HourData.customers);
+            endHourlyCustomerMax.value = Math.max(...end3HourData.customers);
+
+            startHourlyChartSeries.value = [
+                {
+                    name: 'Doanh thu',
+                    type: 'line',
+                    data: start3HourData.revenue
+                },
+                {
+                    name: 'Khách hàng',
+                    type: 'line',
+                    data: start3HourData.customers
+                }
+            ];
+
+            endHourlyChartSeries.value = [
+                {
+                    name: 'Doanh thu',
+                    type: 'line',
+                    data: end3HourData.revenue
+                },
+                {
+                    name: 'Khách hàng',
+                    type: 'line',
+                    data: end3HourData.customers
+                }
+            ];
+
+            // Fake paginated products stats
+            productStats.value = [
+                { maSanPham: 'SP001', name: 'Giày Chạy Bộ Nike Air Zoom Pegasus 40', thuongHieu: 'Nike', quantity: 120, revenue: 245000000 },
+                { maSanPham: 'SP002', name: 'Giày Adidas Ultraboost Light', thuongHieu: 'Adidas', quantity: 85, revenue: 189000000 },
+                { maSanPham: 'SP003', name: 'Giày Jordan 1 Retro High OG', thuongHieu: 'Jordan', quantity: 50, revenue: 154000000 },
+                { maSanPham: 'SP004', name: 'Giày Puma Velocity Nitro 2', thuongHieu: 'Puma', quantity: 65, revenue: 98000000 },
+                { maSanPham: 'SP005', name: 'Giày MLB Bigball Chunky A', thuongHieu: 'MLB', quantity: 48, revenue: 76000000 }
+            ];
+            productTotalElements.value = 5;
+            productTotalPages.value = 1;
+
+            isFirstLoad.value = false;
+        } catch (e) {
+            console.error('Error generating fake stats:', e);
+        } finally {
+            loading.value = false;
+        }
+        return;
+    }
+
     loading.value = true;
     try {
         const { tuNgay, denNgay } = getDateRange();
@@ -1227,7 +1418,7 @@ onMounted(() => {
                         class="stats-refresh-btn px-6"
                         height="40"
                         :loading="loading"
-                        @click="loadStatistics"
+                        @click="loadStatistics(true)"
                     >
                         <v-icon start size="18">mdi-refresh</v-icon>
                         Cập nhật dữ liệu

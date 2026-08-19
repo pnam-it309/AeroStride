@@ -47,4 +47,9 @@ public class AdminChatResponse {
 
     @JsonProperty("partnerUsername")
     private String tenTaiKhoanDoiTac;
+    @JsonProperty("role")
+    private String vaiTro;
+
+    @JsonProperty("timestamp")
+    private Long timestamp;
 }

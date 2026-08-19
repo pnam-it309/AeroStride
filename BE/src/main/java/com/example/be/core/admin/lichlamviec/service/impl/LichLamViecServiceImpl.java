@@ -266,9 +266,10 @@ public class LichLamViecServiceImpl implements LichLamViecService {
             lichLamViecRepository.deleteAll(oldSchedules);
         }
 
-        // 2. Lấy danh sách nhân viên đang hoạt động
+        // 2. Lấy danh sách nhân viên đang hoạt động (loại trừ các tài khoản quản lý/admin)
         List<NhanVien> activeEmployees = nhanVienRepository.findAll().stream()
                 .filter(nv -> (nv.getXoaMem() == null || !nv.getXoaMem()) && nv.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+                .filter(nv -> !VaiTro.isManagementRole(nv))
                 .collect(Collectors.toList());
 
         if (activeEmployees.isEmpty()) {
