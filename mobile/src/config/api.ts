@@ -8,7 +8,7 @@ import { Platform } from 'react-native';
 // Android emulator uses 10.0.2.2 to access host machine's localhost.
 const DEV_HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 const DEV_ORIGIN = process.env.EXPO_PUBLIC_API_URL || `http://${DEV_HOST}:8080`;
-const PROD_ORIGIN = process.env.EXPO_PUBLIC_API_URL || 'https://aerostride.example.com';
+const PROD_ORIGIN = process.env.EXPO_PUBLIC_API_URL || 'https://aerostride.onrender.com';
 
 export const API_CONFIG = {
   ORIGIN: __DEV__ ? DEV_ORIGIN : PROD_ORIGIN,
