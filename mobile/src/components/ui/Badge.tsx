@@ -60,7 +60,7 @@ export function Badge({
 
 // Status badge for orders
 interface StatusBadgeProps {
-  status: string;
+  status?: string;
   label: string;
   color: string;
 }

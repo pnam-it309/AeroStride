@@ -3,7 +3,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, View, Text, Pressable, FlatList, RefreshControl } from 'react-native';
+import { StyleSheet, View, Text, Pressable, FlatList, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -69,9 +69,15 @@ export default function VouchersScreen() {
             </Text>
           ) : null}
           <View style={styles.voucherFooter}>
-            <View style={[styles.codeChip, { borderColor: Brand.primary }]}>
+            <Pressable
+              style={[styles.codeChip, { borderColor: Brand.primary }]}
+              onPress={() => {
+                Alert.alert('Mã Voucher', `Mã "${item.ma}" đã sẵn sàng. Bạn có thể chọn voucher này khi đặt hàng!`);
+              }}
+            >
+              <Ionicons name="copy-outline" size={12} color={Brand.primary} style={{ marginRight: 3 }} />
               <Text style={[styles.codeText, { color: Brand.primary }]}>{item.ma}</Text>
-            </View>
+            </Pressable>
             {item.ngayKetThuc ? (
               <Text style={[styles.expiry, { color: theme.textTertiary }]}>
                 HSD {formatDate(item.ngayKetThuc)}

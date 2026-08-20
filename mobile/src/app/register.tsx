@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { getApiErrorMessage } from '@/services/apiClient';
 
 interface FieldConfig {
   key: 'ten' | 'tenTaiKhoan' | 'email' | 'sdt' | 'matKhau' | 'xacNhan';
@@ -74,8 +75,7 @@ export default function RegisterScreen() {
       });
       router.replace('/(tabs)/account');
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message || `Đăng ký qua ${provider} thất bại`;
+      const message = getApiErrorMessage(error, `Đăng ký qua ${provider} thất bại`);
       Alert.alert('Đăng ký thất bại', message);
     } finally {
       setSocialLoading(null);
@@ -112,7 +112,7 @@ export default function RegisterScreen() {
       // Auto-logged-in by the BE response; close back to where we came from
       router.back();
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+      const message = getApiErrorMessage(error, 'Đăng ký thất bại. Vui lòng thử lại.');
       Alert.alert('Đăng ký thất bại', message);
     } finally {
       setLoading(false);

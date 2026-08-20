@@ -48,8 +48,34 @@ export interface Order {
   ngayDuKienNhan: number;
   tenVoucher: string;
   maVoucher: string;
+
+  // Permission and status flags
+  laTienMat?: boolean;
+  daThanhToan?: boolean;
+  daSuaThongTin?: boolean;
+  choPhepSuaThongTin?: boolean;
+  choPhepSuaSanPham?: boolean;
+  choPhepHuy?: boolean;
+  choPhepThanhToanLai?: boolean;
+  tienHoanTraTruoc?: number;
+  phuPhiCanThu?: number;
+
   items: OrderItem[];
   lichSuTrangThai: OrderStatusHistory[];
+}
+
+export interface UpdateShippingRequest {
+  tenNguoiNhan: string;
+  soDienThoaiNguoiNhan: string;
+  diaChiNguoiNhan: string;
+  ghiChu?: string;
+}
+
+export interface UpdateItemsRequest {
+  items: {
+    idChiTietSanPham: string;
+    soLuong: number;
+  }[];
 }
 
 // Matches BE CustomerOrderCheckoutRequest
@@ -112,6 +138,22 @@ export const orderService = {
 
   async cancelOrder(id: string): Promise<void> {
     await apiClient.put(API_PATHS.ORDER.CANCEL(id));
+  },
+
+  async updateShippingInfo(id: string, data: UpdateShippingRequest): Promise<Order> {
+    const response = await apiClient.put<ApiResponse<Order>>(
+      API_PATHS.ORDER.UPDATE_SHIPPING(id),
+      data
+    );
+    return response.data.data;
+  },
+
+  async updateItems(id: string, data: UpdateItemsRequest): Promise<Order> {
+    const response = await apiClient.put<ApiResponse<Order>>(
+      API_PATHS.ORDER.UPDATE_ITEMS(id),
+      data
+    );
+    return response.data.data;
   },
 
   async getAvailableVouchers(tongTien?: number): Promise<Voucher[]> {

@@ -7,26 +7,27 @@ import {
   StyleSheet,
   View,
   Text,
-  TextInput,
+  FlatList,
   ScrollView,
   Pressable,
   Alert,
   Modal,
-  FlatList,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { openBrowserAsync } from 'expo-web-browser';
+import { createURL } from 'expo-linking';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { orderService, type CheckoutRequest, type Voucher } from '@/services/orderService';
 import { profileService } from '@/services/profileService';
+import { getApiErrorMessage } from '@/services/apiClient';
+import { FormField } from '@/components/ui/FormField';
 import {
   formatCurrency,
   formatVoucherValue,
@@ -137,7 +138,7 @@ export default function CheckoutScreen() {
         showSuccess();
       }
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Không thể đặt hàng. Vui lòng thử lại.';
+      const message = getApiErrorMessage(error, 'Không thể đặt hàng. Vui lòng thử lại.');
       Alert.alert('Lỗi', message);
     } finally {
       setLoading(false);
@@ -146,9 +147,9 @@ export default function CheckoutScreen() {
 
   const handleVnPay = async (orderId: string) => {
     try {
-      const returnUrl = Linking.createURL('/orders');
+      const returnUrl = createURL('/orders');
       const payUrl = await orderService.createVnPayUrl(orderId, returnUrl);
-      await WebBrowser.openBrowserAsync(payUrl);
+      await openBrowserAsync(payUrl);
     } catch {
       Alert.alert(
         'Thanh toán',
@@ -205,62 +206,42 @@ export default function CheckoutScreen() {
               </Text>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: theme.textSecondary }]}>Tên người nhận *</Text>
-              <TextInput
-                style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
-                placeholder="Nguyễn Văn A"
-                placeholderTextColor={theme.textTertiary}
-                value={tenNguoiNhan}
-                onChangeText={setTenNguoiNhan}
-              />
-            </View>
+            <FormField
+              label="Tên người nhận *"
+              value={tenNguoiNhan}
+              onChangeText={setTenNguoiNhan}
+              placeholder="Nguyễn Văn A"
+              icon="person-outline"
+            />
 
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: theme.textSecondary }]}>Số điện thoại *</Text>
-              <TextInput
-                style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
-                placeholder="0901234567"
-                placeholderTextColor={theme.textTertiary}
-                value={soDienThoai}
-                onChangeText={setSoDienThoai}
-                keyboardType="phone-pad"
-              />
-            </View>
+            <FormField
+              label="Số điện thoại *"
+              value={soDienThoai}
+              onChangeText={setSoDienThoai}
+              placeholder="0901234567"
+              keyboardType="phone-pad"
+              icon="call-outline"
+            />
 
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: theme.textSecondary }]}>Địa chỉ *</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  styles.multilineInput,
-                  { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.border },
-                ]}
-                placeholder="Số nhà, đường, phường, quận, thành phố"
-                placeholderTextColor={theme.textTertiary}
-                value={diaChi}
-                onChangeText={setDiaChi}
-                multiline
-                numberOfLines={2}
-              />
-            </View>
+            <FormField
+              label="Địa chỉ *"
+              value={diaChi}
+              onChangeText={setDiaChi}
+              placeholder="Số nhà, đường, phường, quận, thành phố"
+              multiline
+              numberOfLines={2}
+              icon="location-outline"
+            />
 
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: theme.textSecondary }]}>Ghi chú</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  styles.multilineInput,
-                  { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.border },
-                ]}
-                placeholder="Ghi chú cho đơn hàng (tùy chọn)"
-                placeholderTextColor={theme.textTertiary}
-                value={ghiChu}
-                onChangeText={setGhiChu}
-                multiline
-                numberOfLines={2}
-              />
-            </View>
+            <FormField
+              label="Ghi chú"
+              value={ghiChu}
+              onChangeText={setGhiChu}
+              placeholder="Ghi chú cho đơn hàng (tùy chọn)"
+              multiline
+              numberOfLines={2}
+              icon="create-outline"
+            />
           </View>
 
           {/* Voucher */}

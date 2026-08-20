@@ -7,7 +7,7 @@ import { StyleSheet, View, Text, Pressable, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Brand, Colors, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
+import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { PriceTag } from '@/components/ui/PriceTag';
 import { truncateText } from '@/utils/format';
 import { fileService } from '@/services/fileService';
@@ -48,6 +48,7 @@ export function ProductCard({ product }: ProductCardProps) {
             source={imageSource}
             style={styles.image}
             contentFit="cover"
+            cachePolicy="memory-disk"
             transition={300}
           />
         ) : (

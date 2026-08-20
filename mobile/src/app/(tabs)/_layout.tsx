@@ -3,12 +3,11 @@
  */
 
 import React from 'react';
-import { StyleSheet, View, Text, Platform } from 'react-native';
+import { StyleSheet, View, Text, useColorScheme } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { BlurView } from 'expo-blur';
-import { Colors, Brand, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { Colors, Brand, FontSizes, FontWeights } from '@/constants/theme';
 import { useCart } from '@/context/CartContext';
 
 export default function TabLayout() {

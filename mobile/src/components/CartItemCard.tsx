@@ -5,7 +5,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { formatCurrency } from '@/utils/format';
 import { fileService } from '@/services/fileService';
@@ -25,7 +25,13 @@ export function CartItemCard({ item }: CartItemCardProps) {
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={[styles.imageContainer, { backgroundColor: theme.backgroundElement }]}>
         {imageSource ? (
-          <Image source={imageSource} style={styles.image} contentFit="cover" transition={200} />
+          <Image
+            source={imageSource}
+            style={styles.image}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={200}
+          />
         ) : (
           <View style={styles.placeholder}>
             <Ionicons name="footsteps-outline" size={28} color={theme.textTertiary} />

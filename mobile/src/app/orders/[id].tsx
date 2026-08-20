@@ -2,18 +2,20 @@
  * Order Detail Screen
  */
 
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, Pressable, Alert, Modal, TextInput } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { StyleSheet, View, Text, ScrollView, Pressable, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { openBrowserAsync } from 'expo-web-browser';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { orderService, type Order, type OrderItem } from '@/services/orderService';
 import { reviewService } from '@/services/reviewService';
 import { profileService } from '@/services/profileService';
 import { fileService } from '@/services/fileService';
+import { getApiErrorMessage } from '@/services/apiClient';
 import { formatCurrency, formatDate, getOrderStatusColor } from '@/utils/format';
 import { StatusBadge } from '@/components/ui/Badge';
 import { StatusTimeline } from '@/components/StatusTimeline';
@@ -28,25 +30,66 @@ export default function OrderDetailScreen() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [payingVnPay, setPayingVnPay] = useState(false);
 
+  // Review states
   const [eligibilityMap, setEligibilityMap] = useState<Record<string, boolean>>({});
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [selectedReviewItem, setSelectedReviewItem] = useState<OrderItem | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [customerId, setCustomerId] = useState<string>('');
+
+  // Edit Shipping Modal states
+  const [editShippingModalVisible, setEditShippingModalVisible] = useState(false);
+  const [editTenNguoiNhan, setEditTenNguoiNhan] = useState('');
+  const [editSoDienThoai, setEditSoDienThoai] = useState('');
+  const [editDiaChi, setEditDiaChi] = useState('');
+  const [editGhiChu, setEditGhiChu] = useState('');
+  const [savingShipping, setSavingShipping] = useState(false);
+
+  const loadOrder = useCallback(async () => {
+    if (!id) return;
+    try {
+      const data = await orderService.getOrderDetail(id);
+      setOrder(data);
+
+      if (data.trangThai === 'HOAN_THANH' && data.items?.length) {
+        try {
+          const profile = await profileService.getMyProfile();
+          if (profile?.id) {
+            setCustomerId(profile.id);
+            const map: Record<string, boolean> = {};
+            await Promise.all(
+              data.items.map(async (item) => {
+                if (item.idSanPham) {
+                  try {
+                    const ok = await reviewService.checkEligibility(data.id, item.idSanPham, profile.id);
+                    map[item.idSanPham] = ok;
+                  } catch {
+                    map[item.idSanPham] = false;
+                  }
+                }
+              })
+            );
+            setEligibilityMap(map);
+          }
+        } catch {
+          // ignore profile load error for guest/offline
+        }
+      }
+    } catch (err: any) {
+      console.warn('Failed to load order:', err);
+      Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể tải đơn hàng'));
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    if (!id) return;
-    orderService
-      .getOrderDetail(id)
-      .then(setOrder)
-      .catch((err) => {
-        console.warn('Failed to load order:', err);
-        Alert.alert('Lỗi', 'Không thể tải đơn hàng');
-      })
-      .finally(() => setLoading(false));
-  }, [id]);
+    loadOrder();
+  }, [loadOrder]);
 
   const handleCancel = () => {
     if (!order) return;
@@ -61,18 +104,113 @@ export default function OrderDetailScreen() {
             await orderService.cancelOrder(order.id);
             setOrder((prev) =>
               prev
-                ? { ...prev, trangThai: 'DA_HUY', trangThaiDisplay: 'Đã hủy' }
+                ? { ...prev, trangThai: 'DA_HUY', trangThaiDisplay: 'Đã hủy', choPhepHuy: false, choPhepSuaThongTin: false }
                 : null
             );
             Alert.alert('Thành công', 'Đơn hàng đã được hủy');
           } catch (err: any) {
-            Alert.alert('Lỗi', err?.response?.data?.message || 'Không thể hủy đơn hàng');
+            Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể hủy đơn hàng'));
           } finally {
             setCancelling(false);
           }
         },
       },
     ]);
+  };
+
+  const handleRepayVnPay = async () => {
+    if (!order) return;
+    setPayingVnPay(true);
+    try {
+      const returnUrl = 'aerostride://orders/' + order.id;
+      const paymentUrl = await orderService.createVnPayUrl(order.id, returnUrl);
+      if (paymentUrl) {
+        await openBrowserAsync(paymentUrl);
+        await loadOrder();
+      }
+    } catch (err: any) {
+      Alert.alert('Lỗi thanh toán', getApiErrorMessage(err, 'Không thể tạo liên kết thanh toán VNPay'));
+    } finally {
+      setPayingVnPay(false);
+    }
+  };
+
+  const handleOpenEditShippingModal = () => {
+    if (!order) return;
+    setEditTenNguoiNhan(order.tenNguoiNhan || '');
+    setEditSoDienThoai(order.soDienThoaiNguoiNhan || '');
+    setEditDiaChi(order.diaChiNguoiNhan || '');
+    setEditGhiChu(order.ghiChu || '');
+    setEditShippingModalVisible(true);
+  };
+
+  const handleSaveShipping = async () => {
+    if (!order) return;
+    if (!editTenNguoiNhan.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập tên người nhận');
+      return;
+    }
+    if (!editSoDienThoai.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại');
+      return;
+    }
+    if (!editDiaChi.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập địa chỉ nhận hàng');
+      return;
+    }
+
+    setSavingShipping(true);
+    try {
+      const updated = await orderService.updateShippingInfo(order.id, {
+        tenNguoiNhan: editTenNguoiNhan.trim(),
+        soDienThoaiNguoiNhan: editSoDienThoai.trim(),
+        diaChiNguoiNhan: editDiaChi.trim(),
+        ghiChu: editGhiChu.trim(),
+      });
+      setOrder(updated);
+      setEditShippingModalVisible(false);
+      Alert.alert('Thành công', 'Đã cập nhật thông tin giao nhận thành công (1/1 lần)');
+    } catch (err: any) {
+      Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể cập nhật thông tin giao nhận'));
+    } finally {
+      setSavingShipping(false);
+    }
+  };
+
+  const handleOpenReviewModal = (item: OrderItem) => {
+    setSelectedReviewItem(item);
+    setRating(5);
+    setComment('');
+    setReviewModalVisible(true);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!selectedReviewItem || !customerId || !order) return;
+    if (!comment.trim()) {
+      Alert.alert('Thông báo', 'Vui lòng nhập nội dung đánh giá của bạn');
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      await reviewService.submitReview({
+        idHoaDon: order.id,
+        idSanPham: selectedReviewItem.idSanPham,
+        idKhachHang: customerId,
+        diemDanhGia: rating,
+        noiDung: comment.trim(),
+      });
+      setReviewModalVisible(false);
+      setEligibilityMap((prev) => ({
+        ...prev,
+        [selectedReviewItem.idSanPham]: false,
+      }));
+      Alert.alert('Cảm ơn bạn', 'Đánh giá của bạn đã được gửi thành công!');
+    } catch (err: any) {
+      Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể gửi đánh giá'));
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   if (loading) {
@@ -85,7 +223,7 @@ export default function OrderDetailScreen() {
 
   if (!order) return null;
 
-  const canCancel = order.trangThai === 'CHO_XAC_NHAN';
+  const canCancel = !!order.choPhepHuy;
   const statusColor = getOrderStatusColor(order.trangThai);
 
   return (
@@ -100,53 +238,113 @@ export default function OrderDetailScreen() {
           <View style={{ width: 24 }} />
         </View>
 
-        {/* Order Status */}
-        <View style={[styles.statusCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        {/* Status Card */}
+        <View style={[styles.statusCard, { backgroundColor: theme.surfaceElevated, borderColor: theme.border }]}>
           <View style={styles.statusHeader}>
             <View>
               <Text style={[styles.orderCode, { color: theme.text }]}>{order.maHoaDon}</Text>
-              <Text style={[styles.orderDate, { color: theme.textTertiary }]}>
+              <Text style={[styles.orderDate, { color: theme.textSecondary }]}>
                 {formatDate(order.ngayTao)}
               </Text>
             </View>
             <StatusBadge
-              status={order.trangThai}
-              label={order.trangThaiDisplay}
+              label={order.trangThaiDisplay || order.trangThai}
               color={statusColor}
             />
           </View>
+
+          {/* Refund Notice Banner if refund surplus exists */}
+          {order.tienHoanTraTruoc != null && order.tienHoanTraTruoc > 0 && (
+            <View style={styles.refundBanner}>
+              <Ionicons name="cash-outline" size={20} color={Brand.success} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.refundBannerTitle}>
+                  Khoản tiền hoàn thừa: {formatCurrency(order.tienHoanTraTruoc)}
+                </Text>
+                <Text style={styles.refundBannerDesc}>
+                  Cửa hàng sẽ liên hệ hoàn tiền chênh lệch này cho bạn.
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Repay VNPay banner button */}
+          {order.choPhepThanhToanLai && (
+            <Pressable
+              style={[styles.repayButton, { opacity: payingVnPay ? 0.7 : 1 }]}
+              onPress={handleRepayVnPay}
+              disabled={payingVnPay}
+            >
+              {payingVnPay ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons name="card-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                  <Text style={styles.repayButtonText}>Thanh toán lại qua VNPay</Text>
+                </>
+              )}
+            </Pressable>
+          )}
         </View>
 
-        {/* Status Timeline */}
+        {/* Order Status History Timeline */}
         {order.lichSuTrangThai && order.lichSuTrangThai.length > 0 && (
           <View style={[styles.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <Text style={[styles.sectionTitle, { color: theme.text }]}>Trạng thái đơn hàng</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Lịch sử đơn hàng</Text>
             <StatusTimeline history={order.lichSuTrangThai} />
           </View>
         )}
 
-        {/* Delivery Info */}
+        {/* Shipping Info */}
         <View style={[styles.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Thông tin giao hàng</Text>
-          <View style={styles.infoRow}>
-            <Ionicons name="person-outline" size={16} color={theme.textSecondary} />
-            <Text style={[styles.infoText, { color: theme.text }]}>{order.tenNguoiNhan}</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 0 }]}>
+              Thông tin nhận hàng
+            </Text>
+            {order.choPhepSuaThongTin ? (
+              <Pressable
+                style={[styles.editShippingBtn, { backgroundColor: Brand.primaryLight + '20' }]}
+                onPress={handleOpenEditShippingModal}
+              >
+                <Ionicons name="pencil" size={14} color={Brand.primary} />
+                <Text style={[styles.editShippingText, { color: Brand.primary }]}>Sửa</Text>
+              </Pressable>
+            ) : order.daSuaThongTin ? (
+              <View style={[styles.editedChip, { backgroundColor: theme.backgroundElement }]}>
+                <Text style={[styles.editedChipText, { color: theme.textTertiary }]}>
+                  Đã sửa (1/1 lần)
+                </Text>
+              </View>
+            ) : null}
           </View>
-          <View style={styles.infoRow}>
-            <Ionicons name="call-outline" size={16} color={theme.textSecondary} />
-            <Text style={[styles.infoText, { color: theme.text }]}>
+
+          <View style={styles.shippingRow}>
+            <Ionicons name="person-outline" size={18} color={theme.textTertiary} />
+            <Text style={[styles.shippingText, { color: theme.text }]}>{order.tenNguoiNhan}</Text>
+          </View>
+          <View style={styles.shippingRow}>
+            <Ionicons name="call-outline" size={18} color={theme.textTertiary} />
+            <Text style={[styles.shippingText, { color: theme.text }]}>
               {order.soDienThoaiNguoiNhan}
             </Text>
           </View>
-          <View style={styles.infoRow}>
-            <Ionicons name="location-outline" size={16} color={theme.textSecondary} />
-            <Text style={[styles.infoText, { color: theme.text }]}>
+          <View style={styles.shippingRow}>
+            <Ionicons name="location-outline" size={18} color={theme.textTertiary} />
+            <Text style={[styles.shippingText, { color: theme.text }]} numberOfLines={2}>
               {order.diaChiNguoiNhan}
             </Text>
           </View>
+          {order.ghiChu ? (
+            <View style={styles.shippingRow}>
+              <Ionicons name="chatbubble-ellipses-outline" size={18} color={theme.textTertiary} />
+              <Text style={[styles.shippingText, { color: theme.textSecondary }]}>
+                {order.ghiChu}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
-        {/* Order Items */}
+        {/* Product Items */}
         <View style={[styles.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
             Sản phẩm ({order.items?.length || 0})
@@ -159,6 +357,8 @@ export default function OrderDetailScreen() {
                     source={fileService.getImageSource(item.hinhAnh)}
                     style={{ width: '100%', height: '100%' }}
                     contentFit="cover"
+                    cachePolicy="memory-disk"
+                    transition={200}
                   />
                 ) : (
                   <Ionicons name="footsteps-outline" size={20} color={theme.textTertiary} />
@@ -240,7 +440,7 @@ export default function OrderDetailScreen() {
             </Text>
           </View>
           <View style={styles.priceRow}>
-            <Text style={[styles.priceLabel, { color: theme.textSecondary }]}>Thanh toán</Text>
+            <Text style={[styles.priceLabel, { color: theme.textSecondary }]}>Phương thức</Text>
             <Text style={[styles.priceValue, { color: theme.text }]}>
               {order.phuongThucThanhToan === 'COD' ? 'Tiền mặt khi nhận' : order.phuongThucThanhToan}
             </Text>
@@ -372,97 +572,253 @@ export default function OrderDetailScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Edit Shipping Address Modal */}
+      <Modal
+        visible={editShippingModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditShippingModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setEditShippingModalVisible(false)}>
+          <Pressable
+            style={[
+              styles.modalSheet,
+              {
+                backgroundColor: theme.surfaceElevated,
+                paddingBottom: insets.bottom + Spacing.four,
+              },
+            ]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Sửa thông tin nhận hàng</Text>
+              <Pressable onPress={() => setEditShippingModalVisible(false)} hitSlop={12}>
+                <Ionicons name="close" size={22} color={theme.textSecondary} />
+              </Pressable>
+            </View>
+
+            <Text style={[styles.editWarningText, { color: Brand.warning }]}>
+              Lưu ý: Bạn chỉ được phép đổi thông tin nhận hàng tối đa 1 lần duy nhất khi đơn đang chờ xác nhận.
+            </Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Tên người nhận</Text>
+              <TextInput
+                style={[styles.inputField, { borderColor: theme.border, color: theme.text, backgroundColor: theme.background }]}
+                placeholder="Nhập họ và tên"
+                placeholderTextColor={theme.textTertiary}
+                value={editTenNguoiNhan}
+                onChangeText={setEditTenNguoiNhan}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Số điện thoại</Text>
+              <TextInput
+                style={[styles.inputField, { borderColor: theme.border, color: theme.text, backgroundColor: theme.background }]}
+                placeholder="Nhập số điện thoại"
+                placeholderTextColor={theme.textTertiary}
+                keyboardType="phone-pad"
+                value={editSoDienThoai}
+                onChangeText={setEditSoDienThoai}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Địa chỉ giao hàng</Text>
+              <TextInput
+                style={[styles.inputField, { borderColor: theme.border, color: theme.text, backgroundColor: theme.background, minHeight: 60 }]}
+                placeholder="Nhập số nhà, đường, phường/xã, quận/huyện..."
+                placeholderTextColor={theme.textTertiary}
+                multiline
+                value={editDiaChi}
+                onChangeText={setEditDiaChi}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Ghi chú</Text>
+              <TextInput
+                style={[styles.inputField, { borderColor: theme.border, color: theme.text, backgroundColor: theme.background }]}
+                placeholder="Ghi chú thêm cho người giao hàng"
+                placeholderTextColor={theme.textTertiary}
+                value={editGhiChu}
+                onChangeText={setEditGhiChu}
+              />
+            </View>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.submitBtn,
+                {
+                  opacity: savingShipping || pressed ? 0.7 : 1,
+                  backgroundColor: Brand.primary,
+                  marginTop: Spacing.three,
+                },
+              ]}
+              onPress={handleSaveShipping}
+              disabled={savingShipping}
+            >
+              <Text style={styles.submitText}>
+                {savingShipping ? 'Đang lưu...' : 'Lưu thông tin'}
+              </Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  loadingContainer: { flex: 1 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.three,
-    paddingBottom: Spacing.two + 4,
+    paddingHorizontal: Spacing.four,
+    paddingBottom: Spacing.three,
   },
   title: {
     fontSize: FontSizes.lg,
     fontWeight: FontWeights.bold,
   },
   statusCard: {
-    marginHorizontal: Spacing.three,
+    marginHorizontal: Spacing.four,
+    marginBottom: Spacing.three,
+    padding: Spacing.four,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    padding: Spacing.three,
-    marginBottom: Spacing.two,
   },
   statusHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   orderCode: {
-    fontSize: FontSizes.md,
+    fontSize: FontSizes.base,
     fontWeight: FontWeights.bold,
   },
   orderDate: {
     fontSize: FontSizes.xs,
     marginTop: 2,
   },
+  refundBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.three,
+    marginTop: Spacing.three,
+    gap: Spacing.two,
+  },
+  refundBannerTitle: {
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.bold,
+    color: Brand.success,
+  },
+  refundBannerDesc: {
+    fontSize: FontSizes.xs,
+    color: '#065F46',
+    marginTop: 2,
+  },
+  repayButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Brand.primary,
+    paddingVertical: Spacing.three,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.three,
+  },
+  repayButtonText: {
+    color: '#FFFFFF',
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.bold,
+  },
   section: {
-    marginHorizontal: Spacing.three,
+    marginHorizontal: Spacing.four,
+    marginBottom: Spacing.three,
+    padding: Spacing.four,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    padding: Spacing.three,
-    marginBottom: Spacing.two,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.three,
   },
   sectionTitle: {
-    fontSize: FontSizes.base,
+    fontSize: FontSizes.sm,
     fontWeight: FontWeights.bold,
     marginBottom: Spacing.three,
   },
-  infoRow: {
+  editShippingBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+  },
+  editShippingText: {
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.bold,
+  },
+  editedChip: {
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+  },
+  editedChipText: {
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.medium,
+  },
+  shippingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
     marginBottom: Spacing.two,
   },
-  infoText: {
+  shippingText: {
     fontSize: FontSizes.sm,
     flex: 1,
   },
   itemRow: {
     flexDirection: 'row',
-    gap: Spacing.two + 2,
-    paddingVertical: Spacing.two + 2,
+    paddingVertical: Spacing.three,
     borderTopWidth: 1,
+    gap: Spacing.three,
   },
   itemImage: {
-    width: 60,
-    height: 60,
-    borderRadius: BorderRadius.sm,
+    width: 64,
+    height: 64,
+    borderRadius: BorderRadius.md,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
   },
   itemInfo: {
     flex: 1,
-    gap: 2,
+    justifyContent: 'center',
   },
   itemName: {
     fontSize: FontSizes.sm,
     fontWeight: FontWeights.medium,
-    lineHeight: 18,
   },
   itemVariant: {
     fontSize: FontSizes.xs,
+    marginTop: 2,
   },
   itemPriceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 2,
+    marginTop: Spacing.one,
   },
   itemPrice: {
     fontSize: FontSizes.sm,
@@ -471,10 +827,23 @@ const styles = StyleSheet.create({
   itemQty: {
     fontSize: FontSizes.xs,
   },
+  reviewBtn: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    borderRadius: BorderRadius.sm,
+  },
+  reviewBtnText: {
+    color: '#FFF',
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.bold,
+  },
+  reviewedText: {
+    fontSize: FontSizes.xs,
+    fontStyle: 'italic',
+  },
   priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: Spacing.two,
   },
   priceLabel: {
@@ -487,82 +856,66 @@ const styles = StyleSheet.create({
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    paddingTop: Spacing.two + 2,
+    paddingTop: Spacing.two,
     marginTop: Spacing.one,
     marginBottom: Spacing.two,
+    borderTopWidth: 1,
   },
   totalLabel: {
-    fontSize: FontSizes.md,
+    fontSize: FontSizes.base,
     fontWeight: FontWeights.bold,
   },
   totalValue: {
-    fontSize: FontSizes.lg,
-    fontWeight: FontWeights.extrabold,
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.bold,
   },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.three,
+    padding: Spacing.four,
     borderTopWidth: 1,
   },
   cancelBtn: {
-    backgroundColor: Brand.error,
+    backgroundColor: '#FEE2E2',
     paddingVertical: Spacing.three,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
   },
   cancelText: {
-    color: '#FFFFFF',
-    fontSize: FontSizes.base,
+    color: Brand.error,
+    fontSize: FontSizes.sm,
     fontWeight: FontWeights.bold,
-  },
-  reviewBtn: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one + 2,
-    borderRadius: BorderRadius.md,
-  },
-  reviewBtnText: {
-    color: '#FFFFFF',
-    fontSize: FontSizes.xs,
-    fontWeight: FontWeights.bold,
-  },
-  reviewedText: {
-    fontSize: FontSizes.xs,
-    fontWeight: FontWeights.medium,
-    fontStyle: 'italic',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   modalSheet: {
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
-    padding: Spacing.three,
+    padding: Spacing.four,
   },
   modalHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: Spacing.three,
   },
   modalTitle: {
-    fontSize: FontSizes.md,
+    fontSize: FontSizes.base,
     fontWeight: FontWeights.bold,
   },
   selectedProductCard: {
     flexDirection: 'row',
-    gap: Spacing.two,
+    alignItems: 'center',
+    padding: Spacing.two,
     borderWidth: 1,
     borderRadius: BorderRadius.md,
-    padding: Spacing.two,
     marginBottom: Spacing.three,
+    gap: Spacing.two,
   },
   selectedProductImage: {
     width: 48,
@@ -571,7 +924,7 @@ const styles = StyleSheet.create({
   },
   selectedProductName: {
     fontSize: FontSizes.sm,
-    fontWeight: FontWeights.bold,
+    fontWeight: FontWeights.medium,
   },
   ratingSection: {
     alignItems: 'center',
@@ -579,29 +932,50 @@ const styles = StyleSheet.create({
   },
   ratingLabel: {
     fontSize: FontSizes.sm,
-    fontWeight: FontWeights.semibold,
+    fontWeight: FontWeights.medium,
     marginBottom: Spacing.two,
   },
   ratingStars: {
     flexDirection: 'row',
+    justifyContent: 'center',
   },
   reviewInput: {
     borderWidth: 1,
     borderRadius: BorderRadius.md,
-    padding: Spacing.two + 2,
-    fontSize: FontSizes.sm,
-    height: 100,
+    padding: Spacing.three,
     textAlignVertical: 'top',
-    marginBottom: Spacing.three,
+    fontSize: FontSizes.sm,
+    minHeight: 80,
+    marginBottom: Spacing.four,
   },
   submitBtn: {
     paddingVertical: Spacing.three,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
   },
   submitText: {
-    color: '#FFFFFF',
-    fontSize: FontSizes.base,
+    color: '#FFF',
+    fontSize: FontSizes.sm,
     fontWeight: FontWeights.bold,
+  },
+  editWarningText: {
+    fontSize: FontSizes.xs,
+    marginBottom: Spacing.three,
+    lineHeight: 16,
+  },
+  inputGroup: {
+    marginBottom: Spacing.three,
+  },
+  inputLabel: {
+    fontSize: FontSizes.xs,
+    marginBottom: 4,
+    fontWeight: FontWeights.medium,
+  },
+  inputField: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    fontSize: FontSizes.sm,
   },
 });

@@ -5,8 +5,8 @@
 import React from 'react';
 import { StyleSheet, View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { StatusBadge } from '@/components/ui/Badge';
 import { formatCurrency, formatDate, getOrderStatusColor } from '@/utils/format';
 import { useTheme } from '@/hooks/use-theme';
@@ -36,17 +36,44 @@ export function OrderCard({ order }: OrderCardProps) {
     >
       <View style={styles.header}>
         <View style={styles.orderInfo}>
-          <Text style={[styles.orderCode, { color: theme.text }]}>{order.maHoaDon}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={[styles.orderCode, { color: theme.text }]}>{order.maHoaDon}</Text>
+            {order.daSuaThongTin && (
+              <View style={[styles.subBadge, { backgroundColor: theme.backgroundElement }]}>
+                <Text style={[styles.subBadgeText, { color: theme.textTertiary }]}>Đã sửa 1/1</Text>
+              </View>
+            )}
+          </View>
           <Text style={[styles.date, { color: theme.textTertiary }]}>
             {formatDate(order.ngayTao)}
           </Text>
         </View>
         <StatusBadge
           status={order.trangThai}
-          label={order.trangThaiDisplay}
+          label={order.trangThaiDisplay || order.trangThai}
           color={statusColor}
         />
       </View>
+
+      {/* Extra alerts row for repay or refund */}
+      {(order.choPhepThanhToanLai || (order.tienHoanTraTruoc != null && order.tienHoanTraTruoc > 0)) && (
+        <View style={styles.extraAlertsRow}>
+          {order.choPhepThanhToanLai && (
+            <View style={[styles.alertTag, { backgroundColor: Brand.primary + '15', borderColor: Brand.primary + '30' }]}>
+              <Ionicons name="card-outline" size={12} color={Brand.primary} />
+              <Text style={[styles.alertTagText, { color: Brand.primary }]}>Cần thanh toán lại</Text>
+            </View>
+          )}
+          {order.tienHoanTraTruoc != null && order.tienHoanTraTruoc > 0 && (
+            <View style={[styles.alertTag, { backgroundColor: Brand.success + '15', borderColor: Brand.success + '30' }]}>
+              <Ionicons name="cash-outline" size={12} color={Brand.success} />
+              <Text style={[styles.alertTagText, { color: Brand.success }]}>
+                Hoàn tiền {formatCurrency(order.tienHoanTraTruoc)}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
 
       <View style={[styles.divider, { backgroundColor: theme.borderLight }]} />
 
@@ -132,5 +159,33 @@ const styles = StyleSheet.create({
     right: Spacing.three,
     top: '50%',
     marginTop: -9,
+  },
+  subBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+  },
+  subBadgeText: {
+    fontSize: 10,
+    fontWeight: FontWeights.medium,
+  },
+  extraAlertsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: Spacing.two,
+  },
+  alertTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+  },
+  alertTagText: {
+    fontSize: 11,
+    fontWeight: FontWeights.bold,
   },
 });

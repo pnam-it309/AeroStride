@@ -18,7 +18,7 @@ import {
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { productService, type Product, type ProductFilters, type ProductSearchParams } from '@/services/productService';
@@ -47,18 +47,6 @@ export default function ShopScreen() {
   const [sortBy, setSortBy] = useState('ngayTao');
   const [sortDir, setSortDir] = useState('desc');
 
-  const sortProductsForUi = useCallback(
-    (items: Product[]) => {
-      if (sortBy !== 'giaBanThapNhat') return items;
-      return [...items].sort((a, b) => {
-        const left = Number(a.giaBanThapNhat ?? 0);
-        const right = Number(b.giaBanThapNhat ?? 0);
-        return sortDir === 'asc' ? left - right : right - left;
-      });
-    },
-    [sortBy, sortDir]
-  );
-
   const loadProducts = useCallback(
     async (page: number = 0, append: boolean = false) => {
       try {
@@ -71,7 +59,7 @@ export default function ShopScreen() {
           ...selectedFilters,
         };
         const data = await productService.getProducts(params);
-        const nextProducts = sortProductsForUi(data.content || []);
+        const nextProducts = data.content || [];
         setProducts((prev) => (append ? [...prev, ...nextProducts] : nextProducts));
         setTotalPages(data.totalPages || 1);
         setCurrentPage(data.pageNumber ?? page);
@@ -83,7 +71,7 @@ export default function ShopScreen() {
         setLoadingMore(false);
       }
     },
-    [keyword, sortBy, sortDir, selectedFilters, sortProductsForUi]
+    [keyword, sortBy, sortDir, selectedFilters]
   );
 
   useEffect(() => {
@@ -231,6 +219,10 @@ export default function ShopScreen() {
           columnWrapperStyle={styles.gridRow}
           contentContainerStyle={styles.gridContainer}
           showsVerticalScrollIndicator={false}
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews={true}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Brand.primary} />
           }

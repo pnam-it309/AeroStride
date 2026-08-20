@@ -4,8 +4,7 @@
 
 import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Brand, FontSizes, FontWeights, Spacing } from '@/constants/theme';
+import { FontSizes, FontWeights, Spacing } from '@/constants/theme';
 import { formatDateTime, getOrderStatusColor } from '@/utils/format';
 import { useTheme } from '@/hooks/use-theme';
 import type { OrderStatusHistory } from '@/services/orderService';

@@ -7,7 +7,6 @@ import {
   StyleSheet,
   View,
   Text,
-  TextInput,
   ScrollView,
   Pressable,
   Alert,
@@ -17,12 +16,15 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/context/AuthContext';
 import { profileService, type CustomerProfile } from '@/services/profileService';
+import { getApiErrorMessage } from '@/services/apiClient';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { FormField } from '@/components/ui/FormField';
+import { PrimaryButton } from '@/components/ui/PrimaryButton';
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -52,7 +54,7 @@ export default function ProfileScreen() {
       })
       .catch((err) => {
         console.warn('Failed to load profile:', err);
-        Alert.alert('Lỗi', err?.response?.data?.message || 'Không thể tải hồ sơ');
+        Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể tải hồ sơ'));
       })
       .finally(() => setLoading(false));
   }, [isAuthenticated, router]);
@@ -73,7 +75,7 @@ export default function ProfileScreen() {
       setEditing(false);
       Alert.alert('Thành công', 'Đã cập nhật hồ sơ');
     } catch (err: any) {
-      Alert.alert('Lỗi', err?.response?.data?.message || 'Không thể cập nhật hồ sơ');
+      Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể cập nhật hồ sơ'));
     } finally {
       setSaving(false);
     }
@@ -152,27 +154,21 @@ export default function ProfileScreen() {
 
             {editing ? (
               <>
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.label, { color: theme.textSecondary }]}>Họ và tên *</Text>
-                  <TextInput
-                    style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
-                    value={ten}
-                    onChangeText={setTen}
-                    placeholder="Nguyễn Văn A"
-                    placeholderTextColor={theme.textTertiary}
-                  />
-                </View>
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.label, { color: theme.textSecondary }]}>Số điện thoại *</Text>
-                  <TextInput
-                    style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
-                    value={sdt}
-                    onChangeText={setSdt}
-                    keyboardType="phone-pad"
-                    placeholder="0901234567"
-                    placeholderTextColor={theme.textTertiary}
-                  />
-                </View>
+                <FormField
+                  label="Họ và tên *"
+                  icon="person-outline"
+                  value={ten}
+                  onChangeText={setTen}
+                  placeholder="Nguyễn Văn A"
+                />
+                <FormField
+                  label="Số điện thoại *"
+                  icon="call-outline"
+                  value={sdt}
+                  onChangeText={setSdt}
+                  keyboardType="phone-pad"
+                  placeholder="0901234567"
+                />
                 <View style={styles.editActions}>
                   <Pressable
                     style={({ pressed }) => [styles.btnSecondary, { borderColor: theme.border, opacity: pressed ? 0.7 : 1 }]}
@@ -181,13 +177,12 @@ export default function ProfileScreen() {
                   >
                     <Text style={[styles.btnSecondaryText, { color: theme.textSecondary }]}>Hủy</Text>
                   </Pressable>
-                  <Pressable
-                    style={({ pressed }) => [styles.btnPrimary, { opacity: saving || pressed ? 0.7 : 1 }]}
+                  <PrimaryButton
+                    label="Lưu"
                     onPress={handleSave}
-                    disabled={saving}
-                  >
-                    <Text style={styles.btnPrimaryText}>{saving ? 'Đang lưu...' : 'Lưu'}</Text>
-                  </Pressable>
+                    loading={saving}
+                    style={styles.btnPrimary}
+                  />
                 </View>
               </>
             ) : (
@@ -233,7 +228,7 @@ function InfoRow({
   theme,
   last,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
   value?: string;
   theme: ReturnType<typeof useTheme>;

@@ -94,4 +94,14 @@ export interface PageResponse<T> {
   currentPage?: number;
 }
 
+export function getApiErrorMessage(error: any, fallback = 'Đã có lỗi xảy ra. Vui lòng thử lại.'): string {
+  if (!error) return fallback;
+  if (typeof error === 'string') return error;
+  if (error.response?.data?.message) return error.response.data.message;
+  if (error.response?.data?.error) return error.response.data.error;
+  if (error.message === 'Network Error') return 'Lỗi kết nối mạng. Vui lòng kiểm tra internet.';
+  if (error.code === 'ECONNABORTED') return 'Quá thời gian kết nối server.';
+  return error.message || fallback;
+}
+
 export default apiClient;

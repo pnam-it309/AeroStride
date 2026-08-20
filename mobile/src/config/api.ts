@@ -54,6 +54,8 @@ export const API_PATHS = {
     MY_ORDERS: '/customer/order/my-orders',
     DETAIL: (id: string) => `/customer/order/${id}`,
     CANCEL: (id: string) => `/customer/order/${id}/cancel`,
+    UPDATE_SHIPPING: (id: string) => `/customer/order/${id}/shipping-info`,
+    UPDATE_ITEMS: (id: string) => `/customer/order/${id}/items`,
     VOUCHERS: '/customer/order/vouchers',
     VNPAY_URL: (id: string) => `/customer/order/${id}/vnpay-url`,
   },

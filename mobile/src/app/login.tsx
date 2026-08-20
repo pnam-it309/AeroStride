@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { getApiErrorMessage } from '@/services/apiClient';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -48,8 +49,7 @@ export default function LoginScreen() {
       });
       router.back();
     } catch (error: any) {
-      const message =
-        error?.response?.data?.message || 'Tài khoản hoặc mật khẩu không đúng';
+      const message = getApiErrorMessage(error, 'Tài khoản hoặc mật khẩu không đúng');
       Alert.alert('Đăng nhập thất bại', message);
     } finally {
       setLoading(false);
