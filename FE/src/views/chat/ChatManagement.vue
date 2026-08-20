@@ -75,6 +75,29 @@ const activeNote = computed({
     }
 });
 
+const removeVietnameseTones = (str) => {
+    if (!str) return '';
+    return str
+        .toString()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .toLowerCase()
+        .trim();
+};
+
+const escapeHtml = (unsafe) => {
+    if (!unsafe) return '';
+    return unsafe
+        .toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+};
+
 const isUnread = (c) => {
     if (!c) return false;
     return (c.chuaDoc > 0) || notificationStore.unreadChatConvIds.includes(c.id);
@@ -86,13 +109,70 @@ const getUnreadCount = (c) => {
     return notificationStore.unreadChatConvIds.includes(c.id) ? 1 : 0;
 };
 
+const currentTypeConversations = computed(() => {
+    return allConversations.value.filter((c) => {
+        const cType = c.type || c.loaiHoiThoai || CHAT_TYPES.CUSTOMER;
+        return cType === chatType.value;
+    });
+});
+
+const activeCount = computed(() => {
+    return currentTypeConversations.value.filter(
+        (c) => (c.status || c.trangThaiHoiThoai) === 'ACTIVE'
+    ).length;
+});
+
+const pendingCount = computed(() => {
+    return currentTypeConversations.value.filter(
+        (c) => (c.status || c.trangThaiHoiThoai) === 'PENDING'
+    ).length;
+});
+
+const closedCount = computed(() => {
+    return currentTypeConversations.value.filter(
+        (c) => (c.status || c.trangThaiHoiThoai) === 'CLOSED'
+    ).length;
+});
+
 const sortedCustomers = computed(() => {
-    return [...customers.value].sort((a, b) => {
+    let list = currentTypeConversations.value;
+
+    // Lọc theo trạng thái
+    if (chatStatus.value !== 'ALL') {
+        list = list.filter((c) => {
+            const st = c.status || c.trangThaiHoiThoai;
+            return st === chatStatus.value;
+        });
+    }
+
+    // Tìm kiếm tức thì phía client-side (Tên người dùng, tin nhắn cuối, SĐT, Email, Username, ID)
+    const q = removeVietnameseTones(searchQuery.value);
+    if (q) {
+        list = list.filter((c) => {
+            const name = removeVietnameseTones(c.name || c.ten || '');
+            const msg = removeVietnameseTones(c.lastMsg || c.tinNhanCuoi || '');
+            const partnerUser = removeVietnameseTones(c.partnerUsername || c.tenTaiKhoanDoiTac || '');
+            const phone = removeVietnameseTones(c.phone || c.sdt || '');
+            const email = removeVietnameseTones(c.email || '');
+            const id = removeVietnameseTones(c.id || '');
+            return (
+                name.includes(q) ||
+                msg.includes(q) ||
+                partnerUser.includes(q) ||
+                phone.includes(q) ||
+                email.includes(q) ||
+                id.includes(q)
+            );
+        });
+    }
+
+    // Sắp xếp: Tin chưa đọc lên trước, sau đó sắp xếp theo thời gian mới nhất
+    return [...list].sort((a, b) => {
         const aUnread = isUnread(a);
         const bUnread = isUnread(b);
         if (aUnread && !bUnread) return -1;
         if (!aUnread && bUnread) return 1;
-        
+
         const timeA = a.timestamp || 0;
         const timeB = b.timestamp || 0;
         return timeB - timeA;
@@ -304,62 +384,44 @@ watch(
     }
 );
 
-const stats = ref({ ACTIVE: 0, PENDING: 0, CLOSED: 0 });
 const allConversations = ref([]);
-
-const activeCount = computed(() => stats.value.ACTIVE || 0);
-const pendingCount = computed(() => stats.value.PENDING || 0);
-const closedCount = computed(() => stats.value.CLOSED || 0);
 
 const totalCustomerUnread = computed(() => {
     return allConversations.value.filter(
-        (c) => (c.type === CHAT_TYPES.CUSTOMER || !c.type) && (c.unread > 0 || notificationStore.unreadChatConvIds.includes(c.id))
+        (c) => (c.type === CHAT_TYPES.CUSTOMER || c.loaiHoiThoai === CHAT_TYPES.CUSTOMER || !c.type) && (c.unread > 0 || c.chuaDoc > 0 || notificationStore.unreadChatConvIds.includes(c.id))
     ).length;
 });
 
 const totalInternalUnread = computed(() => {
     return allConversations.value.filter(
-        (c) => c.type === CHAT_TYPES.INTERNAL && (c.unread > 0 || notificationStore.unreadChatConvIds.includes(c.id))
+        (c) => (c.type === CHAT_TYPES.INTERNAL || c.loaiHoiThoai === CHAT_TYPES.INTERNAL) && (c.unread > 0 || c.chuaDoc > 0 || notificationStore.unreadChatConvIds.includes(c.id))
     ).length;
 });
 
-// Lấy danh sách hội thoại từ Backend
+// Lấy danh sách hội thoại từ Backend (1 request duy nhất)
 const fetchConversations = async (quiet = false) => {
-    if (!quiet && customers.value.length === 0) {
+    if (!quiet && allConversations.value.length === 0) {
         isLoading.value = true;
     }
     try {
-        const [convRes, allConvRes, statsRes] = await Promise.all([
-            api.get(API_CHAT.CONVERSATIONS, {
-                params: {
-                    type: chatType.value,
-                    status: chatStatus.value === 'ALL' ? undefined : chatStatus.value,
-                    search: searchQuery.value
-                }
-            }),
-            api.get(API_CHAT.CONVERSATIONS),
-            api.get(API_CHAT.CONVERSATIONS + '/stats', {
-                params: {
-                    type: chatType.value
-                }
-            })
-        ]);
-
-        allConversations.value = allConvRes.data?.data || [];
-        customers.value = convRes.data?.data || [];
-        stats.value = statsRes.data?.data || { ACTIVE: 0, PENDING: 0, CLOSED: 0 };
+        const response = await api.get(API_CHAT.CONVERSATIONS);
+        const data = response.data?.data || [];
+        allConversations.value = data;
+        customers.value = data;
 
         if (activeChat.value) {
-            const updatedChat = customers.value.find((c) => c.id === activeChat.value.id);
+            const updatedChat = allConversations.value.find((c) => c.id === activeChat.value.id);
             if (updatedChat) {
                 activeChat.value.status = updatedChat.status;
                 activeChat.value.isAccepted = updatedChat.isAccepted;
+                activeChat.value.name = updatedChat.name;
+                activeChat.value.lastMsg = updatedChat.lastMsg;
             }
         }
 
         if (activeChat.value && activeChat.value.id.startsWith('NEW_INTERNAL_')) {
             const targetPartnerId = activeChat.value.id.replace('NEW_INTERNAL_', '');
-            const realConv = customers.value.find(
+            const realConv = allConversations.value.find(
                 (c) =>
                     c.type === CHAT_TYPES.INTERNAL &&
                     !c.id.startsWith('NEW_INTERNAL_') &&
@@ -384,9 +446,97 @@ watch(chatType, () => {
     searchQuery.value = '';
 });
 
-watch([chatType, chatStatus, searchQuery], () => {
-    fetchConversations();
+// ================= TÌM KIẾM TRONG LỊCH SỬ TIN NHẮN =================
+const showMessageSearch = ref(false);
+const messageSearchQuery = ref('');
+const currentMatchIndex = ref(0);
+const messageSearchInput = ref(null);
+
+const toggleMessageSearch = () => {
+    showMessageSearch.value = !showMessageSearch.value;
+    if (showMessageSearch.value) {
+        nextTick(() => {
+            if (messageSearchInput.value) {
+                const el = messageSearchInput.value.$el?.querySelector('input') || messageSearchInput.value;
+                if (el && typeof el.focus === 'function') el.focus();
+            }
+        });
+    } else {
+        closeMessageSearch();
+    }
+};
+
+const closeMessageSearch = () => {
+    showMessageSearch.value = false;
+    messageSearchQuery.value = '';
+    currentMatchIndex.value = 0;
+};
+
+const matchedMessageIds = computed(() => {
+    const q = removeVietnameseTones(messageSearchQuery.value);
+    if (!q || !showMessageSearch.value) return [];
+    const matched = [];
+    displayMessages.value.forEach((m, idx) => {
+        const text = removeVietnameseTones(m.text || m.noiDung || '');
+        if (text.includes(q)) {
+            matched.push(m.id || `msg_${idx}`);
+        }
+    });
+    return matched;
 });
+
+watch(messageSearchQuery, (newVal) => {
+    if (!newVal || matchedMessageIds.value.length === 0) {
+        currentMatchIndex.value = 0;
+    } else {
+        currentMatchIndex.value = matchedMessageIds.value.length - 1;
+        scrollToCurrentMatch();
+    }
+});
+
+const scrollToCurrentMatch = () => {
+    if (matchedMessageIds.value.length === 0) return;
+    const currentId = matchedMessageIds.value[currentMatchIndex.value];
+    if (!currentId) return;
+    nextTick(() => {
+        const el = document.getElementById(`msg-item-${currentId}`);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.remove('pulse-highlight');
+            void el.offsetWidth;
+            el.classList.add('pulse-highlight');
+        }
+    });
+};
+
+const nextSearchMatch = () => {
+    if (matchedMessageIds.value.length === 0) return;
+    currentMatchIndex.value = (currentMatchIndex.value + 1) % matchedMessageIds.value.length;
+    scrollToCurrentMatch();
+};
+
+const prevSearchMatch = () => {
+    if (matchedMessageIds.value.length === 0) return;
+    currentMatchIndex.value = (currentMatchIndex.value - 1 + matchedMessageIds.value.length) % matchedMessageIds.value.length;
+    scrollToCurrentMatch();
+};
+
+const highlightSearchText = (rawText, msgId) => {
+    if (!rawText) return '';
+    const safeText = escapeHtml(rawText);
+    const query = messageSearchQuery.value?.trim();
+    if (!query || !showMessageSearch.value) return safeText;
+
+    try {
+        const escapedQuery = escapeHtml(query).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapedQuery})`, 'gi');
+        const isCurrentActive = matchedMessageIds.value[currentMatchIndex.value] === msgId;
+        const markClass = isCurrentActive ? 'chat-search-highlight active-match' : 'chat-search-highlight';
+        return safeText.replace(regex, `<mark class="${markClass}">$1</mark>`);
+    } catch (e) {
+        return safeText;
+    }
+};
 
 // Lấy lịch sử tin nhắn của hội thoại đang chọn
 const fetchMessages = async (conversationId) => {
@@ -467,6 +617,7 @@ const selectChat = async (customer) => {
     activeChat.value = customer;
     isAccepted.value = customer.isAccepted || false;
     showDetailPanel.value = false;
+    closeMessageSearch();
     if (customer.id.startsWith('NEW_INTERNAL_')) {
         chatMessages.value = [];
     } else {
@@ -553,6 +704,7 @@ const confirmDeleteChat = () => {
                     activeChat.value = null;
                     chatMessages.value = [];
                     showDetailPanel.value = false;
+                    closeMessageSearch();
                 }
                 fetchConversations(true);
             } catch (error) {
@@ -632,11 +784,11 @@ onMounted(() => {
                 }
                 scrollToBottom();
                 notificationStore.markChatRead(data.conversationId);
-                const conv = customers.value.find(c => c.id === data.conversationId);
+                const conv = allConversations.value.find(c => c.id === data.conversationId);
                 if (conv) conv.timestamp = Date.now();
             } else if (data.sender !== currentUsername) {
                 notificationStore.incrementUnreadChat(data.conversationId);
-                const conv = customers.value.find(c => c.id === data.conversationId);
+                const conv = allConversations.value.find(c => c.id === data.conversationId);
                 if (conv) conv.timestamp = Date.now();
             }
 
@@ -647,10 +799,9 @@ onMounted(() => {
 
 const handleRefresh = async () => {
     await executeRefresh(async () => {
-        searchQuery.value = '';
-        chatStatus.value = 'ALL';
-        await fetchConversations();
-        if (activeChat.value) {
+        // Chỉ tải lại dữ liệu danh sách hội thoại ngầm và tin nhắn cuộc hội thoại đang mở
+        await fetchConversations(true);
+        if (activeChat.value && !activeChat.value.id.startsWith('NEW_INTERNAL_')) {
             await fetchMessages(activeChat.value.id);
         }
     });
@@ -711,12 +862,13 @@ const handleRefresh = async () => {
                         <v-text-field
                             v-model="searchQuery"
                             prepend-inner-icon="mdi-magnify"
-                            placeholder="Tìm kiếm khách hàng, nội dung..."
+                            placeholder="Tìm kiếm người trò chuyện..."
                             variant="solo"
                             flat
                             density="compact"
                             bg-color="#f1f5f9"
                             hide-details
+                            clearable
                             class="search-field flex-grow-1"
                         ></v-text-field>
                         <v-btn
@@ -725,13 +877,13 @@ const handleRefresh = async () => {
                             class="reset-btn rounded-lg"
                             size="small"
                             style="height: 40px; width: 40px; border-color: #cbd5e1;"
-                            :disabled="isLoading || isRefreshing"
+                            :disabled="isRefreshing"
                             @click="handleRefresh"
                         >
                             <v-icon size="18" :class="{ 'filter-spin': isRefreshing }">
                                 {{ isRefreshing ? 'mdi-loading' : 'mdi-refresh' }}
                             </v-icon>
-                            <v-tooltip activator="parent" location="top">Làm mới danh sách tin nhắn</v-tooltip>
+                            <v-tooltip activator="parent" location="top">Làm mới danh sách</v-tooltip>
                         </v-btn>
                     </div>
 
@@ -865,8 +1017,15 @@ const handleRefresh = async () => {
                             </div>
                         </div>
                         <div class="d-flex align-center ga-2">
-                            <!-- Action buttons -->
-                            <v-btn icon="mdi-magnify" variant="text" color="grey-darken-1" title="Tìm kiếm"></v-btn>
+                            <!-- Action buttons: Tìm kiếm lịch sử tin nhắn -->
+                            <v-btn
+                                icon="mdi-magnify"
+                                variant="text"
+                                :color="showMessageSearch ? '#1e257c' : 'grey-darken-1'"
+                                :style="showMessageSearch ? 'background: #e0e7ff; border-radius: 8px;' : ''"
+                                title="Tìm kiếm lịch sử tin nhắn"
+                                @click="toggleMessageSearch"
+                            ></v-btn>
                             
                             <!-- Toggle button for Detail Panel -->
                             <v-btn
@@ -893,6 +1052,55 @@ const handleRefresh = async () => {
                         </div>
                     </div>
 
+                    <!-- Thanh tìm kiếm trong lịch sử tin nhắn -->
+                    <v-expand-transition>
+                        <div v-if="showMessageSearch" class="msg-search-bar d-flex align-center px-4 py-2 border-bottom">
+                            <v-icon icon="mdi-magnify" size="20" color="#1e257c" class="mr-2"></v-icon>
+                            <v-text-field
+                                ref="messageSearchInput"
+                                v-model="messageSearchQuery"
+                                placeholder="Tìm kiếm trong lịch sử tin nhắn..."
+                                variant="plain"
+                                density="compact"
+                                hide-details
+                                clearable
+                                class="msg-search-input flex-grow-1"
+                                @keydown.enter.exact.prevent="nextSearchMatch"
+                                @keydown.shift.enter.exact.prevent="prevSearchMatch"
+                                @keydown.esc="closeMessageSearch"
+                            ></v-text-field>
+                            <div class="d-flex align-center ml-2 ga-1">
+                                <span v-if="messageSearchQuery.trim()" class="match-count-tag text-caption font-weight-bold px-2 py-0.5 rounded">
+                                    {{ matchedMessageIds.length > 0 ? `${currentMatchIndex + 1}/${matchedMessageIds.length}` : '0 kết quả' }}
+                                </span>
+                                <v-btn
+                                    icon="mdi-chevron-up"
+                                    size="small"
+                                    variant="text"
+                                    :disabled="matchedMessageIds.length <= 1"
+                                    @click="prevSearchMatch"
+                                    title="Tin nhắn trước đó (Shift + Enter)"
+                                ></v-btn>
+                                <v-btn
+                                    icon="mdi-chevron-down"
+                                    size="small"
+                                    variant="text"
+                                    :disabled="matchedMessageIds.length <= 1"
+                                    @click="nextSearchMatch"
+                                    title="Tin nhắn tiếp theo (Enter)"
+                                ></v-btn>
+                                <v-btn
+                                    icon="mdi-close"
+                                    size="small"
+                                    variant="text"
+                                    color="grey-darken-1"
+                                    @click="closeMessageSearch"
+                                    title="Đóng tìm kiếm (Esc)"
+                                ></v-btn>
+                            </div>
+                        </div>
+                    </v-expand-transition>
+
                     <!-- Messages -->
                     <div ref="messagesContainer" class="messages-area flex-grow-1 overflow-y-auto">
                         <div v-if="isMessagesLoading" class="d-flex justify-center align-center fill-height">
@@ -901,13 +1109,15 @@ const handleRefresh = async () => {
                         <template v-else>
                             <div
                                 v-for="(m, idx) in displayMessages"
+                                :id="`msg-item-${m.id || 'msg_' + idx}`"
                                 :key="m.id || idx"
                                 class="msg-row"
-                                :class="
+                                :class="[
                                     m.sender === authStore.user?.username || m.sender === 'bot' || m.sender === 'SYSTEM'
                                         ? 'is-mine'
-                                        : 'is-other'
-                                "
+                                        : 'is-other',
+                                    matchedMessageIds[currentMatchIndex] === (m.id || 'msg_' + idx) ? 'focused-msg-match' : ''
+                                ]"
                             >
                                 <!-- Avatar for other sender in message row -->
                                 <v-avatar
@@ -944,7 +1154,7 @@ const handleRefresh = async () => {
                                     </div>
 
                                     <!-- Render Text -->
-                                    <div v-if="m.text || m.noiDung" class="bubble-text">{{ m.text || m.noiDung }}</div>
+                                    <div v-if="m.text || m.noiDung" class="bubble-text" v-html="highlightSearchText(m.text || m.noiDung, m.id || 'msg_' + idx)"></div>
 
                                     <div class="bubble-meta">
                                         <span class="bubble-time">{{ m.time }}</span>
@@ -2104,6 +2314,66 @@ $primary-gradient: linear-gradient(135deg, #1e257c 0%, #343fa8 100%);
             font-size: 0.95rem;
             backdrop-filter: blur(2px);
         }
+    }
+}
+
+/* ========== MESSAGE HISTORY SEARCH & HIGHLIGHTING ========== */
+.msg-search-bar {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    min-height: 48px;
+    z-index: 5;
+}
+
+.msg-search-input {
+    :deep(.v-field__input) {
+        font-size: 0.85rem;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        color: #0f172a;
+    }
+}
+
+.match-count-tag {
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+:deep(.chat-search-highlight) {
+    background-color: #fef08a !important;
+    color: #854d0e !important;
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-weight: 700;
+    display: inline;
+
+    &.active-match {
+        background-color: #f59e0b !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4);
+    }
+}
+
+.msg-row {
+    transition: background-color 0.3s ease;
+    border-radius: 8px;
+
+    &.pulse-highlight {
+        animation: messagePulse 2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+}
+
+@keyframes messagePulse {
+    0% {
+        background-color: rgba(30, 37, 124, 0.15);
+    }
+    50% {
+        background-color: rgba(30, 37, 124, 0.28);
+    }
+    100% {
+        background-color: transparent;
     }
 }
 </style>

@@ -12,7 +12,7 @@ const emit = defineEmits(['refresh', 'search']);
 
 <template>
     <v-card class="filter-card elevation-0" elevation="0">
-        <v-card-text class="pa-2 px-3">
+        <v-card-text class="pa-3 px-4">
             <div v-if="title" class="filter-header d-flex align-center mb-1">
                 <v-icon color="#000000" class="mr-1.5 filter-main-icon" size="16">mdi-filter-variant</v-icon>
                 <div class="filter-title text-black font-weight-bold" style="font-size: 13px">{{ title }}</div>

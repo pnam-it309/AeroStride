@@ -10,7 +10,8 @@
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
-    padding: 6px 12px 8px !important;
+    padding: 16px 24px 20px 24px !important;
+    box-sizing: border-box !important;
 }
 
 /* Root của AdminTable: nối chuỗi flex để table chiếm hết chiều cao còn lại
@@ -31,7 +32,8 @@
     border-radius: $border-radius-root !important;
     overflow: hidden;
     box-shadow: $box-shadow-premium !important;
-    margin: 4px 0 0 0 !important;
+    margin: 14px 0 0 0 !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
 }
 
 /* Vùng cuộn của bảng: chỉ thân bảng cuộn dọc, header dính ở trên (.header-cell đã sticky),
@@ -54,43 +56,48 @@
         top: 0;
         z-index: 10;
         background: #f8fafc;
-        color: #1d2025 !important;
-        padding: 5px 8px !important;
-        font-size: 12px !important;
+        color: #1e293b !important;
+        padding: 12px 16px !important;
+        font-size: 13px !important;
         font-weight: 700 !important;
         border-bottom: 2px solid #e2e8f0;
         text-align: center;
         white-space: nowrap !important;
-        height: 32px !important;
+        height: 48px !important;
     }
 
     .data-cell {
-        padding: 2px 6px !important;
-        font-size: 12px !important;
-        color: #1d2025 !important;
+        padding: 10px 16px !important;
+        font-size: 13px !important;
+        color: #334155 !important;
         vertical-align: middle;
         border-bottom: 1px solid #f1f5f9;
         background: white;
         text-align: center;
-        height: 36px !important;
-        line-height: 1.25 !important;
+        height: 52px !important;
+        line-height: 1.4 !important;
     }
 
-    .data-row:hover .data-cell {
-        background-color: #f8fafc;
+    .data-row {
+        transition: background-color 0.15s ease;
+
+        &:hover .data-cell {
+            background-color: #f8fafc;
+        }
     }
 }
 
 .table-toolbar {
-    padding: 3px 12px !important;
-    min-height: 34px !important;
+    padding: 10px 20px !important;
+    min-height: 50px !important;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .pagination-footer {
     flex: none !important;
     background: #ffffff;
-    padding: 2px 12px !important;
-    min-height: 32px !important;
+    padding: 8px 20px !important;
+    min-height: 48px !important;
     border-top: 1px solid #f1f5f9;
     display: flex;
     align-items: center;
@@ -101,6 +108,7 @@
     background: #ffffff;
     border-radius: $border-radius-root !important;
     box-shadow: $box-shadow-premium !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
     padding: 0 !important;
     margin: 0 !important;
     flex-shrink: 0 !important;
