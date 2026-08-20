@@ -21,6 +21,11 @@ const handleDirectInput = (item, event) => {
     if (isNaN(newQty) || newQty < 0) newQty = 0;
 
     const delta = newQty - item.soLuong;
+    if (item.isGiaCu && delta > 0) {
+        event.target.value = item.soLuong;
+        emit('update-qty', item, delta, event.target);
+        return;
+    }
     if (delta !== 0) {
         // Pass event.target so BanHang can force the input back if max is exceeded
         emit('update-qty', item, delta, event.target);
@@ -104,7 +109,24 @@ const handleDirectInput = (item, event) => {
                                     {{ item.tenSanPham }}
                                 </span>
                                 <div
-                                    v-if="item.giaCu && Number(item.giaCu) !== Number(item.donGia)"
+                                    v-if="item.isGiaCu"
+                                    class="price-old-notice-badge mt-1 px-2 py-0.5 rounded border font-weight-medium"
+                                    style="
+                                        background-color: #fffbeb;
+                                        border-color: #fde68a;
+                                        color: #b45309;
+                                        font-size: 11px;
+                                        display: inline-flex;
+                                        align-items: center;
+                                        gap: 4px;
+                                        max-width: max-content;
+                                    "
+                                >
+                                    <v-icon size="12" color="#b45309">mdi-alert-circle-outline</v-icon>
+                                    <span>Giá cũ{{ item.giaHienHanh ? ` (Hiện hành: ${formatCurrency(item.giaHienHanh)})` : '' }} - Không thể tăng SL</span>
+                                </div>
+                                <div
+                                    v-else-if="item.giaCu && Number(item.giaCu) !== Number(item.donGia)"
                                     class="price-change-notice-badge mt-1 px-2 py-0.5 rounded border font-weight-medium"
                                     style="
                                         background-color: #fef2f2;
@@ -137,8 +159,16 @@ const handleDirectInput = (item, event) => {
                                 :value="item.soLuong"
                                 @change="(e) => handleDirectInput(item, e)"
                                 min="1"
+                                :max="item.isGiaCu ? item.soLuong : undefined"
                             />
-                            <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, 1)">
+                            <v-btn
+                                icon
+                                size="x-small"
+                                variant="text"
+                                :disabled="item.isGiaCu"
+                                :title="item.isGiaCu ? 'Sản phẩm đã đổi giá, không thể tăng số lượng với giá cũ' : ''"
+                                @click="emit('update-qty', item, 1)"
+                            >
                                 <PlusIcon size="12" />
                             </v-btn>
                         </div>

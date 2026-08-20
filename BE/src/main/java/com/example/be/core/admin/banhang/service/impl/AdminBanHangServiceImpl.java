@@ -262,6 +262,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         } else {
             int delta = soLuong - oldQty;
             if (delta > 0) {
+                BigDecimal currentEffectivePrice = getEffectiveVariantPrice(hdct.getChiTietSanPham());
+                if (hdct.getDonGia() != null && currentEffectivePrice != null && hdct.getDonGia().compareTo(currentEffectivePrice) != 0) {
+                    throw new BusinessException("Sản phẩm này đã đổi giá. Không thể tăng số lượng với giá cũ, vui lòng thêm sản phẩm với giá mới.");
+                }
                 deductStock(ctspId, delta, MessageConstants.PRODUCT_INSUFFICIENT_QTY);
             } else if (delta < 0) {
                 restoreStock(ctspId, Math.abs(delta));
@@ -364,6 +368,20 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         int tongSoLuong = details.stream().mapToInt(d -> d.getSoLuong() != null ? d.getSoLuong() : 0).sum();
         if (hasInvalidQuantity || tongSoLuong <= 0) {
             throw new BusinessException(MessageConstants.PRODUCT_OUT_OF_STOCK);
+        }
+
+        // Validate applied voucher condition before checkout
+        if (hd.getPhieuGiamGia() != null) {
+            PhieuGiamGia v = phieuGiamGiaRepository.findById(hd.getPhieuGiamGia().getId()).orElse(null);
+            long now = System.currentTimeMillis();
+            if (v == null || !isVoucherAvailableForOrder(v, hd, now)) {
+                throw new BusinessException("Phiếu giảm giá áp dụng cho đơn hàng này đã hết hạn hoặc bị hủy. Vui lòng kiểm tra lại trước khi thanh toán.");
+            }
+            BigDecimal total = hd.getTongTien() != null ? hd.getTongTien() : BigDecimal.ZERO;
+            BigDecimal minOrder = v.getDonHangToiThieu() != null ? v.getDonHangToiThieu() : BigDecimal.ZERO;
+            if (total.compareTo(minOrder) < 0) {
+                throw new BusinessException("Đơn hàng chưa đạt giá trị tối thiểu (" + formatCurrencyVND(minOrder) + ") của phiếu giảm giá " + getVoucherCode(v) + ". Vui lòng mua thêm hoặc gỡ phiếu giảm giá trước khi thanh toán.");
+            }
         }
 
         // Kiểm tra sản phẩm/biến thể có bị ngừng hoạt động hoặc xóa không
@@ -859,14 +877,18 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         hd.setTongTien(total);
 
-        if (autoSelectBestVoucher) {
-            // Mỗi biến động giỏ hàng/khách hàng đều chọn lại voucher có mức giảm thực tế cao nhất.
-            hd.setPhieuGiamGia(getBestVoucher(hd.getId()));
-        } else if (hd.getPhieuGiamGia() != null) {
-            PhieuGiamGia currentVoucher = phieuGiamGiaRepository.findById(hd.getPhieuGiamGia().getId()).orElse(null);
-            if (!isVoucherEligible(currentVoucher, hd, total, System.currentTimeMillis())) {
+        if (hd.getPhieuGiamGia() != null) {
+            PhieuGiamGia currentVoucher = hd.getPhieuGiamGia();
+            if (currentVoucher.getId() != null) {
+                currentVoucher = phieuGiamGiaRepository.findById(currentVoucher.getId()).orElse(currentVoucher);
+            }
+            long now = System.currentTimeMillis();
+            if (currentVoucher == null || !isVoucherAvailableForOrder(currentVoucher, hd, now)) {
+                // Voucher bị hủy, hết hạn, hoặc hết lượt dùng -> gỡ bỏ
                 hd.setPhieuGiamGia(null);
             } else {
+                // Voucher vẫn còn hiệu lực (kể cả khi tổng tiền chưa đạt đơn tối thiểu)
+                // Giữ nguyên voucher để mapToHoaDonResponse hiển thị cảnh báo và modal cho nhân viên
                 hd.setPhieuGiamGia(currentVoucher);
             }
         }
@@ -953,6 +975,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         List<AdminBanHangHoaDonChiTietResponse> detailDTOs = chiTietList.stream()
                 .map(d -> {
                     ChiTietSanPham ct = d.getChiTietSanPham();
+                    BigDecimal currentEffectivePrice = getEffectiveVariantPrice(ct, discountMap);
+                    boolean isOldPrice = d.getDonGia() != null && currentEffectivePrice != null && d.getDonGia().compareTo(currentEffectivePrice) != 0;
                     BigDecimal itemGiaGoc = d.getGiaGoc() != null ? d.getGiaGoc() : (ct.getGiaBan() != null ? ct.getGiaBan() : d.getDonGia());
                     BigDecimal giaBan = d.getDonGia();
                     Integer phanTramGiam = null;
@@ -981,6 +1005,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                         .soLuongTon(ct.getSoLuong())
                         .hinhAnh(getHinhAnhVariant(ct))
                         .giaCu(d.getGiaCu())
+                        .giaHienHanh(currentEffectivePrice)
+                        .isGiaCu(isOldPrice)
                         .build();
                 }).collect(Collectors.toList());
 
@@ -994,32 +1020,81 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         BigDecimal phiVanChuyen = hd.getPhiVanChuyen() != null ? hd.getPhiVanChuyen() : BigDecimal.ZERO;
         BigDecimal thanhTien = tongTienSauGiam.add(phiVanChuyen);
 
-        // --- VOUCHER SUGGESTION LOGIC ---
+        // --- VOUCHER SUGGESTION & VALIDATION LOGIC ---
         String bestVoucherId = null;
         String voucherSuggestionText = "";
         String betterVoucherSuggestionText = "";
         Boolean canApplySuggestedVoucher = false;
 
-        PhieuGiamGia appliedVoucher = hd.getPhieuGiamGia() != null
-                ? phieuGiamGiaRepository.findById(hd.getPhieuGiamGia().getId()).orElse(null)
-                : null;
+        Boolean voucherIneligible = false;
+        String voucherIneligibleReason = null;
+        String voucherIneligibleMessage = null;
+        BigDecimal voucherMinOrder = null;
+        BigDecimal voucherShortfall = null;
+
+        Boolean voucherRemoved = false;
+        String voucherRemovedMessage = null;
+
+        String betterVoucherCode = null;
+        String betterVoucherName = null;
+        BigDecimal betterVoucherDiscount = null;
+        BigDecimal currentVoucherDiscount = BigDecimal.ZERO;
+        BigDecimal extraSavings = null;
+
+        PhieuGiamGia appliedVoucher = hd.getPhieuGiamGia();
+        if (appliedVoucher != null && appliedVoucher.getId() != null) {
+            appliedVoucher = phieuGiamGiaRepository.findById(appliedVoucher.getId()).orElse(appliedVoucher);
+        }
+
+        long now = System.currentTimeMillis();
+
+        if (appliedVoucher != null) {
+            if (!isVoucherAvailableForOrder(appliedVoucher, hd, now)) {
+                voucherRemoved = true;
+                voucherRemovedMessage = "Phiếu giảm giá " + getVoucherCode(appliedVoucher) + " đã bị hủy hoặc không còn khả dụng và đã được gỡ khỏi đơn hàng.";
+                appliedVoucher = null;
+            } else {
+                BigDecimal minOrder = appliedVoucher.getDonHangToiThieu() != null ? appliedVoucher.getDonHangToiThieu() : BigDecimal.ZERO;
+                if (tongTien.compareTo(minOrder) < 0) {
+                    voucherIneligible = true;
+                    voucherIneligibleReason = "MIN_ORDER_NOT_MET";
+                    voucherMinOrder = minOrder;
+                    voucherShortfall = minOrder.subtract(tongTien);
+                    voucherIneligibleMessage = "Đơn hàng chưa đạt giá trị tối thiểu của phiếu " + getVoucherCode(appliedVoucher)
+                            + " (Yêu cầu: " + formatCurrencyVND(minOrder) + ", hiện tại: " + formatCurrencyVND(tongTien)
+                            + ", cần thêm: " + formatCurrencyVND(voucherShortfall) + ").";
+                }
+                currentVoucherDiscount = calculateVoucherDiscount(tongTien, appliedVoucher);
+            }
+        }
 
         if (!chiTietList.isEmpty()) {
             PhieuGiamGia bestVoucher = getBestVoucher(hd.getId());
 
-            if (bestVoucher != null && calculateVoucherDiscount(tongTien, bestVoucher).compareTo(BigDecimal.ZERO) > 0) {
-                bestVoucherId = bestVoucher.getId();
-                boolean bestAlreadyApplied = appliedVoucher != null
-                        && bestVoucher.getId().equals(appliedVoucher.getId());
-                voucherSuggestionText = bestAlreadyApplied
-                        ? "Đã áp dụng mã giảm giá ưu đãi nhất: " + getVoucherCode(bestVoucher)
-                            + " (-" + formatCurrencyVND(getPotentialDiscount(bestVoucher, tongTien)) + ")"
-                        : "Có mã giảm giá tốt hơn: " + getVoucherCode(bestVoucher)
-                            + " (-" + formatCurrencyVND(getPotentialDiscount(bestVoucher, tongTien)) + ")";
-                canApplySuggestedVoucher = !bestAlreadyApplied;
+            if (bestVoucher != null) {
+                BigDecimal bestDisc = calculateVoucherDiscount(tongTien, bestVoucher);
+                if (bestDisc.compareTo(BigDecimal.ZERO) > 0) {
+                    bestVoucherId = bestVoucher.getId();
+                    boolean bestAlreadyApplied = appliedVoucher != null
+                            && bestVoucher.getId().equals(appliedVoucher.getId());
+                    BigDecimal savings = bestDisc.subtract(currentVoucherDiscount);
+                    
+                    if (!bestAlreadyApplied && savings.compareTo(BigDecimal.ZERO) > 0) {
+                        canApplySuggestedVoucher = true;
+                        betterVoucherCode = getVoucherCode(bestVoucher);
+                        betterVoucherName = bestVoucher.getTen();
+                        betterVoucherDiscount = bestDisc;
+                        extraSavings = savings;
+                        voucherSuggestionText = "Có mã giảm giá tốt hơn: " + betterVoucherCode
+                                + " (-" + formatCurrencyVND(bestDisc) + ", tiết kiệm thêm " + formatCurrencyVND(savings) + ")";
+                    } else if (bestAlreadyApplied) {
+                        voucherSuggestionText = "Đã áp dụng mã giảm giá ưu đãi nhất: " + getVoucherCode(bestVoucher)
+                                + " (-" + formatCurrencyVND(bestDisc) + ")";
+                    }
+                }
             } else {
                 PhieuGiamGia nextBetterVoucher = getNextBetterVoucher(hd, null);
-                if (nextBetterVoucher == null) {
+                if (nextBetterVoucher == null && !Boolean.TRUE.equals(voucherIneligible)) {
                     voucherSuggestionText = "Chưa có phiếu giảm giá phù hợp cho đơn hiện tại.";
                 }
             }
@@ -1059,6 +1134,18 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .voucherSuggestionText(voucherSuggestionText)
                 .betterVoucherSuggestionText(betterVoucherSuggestionText)
                 .canApplySuggestedVoucher(canApplySuggestedVoucher)
+                .voucherIneligible(voucherIneligible)
+                .voucherIneligibleReason(voucherIneligibleReason)
+                .voucherIneligibleMessage(voucherIneligibleMessage)
+                .voucherMinOrder(voucherMinOrder)
+                .voucherShortfall(voucherShortfall)
+                .voucherRemoved(voucherRemoved)
+                .voucherRemovedMessage(voucherRemovedMessage)
+                .betterVoucherCode(betterVoucherCode)
+                .betterVoucherName(betterVoucherName)
+                .betterVoucherDiscount(betterVoucherDiscount)
+                .currentVoucherDiscount(currentVoucherDiscount)
+                .extraSavings(extraSavings)
                 .build();
     }
 

@@ -87,4 +87,10 @@ public class AdminHoaDonController {
                 .contentType(MediaType.TEXT_HTML)
                 .body(html);
     }
+
+    @PostMapping("/{id}/vnpay-url")
+    public ResponseEntity<ApiResponse<String>> createVnPayUrl(@PathVariable String id,
+                                                              @RequestParam(required = false) String returnUrl) {
+        return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.createVnPayUrl(id, returnUrl)));
+    }
 }

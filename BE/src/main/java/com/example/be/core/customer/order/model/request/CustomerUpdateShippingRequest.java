@@ -1,8 +1,7 @@
 package com.example.be.core.customer.order.model.request;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 /**
  * Yêu cầu khách hàng cập nhật thông tin nhận hàng của đơn online.
@@ -11,6 +10,9 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CustomerUpdateShippingRequest {
 
     @NotBlank(message = "Tên người nhận không được trống")

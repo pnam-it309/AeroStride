@@ -40,4 +40,18 @@ public class AdminBanHangHoaDonResponse {
     private String voucherSuggestionText;
     private String betterVoucherSuggestionText;
     private Boolean canApplySuggestedVoucher;
+
+    // Voucher Warning & Condition fields
+    private Boolean voucherIneligible;
+    private String voucherIneligibleReason;
+    private String voucherIneligibleMessage;
+    private BigDecimal voucherMinOrder;
+    private BigDecimal voucherShortfall;
+    private Boolean voucherRemoved;
+    private String voucherRemovedMessage;
+    private String betterVoucherCode;
+    private String betterVoucherName;
+    private BigDecimal betterVoucherDiscount;
+    private BigDecimal currentVoucherDiscount;
+    private BigDecimal extraSavings;
 }

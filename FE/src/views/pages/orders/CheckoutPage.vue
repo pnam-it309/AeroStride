@@ -413,6 +413,48 @@ const confirmAndExecuteCheckout = async () => {
     await handleCheckout();
 };
 
+const showVoucherIneligibleModal = ref(false);
+const ineligibleVoucherInfo = ref(null);
+
+const checkVoucherEligibilityBeforeCheckout = async () => {
+    if (!selectedVoucher.value) return true;
+
+    await fetchVouchers();
+    const currentVoucherInList = availableVouchers.value.find((v) => v.id === selectedVoucher.value.id);
+    if (!currentVoucherInList) {
+        const removed = selectedVoucher.value;
+        selectedVoucher.value = null;
+        alert(`Phiếu giảm giá "${removed.ten || removed.ma}" không còn khả dụng hoặc đã hết lượt và đã được gỡ bỏ.`);
+        return false;
+    }
+
+    const minOrder = currentVoucherInList.donHangToiThieu || 0;
+    if (minOrder > 0 && cartStore.cartTotal < minOrder) {
+        const shortfall = minOrder - cartStore.cartTotal;
+        ineligibleVoucherInfo.value = {
+            voucher: currentVoucherInList,
+            minOrder,
+            currentTotal: cartStore.cartTotal,
+            shortfall
+        };
+        showVoucherIneligibleModal.value = true;
+        return false;
+    }
+
+    selectedVoucher.value = currentVoucherInList;
+    return true;
+};
+
+const handleRemoveIneligibleVoucher = () => {
+    selectedVoucher.value = null;
+    showVoucherIneligibleModal.value = false;
+};
+
+const handleContinueShopping = () => {
+    showVoucherIneligibleModal.value = false;
+    router.push(PATH.SHOES);
+};
+
 const handleCheckout = async () => {
     if (!isShippingValid.value) {
         return;
@@ -421,21 +463,15 @@ const handleCheckout = async () => {
     try {
         await cartStore.syncWithBackend();
         if (cartStore.isEmpty) {
-            alert('Giỏ hàng của bạn đã thay đổi. Vui lòng kiểm tra lại.');
+            alert('Giỏ hàng của bạn đã thay đổi hoặc hết hàng. Vui lòng kiểm tra lại.');
             router.push(PATH.SHOES);
             return;
         }
-        if (selectedVoucher.value) {
-            await fetchVouchers();
-            const stillValid = availableVouchers.value.some((v) => v.id === selectedVoucher.value.id);
-            if (!stillValid) {
-                const removed = selectedVoucher.value;
-                selectedVoucher.value = null;
-                alert(
-                    `Phiếu giảm giá "${removed.ten || removed.ma}" không còn hiệu lực và đã được gỡ bỏ. Vui lòng kiểm tra lại đơn hàng trước khi thanh toán.`
-                );
-                return;
-            }
+        
+        const voucherOk = await checkVoucherEligibilityBeforeCheckout();
+        if (!voucherOk) {
+            loading.value = false;
+            return;
         }
 
         const p = provinces.value.find((x) => x.code === shippingInfo.value.tinhThanh);
@@ -1650,6 +1686,70 @@ onUnmounted(() => {
                         @click="handleSaveNewAddress"
                     >
                         Lưu & Áp dụng
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Modal Cảnh báo Voucher Chưa đủ điều kiện tối thiểu -->
+        <v-dialog v-model="showVoucherIneligibleModal" max-width="480" persistent>
+            <v-card class="rounded-xl overflow-hidden shadow-2xl">
+                <div class="pa-4 d-flex align-center justify-space-between text-white" style="background: #1e257c">
+                    <div class="d-flex align-center">
+                        <v-icon class="mr-2" color="amber-lighten-2">mdi-alert-circle</v-icon>
+                        <span class="font-weight-bold text-subtitle-1">Chưa đạt đơn hàng tối thiểu</span>
+                    </div>
+                    <v-btn icon="mdi-close" variant="text" size="small" color="white" @click="showVoucherIneligibleModal = false"></v-btn>
+                </div>
+                <v-card-text class="pa-6">
+                    <div class="pa-4 rounded-xl mb-4" style="background: #fffbeb; border: 1px solid #fde68a">
+                        <div class="d-flex align-center mb-2">
+                            <v-icon color="#b45309" size="20" class="mr-2">mdi-ticket-percent</v-icon>
+                            <strong style="color: #92400e">{{ ineligibleVoucherInfo?.voucher?.ten || ineligibleVoucherInfo?.voucher?.ma }}</strong>
+                        </div>
+                        <p class="text-body-2 mb-0" style="color: #b45309">
+                            Phiếu giảm giá yêu cầu giá trị đơn hàng tối thiểu <strong>{{ formatPrice(ineligibleVoucherInfo?.minOrder) }}</strong>.
+                        </p>
+                    </div>
+
+                    <div class="py-2 px-3 bg-slate-50 rounded-lg mb-4 text-body-2">
+                        <div class="d-flex justify-space-between py-1">
+                            <span class="text-slate-500">Tiền hàng hiện tại:</span>
+                            <strong class="text-slate-800">{{ formatPrice(ineligibleVoucherInfo?.currentTotal) }}</strong>
+                        </div>
+                        <div class="d-flex justify-space-between py-1">
+                            <span class="text-slate-500">Đơn hàng tối thiểu:</span>
+                            <strong class="text-slate-800">{{ formatPrice(ineligibleVoucherInfo?.minOrder) }}</strong>
+                        </div>
+                        <v-divider class="my-2"></v-divider>
+                        <div class="d-flex justify-space-between py-1">
+                            <span class="text-amber-800 font-weight-bold">Cần mua thêm:</span>
+                            <strong style="color: #b45309; font-size: 1.05rem">+{{ formatPrice(ineligibleVoucherInfo?.shortfall) }}</strong>
+                        </div>
+                    </div>
+
+                    <p class="text-caption text-slate-500 mb-0">
+                        Bạn có thể gỡ phiếu giảm giá để tiếp tục đặt hàng ngay hoặc mua thêm sản phẩm để được áp dụng giảm giá.
+                    </p>
+                </v-card-text>
+                <v-card-actions class="pa-4 bg-slate-50 border-t d-flex ga-2">
+                    <v-btn
+                        variant="outlined"
+                        color="error"
+                        class="flex-grow-1 font-weight-bold rounded-pill text-none"
+                        @click="handleRemoveIneligibleVoucher"
+                    >
+                        <v-icon start size="16">mdi-ticket-remove</v-icon>
+                        Gỡ phiếu giảm giá
+                    </v-btn>
+                    <v-btn
+                        style="background: #1e257c; color: white !important"
+                        variant="flat"
+                        class="flex-grow-1 font-weight-bold rounded-pill text-none"
+                        @click="handleContinueShopping"
+                    >
+                        <v-icon start size="16">mdi-cart-plus</v-icon>
+                        Mua thêm sản phẩm
                     </v-btn>
                 </v-card-actions>
             </v-card>

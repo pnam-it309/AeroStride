@@ -27,4 +27,6 @@ public interface AdminHoaDonService {
     byte[] exportExcel(AdminHoaDonRequest request);
 
     String generateInvoiceHtml(String id);
+
+    String createVnPayUrl(String id, String returnUrl);
 }

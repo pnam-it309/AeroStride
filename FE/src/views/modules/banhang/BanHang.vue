@@ -40,6 +40,7 @@ import VnPayDialogs from './components/VnPayDialogs.vue';
 import ScannerDialog from './components/ScannerDialog.vue';
 import QuickAddCustomerDialog from './components/QuickAddCustomerDialog.vue';
 import BetterVoucherModal from './components/BetterVoucherModal.vue';
+import VoucherIneligibleModal from './components/VoucherIneligibleModal.vue';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import { useRoleAccess } from '@/composables/useRoleAccess';
@@ -1167,16 +1168,16 @@ const isGhnLocationCode = (list, code) => {
 async function calculateShippingFee() {
     if (!isGiaoHang.value || isFreeShip.value) return;
     if (!recipientDistrict.value || !recipientWard.value) {
-        shippingFee.value = 0;
-        shippingFeeSource.value = '';
-        shippingFeeError.value = 'Chưa đủ địa chỉ nhận hàng để tính phí GHN.';
+        shippingFee.value = 30000;
+        shippingFeeSource.value = 'FALLBACK';
+        shippingFeeError.value = '';
         return;
     }
 
     if (!isGhnLocationCode(districtsShip.value, recipientDistrict.value) || !isGhnLocationCode(wardsShip.value, recipientWard.value)) {
-        shippingFee.value = 0;
-        shippingFeeSource.value = '';
-        shippingFeeError.value = 'Địa chỉ chưa có mã GHN hợp lệ để tính phí.';
+        shippingFee.value = 30000;
+        shippingFeeSource.value = 'FALLBACK';
+        shippingFeeError.value = '';
         return;
     }
 
@@ -1198,15 +1199,15 @@ async function calculateShippingFee() {
             shippingFeeSource.value = 'GHN';
             shippingFeeError.value = '';
         } else {
-            shippingFee.value = 0;
-            shippingFeeSource.value = '';
-            shippingFeeError.value = 'GHN chưa trả phí vận chuyển hợp lệ.';
+            shippingFee.value = 30000;
+            shippingFeeSource.value = 'FALLBACK';
+            shippingFeeError.value = '';
         }
     } catch (e) {
-        console.error('Failed to calculate shipping fee', e);
-        shippingFee.value = 0;
-        shippingFeeSource.value = '';
-        shippingFeeError.value = 'Không tính được phí GHN, vui lòng kiểm tra địa chỉ/API.';
+        console.error('Failed to calculate shipping fee, fallback to 30.000đ', e);
+        shippingFee.value = 30000;
+        shippingFeeSource.value = 'FALLBACK';
+        shippingFeeError.value = '';
     } finally {
         shippingFeeLoading.value = false;
     }
@@ -1328,6 +1329,18 @@ const onAddProduct = async (product) => {
 };
 
 const onUpdateQty = async (item, delta, inputEventTarget = null) => {
+    if (delta > 0 && item.isGiaCu) {
+        if (inputEventTarget) {
+            inputEventTarget.value = item.soLuong;
+        }
+        addNotification({
+            title: 'Cảnh báo',
+            subtitle: 'Sản phẩm này có giá cũ đã thay đổi. Không thể tăng số lượng với giá cũ, vui lòng thêm sản phẩm với giá mới.',
+            color: 'warning'
+        });
+        return;
+    }
+
     let newQty = item.soLuong + delta;
     if (newQty < 1) {
         if (inputEventTarget) {
@@ -1362,7 +1375,8 @@ const onUpdateQty = async (item, delta, inputEventTarget = null) => {
         if (inputEventTarget) {
             inputEventTarget.value = item.soLuong;
         }
-        addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK, color: 'error' });
+        const errorMsg = e.response?.data?.message || MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK;
+        addNotification({ title: 'Lỗi', subtitle: errorMsg, color: 'error' });
     }
 };
 
@@ -1820,7 +1834,7 @@ const onConfirmVnPayManual = async () => {
     }
 };
 
-// Logic: Better Voucher Detection
+// Logic: Better Voucher & Ineligible Voucher Dialogs
 const betterVoucherDialog = ref({
     show: false,
     currentVoucher: null,
@@ -1830,6 +1844,68 @@ const betterVoucherDialog = ref({
     betterDiscount: 0,
     onProceed: null
 });
+
+const voucherIneligibleDialog = ref({
+    show: false,
+    voucher: null,
+    orderTotal: 0,
+    minOrder: 0,
+    shortfall: 0,
+    message: ''
+});
+
+const onRemoveIneligibleVoucher = async () => {
+    voucherIneligibleDialog.value.show = false;
+    await onApplyVoucher(null);
+    addNotification({
+        title: 'Đã gỡ phiếu giảm giá',
+        subtitle: 'Phiếu giảm giá chưa đủ điều kiện đã được gỡ khỏi hóa đơn.',
+        color: 'info'
+    });
+};
+
+const onOpenVoucherIneligibleModal = () => {
+    if (!selectedOrder.value) return;
+    const v = selectedOrder.value.phieuGiamGia || (selectedOrder.value.idPhieuGiamGia ? vouchers.value.find((item) => String(item.id) === String(selectedOrder.value.idPhieuGiamGia)) : null);
+    const minOrderVal = Number(selectedOrder.value.voucherMinOrder || v?.donHangToiThieu || 0);
+    const currentTotal = Number(selectedOrder.value.tongTien || cartSubtotalAmount.value || 0);
+    const shortfallVal = Number(selectedOrder.value.voucherShortfall || Math.max(0, minOrderVal - currentTotal));
+
+    voucherIneligibleDialog.value = {
+        show: true,
+        voucher: v || {
+            ma: selectedOrder.value.idPhieuGiamGia,
+            ten: 'Phiếu giảm giá'
+        },
+        orderTotal: currentTotal,
+        minOrder: minOrderVal,
+        shortfall: shortfallVal,
+        message: selectedOrder.value.voucherIneligibleMessage || `Đơn hàng chưa đạt giá trị tối thiểu ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(minOrderVal)} của phiếu giảm giá.`
+    };
+};
+
+const onApplyBetterVoucher = async () => {
+    const betterId = betterVoucherDialog.value.betterVoucher?.id || selectedOrder.value?.bestVoucherId;
+    betterVoucherDialog.value.show = false;
+    if (betterId) {
+        await onApplyVoucher(betterId, false, false);
+        addNotification({ title: 'Áp dụng voucher thành công', subtitle: 'Đã chuyển sang mã giảm giá tốt hơn.', color: 'success' });
+    }
+    if (betterVoucherDialog.value.onProceed) {
+        const fn = betterVoucherDialog.value.onProceed;
+        betterVoucherDialog.value.onProceed = null;
+        await fn();
+    }
+};
+
+const onKeepOldVoucher = async () => {
+    betterVoucherDialog.value.show = false;
+    if (betterVoucherDialog.value.onProceed) {
+        const fn = betterVoucherDialog.value.onProceed;
+        betterVoucherDialog.value.onProceed = null;
+        await fn();
+    }
+};
 
 const getVoucherDiscountValue = (voucher, total) => {
     if (!voucher) return 0;
@@ -1921,6 +1997,27 @@ const onCheckout = async () => {
         return;
     }
 
+    // Kiểm tra điều kiện voucher trước khi thanh toán
+    if (selectedOrder.value?.voucherIneligible) {
+        voucherIneligibleDialog.value = {
+            show: true,
+            voucher: selectedOrder.value.phieuGiamGia || {
+                ma: selectedOrder.value.idPhieuGiamGia,
+                ten: 'Phiếu giảm giá'
+            },
+            orderTotal: Number(selectedOrder.value.tongTien || 0),
+            minOrder: Number(selectedOrder.value.voucherMinOrder || 0),
+            shortfall: Number(selectedOrder.value.voucherShortfall || 0),
+            message: selectedOrder.value.voucherIneligibleMessage || ''
+        };
+        addNotification({
+            title: 'Chưa đủ điều kiện thanh toán',
+            subtitle: selectedOrder.value.voucherIneligibleMessage || 'Đơn hàng chưa đạt giá trị tối thiểu để áp dụng phiếu giảm giá này.',
+            color: 'warning'
+        });
+        return;
+    }
+
     // Nếu chưa nhập tiền khách đưa hoặc nhập 0, tự động thanh toán đúng số tiền cần thanh toán
     if (!checkoutData.value.receivedAmount || Number(checkoutData.value.receivedAmount) <= 0) {
         checkoutData.value.receivedAmount = Number(finalCollectAmount.value);
@@ -1929,6 +2026,25 @@ const onCheckout = async () => {
     if (checkoutData.value.paymentMethod === 'CASH' && Number(checkoutData.value.receivedAmount) < Number(finalCollectAmount.value)) {
         addNotification({ title: 'Cảnh báo', subtitle: MESSAGES.ERROR.INSUFFICIENT_FUNDS, color: 'warning' });
         return;
+    }
+
+    // Kiểm tra nếu có voucher tốt hơn trước khi thanh toán
+    if (selectedOrder.value?.canApplySuggestedVoucher && selectedOrder.value?.bestVoucherId) {
+        const betterInfo = await checkBetterVoucherBeforeCheckout();
+        if (betterInfo) {
+            betterVoucherDialog.value = {
+                show: true,
+                currentVoucher: betterInfo.currentVoucher,
+                betterVoucher: betterInfo.betterVoucher,
+                orderTotal: betterInfo.orderTotal,
+                currentDiscount: betterInfo.currentDiscount,
+                betterDiscount: betterInfo.betterDiscount,
+                onProceed: async () => {
+                    await proceedActualCheckout();
+                }
+            };
+            return;
+        }
     }
 
     await proceedActualCheckout();
@@ -1998,6 +2114,46 @@ const updateOrderInList = (updated) => {
                 banHangStore.updateProductStock(item.idChiTietSanPham, item.soLuongTon);
             }
         });
+    }
+
+    // Xử lý cảnh báo voucher từ phản hồi backend
+    if (normalized.id === selectedOrder.value?.id) {
+        if (normalized.voucherRemoved) {
+            addNotification({
+                title: 'Phiếu giảm giá đã bị gỡ',
+                subtitle: normalized.voucherRemovedMessage || 'Phiếu giảm giá đã bị hủy hoặc không còn khả dụng.',
+                color: 'warning'
+            });
+        }
+
+        if (normalized.voucherIneligible) {
+            voucherIneligibleDialog.value = {
+                show: true,
+                voucher: normalized.phieuGiamGia || {
+                    ma: normalized.idPhieuGiamGia,
+                    ten: 'Phiếu giảm giá'
+                },
+                orderTotal: Number(normalized.tongTien || 0),
+                minOrder: Number(normalized.voucherMinOrder || 0),
+                shortfall: Number(normalized.voucherShortfall || 0),
+                message: normalized.voucherIneligibleMessage || ''
+            };
+            addNotification({
+                title: 'Chưa đủ điều kiện phiếu giảm giá',
+                subtitle: normalized.voucherIneligibleMessage || 'Đơn hàng chưa đạt giá trị tối thiểu của phiếu giảm giá.',
+                color: 'warning'
+            });
+        } else if (voucherIneligibleDialog.value.show && !normalized.voucherIneligible) {
+            voucherIneligibleDialog.value.show = false;
+        }
+
+        if (normalized.canApplySuggestedVoucher && normalized.betterVoucherCode) {
+            addNotification({
+                title: 'Có voucher tốt hơn',
+                subtitle: normalized.voucherSuggestionText || `Có mã [${normalized.betterVoucherCode}] giảm nhiều hơn cho đơn hàng.`,
+                color: 'info'
+            });
+        }
     }
 };
 
@@ -2190,6 +2346,7 @@ const handleVnPayCallbackFromUrl = async () => {
                         :shipping-fee-error="shippingFeeError"
                         :is-free-ship="isFreeShip"
                         @apply-voucher="onApplyVoucher"
+                        @open-voucher-ineligible-modal="onOpenVoucherIneligibleModal"
                     />
 
                     <!-- Payment Card -->
@@ -2262,6 +2419,31 @@ const handleVnPayCallbackFromUrl = async () => {
                     vnpayPopup = window.open(vnpayDialog.paymentUrl, 'vnpay', 'width=800,height=600');
                 }
             "
+        />
+
+        <!-- Modal Voucher Tốt Hơn -->
+        <BetterVoucherModal
+            :show="betterVoucherDialog.show"
+            :current-voucher="betterVoucherDialog.currentVoucher"
+            :better-voucher="betterVoucherDialog.betterVoucher"
+            :order-total="betterVoucherDialog.orderTotal"
+            :current-discount="betterVoucherDialog.currentDiscount"
+            :better-discount="betterVoucherDialog.betterDiscount"
+            @apply-new="onApplyBetterVoucher"
+            @keep-old="onKeepOldVoucher"
+            @close="betterVoucherDialog.show = false"
+        />
+
+        <!-- Modal Voucher Chưa Đủ Điều Kiện -->
+        <VoucherIneligibleModal
+            :show="voucherIneligibleDialog.show"
+            :voucher="voucherIneligibleDialog.voucher"
+            :order-total="voucherIneligibleDialog.orderTotal"
+            :min-order="voucherIneligibleDialog.minOrder"
+            :shortfall="voucherIneligibleDialog.shortfall"
+            :message="voucherIneligibleDialog.message"
+            @remove-voucher="onRemoveIneligibleVoucher"
+            @close="voucherIneligibleDialog.show = false"
         />
 
         <!-- Scanner dialog -->

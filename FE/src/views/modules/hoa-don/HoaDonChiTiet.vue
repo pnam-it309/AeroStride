@@ -254,6 +254,61 @@ const loadOrderDetail = async () => {
     }
 };
 
+// --- Tạo link / QR thanh toán lại VNPay (cho đơn online chờ xác nhận chưa thanh toán) ---
+const showRepayDialog = ref(false);
+const repayUrl = ref('');
+const repayQrUrl = ref('');
+const repayLoading = ref(false);
+const copySuccess = ref(false);
+
+const canTaoLinkThanhToanLai = computed(() => {
+    if (!order.value || order.value.orderType !== 'ONLINE') return false;
+    const currentStatus = order.value.trangThai;
+    const isChoXacNhan = currentStatus === ORDER_STATUS.CHO_XAC_NHAN || currentStatus === ORDER_STATUS_ORDINALS.CHO_XAC_NHAN || String(currentStatus) === '0';
+    if (!isChoXacNhan) return false;
+
+    const isCash = order.value.listsGiaoDichThanhToan?.some((gd) => {
+        const name = String(gd.tenPhuongThuc || '').toUpperCase();
+        const note = String(gd.ghiChu || '').toUpperCase();
+        return name.includes('TIEN_MAT') || name.includes('TIỀN MẶT') || name.includes('COD') || note.includes('COD');
+    });
+    const isPaid = order.value.listsGiaoDichThanhToan?.some((gd) =>
+        (gd.trangThai === 1 || gd.trangThai === '1' || gd.trangThai === 'NGUNG_HOAT_DONG') && gd.maGiaoDichNgoai
+    );
+    return !isCash && !isPaid;
+});
+
+const handleTaoLinkThanhToanLai = async () => {
+    repayLoading.value = true;
+    try {
+        const returnUrl = `${window.location.origin}/my-orders/${order.value.id}`;
+        const url = await dichVuHoaDon.taoUrlThanhToanLai(order.value.id, returnUrl);
+        if (url) {
+            repayUrl.value = url;
+            repayQrUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}`;
+            showRepayDialog.value = true;
+            addNotification({ title: 'Thành công', subtitle: 'Tạo link thanh toán VNPay thành công', color: 'success' });
+        }
+    } catch (error) {
+        addNotification({ title: 'Lỗi', subtitle: error?.response?.data?.message || 'Không thể tạo link thanh toán VNPay', color: 'error' });
+    } finally {
+        repayLoading.value = false;
+    }
+};
+
+const copyRepayUrl = async () => {
+    if (repayUrl.value) {
+        try {
+            await navigator.clipboard.writeText(repayUrl.value);
+            copySuccess.value = true;
+            addNotification({ title: 'Đã sao chép', subtitle: 'Đã copy link thanh toán vào bộ nhớ tạm', color: 'success' });
+            setTimeout(() => { copySuccess.value = false; }, 2000);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+};
+
 const getStatusLabel = (s) => getStatusInfo(s).text;
 const getStatusTone = (s) => getStatusInfo(s).color;
 
@@ -330,15 +385,13 @@ const canEditOrder = computed(() => {
     return true;
 });
 
-// Xác định xem đơn hàng có cần nút "Xác nhận hoàn phí" không:
-// Áp dụng cho các đơn bị hủy (DA_HUY) đặt trực tuyến (ONLINE) hoặc có thanh toán trước mà chưa hoàn phí
 const canHoanPhi = computed(() => {
-    const isCancelled = order.value.trangThai === ORDER_STATUS.DA_HUY || getOrderStatus() === ORDER_STATUS_ORDINALS.DA_HUY;
-    if (!isCancelled) return false;
     if (order.value.daHoanPhi) return false;
     if (order.value.canHoanPhi != null) return Boolean(order.value.canHoanPhi);
+    const isCancelled = order.value.trangThai === ORDER_STATUS.DA_HUY || getOrderStatus() === ORDER_STATUS_ORDINALS.DA_HUY;
     const isOnline = order.value.orderType === 'ONLINE' || String(order.value.loaiDon || '').toUpperCase() === 'ONLINE';
-    return isOnline;
+    const hasRefundSurplus = order.value.tienHoanTraTruoc != null && Number(order.value.tienHoanTraTruoc) > 0;
+    return (isCancelled && isOnline) || hasRefundSurplus;
 });
 
 const customerName = computed(() => order.value.tenKhachHang || order.value.tenNguoiNhan || 'Khách vãng lai');
@@ -764,13 +817,15 @@ const openEditModal = () => {
 const submitEditOrder = async () => {
     loading.value = true;
     try {
-        // 1. Update Info (Recipient details, note)
-        await dichVuHoaDon.capNhatThongTinHoaDon(order.value.id, {
-            tenNguoiNhan: editForm.value.tenNguoiNhan,
-            soDienThoaiNguoiNhan: editForm.value.soDienThoaiNguoiNhan,
-            diaChiNguoiNhan: editForm.value.diaChiNguoiNhan,
-            ghiChu: editForm.value.ghiChu
-        });
+        // 1. Update Info (Recipient details, note) if allowed
+        if (!order.value.daSuaThongTin) {
+            await dichVuHoaDon.capNhatThongTinHoaDon(order.value.id, {
+                tenNguoiNhan: editForm.value.tenNguoiNhan,
+                soDienThoaiNguoiNhan: editForm.value.soDienThoaiNguoiNhan,
+                diaChiNguoiNhan: editForm.value.diaChiNguoiNhan,
+                ghiChu: editForm.value.ghiChu
+            });
+        }
 
         // 2. Update Status if changed
         if (editForm.value.trangThai !== order.value.trangThai) {
@@ -787,7 +842,7 @@ const submitEditOrder = async () => {
         editOrderDialogOpen.value = false;
     } catch (error) {
         console.error(error);
-        addNotification({ title: 'Lỗi', subtitle: 'Cập nhật đơn hàng thất bại', color: 'error' });
+        addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Cập nhật đơn hàng thất bại', color: 'error' });
     } finally {
         loading.value = false;
     }
@@ -1300,7 +1355,21 @@ onMounted(() => {
                     class="premium-card mb-0 pa-4 bg-white d-flex flex-column justify-center ga-3 flex-grow-0"
                     style="border: 1px dashed rgba(30, 37, 124, 0.3) !important; background: rgba(30, 37, 124, 0.02) !important"
                 >
-                    <div class="text-body-2 text-slate-600 font-weight-bold text-center mb-1">Thao tác đơn hàng</div>
+                    <v-btn
+                        v-if="canTaoLinkThanhToanLai"
+                        variant="flat"
+                        class="rounded-lg px-6"
+                        height="44"
+                        style="background-color: #1e257c !important; color: #ffffff !important;"
+                        :loading="repayLoading"
+                        @click="handleTaoLinkThanhToanLai"
+                    >
+                        <template v-slot:prepend>
+                            <v-icon size="18" class="mr-1" color="#ffffff">mdi-qrcode-scan</v-icon>
+                        </template>
+                        <span class="text-white font-weight-bold">Tạo QR / Link VNPay</span>
+                    </v-btn>
+
                     <v-btn
                         v-if="canHoanPhi"
                         variant="flat"
@@ -1747,6 +1816,16 @@ onMounted(() => {
                         <!-- TAB 2: Shipping/Delivery Information -->
                         <v-window-item :value="1">
                             <v-row class="ga-3" dense>
+                                <v-col cols="12" v-if="order.daSuaThongTin">
+                                    <v-alert
+                                        type="warning"
+                                        variant="tonal"
+                                        density="compact"
+                                        class="rounded-lg font-weight-medium text-caption"
+                                    >
+                                        Thông tin giao nhận của đơn hàng này đã được chỉnh sửa 1 lần (quy định tối đa 1 lần).
+                                    </v-alert>
+                                </v-col>
                                 <!-- Recipient Name Field -->
                                 <v-col cols="12" class="mb-2">
                                     <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Tên người nhận</span>
@@ -1757,6 +1836,7 @@ onMounted(() => {
                                         rounded="lg"
                                         density="comfortable"
                                         hide-details
+                                        :disabled="order.daSuaThongTin"
                                         prepend-inner-icon="mdi-account"
                                     ></v-text-field>
                                 </v-col>
@@ -1770,6 +1850,7 @@ onMounted(() => {
                                         rounded="lg"
                                         density="comfortable"
                                         hide-details
+                                        :disabled="order.daSuaThongTin"
                                         prepend-inner-icon="mdi-phone"
                                     ></v-text-field>
                                 </v-col>
@@ -1784,6 +1865,7 @@ onMounted(() => {
                                         rounded="lg"
                                         density="comfortable"
                                         hide-details
+                                        :disabled="order.daSuaThongTin"
                                         rows="3"
                                         prepend-inner-icon="mdi-map-marker"
                                     ></v-textarea>
@@ -1816,6 +1898,70 @@ onMounted(() => {
                         Lưu thay đổi
                     </v-btn>
                 </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Modal Tạo QR / Link thanh toán VNPay -->
+        <v-dialog v-model="showRepayDialog" max-width="480">
+            <v-card class="rounded-xl overflow-hidden">
+                <div class="pa-4 d-flex align-center justify-space-between text-white" style="background: #1e257c">
+                    <div class="d-flex align-center">
+                        <v-icon class="mr-2" color="white">mdi-credit-card-sync-outline</v-icon>
+                        <span class="font-weight-bold text-subtitle-1">Thanh toán lại qua VNPay</span>
+                    </div>
+                    <v-btn icon="mdi-close" variant="text" size="small" color="white" @click="showRepayDialog = false"></v-btn>
+                </div>
+                <v-card-text class="pa-6 text-center">
+                    <div class="mb-3 text-subtitle-2 text-slate-600">
+                        Đơn hàng: <strong class="text-slate-800">#{{ order.maHoaDon }}</strong> — Số tiền: <strong class="text-primary">{{ formatCurrency(orderTotalAmount) }}</strong>
+                    </div>
+                    <div v-if="repayQrUrl" class="d-flex justify-center my-4 pa-3 bg-slate-50 rounded-xl border">
+                        <img :src="repayQrUrl" alt="QR VNPay" style="width: 220px; height: 220px; object-fit: contain" />
+                    </div>
+                    <p class="text-caption text-slate-500 mb-4">
+                        Khách hàng có thể quét mã QR bằng App Ngân hàng / VNPay hoặc truy cập đường link bên dưới.
+                    </p>
+                    <v-text-field
+                        :model-value="repayUrl"
+                        readonly
+                        density="compact"
+                        variant="outlined"
+                        class="mb-3"
+                        hide-details
+                    >
+                        <template v-slot:append-inner>
+                            <v-btn
+                                size="small"
+                                variant="text"
+                                color="primary"
+                                class="font-weight-bold"
+                                @click="copyRepayUrl"
+                            >
+                                <v-icon start size="16">{{ copySuccess ? 'mdi-check' : 'mdi-content-copy' }}</v-icon>
+                                {{ copySuccess ? 'Đã chép' : 'Sao chép' }}
+                            </v-btn>
+                        </template>
+                    </v-text-field>
+                    <div class="d-flex ga-2 mt-4">
+                        <v-btn
+                            variant="outlined"
+                            class="flex-grow-1 font-weight-bold"
+                            @click="showRepayDialog = false"
+                        >
+                            Đóng
+                        </v-btn>
+                        <v-btn
+                            color="primary"
+                            variant="flat"
+                            class="flex-grow-1 font-weight-bold"
+                            :href="repayUrl"
+                            target="_blank"
+                        >
+                            <v-icon start size="16">mdi-open-in-new</v-icon>
+                            Mở cổng thanh toán
+                        </v-btn>
+                    </div>
+                </v-card-text>
             </v-card>
         </v-dialog>
     </v-container>

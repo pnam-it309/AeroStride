@@ -40,12 +40,20 @@ public class CustomerOrderResponse {
     private boolean laTienMat;
     // Khách có được phép sửa thông tin nhận hàng (sđt, địa chỉ) không
     private boolean choPhepSuaThongTin;
+    // Đã sửa thông tin nhận hàng 1 lần rồi
+    private boolean daSuaThongTin;
     // Khách có được phép sửa số lượng sản phẩm không
     private boolean choPhepSuaSanPham;
     // Khách có được phép hủy đơn không
     private boolean choPhepHuy;
+    // Trạng thái đã hoàn tất thanh toán tiền chưa
+    private boolean daThanhToan;
     // Đơn chuyển khoản chưa thanh toán -> cho phép thanh toán lại qua VNPay
     private boolean choPhepThanhToanLai;
+    // Tiền hoàn trả trước khi giảm số lượng (nếu có)
+    private BigDecimal tienHoanTraTruoc;
+    // Phụ phí phát sinh khi tăng số lượng (nếu có)
+    private BigDecimal phuPhiCanThu;
 
     // Voucher info
     private String tenVoucher;

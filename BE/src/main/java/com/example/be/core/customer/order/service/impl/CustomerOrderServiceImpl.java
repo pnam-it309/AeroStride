@@ -447,8 +447,29 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         log.info("Hủy đơn hàng thành công: hoaDon={}, khachHang={}", id, username);
     }
 
-    // Khách cập nhật thông tin nhận hàng (sđt, địa chỉ, ghi chú) khi đơn đang chờ xác nhận.
-    // Việc đổi địa chỉ KHÔNG làm thay đổi phí vận chuyển đã chốt của đơn.
+    private boolean hasUpdatedShippingInfo(HoaDon hoaDon) {
+        if (hoaDon.getListsLichSuHoaDon() == null || hoaDon.getListsLichSuHoaDon().isEmpty()) {
+            return false;
+        }
+        return hoaDon.getListsLichSuHoaDon().stream().anyMatch(ls -> {
+            String note = ls.getGhiChu();
+            if (note == null) return false;
+            String lower = note.toLowerCase();
+            return lower.contains("cập nhật thông tin nhận hàng")
+                    || lower.contains("cập nhật thông tin giao hàng")
+                    || lower.contains("cập nhật thông tin giao nhận")
+                    || lower.contains("thông tin người nhận")
+                    || lower.contains("thay đổi địa chỉ")
+                    || lower.contains("thay đổi người nhận");
+        });
+    }
+
+    private String formatTien(BigDecimal value) {
+        if (value == null) return "0";
+        return String.format("%,d", value.longValue()).replace(',', '.');
+    }
+
+    // Khách cập nhật thông tin nhận hàng (sđt, địa chỉ, ghi chú) khi đơn đang chờ xác nhận (tối đa 1 lần duy nhất).
     @Override
     @Transactional
     public CustomerOrderResponse updateShippingInfo(String id, CustomerUpdateShippingRequest request, String username) {
@@ -458,6 +479,14 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             throw new RuntimeException("Chỉ có thể sửa thông tin khi đơn hàng đang ở trạng thái 'Chờ xác nhận'");
         }
 
+        if (hasUpdatedShippingInfo(hoaDon)) {
+            throw new RuntimeException("Thông tin nhận hàng của đơn hàng chỉ được phép thay đổi 1 lần duy nhất.");
+        }
+
+        String oldTen = hoaDon.getTenNguoiNhan();
+        String oldSdt = hoaDon.getSoDienThoaiNguoiNhan();
+        String oldDiaChi = hoaDon.getDiaChiNguoiNhan();
+
         hoaDon.setTenNguoiNhan(request.getTenNguoiNhan());
         hoaDon.setSoDienThoaiNguoiNhan(request.getSoDienThoaiNguoiNhan());
         hoaDon.setDiaChiNguoiNhan(request.getDiaChiNguoiNhan());
@@ -465,12 +494,30 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         hoaDon.setNgayCapNhat(System.currentTimeMillis());
         hoaDonRepository.save(hoaDon);
 
-        // Ghi lịch sử: ai làm gì
+        // Ghi lịch sử chi tiết thay đổi
+        StringBuilder changes = new StringBuilder("Khách hàng cập nhật thông tin nhận hàng: ");
+        boolean hasChange = false;
+        if (request.getTenNguoiNhan() != null && !request.getTenNguoiNhan().equals(oldTen)) {
+            changes.append(String.format("Tên: '%s' -> '%s'; ", oldTen, request.getTenNguoiNhan()));
+            hasChange = true;
+        }
+        if (request.getSoDienThoaiNguoiNhan() != null && !request.getSoDienThoaiNguoiNhan().equals(oldSdt)) {
+            changes.append(String.format("SĐT: '%s' -> '%s'; ", oldSdt, request.getSoDienThoaiNguoiNhan()));
+            hasChange = true;
+        }
+        if (request.getDiaChiNguoiNhan() != null && !request.getDiaChiNguoiNhan().equals(oldDiaChi)) {
+            changes.append(String.format("Địa chỉ: '%s' -> '%s'; ", oldDiaChi, request.getDiaChiNguoiNhan()));
+            hasChange = true;
+        }
+        if (!hasChange) {
+            changes.append("Lưu thông tin giao nhận");
+        }
+
         LichSuTrangThaiHoaDon lichSu = LichSuTrangThaiHoaDon.builder()
                 .hoaDon(hoaDon)
                 .trangThaiCu(hoaDon.getTrangThai().ordinal())
                 .trangThaiMoi(hoaDon.getTrangThai().ordinal())
-                .ghiChu("Khách hàng cập nhật thông tin nhận hàng")
+                .ghiChu(changes.toString().trim())
                 .nguoiThucHien(username)
                 .build();
         lichSuRepository.save(lichSu);
@@ -479,8 +526,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         return mapToResponse(hoaDon, null);
     }
 
-    // Khách cập nhật số lượng sản phẩm trong đơn. Chỉ cho đơn tiền mặt (COD) đang chờ xác nhận.
-    // Không được để đơn rỗng; tự động cộng/trừ tồn kho và tính lại tổng tiền (kèm voucher).
+    // Khách cập nhật số lượng sản phẩm trong đơn khi đang chờ xác nhận (cả tiền mặt & trả trước).
     @Override
     @Transactional
     public CustomerOrderResponse updateItems(String id, CustomerUpdateItemsRequest request, String username) {
@@ -489,12 +535,14 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         if (hoaDon.getTrangThai() != OrderStatus.CHO_XAC_NHAN) {
             throw new RuntimeException("Chỉ có thể sửa sản phẩm khi đơn hàng đang ở trạng thái 'Chờ xác nhận'");
         }
-        if (!isCashOrder(hoaDon)) {
-            throw new RuntimeException("Đơn thanh toán chuyển khoản không được phép thay đổi sản phẩm");
-        }
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new RuntimeException("Đơn hàng phải còn ít nhất 1 sản phẩm");
         }
+
+        BigDecimal tongTienCu = hoaDon.getTongTienSauGiam() != null ? hoaDon.getTongTienSauGiam() : BigDecimal.ZERO;
+        boolean daThanhToan = hoaDon.getListsGiaoDichThanhToan() != null && hoaDon.getListsGiaoDichThanhToan().stream()
+                .anyMatch(gd -> gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG
+                        && gd.getMaGiaoDichNgoai() != null && !gd.getMaGiaoDichNgoai().isBlank());
 
         List<HoaDonChiTiet> currentItems = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
         Map<String, HoaDonChiTiet> hdctByVariant = new HashMap<>();
@@ -504,7 +552,6 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             }
         }
 
-        // Chỉ cho phép chỉnh số lượng các biến thể đã có sẵn trong đơn (không thêm SP mới)
         StringBuilder doiGiaNote = new StringBuilder();
         for (CustomerUpdateItemsRequest.Item item : request.getItems()) {
             HoaDonChiTiet hdct = hdctByVariant.get(item.getIdChiTietSanPham());
@@ -516,16 +563,12 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             }
 
             ChiTietSanPham ctsp = hdct.getChiTietSanPham();
-            int delta = item.getSoLuong() - hdct.getSoLuong(); // >0: cần thêm tồn, <0: hoàn tồn
-            if (delta > 0 && ctsp.getSoLuong() < delta) {
+            if (ctsp.getSoLuong() < item.getSoLuong()) {
                 String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
                 throw new RuntimeException("Sản phẩm '" + tenSP + "' chỉ còn " + ctsp.getSoLuong() + " sản phẩm");
             }
 
-            ctsp.setSoLuong(ctsp.getSoLuong() - delta);
-            chiTietSanPhamRepository.save(ctsp);
-
-            // Phát hiện & áp dụng đổi giá (giống bán hàng tại quầy): tạo bản ghi với đơn giá hiện hành
+            // Phát hiện & áp dụng đổi giá (giống bán hàng tại quầy)
             BigDecimal giaCu = hdct.getDonGia();
             BigDecimal giaMoi = ctsp.getGiaBan();
             if (giaCu != null && giaMoi != null && giaCu.compareTo(giaMoi) != 0) {
@@ -540,17 +583,38 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         }
 
         recalculateTotals(hoaDon);
+        BigDecimal tongTienMoi = hoaDon.getTongTienSauGiam() != null ? hoaDon.getTongTienSauGiam() : BigDecimal.ZERO;
 
-        // Ghi lịch sử: ai làm gì (kèm thông tin đổi giá nếu có)
-        String note = "Khách hàng cập nhật số lượng sản phẩm";
+        // Xử lý Phụ phí / Hoàn phí nếu đơn đã thanh toán trước (hoặc trả trước)
+        StringBuilder noteBuilder = new StringBuilder("Khách hàng cập nhật số lượng sản phẩm");
         if (doiGiaNote.length() > 0) {
-            note = note + ". " + doiGiaNote.toString().trim();
+            noteBuilder.append(". ").append(doiGiaNote.toString().trim());
         }
+
+        if (daThanhToan) {
+            if (tongTienMoi.compareTo(tongTienCu) > 0) {
+                BigDecimal phuPhi = tongTienMoi.subtract(tongTienCu);
+                noteBuilder.append(String.format(". Tổng tiền tăng từ %sđ lên %sđ. Phát sinh phụ phí cần thu thêm: %sđ",
+                        formatTien(tongTienCu), formatTien(tongTienMoi), formatTien(phuPhi)));
+                hoaDon.setDaHoanPhi(null);
+            } else if (tongTienMoi.compareTo(tongTienCu) < 0) {
+                BigDecimal tienHoan = tongTienCu.subtract(tongTienMoi);
+                noteBuilder.append(String.format(". Tổng tiền giảm từ %sđ xuống %sđ. Phát sinh tiền hoàn trả lại khách: %sđ",
+                        formatTien(tongTienCu), formatTien(tongTienMoi), formatTien(tienHoan)));
+                hoaDon.setDaHoanPhi(false);
+                hoaDon.setPhiHoanHang(tienHoan);
+            }
+        } else {
+            noteBuilder.append(String.format(". Tổng tiền đơn hàng: %sđ", formatTien(tongTienMoi)));
+        }
+
+        hoaDonRepository.save(hoaDon);
+
         LichSuTrangThaiHoaDon lichSu = LichSuTrangThaiHoaDon.builder()
                 .hoaDon(hoaDon)
                 .trangThaiCu(hoaDon.getTrangThai().ordinal())
                 .trangThaiMoi(hoaDon.getTrangThai().ordinal())
-                .ghiChu(note)
+                .ghiChu(noteBuilder.toString().trim())
                 .nguoiThucHien(username)
                 .build();
         lichSuRepository.save(lichSu);
@@ -800,23 +864,33 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         // Phân quyền thao tác theo trạng thái + phương thức thanh toán
         boolean choXacNhan = hoaDon.getTrangThai() == OrderStatus.CHO_XAC_NHAN;
         boolean laTienMat = isCashOrder(hoaDon);
-        // Sửa thông tin nhận hàng: cho phép khi đang chờ xác nhận (cả tiền mặt & chuyển khoản),
-        // riêng chuyển khoản đổi địa chỉ không làm đổi phí ship.
-        boolean choPhepSuaThongTin = choXacNhan;
-        // Sửa số lượng sản phẩm: chỉ đơn tiền mặt (COD) và đang chờ xác nhận.
-        boolean choPhepSuaSanPham = choXacNhan && laTienMat;
-        boolean choPhepHuy = choXacNhan;
-        // Đơn chuyển khoản (không phải tiền mặt) còn chờ xác nhận -> cho thanh toán lại
-        boolean choPhepThanhToanLai = choXacNhan && !laTienMat;
+        boolean daThanhToan = hoaDon.getListsGiaoDichThanhToan() != null && hoaDon.getListsGiaoDichThanhToan().stream()
+                .anyMatch(gd -> gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG 
+                        && gd.getMaGiaoDichNgoai() != null && !gd.getMaGiaoDichNgoai().isBlank());
+        // Sửa thông tin nhận hàng: chỉ được sửa 1 lần duy nhất khi đang chờ xác nhận
+        boolean daSuaThongTin = hasUpdatedShippingInfo(hoaDon);
+        boolean choPhepSuaThongTin = choXacNhan && !daSuaThongTin;
+        // Sửa số lượng sản phẩm: cho phép khi đang chờ xác nhận (cả tiền mặt & trả trước)
+        boolean choPhepSuaSanPham = choXacNhan;
+        boolean choPhepHuy = choXacNhan && !daThanhToan;
+        // Đơn chuyển khoản (không phải tiền mặt) còn chờ xác nhận và CHƯA thanh toán -> cho thanh toán lại
+        boolean choPhepThanhToanLai = choXacNhan && !laTienMat && !daThanhToan;
+
+        BigDecimal tienHoanTraTruoc = Boolean.FALSE.equals(hoaDon.getDaHoanPhi()) && hoaDon.getPhiHoanHang() != null && hoaDon.getPhiHoanHang().compareTo(BigDecimal.ZERO) > 0
+                ? hoaDon.getPhiHoanHang()
+                : null;
 
         return CustomerOrderResponse.builder()
                 .id(hoaDon.getId())
                 .maHoaDon(hoaDon.getMaHoaDon())
                 .laTienMat(laTienMat)
+                .daThanhToan(daThanhToan)
+                .daSuaThongTin(daSuaThongTin)
                 .choPhepSuaThongTin(choPhepSuaThongTin)
                 .choPhepSuaSanPham(choPhepSuaSanPham)
                 .choPhepHuy(choPhepHuy)
                 .choPhepThanhToanLai(choPhepThanhToanLai)
+                .tienHoanTraTruoc(tienHoanTraTruoc)
                 .trangThai(hoaDon.getTrangThai() != null ? hoaDon.getTrangThai().name() : "")
                 .trangThaiDisplay(hoaDon.getTrangThai() != null ? CustomerOrderResponse.mapTrangThaiDisplay(hoaDon.getTrangThai().name()) : "")
                 .tongTien(hoaDon.getTongTien())

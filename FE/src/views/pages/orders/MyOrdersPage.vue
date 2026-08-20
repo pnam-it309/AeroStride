@@ -120,6 +120,25 @@ import ReviewModal from '@/components/shared/ReviewModal.vue';
 
 const showReviewModal = ref(false);
 const orderToReview = ref(null);
+const repayLoadingId = ref(null);
+
+const handleRepay = async (order) => {
+    repayLoadingId.value = order.id;
+    try {
+        const returnUrl = `${window.location.origin}/my-orders/${order.id}`;
+        const url = await dichVuDatHang.taoUrlThanhToanLai(order.id, returnUrl);
+        if (url) {
+            window.location.href = url;
+        } else {
+            alert('Không lấy được URL thanh toán. Vui lòng thử lại.');
+        }
+    } catch (error) {
+        console.error('Error creating VNPay URL:', error);
+        alert(error.response?.data?.message || 'Tạo thanh toán thất bại');
+    } finally {
+        repayLoadingId.value = null;
+    }
+};
 
 const openReviewModal = (order) => {
     orderToReview.value = order;
@@ -363,6 +382,18 @@ const goToDetail = (id) => {
                     <!-- Actions -->
                     <div class="d-flex justify-end mt-4 ga-2 border-t pt-3" style="border-top: 1px solid #f0f0f0">
                         <v-btn
+                            v-if="order.choPhepThanhToanLai"
+                            style="background: #1e257c; color: white !important"
+                            variant="flat"
+                            size="small"
+                            rounded="pill"
+                            class="text-none font-weight-bold px-4"
+                            :loading="repayLoadingId === order.id"
+                            @click.stop="handleRepay(order)"
+                        >
+                            <v-icon size="16" class="mr-1">mdi-credit-card-sync-outline</v-icon>Thanh toán lại
+                        </v-btn>
+                        <v-btn
                             v-if="order.trangThai === 'HOAN_THANH'"
                             color="#1e257c"
                             variant="outlined"
@@ -375,7 +406,7 @@ const goToDetail = (id) => {
                         </v-btn>
                         <v-btn
                             color="#1e257c"
-                            variant="flat"
+                            :variant="order.choPhepThanhToanLai ? 'outlined' : 'flat'"
                             size="small"
                             rounded="pill"
                             class="text-none font-weight-bold px-4"

@@ -61,5 +61,13 @@ export const dichVuHoaDon = {
     async inHoaDon(id) {
         const response = await api.get(`${API_ADMIN.HOA_DON}/${id}/print`);
         return response.data;
+    },
+
+    // Tạo lại URL / QR thanh toán VNPay cho đơn online chưa thanh toán
+    async taoUrlThanhToanLai(id, returnUrl) {
+        const response = await api.post(`${API_ADMIN.HOA_DON}/${id}/vnpay-url`, null, {
+            params: { returnUrl }
+        });
+        return response.data.data;
     }
 };

@@ -591,6 +591,15 @@ onMounted(async () => {
                                 >
                                     <v-icon size="16" class="mr-1">mdi-pencil</v-icon>Sửa
                                 </v-btn>
+                                <v-chip
+                                    v-else-if="order.daSuaThongTin"
+                                    size="x-small"
+                                    color="grey"
+                                    variant="tonal"
+                                    class="font-weight-bold"
+                                >
+                                    Đã sửa thông tin (1/1 lần)
+                                </v-chip>
                             </div>
                             <div class="shipping-details">
                                 <div class="shipping-row">
@@ -682,6 +691,13 @@ onMounted(async () => {
                                         <v-icon size="14" class="mr-1">mdi-ticket-percent</v-icon>
                                         {{ order.maVoucher }}
                                     </v-chip>
+                                </div>
+                                <div v-if="order.tienHoanTraTruoc" class="pa-3 rounded-lg mt-3" style="background: #ecfdf5; border: 1px solid #a7f3d0">
+                                    <div class="d-flex align-center text-success font-weight-bold text-caption">
+                                        <v-icon size="16" class="mr-1" color="success">mdi-cash-refund</v-icon>
+                                        Đơn hàng có khoản hoàn tiền thừa: {{ formatPrice(order.tienHoanTraTruoc) }}
+                                    </div>
+                                    <p class="text-caption text-slate-600 mb-0 mt-1">Cửa hàng sẽ liên hệ hoàn tiền chênh lệch này cho quý khách.</p>
                                 </div>
                             </div>
                         </div>

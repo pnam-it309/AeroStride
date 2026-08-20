@@ -72,6 +72,28 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Cảnh báo khi đơn hàng chưa đạt điều kiện tối thiểu của voucher đang áp dụng -->
+                <div
+                    v-if="activeVoucher && Number(activeVoucher.donHangToiThieu || 0) > Number(voucherBaseAmount || totalRawAmount || 0)"
+                    class="d-flex align-center justify-space-between ga-2 rounded-lg border mt-1 px-3 py-2"
+                    style="background-color: #fffbeb !important; border-color: #fde68a !important; color: #b45309 !important; font-size: 12px !important;"
+                >
+                    <div class="d-flex align-center ga-1.5 overflow-hidden">
+                        <v-icon size="16" color="#b45309" class="flex-shrink-0">mdi-alert-outline</v-icon>
+                        <span class="text-truncate font-weight-medium">
+                            Chưa đủ đơn tối thiểu (thiếu {{ formatCurrency(Number(activeVoucher.donHangToiThieu || 0) - Number(voucherBaseAmount || totalRawAmount || 0)) }})
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        class="font-weight-bold text-caption flex-shrink-0 text-decoration-underline"
+                        style="color: #dc2626; cursor: pointer; background: none; border: none;"
+                        @click="emit('open-voucher-ineligible-modal')"
+                    >
+                        Hủy / Xem
+                    </button>
+                </div>
             </div>
 
             <!-- Hai trạng thái loại trừ: có voucher thì chỉ hiện ticket, không có mới hiện thông báo. -->
@@ -215,6 +237,13 @@
                         >
                             Đã tính phí từ GHN
                         </div>
+                        <div
+                            v-else-if="shippingFeeSource === 'FALLBACK'"
+                            class="text-caption text-amber-darken-3 text-right font-weight-medium"
+                            style="font-size: 11px !important"
+                        >
+                            Phí tiêu chuẩn toàn quốc (30.000 ₫)
+                        </div>
                         <div v-else-if="shippingFeeError" class="text-caption text-error text-right" style="font-size: 11px !important">
                             {{ shippingFeeError }}
                         </div>
@@ -266,7 +295,7 @@ const props = defineProps({
     isFreeShip: { type: Boolean, default: false }
 });
 
-const emit = defineEmits(['update:isGiaoHang', 'apply-voucher', 'update:shippingFee']);
+const emit = defineEmits(['update:isGiaoHang', 'apply-voucher', 'update:shippingFee', 'open-voucher-ineligible-modal']);
 
 const isUuidString = (str) =>
     typeof str === 'string' && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str);

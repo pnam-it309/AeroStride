@@ -35,7 +35,13 @@ public class AdminHoaDonDetailResponse {
 
     // Hoàn phí
     private Boolean daHoanPhi;     // đã xác nhận hoàn tiền cho khách chưa
-    private Boolean canHoanPhi;    // đơn có cần/được xác nhận hoàn phí không (trả trước & đã hủy & chưa hoàn)
+    private Boolean canHoanPhi;    // đơn có cần/được xác nhận hoàn phí không (trả trước & đã hủy/giảm tiền & chưa hoàn)
+    private BigDecimal tienHoanTraTruoc; // Tiền hoàn trả trước khi giảm số lượng (nếu có)
+    private BigDecimal phuPhiCanThu;     // Phụ phí phát sinh khi tăng số lượng (nếu có)
+
+    // Sửa thông tin nhận hàng (tối đa 1 lần)
+    private Boolean daSuaThongTin;
+    private Boolean choPhepSuaThongTin;
 
     private String maPhieuGiamGia;
     private String tenPhieuGiamGia;

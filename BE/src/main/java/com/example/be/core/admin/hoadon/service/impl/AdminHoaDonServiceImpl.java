@@ -30,12 +30,14 @@ import org.thymeleaf.context.Context;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.example.be.infrastructure.constants.TrangThai;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +52,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     private final TemplateEngine templateEngine;
     private final AdminHoaDonMapper hoaDonMapper;
     private final com.example.be.core.notification.EmailService emailService;
+    private final com.example.be.core.payment.PaymentService paymentService;
 
     @org.springframework.beans.factory.annotation.Value("${app.frontend_url}")
     private String frontendUrl;
@@ -99,6 +102,19 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         }
         AdminHoaDonDetailResponse response = hoaDonMapper.toDetailResponse(hd);
         resolvePerformerNames(response);
+
+        boolean daSuaThongTin = hasUpdatedShippingInfo(hd);
+        response.setDaSuaThongTin(daSuaThongTin);
+        response.setChoPhepSuaThongTin(hd.getTrangThai() == OrderStatus.CHO_XAC_NHAN && !daSuaThongTin);
+
+        BigDecimal tienHoanTraTruoc = Boolean.FALSE.equals(hd.getDaHoanPhi()) && hd.getPhiHoanHang() != null && hd.getPhiHoanHang().compareTo(BigDecimal.ZERO) > 0
+                ? hd.getPhiHoanHang()
+                : null;
+        response.setTienHoanTraTruoc(tienHoanTraTruoc);
+        if (tienHoanTraTruoc != null) {
+            response.setCanHoanPhi(true);
+        }
+
         return response;
     }
 
@@ -285,11 +301,39 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         };
     }
 
+    private boolean hasUpdatedShippingInfo(HoaDon hd) {
+        if (hd.getListsLichSuHoaDon() == null || hd.getListsLichSuHoaDon().isEmpty()) {
+            return false;
+        }
+        return hd.getListsLichSuHoaDon().stream().anyMatch(ls -> {
+            String note = ls.getGhiChu();
+            if (note == null) return false;
+            String lower = note.toLowerCase();
+            return lower.contains("cập nhật thông tin nhận hàng")
+                    || lower.contains("cập nhật thông tin giao hàng")
+                    || lower.contains("cập nhật thông tin giao nhận")
+                    || lower.contains("thông tin người nhận")
+                    || lower.contains("thay đổi địa chỉ")
+                    || lower.contains("thay đổi người nhận");
+        });
+    }
 
     @Override
     @Transactional
     public AdminHoaDonDetailResponse updateInfo(String id, AdminUpdateHoaDonRequest request) {
         HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
+
+        if (hd.getTrangThai() != OrderStatus.CHO_XAC_NHAN) {
+            throw new BusinessException("Chỉ có thể sửa thông tin khi đơn hàng đang ở trạng thái 'Chờ xác nhận'");
+        }
+
+        if (hasUpdatedShippingInfo(hd)) {
+            throw new BusinessException("Thông tin giao nhận của đơn hàng chỉ được phép thay đổi 1 lần duy nhất.");
+        }
+
+        String oldTen = hd.getTenNguoiNhan();
+        String oldSdt = hd.getSoDienThoaiNguoiNhan();
+        String oldDiaChi = hd.getDiaChiNguoiNhan();
 
         if (request.getTenNguoiNhan() != null) hd.setTenNguoiNhan(request.getTenNguoiNhan());
         hd.setSoDienThoaiNguoiNhan(request.getSoDienThoaiNguoiNhan());
@@ -305,7 +349,26 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         }
 
         hd.setNgayCapNhat(System.currentTimeMillis());
-        logHistory(hd, "Cập nhật thông tin giao hàng/khách hàng");
+
+        StringBuilder changes = new StringBuilder("Cập nhật thông tin giao hàng/khách hàng: ");
+        boolean hasChange = false;
+        if (request.getTenNguoiNhan() != null && !request.getTenNguoiNhan().equals(oldTen)) {
+            changes.append(String.format("Tên: '%s' -> '%s'; ", oldTen, request.getTenNguoiNhan()));
+            hasChange = true;
+        }
+        if (request.getSoDienThoaiNguoiNhan() != null && !request.getSoDienThoaiNguoiNhan().equals(oldSdt)) {
+            changes.append(String.format("SĐT: '%s' -> '%s'; ", oldSdt, request.getSoDienThoaiNguoiNhan()));
+            hasChange = true;
+        }
+        if (request.getDiaChiNguoiNhan() != null && !request.getDiaChiNguoiNhan().equals(oldDiaChi)) {
+            changes.append(String.format("Địa chỉ: '%s' -> '%s'; ", oldDiaChi, request.getDiaChiNguoiNhan()));
+            hasChange = true;
+        }
+        if (!hasChange) {
+            changes.append("Lưu thông tin giao nhận");
+        }
+
+        logHistory(hd, changes.toString().trim());
 
         repository.save(hd);
         return detail(id);
@@ -390,8 +453,11 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     public AdminHoaDonDetailResponse confirmRefund(String id) {
         HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
 
-        if (hd.getTrangThai() != OrderStatus.DA_HUY) {
-            throw new BusinessException("Chỉ xác nhận hoàn phí cho đơn hàng đã hủy");
+        boolean isCancelled = hd.getTrangThai() == OrderStatus.DA_HUY;
+        boolean hasPendingRefund = Boolean.FALSE.equals(hd.getDaHoanPhi()) && hd.getPhiHoanHang() != null && hd.getPhiHoanHang().compareTo(BigDecimal.ZERO) > 0;
+
+        if (!isCancelled && !hasPendingRefund) {
+            throw new BusinessException("Chỉ xác nhận hoàn phí cho đơn hàng đã hủy hoặc có phát sinh hoàn tiền thừa");
         }
         if (Boolean.TRUE.equals(hd.getDaHoanPhi())) {
             throw new BusinessException("Đơn hàng này đã được xác nhận hoàn phí");
@@ -401,7 +467,8 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         hd.setNgayCapNhat(System.currentTimeMillis());
         repository.save(hd);
 
-        logHistory(hd, "Xác nhận đã hoàn phí cho khách hàng");
+        String amountStr = hd.getPhiHoanHang() != null ? " (" + formatTien(hd.getPhiHoanHang()) + ")" : "";
+        logHistory(hd, "Xác nhận đã hoàn phí cho khách hàng" + amountStr);
         return detail(id);
     }
 
@@ -439,14 +506,47 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     }
 
     private HoaDon recalculateTotal(HoaDon hd) {
+        BigDecimal tongTienCu = hd.getTongTienSauGiam() != null ? hd.getTongTienSauGiam() : BigDecimal.ZERO;
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
         java.math.BigDecimal total = details.stream()
                 .map(d -> d.getDonGia().multiply(java.math.BigDecimal.valueOf(d.getSoLuong())))
                 .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
 
         hd.setTongTien(total);
-        hd.setTongTienSauGiam(total);
+        BigDecimal ship = hd.getPhiVanChuyen() != null ? hd.getPhiVanChuyen() : BigDecimal.ZERO;
+        BigDecimal tienGiam = BigDecimal.ZERO;
+        if (hd.getPhieuGiamGia() != null) {
+            var voucher = hd.getPhieuGiamGia();
+            if (voucher.getDonHangToiThieu() == null || total.compareTo(voucher.getDonHangToiThieu()) >= 0) {
+                if ("PHAN_TRAM".equals(voucher.getLoaiPhieu()) && voucher.getPhanTramGiamGia() != null) {
+                    tienGiam = total.multiply(BigDecimal.valueOf(voucher.getPhanTramGiamGia()))
+                            .divide(BigDecimal.valueOf(100), 0, RoundingMode.FLOOR);
+                    if (voucher.getGiamToiDa() != null && tienGiam.compareTo(voucher.getGiamToiDa()) > 0) {
+                        tienGiam = voucher.getGiamToiDa();
+                    }
+                } else if (voucher.getSoTienGiam() != null) {
+                    tienGiam = voucher.getSoTienGiam();
+                }
+            }
+        }
+        BigDecimal tongSauGiam = total.add(ship).subtract(tienGiam).max(BigDecimal.ZERO);
+        hd.setTongTienSauGiam(tongSauGiam);
         hd.setNgayCapNhat(System.currentTimeMillis());
+
+        // Check if pre-paid order
+        boolean daThanhToan = hd.getListsGiaoDichThanhToan() != null && hd.getListsGiaoDichThanhToan().stream()
+                .anyMatch(gd -> gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG && gd.getMaGiaoDichNgoai() != null && !gd.getMaGiaoDichNgoai().isBlank());
+
+        if (daThanhToan && tongTienCu.compareTo(BigDecimal.ZERO) > 0) {
+            if (tongSauGiam.compareTo(tongTienCu) < 0) {
+                BigDecimal tienHoan = tongTienCu.subtract(tongSauGiam);
+                hd.setDaHoanPhi(false);
+                hd.setPhiHoanHang(tienHoan);
+            } else if (tongSauGiam.compareTo(tongTienCu) > 0) {
+                hd.setDaHoanPhi(null);
+            }
+        }
+
         return repository.save(hd);
     }
 
@@ -529,5 +629,41 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 .filter(name -> name != null && !name.isBlank())
                 .findFirst()
                 .orElse("Chưa thanh toán");
+    }
+
+    @Override
+    public String createVnPayUrl(String id, String returnUrl) {
+        HoaDon hoaDon = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
+
+        if (isCashOrder(hoaDon)) {
+            throw new BusinessException("Đơn thanh toán khi nhận hàng (COD) không cần thanh toán online");
+        }
+        if (hoaDon.getTrangThai() != OrderStatus.CHO_XAC_NHAN) {
+            throw new BusinessException("Chỉ có thể tạo link thanh toán lại khi đơn đang ở trạng thái 'Chờ xác nhận'");
+        }
+
+        BigDecimal amount = hoaDon.getTongTienSauGiam() != null ? hoaDon.getTongTienSauGiam() : hoaDon.getTongTien();
+        String effectiveReturnUrl = (returnUrl != null && !returnUrl.isBlank()) ? returnUrl : frontendUrl + "/my-orders/" + hoaDon.getId();
+        com.example.be.core.payment.dto.PaymentRequest payReq = com.example.be.core.payment.dto.PaymentRequest.builder()
+                .amount(amount)
+                .orderId(hoaDon.getId())
+                .orderInfo("Thanh toan don hang " + (hoaDon.getMaHoaDon() != null ? hoaDon.getMaHoaDon() : hoaDon.getId()))
+                .returnUrl(effectiveReturnUrl)
+                .build();
+
+        return paymentService.createPaymentUrl(payReq);
+    }
+
+    private boolean isCashOrder(HoaDon hoaDon) {
+        if (hoaDon.getListsGiaoDichThanhToan() == null || hoaDon.getListsGiaoDichThanhToan().isEmpty()) {
+            return true;
+        }
+        return hoaDon.getListsGiaoDichThanhToan().stream().anyMatch(gd -> {
+            String loai = gd.getLoaiGiaoDich();
+            String tenPt = gd.getPhuongThucThanhToan() != null ? gd.getPhuongThucThanhToan().getTen() : null;
+            return "TIEN_MAT".equalsIgnoreCase(loai) || "COD".equalsIgnoreCase(loai)
+                    || (tenPt != null && (tenPt.toUpperCase().contains("TIỀN MẶT") || tenPt.toUpperCase().contains("TIEN MAT") || tenPt.toUpperCase().contains("COD")));
+        });
     }
 }
