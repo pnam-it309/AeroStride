@@ -1,3 +1,10 @@
+## [1.42.6](https://github.com/pnam-it309/AeroStride/compare/v1.42.5...v1.42.6) (2026-08-20)
+
+
+### Bug Fixes
+
+* **mobile:** configure backend API URL to https://aerostride.onrender.com ([cde18b5](https://github.com/pnam-it309/AeroStride/commit/cde18b52c0793206175e99ab32fe798934318c9a))
+
 ## [1.42.4](https://github.com/pnam-it309/AeroStride/compare/v1.42.3...v1.42.4) (2026-08-19)
 
 
