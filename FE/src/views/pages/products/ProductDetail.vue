@@ -341,6 +341,25 @@ const buyNow = async () => {
         return;
     }
 
+    const inCart = cartStore.items.find((i) => i.idChiTietSanPham === variant.id)?.soLuong || 0;
+    const availableStock = variant.soLuong || 0;
+
+    if (inCart >= availableStock && availableStock > 0) {
+        // Đã có tối đa số lượng trong giỏ hàng, chuyển hướng thẳng đến checkout
+        router.push('/checkout');
+        return;
+    }
+
+    if (inCart + selectedQuantity.value > availableStock && availableStock > 0) {
+        const remaining = availableStock - inCart;
+        showStockAlert(
+            'Không đủ số lượng trong kho',
+            `Sản phẩm này hiện chỉ còn ${availableStock} sản phẩm trong kho. Bạn đã có ${inCart} sản phẩm trong giỏ hàng, chỉ có thể mua thêm tối đa ${remaining} sản phẩm nữa.`
+        );
+        toastStore.showToast(`Số lượng trong kho không đủ (đã có ${inCart} trong giỏ, còn lại ${remaining})`, 'warning');
+        return;
+    }
+
     try {
         const result = await cartStore.addToCart({
             idChiTietSanPham: variant.id,
@@ -556,9 +575,31 @@ const addToCart = async () => {
         return;
     }
 
-    if (selectedQuantity.value > variant.soLuong) {
-        showStockAlert('Vượt quá số lượng có sẵn', `Phiên bản này hiện chỉ còn tối đa ${variant.soLuong} sản phẩm.`);
-        selectedQuantity.value = variant.soLuong;
+    const inCart = cartStore.items.find((i) => i.idChiTietSanPham === variant.id)?.soLuong || 0;
+    const availableStock = variant.soLuong || 0;
+
+    if (inCart >= availableStock) {
+        showStockAlert(
+            'Không đủ số lượng trong kho',
+            `Sản phẩm này hiện chỉ còn ${availableStock} sản phẩm trong kho và bạn đã thêm đủ ${inCart} sản phẩm vào giỏ hàng. Không thể thêm tiếp.`
+        );
+        toastStore.showToast(`Sản phẩm trong giỏ đã đạt tối đa số lượng trong kho (${availableStock})`, 'warning');
+        return;
+    }
+
+    if (inCart + selectedQuantity.value > availableStock) {
+        const maxCanAdd = availableStock - inCart;
+        showStockAlert(
+            'Không đủ số lượng trong kho',
+            `Sản phẩm này hiện chỉ còn ${availableStock} sản phẩm trong kho. Bạn đã có ${inCart} sản phẩm trong giỏ hàng, chỉ có thể thêm tối đa ${maxCanAdd} sản phẩm nữa.`
+        );
+        toastStore.showToast(`Số lượng trong kho không đủ (đã có ${inCart} trong giỏ, còn lại ${maxCanAdd})`, 'warning');
+        return;
+    }
+
+    if (selectedQuantity.value > availableStock) {
+        showStockAlert('Vượt quá số lượng có sẵn', `Phiên bản này hiện chỉ còn tối đa ${availableStock} sản phẩm.`);
+        selectedQuantity.value = availableStock;
         return;
     }
 
@@ -580,6 +621,7 @@ const addToCart = async () => {
             toastStore.showToast('Đã thêm vào giỏ hàng', 'success');
             cartStore.openDrawer();
         } else {
+            showStockAlert('Không thể thêm vào giỏ hàng', result?.message || 'Số lượng sản phẩm trong kho không đủ.');
             toastStore.showToast(result?.message || 'Không thể thêm vào giỏ hàng', 'warning');
         }
     } catch (e) {
@@ -822,7 +864,7 @@ const toggleFavorite = () => {
                                         inputmode="numeric"
                                         class="qty-input"
                                         :value="selectedQuantity"
-                                        maxlength="3"
+                                        maxlength="6"
                                         @keypress="onlyNumbers"
                                         @input="onQuantityInput"
                                         @blur="onQuantityBlur"

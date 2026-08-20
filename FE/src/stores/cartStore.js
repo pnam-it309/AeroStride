@@ -103,18 +103,46 @@ export const useCartStore = defineStore('cart', {
          */
         async addToCart(product) {
             const existing = this.items.find((i) => i.idChiTietSanPham === product.idChiTietSanPham);
+            const currentQty = existing ? existing.soLuong : 0;
+            const addingQty = product.soLuong || 1;
+            const stock = product.soLuongTonKho;
+
+            // Kiểm tra nếu số lượng thêm vào cộng với số lượng đã có trong giỏ vượt quá tồn kho
+            if (stock !== undefined && stock !== null && stock >= 0) {
+                if (stock === 0) {
+                    return {
+                        success: false,
+                        message: 'Sản phẩm đã hết hàng trong kho.'
+                    };
+                }
+                if (currentQty >= stock) {
+                    return {
+                        success: false,
+                        message: `Bạn đã thêm toàn bộ ${stock} sản phẩm có sẵn vào giỏ hàng. Không thể thêm tiếp.`
+                    };
+                }
+                if (currentQty + addingQty > stock) {
+                    const remaining = stock - currentQty;
+                    return {
+                        success: false,
+                        message: `Kho chỉ còn ${stock} sản phẩm. Bạn đã có ${currentQty} trong giỏ, chỉ có thể thêm tối đa ${remaining} sản phẩm nữa.`
+                    };
+                }
+            }
+
             if (existing) {
-                existing.soLuong += product.soLuong || 1;
+                existing.soLuong += addingQty;
                 // Cập nhật metadata nếu được cung cấp
                 if (product.tenSanPham) existing.tenSanPham = product.tenSanPham;
                 if (product.hinhAnh) existing.hinhAnh = product.hinhAnh;
                 if (product.tenMauSac) existing.tenMauSac = product.tenMauSac;
                 if (product.tenKichThuoc) existing.tenKichThuoc = product.tenKichThuoc;
                 if (product.giaBan) existing.giaBan = product.giaBan;
+                if (product.soLuongTonKho !== undefined) existing.soLuongTonKho = product.soLuongTonKho;
             } else {
                 this.items.push({
                     idChiTietSanPham: product.idChiTietSanPham,
-                    soLuong: product.soLuong || 1,
+                    soLuong: addingQty,
                     // Lưu metadata tạm thời để hiển thị ngay trong drawer
                     tenSanPham: product.tenSanPham || null,
                     hinhAnh: product.hinhAnh || null,
@@ -131,7 +159,7 @@ export const useCartStore = defineStore('cart', {
             if (!syncResult.success) {
                 // Nếu backend từ chối (hết hàng...), rollback
                 if (existing) {
-                    existing.soLuong -= product.soLuong || 1;
+                    existing.soLuong -= addingQty;
                 } else {
                     this.items = this.items.filter((i) => i.idChiTietSanPham !== product.idChiTietSanPham);
                 }
