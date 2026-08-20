@@ -1,3 +1,10 @@
+## [1.42.7](https://github.com/pnam-it309/AeroStride/compare/v1.42.6...v1.42.7) (2026-08-20)
+
+
+### Bug Fixes
+
+* **ci:** pass EXPO_TOKEN env to eas build step ([20d42c5](https://github.com/pnam-it309/AeroStride/commit/20d42c5384e2b4add745185b04374bd6cdacb885))
+
 ## [1.42.6](https://github.com/pnam-it309/AeroStride/compare/v1.42.5...v1.42.6) (2026-08-20)
 
 
