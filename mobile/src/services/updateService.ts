@@ -45,10 +45,9 @@ export async function checkForUpdate(): Promise<UpdateCheckResult | null> {
   const installedVersion = Application.nativeApplicationVersion ?? '0.0.0';
   const installedBuildNumber = parseInt(Application.nativeBuildVersion ?? '0', 10) || 0;
 
-  const versionDiff = compareSemver(manifest.version, installedVersion);
-  const updateAvailable =
-    versionDiff > 0 ||
-    (versionDiff === 0 && (manifest.buildNumber ?? 0) > installedBuildNumber);
+  // Same-version JS changes are delivered silently via EAS Update (OTA),
+  // so only prompt for a new APK when the app version itself increases.
+  const updateAvailable = compareSemver(manifest.version, installedVersion) > 0;
 
   return { updateAvailable, installedVersion, installedBuildNumber, manifest };
 }
