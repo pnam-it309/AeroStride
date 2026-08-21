@@ -1,3 +1,10 @@
+# [1.44.0](https://github.com/pnam-it309/AeroStride/compare/v1.43.0...v1.44.0) (2026-08-21)
+
+
+### Features
+
+* **mobile:** add EAS workflow for manual Android builds ([68ee82e](https://github.com/pnam-it309/AeroStride/commit/68ee82ede80a727ebc9be54484b173d9c9a0d06a))
+
 # [1.43.0](https://github.com/pnam-it309/AeroStride/compare/v1.42.7...v1.43.0) (2026-08-21)
 
 
