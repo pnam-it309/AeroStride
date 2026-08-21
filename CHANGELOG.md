@@ -1,3 +1,10 @@
+# [1.45.0](https://github.com/pnam-it309/AeroStride/compare/v1.44.0...v1.45.0) (2026-08-21)
+
+
+### Features
+
+* **mobile:** configure EAS Update (OTA) with preview/production channels ([a406bdc](https://github.com/pnam-it309/AeroStride/commit/a406bdca084cc59855026bc9300ad42b32a9f7f0))
+
 # [1.44.0](https://github.com/pnam-it309/AeroStride/compare/v1.43.0...v1.44.0) (2026-08-21)
 
 
