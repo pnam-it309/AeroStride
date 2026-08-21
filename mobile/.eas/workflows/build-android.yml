@@ -1,0 +1,14 @@
+name: Build Android APK
+
+on:
+  # Run manually from the Expo dashboard (Workflows → Run workflow)
+  # or with: eas workflow:run .eas/workflows/build-android.yml
+  workflow_dispatch: {}
+
+jobs:
+  build_android:
+    name: Build Android APK (preview)
+    type: build
+    params:
+      platform: android
+      profile: preview
