@@ -41,4 +41,22 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          eas build --platform android --profile preview --non-interactive
+          eas build --platform android --profile preview --non-interactive --json > eas-build-result.json
+          cat eas-build-result.json
+
+      - name: Update APK link in README & version manifest
+        working-directory: ./mobile
+        run: node scripts/update-release-info.js eas-build-result.json
+
+      - name: Commit updated release info
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898026+github-actions[bot]@users.noreply.github.com"
+          git add README.md mobile/app-version.json
+          if git diff --cached --quiet; then
+            echo "No release info changes to commit."
+          else
+            git commit -m "chore(mobile): update APK download link to latest build [skip ci]"
+            git pull --rebase origin main
+            git push origin main
+          fi
