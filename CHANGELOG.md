@@ -1,3 +1,10 @@
+## [1.45.1](https://github.com/pnam-it309/AeroStride/compare/v1.45.0...v1.45.1) (2026-08-21)
+
+
+### Bug Fixes
+
+* **ci:** serialize mobile builds and make release-info commit race-safe ([3a5e1ee](https://github.com/pnam-it309/AeroStride/commit/3a5e1ee99ef9b64d537c0a041c9f52908eba6a55))
+
 # [1.45.0](https://github.com/pnam-it309/AeroStride/compare/v1.44.0...v1.45.0) (2026-08-21)
 
 
