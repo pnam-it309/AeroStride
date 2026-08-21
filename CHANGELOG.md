@@ -1,3 +1,10 @@
+# [1.43.0](https://github.com/pnam-it309/AeroStride/compare/v1.42.7...v1.43.0) (2026-08-21)
+
+
+### Features
+
+* **mobile:** in-app update modal + auto-updating APK link in README ([85d9d00](https://github.com/pnam-it309/AeroStride/commit/85d9d009bcefd936149f094df87c1992612d2449))
+
 ## [1.42.7](https://github.com/pnam-it309/AeroStride/compare/v1.42.6...v1.42.7) (2026-08-20)
 
 
