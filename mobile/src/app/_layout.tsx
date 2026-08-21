@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
+import { UpdateModal } from '@/components/UpdateModal';
 import { Colors } from '@/constants/theme';
 
 export default function RootLayout() {
@@ -18,6 +19,7 @@ export default function RootLayout() {
     <AuthProvider>
       <CartProvider>
         <StatusBar style={isDark ? 'light' : 'dark'} />
+        <UpdateModal />
         <Stack
           screenOptions={{
             headerShown: false,

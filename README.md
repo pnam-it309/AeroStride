@@ -15,6 +15,8 @@ Người dùng và nhà phát triển có thể tải trực tiếp file cài đ
 - 🌐 **Xem chi tiết bản build trên Expo Cloud:** [Expo Build #7fdd67df](https://expo.dev/accounts/pnamits-team/projects/aerostride/builds/7fdd67df-9619-40a0-b8c8-cc43297610ae)
 - 📲 **Cài đặt nhanh:** Quét mã QR hoặc mở link trên trình duyệt điện thoại Android để tải và cài đặt trực tiếp.
 
+> 🔄 Link tải APK ở trên được **tự động cập nhật** sau mỗi lần build (CI/CD). Ứng dụng đã cài trên máy cũng sẽ **tự hiện thông báo cập nhật** khi có phiên bản mới.
+
 ---
 
 ## 🛠️ Cấu trúc dự án
