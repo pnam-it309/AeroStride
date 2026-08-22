@@ -15,6 +15,7 @@ import { dichVuFile } from '@/services/core/dichVuFile';
 import { useNotifications } from '@/services/notificationService';
 import { getBackendErrorMessage } from '@/utils/errorUtils';
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs, TableEmptyState, FormattedNumberField } from '@/components/common';
+import { useUIStore } from '@/stores/ui';
 import SafeProductImage from './components/SafeProductImage.vue';
 import VariantFormModal from '@/views/modules/bien-the-san-pham/components/VariantFormModal.vue';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
@@ -61,6 +62,7 @@ import { useVariantTable } from '@/composables/useVariantTable';
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
+const uiStore = useUIStore();
 
 const MIN_VARIANT_PRICE = 0;
 const DEFAULT_MAX_VARIANT_PRICE = 100000000;
@@ -68,7 +70,6 @@ const DEFAULT_MAX_VARIANT_PRICE = 100000000;
 // Các mẫu giày theo năm có thể giống thương hiệu/chất liệu/đế/cổ/mục đích nhưng khác tên và biến thể.
 const DUPLICATE_ATTRIBUTE_CHECK_ENABLED = false;
 
-const loading = ref(false);
 const saving = ref(false);
 const attributeCreateState = ref({});
 
@@ -1614,7 +1615,7 @@ const loadProduct = async (id) => {
 // Các watcher đồng bộ giá/phân trang/lựa chọn của bảng biến thể đã nằm trong useVariantTable.
 
 const loadInitData = async () => {
-    loading.value = true;
+    uiStore.startProgress();
     try {
         await fetchFormOptions();
 
@@ -1655,7 +1656,7 @@ const loadInitData = async () => {
         console.error('Error initializing form:', error);
         addNotification({ title: 'Lỗi', subtitle: 'Không thể tải dữ liệu khởi tạo', color: 'error' });
     } finally {
-        loading.value = false;
+        uiStore.stopProgress();
     }
 };
 
@@ -2097,14 +2098,8 @@ const handleSave = async () => {
             </div>
         </div>
 
-        <v-row v-if="loading">
-            <v-col cols="12" class="text-center py-16">
-                <v-progress-circular indeterminate color="primary" size="64" />
-                <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải thông tin sản phẩm...</div>
-            </v-col>
-        </v-row>
 
-        <v-row v-else class="form-grid">
+        <v-row class="form-grid">
             <v-col cols="12" :lg="isEditMode ? 12 : 8" class="d-flex flex-column">
                 <v-card class="premium-card h-100 d-flex flex-column">
                     <v-card-text class="pa-8 flex-grow-1">
@@ -2803,7 +2798,13 @@ const handleSave = async () => {
                                                             class="text-left font-weight-bold text-slate-800 text-caption"
                                                             style="border-bottom: 1px solid #cbd5e1 !important"
                                                         >
-                                                            Thuộc tính (Màu/Size)
+                                                            Màu sắc
+                                                        </th>
+                                                        <th
+                                                            class="text-left font-weight-bold text-slate-800 text-caption"
+                                                            style="border-bottom: 1px solid #cbd5e1 !important"
+                                                        >
+                                                            Kích cỡ
                                                         </th>
                                                         <th
                                                             class="text-left font-weight-bold text-slate-800 text-caption"
@@ -2842,15 +2843,13 @@ const handleSave = async () => {
                                                                         border: '1px solid #94a3b8'
                                                                     }"
                                                                 ></div>
-                                                                <div>
-                                                                    <div class="text-body-2 font-weight-bold">
-                                                                        {{ getVariantSizeLabel(variant.idKichThuoc) }}
-                                                                    </div>
-                                                                    <div class="text-caption text-slate-500">
-                                                                        {{ getVariantColorLabel(variant.idMauSac) }}
-                                                                    </div>
-                                                                </div>
+                                                                <span class="text-body-2 font-weight-medium">
+                                                                    {{ getVariantColorLabel(variant.idMauSac) }}
+                                                                </span>
                                                             </div>
+                                                        </td>
+                                                        <td class="font-weight-bold text-slate-700 text-body-2">
+                                                            {{ getVariantSizeLabel(variant.idKichThuoc) }}
                                                         </td>
                                                         <td>
                                                             <FormattedNumberField

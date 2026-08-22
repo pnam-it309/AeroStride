@@ -1038,12 +1038,11 @@ watch(
     }
 );
 
-// Chỉ tải lại danh sách voucher khi đổi hóa đơn/khách hàng.
-// Biến động tổng tiền được OrderSummaryPanel tính up-sale bằng computed từ danh sách đã có.
+// Tải lại danh sách voucher + tự động áp dụng tốt nhất khi đổi hóa đơn, khách hàng, hoặc tổng tiền.
 const voucherRealtimeKey = computed(() => {
     const order = selectedOrder.value;
     if (!order?.id) return '';
-    return `${order.id}|${order.idKhachHang || ''}`;
+    return `${order.id}|${order.idKhachHang || ''}|${order.tongTien || 0}`;
 });
 
 watch(
@@ -1329,17 +1328,6 @@ const onAddProduct = async (product) => {
 };
 
 const onUpdateQty = async (item, delta, inputEventTarget = null) => {
-    if (delta > 0 && item.isGiaCu) {
-        if (inputEventTarget) {
-            inputEventTarget.value = item.soLuong;
-        }
-        addNotification({
-            title: 'Cảnh báo',
-            subtitle: 'Sản phẩm này có giá cũ đã thay đổi. Không thể tăng số lượng với giá cũ, vui lòng thêm sản phẩm với giá mới.',
-            color: 'warning'
-        });
-        return;
-    }
 
     let newQty = item.soLuong + delta;
     if (newQty < 1) {

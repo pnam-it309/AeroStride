@@ -242,21 +242,21 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
 
     private AdminDotGiamGiaResponse toResponse(DotGiamGia d) {
         if (d == null) return null;
-        AdminDotGiamGiaResponse res = new AdminDotGiamGiaResponse(
-                d.getId(),
-                d.getMa(),
-                d.getTen(),
-                d.getLoaiGiamGia(),
-                d.getSoTienGiam(),
-                d.getDieuKienGiamGia(),
-                d.getNgayBatDau(),
-                d.getNgayKetThuc(),
-                d.getMucUuTien(),
-                d.getTrangThai() != null ? d.getTrangThai().name() : null,
-                d.getMoTa()
-        );
-        res.setIsFlashSale(d.getIsFlashSale());
-        res.setKhungGio(d.getKhungGio());
-        return res;
+        return AdminDotGiamGiaResponse.builder()
+                .id(d.getId())
+                .ma(d.getMa())
+                .ten(d.getTen())
+                .loaiGiamGia(d.getLoaiGiamGia())
+                .soTienGiam(d.getSoTienGiam())
+                .dieuKienGiamGia(d.getDieuKienGiamGia())
+                .giamToiDa(d.getGiamToiDa())
+                .ngayBatDau(d.getNgayBatDau())
+                .ngayKetThuc(d.getNgayKetThuc())
+                .mucUuTien(d.getMucUuTien())
+                .trangThai(d.getTrangThai() != null ? d.getTrangThai().name() : null)
+                .moTa(d.getMoTa())
+                .isFlashSale(d.getIsFlashSale())
+                .khungGio(d.getKhungGio())
+                .build();
     }
 }

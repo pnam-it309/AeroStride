@@ -17,6 +17,7 @@ public class AdminDotGiamGiaResponse {
     private String loaiGiamGia;
     private BigDecimal soTienGiam;
     private BigDecimal dieuKienGiamGia;
+    private BigDecimal giamToiDa;
     private Long ngayBatDau;
     private Long ngayKetThuc;
     private Integer mucUuTien;
@@ -25,17 +26,4 @@ public class AdminDotGiamGiaResponse {
     private Boolean isFlashSale;
     private String khungGio;
 
-    public AdminDotGiamGiaResponse(String id, String ma, String ten, String loaiGiamGia, BigDecimal soTienGiam, BigDecimal dieuKienGiamGia, Long ngayBatDau, Long ngayKetThuc, Integer mucUuTien, String trangThai, String moTa) {
-        this.id = id;
-        this.ma = ma;
-        this.ten = ten;
-        this.loaiGiamGia = loaiGiamGia;
-        this.soTienGiam = soTienGiam;
-        this.dieuKienGiamGia = dieuKienGiamGia;
-        this.ngayBatDau = ngayBatDau;
-        this.ngayKetThuc = ngayKetThuc;
-        this.mucUuTien = mucUuTien;
-        this.trangThai = trangThai;
-        this.moTa = moTa;
-    }
 }

@@ -6,6 +6,7 @@ import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import { generateRandomCode } from '@/utils/codeGenerator';
 import { useNotifications } from '@/services/notificationService';
 import { AdminBreadcrumbs, AdminConfirm } from '@/components/common';
+import { useUIStore } from '@/stores/ui';
 import { ArrowLeftIcon, DeviceFloppyIcon, UserIcon } from 'vue-tabler-icons';
 
 import QrcodeStream from '@/components/common/CCCDQRScanner';
@@ -22,6 +23,7 @@ const FB_DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/000000000000000000000
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
+const uiStore = useUIStore();
 import { getNameRules } from '@/utils/validators';
 
 // Helper to clean location names for better matching
@@ -34,7 +36,6 @@ const cleanName = (s) => {
         .trim();
 };
 
-const loading = ref(false);
 const saving = ref(false);
 const isEditMode = ref(false);
 const isDetailView = computed(() => route.path.includes('/detail') || route.query.view === 'true');
@@ -173,7 +174,7 @@ const confirmDialog = ref({
 });
 
 const loadEmployee = async (id) => {
-    loading.value = true;
+    uiStore.startProgress();
     try {
         const data = await dichVuNhanVien.layChiTietNhanVien(id);
 
@@ -236,7 +237,7 @@ const loadEmployee = async (id) => {
         console.error('Error loading employee:', error);
         addNotification({ title: 'Lỗi', subtitle: 'Không thể tải thông tin nhân viên', color: 'error' });
     } finally {
-        loading.value = false;
+        uiStore.stopProgress();
     }
 };
 
@@ -475,7 +476,7 @@ const dobRules = [
 ];
 
 onMounted(async () => {
-    loading.value = true;
+    uiStore.startProgress();
     fetchProvinces();
     try {
         const rolesData = await dichVuNhanVien.layDanhSachPhanQuyen();
@@ -503,7 +504,7 @@ onMounted(async () => {
     } catch (e) {
         console.error(e);
     } finally {
-        loading.value = false;
+        uiStore.stopProgress();
     }
 });
 </script>
@@ -576,12 +577,6 @@ onMounted(async () => {
             </v-card>
         </v-dialog>
 
-        <v-row v-if="loading">
-            <v-col cols="12" class="text-center py-16">
-                <v-progress-circular indeterminate color="primary" size="64" width="6"></v-progress-circular>
-                <div class="mt-4 text-subtitle-1 font-weight-medium text-slate-500">Đang tải hồ sơ nhân viên...</div>
-            </v-col>
-        </v-row>
 
         <v-row class="pb-16">
             <v-col cols="12" lg="8">

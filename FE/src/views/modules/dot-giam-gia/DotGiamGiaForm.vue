@@ -14,8 +14,10 @@ import {
     AdminFilter,
     AdminPagination,
     TableEmptyState,
-    FormattedPercentField
+    FormattedPercentField,
+    FormattedNumberField
 } from '@/components/common';
+import { useUIStore } from '@/stores/ui';
 import { getColorHexByName } from '@/utils/colorDictionary';
 import { CalendarIcon, GiftIcon, InfoCircleIcon, TagIcon, BoxIcon, SearchIcon, TrashIcon } from 'vue-tabler-icons';
 import { PATH } from '@/router/routePaths';
@@ -27,6 +29,7 @@ import SafeProductImage from '@/views/modules/san-pham/components/SafeProductIma
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
+const uiStore = useUIStore();
 
 const toLocalDatetimeString = (timestamp) => {
     if (!timestamp) return '';
@@ -40,7 +43,6 @@ const toLocalDatetimeString = (timestamp) => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-const loading = ref(false);
 const saving = ref(false);
 
 // Attribute Options
@@ -454,6 +456,7 @@ const form = ref({
     loaiGiamGia: 'PHAN_TRAM',
     soTienGiam: 0,
     dieuKienGiamGia: 0,
+    giamToiDa: null,
     mucUuTien: 0,
     ngayBatDau: '',
     ngayKetThuc: '',
@@ -461,7 +464,7 @@ const form = ref({
 });
 
 const init = async () => {
-    loading.value = true;
+    uiStore.startProgress();
     try {
         const [maxPrice, brandData, colorData, sizeData, materialData] = await Promise.all([
             dichVuSanPham.layGiaLonNhat().catch(() => 6500000),
@@ -513,7 +516,7 @@ const init = async () => {
         console.error('Error during init:', e);
         addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.LOAD_DATA, color: 'error' });
     } finally {
-        loading.value = false;
+        uiStore.stopProgress();
     }
 };
 
@@ -658,14 +661,8 @@ onMounted(init);
             </div>
         </div>
 
-        <v-row v-if="loading">
-            <v-col cols="12" class="text-center py-16">
-                <v-progress-circular indeterminate color="primary" size="64" />
-                <div class="mt-4 text-subtitle-1 font-weight-medium text-slate-500">Đang tải cấu hình...</div>
-            </v-col>
-        </v-row>
 
-        <v-row v-else class="match-height-row pb-16">
+        <v-row class="match-height-row pb-16">
             <v-col cols="12" md="5" class="d-flex flex-column">
                 <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1" style="min-height: 580px">
                     <v-card-text class="pa-8 d-flex flex-column h-100">
@@ -711,6 +708,30 @@ onMounted(init);
                                     v-model="form.soTienGiam"
                                     :readonly="isDetailView"
                                     placeholder="0"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                />
+                            </div>
+
+                            <div class="mb-5">
+                                <div class="field-label">Giảm tối đa (đ)</div>
+                                <FormattedNumberField
+                                    v-model="form.giamToiDa"
+                                    :readonly="isDetailView"
+                                    placeholder="Nhập mức giảm tối đa (để trống nếu không giới hạn)"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                />
+                            </div>
+
+                            <div class="mb-5">
+                                <div class="field-label">Giá trị sản phẩm tối thiểu (đ)</div>
+                                <FormattedNumberField
+                                    v-model="form.dieuKienGiamGia"
+                                    :readonly="isDetailView"
+                                    placeholder="Nhập giá trị sản phẩm tối thiểu để áp dụng"
                                     variant="outlined"
                                     density="compact"
                                     hide-details

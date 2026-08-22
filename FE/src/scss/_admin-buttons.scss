@@ -110,9 +110,10 @@
     }
 }
 
-.admin-btn-export {
+.admin-btn-export,
+.admin-btn-qr {
     @extend .add-btn-primary;
-    background: #107c41 !important; // Excel Green
+    background: #107c41 !important; // Excel / QR Green
     color: #ffffff !important;
     box-shadow: 0 4px 14px rgba(16, 124, 65, 0.3) !important;
 

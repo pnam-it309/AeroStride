@@ -314,7 +314,10 @@ onMounted(() => loadCampaigns());
                         </div>
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
+                        <div class="text-primary font-weight-bold">Giảm {{ getDiscountValueDisplay(item) }}</div>
+                        <div v-if="item.giamToiDa" class="text-caption text-slate-500 mt-0.5" style="font-size: 11px !important;">
+                            Tối đa: {{ formatCurrency(item.giamToiDa) }}
+                        </div>
                     </td>
                     <td class="data-cell text-center">
                         <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayBatDau)">

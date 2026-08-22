@@ -30,6 +30,8 @@ public class AdminDotGiamGiaRequest {
 
     private BigDecimal dieuKienGiamGia;
 
+    private BigDecimal giamToiDa;
+
     @NotNull(message = "Ngày bắt đầu không được để trống")
     private Long ngayBatDau;
 

@@ -8,6 +8,7 @@ import { PATH } from '@/router/routePaths';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { useNotifications } from '@/services/notificationService';
 import { AdminBreadcrumbs, AdminConfirm, AdminPagination, AdminFilter, TableEmptyState } from '@/components/common';
+import { useUIStore } from '@/stores/ui';
 import {
     ChevronLeftIcon,
     DeviceFloppyIcon,
@@ -27,6 +28,7 @@ import { getNameRules } from '@/utils/validators';
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
+const uiStore = useUIStore();
 
 const toLocalDatetimeString = (timestamp) => {
     if (!timestamp) return '';
@@ -40,7 +42,6 @@ const toLocalDatetimeString = (timestamp) => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-const loading = ref(false);
 const saving = ref(false);
 const errors = ref({});
 const isDetailMode = computed(() => !!route.params.id && route.path.includes('/detail'));
@@ -194,7 +195,7 @@ const init = async () => {
     }
 
     if (isEditMode.value || isDetailMode.value) {
-        loading.value = true;
+        uiStore.startProgress();
         try {
             const data = await dichVuPhieuGiamGia.layChiTietPhieuGiamGia(route.params.id);
             form.value = {
@@ -208,7 +209,7 @@ const init = async () => {
             selectedCustomerIds.value = data.listIdKhachHang || [];
             if (data.soLuong === -1) isInfinite.value = true;
         } finally {
-            loading.value = false;
+            uiStore.stopProgress();
         }
     } else {
         try {
@@ -405,14 +406,8 @@ onMounted(init);
             </div>
         </div>
 
-        <v-row v-if="loading">
-            <v-col cols="12" class="text-center py-16">
-                <v-progress-circular indeterminate color="primary" size="64" />
-                <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải cấu hình phiếu giảm giá...</div>
-            </v-col>
-        </v-row>
 
-        <v-row v-if="!loading" class="pb-16 animate-fade-in">
+        <v-row class="pb-16 animate-fade-in">
             <!-- SINGLE CARD FORM (Image 2 style - Optimized layout) -->
             <v-col cols="12">
                 <v-card class="filter-card elevation-0 border border-slate-200 mb-6">

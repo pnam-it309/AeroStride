@@ -34,6 +34,9 @@ public class DotGiamGia extends BaseCodeNameEntity {
     @Column(name = "dieu_kien_giam_gia")
     private BigDecimal dieuKienGiamGia;
 
+    @Column(name = "giam_toi_da")
+    private BigDecimal giamToiDa;
+
     @Column(name = "ngay_bat_dau")
     private Long ngayBatDau;
 

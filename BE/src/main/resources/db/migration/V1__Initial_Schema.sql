@@ -274,6 +274,7 @@ CREATE TABLE IF NOT EXISTS dot_giam_gia (
     loai_giam_gia VARCHAR(50),
     so_tien_giam DECIMAL(20,2),
     dieu_kien_giam_gia DECIMAL(20,2),
+    giam_toi_da DECIMAL(20,2),
     ngay_bat_dau BIGINT,
     ngay_ket_thuc BIGINT,
     muc_uu_tien INT,

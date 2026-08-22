@@ -73,6 +73,13 @@ public final class DiscountPriceUtils {
                 ? basePrice.multiply(discountValue).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP)
                 : discountValue;
 
+        if (isPercentDiscount(activeRelation.getDotGiamGia()) && activeRelation.getDotGiamGia().getGiamToiDa() != null) {
+            BigDecimal maxDiscount = activeRelation.getDotGiamGia().getGiamToiDa();
+            if (maxDiscount.compareTo(BigDecimal.ZERO) > 0 && discountAmount.compareTo(maxDiscount) > 0) {
+                discountAmount = maxDiscount;
+            }
+        }
+
         BigDecimal discountedPrice = basePrice.subtract(discountAmount);
         return discountedPrice.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : discountedPrice;
     }

@@ -6,6 +6,7 @@ import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { generateRandomCode } from '@/utils/codeGenerator';
 import { useNotifications } from '@/services/notificationService';
 import { AdminBreadcrumbs, AdminConfirm, TableEmptyState } from '@/components/common';
+import { useUIStore } from '@/stores/ui';
 import { ArrowLeftIcon, UserIcon, MapPinIcon, NoteIcon, PlusIcon, EditIcon, TrashIcon, StarIcon, ReceiptIcon } from 'vue-tabler-icons';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useLocation } from '@/composables/useLocation';
@@ -19,6 +20,7 @@ import { useAddressMapping } from '@/composables/useAddressMapping';
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
+const uiStore = useUIStore();
 import { getNameRules } from '@/utils/validators';
 
 const formRef = ref(null);
@@ -28,7 +30,6 @@ const { provinces, districts, wards, loadingLocations, fetchProvinces, fetchDist
     useLocation();
 const { mapCodesToNames, isLegacyAddressId, createLegacyAddressId, parseAddressString } = useAddressMapping();
 
-const loading = ref(false);
 const saving = ref(false);
 const isEditMode = ref(false);
 const isDetailView = computed(() => route.path.includes('/detail') || route.query.view === 'true');
@@ -91,7 +92,7 @@ const confirmDialog = ref({
 });
 
 const loadCustomer = async (id) => {
-    loading.value = true;
+    uiStore.startProgress();
     try {
         const data = await dichVuKhachHang.layChiTietKhachHang(id);
 
@@ -176,7 +177,7 @@ const loadCustomer = async (id) => {
         console.error('Error loading customer:', error);
         addNotification({ title: 'Lỗi', subtitle: 'Không thể tải thông tin khách hàng', color: 'error' });
     } finally {
-        loading.value = false;
+        uiStore.stopProgress();
     }
 };
 
