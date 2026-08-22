@@ -1,0 +1,1 @@
+import{a as n}from"./statusConstants-C927ZoM0.js";n.ACTIVE,n.INACTIVE;const A=e=>{if(e==null)return!1;if(typeof e=="number")return e===0;if(typeof e=="boolean")return e===!0;const r=String(e).toUpperCase();return r===n.ACTIVE||r==="ACTIVE"||r==="HOAT_DONG"||r==="0"||r==="TRUE"},o=e=>A(e)?n.LABELS.ACTIVE:n.LABELS.INACTIVE;export{o as g,A as i};

@@ -1,0 +1,1 @@
+import{o as t,ci as e,aM as s,am as n}from"./index-Cp4fnmAg.js";function i(){const o=s(!1);return t(()=>{window.requestAnimationFrame(()=>{o.value=!0})}),{ssrBootStyles:n(()=>o.value?void 0:{transition:"none !important"}),isBooted:e(o)}}export{i as u};

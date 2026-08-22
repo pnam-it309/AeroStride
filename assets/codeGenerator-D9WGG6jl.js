@@ -1,0 +1,1 @@
+import{f as r,bs as o}from"./index-Cp4fnmAg.js";const a=async t=>{try{return(await r.get(`${o.CODE_GENERATE}?type=${t}`,{silent:!0})).data}catch(e){return console.error("Lỗi khi tạo mã từ BE",e),""}};export{a as g};
