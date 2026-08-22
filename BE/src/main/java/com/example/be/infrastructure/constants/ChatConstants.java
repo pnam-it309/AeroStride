@@ -26,6 +26,7 @@ public final class ChatConstants {
     public static final String ERR_CONVERSATION_NOT_ACCEPTED = "Cuộc trò chuyện chưa được tiếp nhận";
     public static final String ERR_SENDER_NOT_FOUND = "Người gửi không tồn tại";
     public static final String ERR_CONVERSATION_NOT_FOUND = "Cuộc hội thoại không tồn tại";
+    public static final String ERR_CONVERSATION_CLOSED = "Phiên trò chuyện đã đóng. Chỉ khách hàng mới có thể mở lại bằng cách gửi tin nhắn mới.";
     
     // Display Names
     public static final String DEFAULT_STAFF_NAME = "Nhân viên";

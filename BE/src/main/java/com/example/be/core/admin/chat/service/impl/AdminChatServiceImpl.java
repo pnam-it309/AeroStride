@@ -97,7 +97,8 @@ public class AdminChatServiceImpl implements AdminChatService {
 
     private String getConversationName(CuocHoiThoai c, String currentUsername) {
         if (c.getKhachHang() != null) {
-            return c.getKhachHang().getTenTaiKhoan();
+            String ten = c.getKhachHang().getTen();
+            return (ten != null && !ten.trim().isEmpty()) ? ten : c.getKhachHang().getTenTaiKhoan();
         }
         
         if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
@@ -348,11 +349,26 @@ public class AdminChatServiceImpl implements AdminChatService {
                 .collect(Collectors.toList());
     }
 
+    /** Nhân viên là mọi người gửi không phải khách hàng và không phải hệ thống. */
+    private boolean isStaffSender(String senderType) {
+        return !ChatConstants.SENDER_TYPE_CUSTOMER.equals(senderType)
+                && !ChatConstants.SENDER_TYPE_SYSTEM.equals(senderType);
+    }
+
+    private boolean isClosedCustomerConversation(CuocHoiThoai conversation) {
+        return conversation.getLoaiHoiThoai() != CuocHoiThoai.LoaiHoiThoai.INTERNAL
+                && conversation.getTrangThaiHoiThoai() == CuocHoiThoai.TrangThaiHoiThoai.CLOSED;
+    }
+
     @Override
     @Transactional
     public boolean acceptConversation(String id) {
         CuocHoiThoai conversation = conversationRepository.findById(id).orElse(null);
         if (conversation != null) {
+            // Phiên đã đóng: nhân viên không được mở lại, chỉ khách hàng mới mở lại được
+            if (isClosedCustomerConversation(conversation)) {
+                return false;
+            }
             conversation.setDaChapNhan(true);
             conversation.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.ACTIVE);
             
@@ -532,8 +548,13 @@ public class AdminChatServiceImpl implements AdminChatService {
             conversation = conversationRepository.save(conversation);
         }
 
-        // Nếu là nhân viên gửi, tự động tiếp nhận / mở lại cuộc trò chuyện
-        if (ChatConstants.SENDER_TYPE_STAFF.equals(senderType) && conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
+        // Nhân viên không được nhắn (và qua đó mở lại) vào phiên đã đóng
+        if (isStaffSender(senderType) && isClosedCustomerConversation(conversation)) {
+            throw new RuntimeException(ChatConstants.ERR_CONVERSATION_CLOSED);
+        }
+
+        // Nếu là nhân viên gửi, tự động tiếp nhận cuộc trò chuyện đang chờ
+        if (isStaffSender(senderType) && conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
             if (Boolean.FALSE.equals(conversation.getDaChapNhan()) || conversation.getTrangThaiHoiThoai() != CuocHoiThoai.TrangThaiHoiThoai.ACTIVE) {
                 conversation.setDaChapNhan(true);
                 conversation.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.ACTIVE);

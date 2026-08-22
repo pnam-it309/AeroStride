@@ -245,6 +245,11 @@ const activeChatRoleLabel = computed(() => {
     return 'Nhân viên';
 });
 
+const isChatClosed = computed(() => {
+    if (!activeChat.value) return false;
+    return activeChat.value.type !== CHAT_TYPES.INTERNAL && activeChat.value.status === 'CLOSED';
+});
+
 const activeChatRoleColor = computed(() => {
     if (!activeChat.value) return '';
     if (activeChat.value.type === CHAT_TYPES.CUSTOMER) return '#1e257c';
@@ -568,8 +573,14 @@ const sendMessage = async () => {
     const textToSend = newMessage.value ? newMessage.value.trim() : null;
     const currentUsername = authStore.user?.username || 'STAFF';
 
+    // Phiên đã đóng: nhân viên không được nhắn để mở lại, chỉ khách hàng mới mở lại được
+    if (isChatClosed.value) {
+        notificationStore.showError('Phiên trò chuyện đã đóng. Chỉ khách hàng mới có thể mở lại bằng cách gửi tin nhắn mới.');
+        return;
+    }
+
     // Tự động chuyển trạng thái cuộc hội thoại sang ACTIVE khi nhân viên gửi tin
-    if (activeChat.value.type !== CHAT_TYPES.INTERNAL && (activeChat.value.status === 'PENDING' || activeChat.value.status === 'CLOSED')) {
+    if (activeChat.value.type !== CHAT_TYPES.INTERNAL && activeChat.value.status === 'PENDING') {
         activeChat.value.status = 'ACTIVE';
         activeChat.value.isAccepted = true;
         isAccepted.value = true;
@@ -1209,15 +1220,9 @@ const handleRefresh = async () => {
                                     Phiên trò chuyện đã đóng
                                 </span>
                             </div>
-                            <v-btn
-                                color="#1e257c"
-                                variant="outlined"
-                                size="small"
-                                class="text-none font-weight-bold rounded-pill px-3"
-                                @click="acceptChat"
-                            >
-                                <v-icon size="16" class="mr-1">mdi-refresh</v-icon> Mở lại trò chuyện
-                            </v-btn>
+                            <span style="font-size: 0.78rem; color: #94a3b8;">
+                                Chỉ khách hàng mới có thể mở lại bằng tin nhắn mới
+                            </span>
                         </div>
 
                         <v-row no-gutters align="center">
@@ -1244,7 +1249,8 @@ const handleRefresh = async () => {
                                 </div>
                                 <v-textarea
                                     v-model="newMessage"
-                                    :placeholder="activeChat.status === 'PENDING' && activeChat.type !== CHAT_TYPES.INTERNAL ? 'Nhập tin nhắn để tự động tiếp nhận...' : (activeChat.status === 'CLOSED' && activeChat.type !== CHAT_TYPES.INTERNAL ? 'Nhập tin nhắn để mở lại cuộc trò chuyện...' : 'Nhập tin nhắn...')"
+                                    :placeholder="activeChat.status === 'PENDING' && activeChat.type !== CHAT_TYPES.INTERNAL ? 'Nhập tin nhắn để tự động tiếp nhận...' : (isChatClosed ? 'Phiên trò chuyện đã đóng' : 'Nhập tin nhắn...')"
+                                    :disabled="isChatClosed"
                                     rows="1"
                                     auto-grow
                                     variant="solo"
@@ -1265,6 +1271,7 @@ const handleRefresh = async () => {
                                 class="ml-2"
                                 @click="triggerImageUpload"
                                 title="Gửi ảnh"
+                                :disabled="isChatClosed"
                             ></v-btn>
 
                             <v-btn
@@ -1275,7 +1282,7 @@ const handleRefresh = async () => {
                                 class="ml-2 rounded-xl text-white"
                                 @click="sendMessage"
                                 :loading="isSendingImage"
-                                :disabled="!newMessage.trim() && !imagePreview"
+                                :disabled="isChatClosed || (!newMessage.trim() && !imagePreview)"
                             ></v-btn>
                         </v-row>
                     </div>
