@@ -21,7 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { productService, type Product, type ProductFilters, type ProductSearchParams } from '@/services/productService';
+import { productService, type Product, type ProductFilters, type ProductSearchParams, type FilterOption } from '@/services/productService';
 import { fileService } from '@/services/fileService';
 import { formatPriceRange } from '@/utils/format';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -133,6 +133,49 @@ export default function ShopScreen() {
     { label: 'Giá giảm', sortBy: 'giaBanThapNhat', sortDir: 'desc' },
     { label: 'Tên A-Z', sortBy: 'ten', sortDir: 'asc' },
   ];
+
+  const renderFilterSection = (
+    title: string,
+    options?: FilterOption[],
+    selectedId?: string,
+    onToggle?: (id: string, active: boolean) => void
+  ) => {
+    if (!options || options.length === 0) return null;
+    return (
+      <View style={styles.filterSection}>
+        <Text style={[styles.filterLabel, { color: theme.text }]}>{title}</Text>
+        <View style={styles.filterChips}>
+          {options.map((item) => {
+            const isActive = selectedId != null && selectedId === item.id;
+            return (
+              <Pressable
+                key={item.id}
+                style={[
+                  styles.filterChip,
+                  {
+                    backgroundColor: isActive ? Brand.primary + '20' : theme.surfaceElevated,
+                    borderColor: isActive ? Brand.primary : theme.border,
+                  },
+                ]}
+                onPress={() => onToggle?.(item.id, isActive)}
+              >
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[styles.filterChipText, { color: isActive ? Brand.primary : theme.textSecondary }]}
+                >
+                  {item.ten}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
+
+  const hasAnyFilter =
+    (filters?.thuongHieus?.length ?? 0) > 0 || (filters?.danhMucs?.length ?? 0) > 0;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
@@ -258,79 +301,26 @@ export default function ShopScreen() {
             </View>
 
             <ScrollView style={styles.modalBody}>
-              {filters?.thuongHieus && filters.thuongHieus.length > 0 && (
-                <View style={styles.filterSection}>
-                  <Text style={[styles.filterLabel, { color: theme.text }]}>Thương hiệu</Text>
-                  <View style={styles.filterChips}>
-                    {filters.thuongHieus.map((item) => {
-                      const isActive = selectedFilters.thuongHieuId === item.id;
-                      return (
-                        <Pressable
-                          key={item.id}
-                          style={[
-                            styles.filterChip,
-                            {
-                              backgroundColor: isActive ? Brand.primary + '20' : theme.surfaceElevated,
-                              borderColor: isActive ? Brand.primary : theme.border,
-                            },
-                          ]}
-                          onPress={() =>
-                            setSelectedFilters((prev) => ({
-                              ...prev,
-                              thuongHieuId: isActive ? undefined : item.id,
-                            }))
-                          }
-                        >
-                          <Text
-                            style={[
-                              styles.filterChipText,
-                              { color: isActive ? Brand.primary : theme.textSecondary },
-                            ]}
-                          >
-                            {item.ten}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </View>
+              {renderFilterSection(
+                'Thương hiệu',
+                filters?.thuongHieus,
+                selectedFilters.thuongHieuId,
+                (id, active) =>
+                  setSelectedFilters((prev) => ({ ...prev, thuongHieuId: active ? undefined : id }))
               )}
 
-              {filters?.danhMucs && filters.danhMucs.length > 0 && (
-                <View style={styles.filterSection}>
-                  <Text style={[styles.filterLabel, { color: theme.text }]}>Danh mục</Text>
-                  <View style={styles.filterChips}>
-                    {filters.danhMucs.map((item) => {
-                      const isActive = selectedFilters.danhMucId === item.id;
-                      return (
-                        <Pressable
-                          key={item.id}
-                          style={[
-                            styles.filterChip,
-                            {
-                              backgroundColor: isActive ? Brand.primary + '20' : theme.surfaceElevated,
-                              borderColor: isActive ? Brand.primary : theme.border,
-                            },
-                          ]}
-                          onPress={() =>
-                            setSelectedFilters((prev) => ({
-                              ...prev,
-                              danhMucId: isActive ? undefined : item.id,
-                            }))
-                          }
-                        >
-                          <Text
-                            style={[
-                              styles.filterChipText,
-                              { color: isActive ? Brand.primary : theme.textSecondary },
-                            ]}
-                          >
-                            {item.ten}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
+              {renderFilterSection(
+                'Danh mục',
+                filters?.danhMucs,
+                selectedFilters.danhMucId,
+                (id, active) =>
+                  setSelectedFilters((prev) => ({ ...prev, danhMucId: active ? undefined : id }))
+              )}
+
+              {!hasAnyFilter && (
+                <View style={styles.emptyFilters}>
+                  <Ionicons name="funnel-outline" size={32} color={theme.textTertiary} />
+                  <Text style={[styles.emptyFiltersText, { color: theme.textSecondary }]}>Chưa có bộ lọc nào</Text>
                 </View>
               )}
             </ScrollView>
@@ -503,8 +493,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
+    alignItems: 'flex-start',
   },
   filterChip: {
+    maxWidth: SCREEN_WIDTH * 0.55,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.one + 2,
     borderRadius: BorderRadius.full,
@@ -512,6 +504,15 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: FontSizes.sm,
+  },
+  emptyFilters: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.six,
+    gap: Spacing.two,
+  },
+  emptyFiltersText: {
+    fontSize: FontSizes.base,
   },
   modalFooter: {
     flexDirection: 'row',

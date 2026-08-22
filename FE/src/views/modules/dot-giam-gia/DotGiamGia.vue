@@ -266,6 +266,7 @@ onMounted(() => loadCampaigns());
                 { text: 'Mã đợt giảm giá', width: '110px' },
                 { text: 'Tên đợt giảm giá', width: '180px' },
                 { text: 'Giá trị giảm', width: '140px' },
+                { text: 'Giảm tối đa', width: '130px' },
                 { text: 'Ngày bắt đầu', width: '160px' },
                 { text: 'Ngày kết thúc', width: '160px' },
                 { text: 'Trạng thái', width: '130px' },
@@ -315,9 +316,12 @@ onMounted(() => loadCampaigns());
                     </td>
                     <td class="data-cell text-center">
                         <div class="text-primary font-weight-bold">Giảm {{ getDiscountValueDisplay(item) }}</div>
-                        <div v-if="item.giamToiDa" class="text-caption text-slate-500 mt-0.5" style="font-size: 11px !important;">
-                            Tối đa: {{ formatCurrency(item.giamToiDa) }}
+                    </td>
+                    <td class="data-cell text-center">
+                        <div v-if="item.giamToiDa" class="text-slate-700 font-weight-medium">
+                            {{ formatCurrency(item.giamToiDa) }}
                         </div>
+                        <span v-else class="text-slate-400">--</span>
                     </td>
                     <td class="data-cell text-center">
                         <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayBatDau)">

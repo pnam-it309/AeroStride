@@ -163,7 +163,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
                 .map(this::toResponse)
                 .collect(Collectors.toList());
 
-        String[] headers = {"STT", "Mã", "Tên", "Giá trị (%)", "Ngày bắt đầu", "Ngày kết thúc", "Trạng thái"};
+        String[] headers = {"STT", "Mã", "Tên", "Giá trị (%)", "Giảm tối đa (đ)", "Ngày bắt đầu", "Ngày kết thúc", "Trạng thái"};
 
         try {
             return ExcelUtils.exportToExcel("Đợt giảm giá", headers, data, item -> new Object[]{
@@ -171,6 +171,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
                 item.getMa(),
                 item.getTen(),
                 item.getSoTienGiam(),
+                item.getGiamToiDa(),
                 item.getNgayBatDau(),
                 item.getNgayKetThuc()
             });

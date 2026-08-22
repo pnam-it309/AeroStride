@@ -455,7 +455,6 @@ const form = ref({
     moTa: '',
     loaiGiamGia: 'PHAN_TRAM',
     soTienGiam: 0,
-    dieuKienGiamGia: 0,
     giamToiDa: null,
     mucUuTien: 0,
     ngayBatDau: '',
@@ -720,18 +719,6 @@ onMounted(init);
                                     v-model="form.giamToiDa"
                                     :readonly="isDetailView"
                                     placeholder="Nhập mức giảm tối đa (để trống nếu không giới hạn)"
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                />
-                            </div>
-
-                            <div class="mb-5">
-                                <div class="field-label">Giá trị sản phẩm tối thiểu (đ)</div>
-                                <FormattedNumberField
-                                    v-model="form.dieuKienGiamGia"
-                                    :readonly="isDetailView"
-                                    placeholder="Nhập giá trị sản phẩm tối thiểu để áp dụng"
                                     variant="outlined"
                                     density="compact"
                                     hide-details
