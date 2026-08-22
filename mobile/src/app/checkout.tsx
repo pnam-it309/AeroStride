@@ -2,7 +2,7 @@
  * Checkout Screen - Order placement form
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -10,7 +10,6 @@ import {
   FlatList,
   ScrollView,
   Pressable,
-  Alert,
   Modal,
   KeyboardAvoidingView,
   Platform,
@@ -24,6 +23,7 @@ import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constant
 import { useTheme } from '@/hooks/use-theme';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useFeedback } from '@/context/FeedbackContext';
 import { orderService, type CheckoutRequest, type Voucher } from '@/services/orderService';
 import { profileService } from '@/services/profileService';
 import { getApiErrorMessage } from '@/services/apiClient';
@@ -43,6 +43,7 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const { items, cartTotal, clearCart } = useCart();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { showToast, confirm } = useFeedback();
 
   const [tenNguoiNhan, setTenNguoiNhan] = useState('');
   const [soDienThoai, setSoDienThoai] = useState('');
@@ -56,14 +57,21 @@ export default function CheckoutScreen() {
   const [voucherModal, setVoucherModal] = useState(false);
 
   // Require authentication for checkout (BE requires ROLE_KHACH_HANG)
+  const authPromptShown = useRef(false);
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      Alert.alert('Cần đăng nhập', 'Vui lòng đăng nhập để đặt hàng', [
-        { text: 'Để sau', style: 'cancel', onPress: () => router.back() },
-        { text: 'Đăng nhập', onPress: () => router.replace('/login') },
-      ]);
+    if (!authLoading && !isAuthenticated && !authPromptShown.current) {
+      authPromptShown.current = true;
+      confirm({
+        title: 'Cần đăng nhập',
+        message: 'Vui lòng đăng nhập để đặt hàng',
+        confirmText: 'Đăng nhập',
+        cancelText: 'Để sau',
+      }).then((confirmed) => {
+        if (confirmed) router.replace('/login');
+        else router.back();
+      });
     }
-  }, [authLoading, isAuthenticated, router]);
+  }, [authLoading, isAuthenticated, router, confirm]);
 
   // Prefill delivery info from profile
   useEffect(() => {
@@ -101,15 +109,15 @@ export default function CheckoutScreen() {
 
   const handleCheckout = async () => {
     if (!tenNguoiNhan.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập tên người nhận');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập tên người nhận' });
       return;
     }
     if (!soDienThoai.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập số điện thoại' });
       return;
     }
     if (!diaChi.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập địa chỉ giao hàng');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập địa chỉ giao hàng' });
       return;
     }
 
@@ -139,7 +147,7 @@ export default function CheckoutScreen() {
       }
     } catch (error: any) {
       const message = getApiErrorMessage(error, 'Không thể đặt hàng. Vui lòng thử lại.');
-      Alert.alert('Lỗi', message);
+      showToast({ type: 'error', title: 'Lỗi', message });
     } finally {
       setLoading(false);
     }
@@ -151,30 +159,28 @@ export default function CheckoutScreen() {
       const payUrl = await orderService.createVnPayUrl(orderId, returnUrl);
       await openBrowserAsync(payUrl);
     } catch {
-      Alert.alert(
-        'Thanh toán',
-        'Đơn hàng đã được tạo nhưng chưa hoàn tất thanh toán VNPay. Bạn có thể thanh toán lại trong chi tiết đơn hàng.'
-      );
+      showToast({
+        type: 'warning',
+        title: 'Thanh toán',
+        message:
+          'Đơn hàng đã được tạo nhưng chưa hoàn tất thanh toán VNPay. Bạn có thể thanh toán lại trong chi tiết đơn hàng.',
+        duration: 4000,
+      });
     } finally {
       router.dismissAll();
       router.push('/orders');
     }
   };
 
-  const showSuccess = () => {
-    Alert.alert('🎉 Đặt hàng thành công', 'Đơn hàng của bạn đã được ghi nhận!', [
-      {
-        text: 'Xem đơn hàng',
-        onPress: () => {
-          router.dismissAll();
-          router.push('/orders');
-        },
-      },
-      {
-        text: 'Tiếp tục mua sắm',
-        onPress: () => router.dismissAll(),
-      },
-    ]);
+  const showSuccess = async () => {
+    const viewOrders = await confirm({
+      title: '🎉 Đặt hàng thành công',
+      message: 'Đơn hàng của bạn đã được ghi nhận!',
+      confirmText: 'Xem đơn hàng',
+      cancelText: 'Tiếp tục mua sắm',
+    });
+    router.dismissAll();
+    if (viewOrders) router.push('/orders');
   };
 
   return (

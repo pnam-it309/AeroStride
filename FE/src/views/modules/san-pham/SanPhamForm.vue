@@ -403,7 +403,7 @@ const visibleVariantItems = computed(() => {
 });
 
 const createVariantPage = ref(1);
-const createVariantPageSize = ref(5);
+const createVariantPageSize = ref(10);
 const createVariantTotalPages = computed(() => Math.max(Math.ceil(visibleVariantItems.value.length / createVariantPageSize.value), 1));
 const paginatedVisibleVariantItems = computed(() => {
     const start = (createVariantPage.value - 1) * createVariantPageSize.value;

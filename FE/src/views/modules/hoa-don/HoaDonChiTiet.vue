@@ -102,7 +102,7 @@ watch(
 
 const productPagination = ref({
     page: 1,
-    size: 5
+    size: 10
 });
 
 const availableColors = computed(() => {

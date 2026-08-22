@@ -58,7 +58,7 @@ const filterEndDate = ref(null);
 const isInfinite = ref(false);
 const pagination = ref({
     page: 1,
-    size: 5
+    size: 10
 });
 
 const totalPages = computed(() => Math.ceil(filteredCustomers.value.length / pagination.value.size));

@@ -12,7 +12,7 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
     const loading = ref(true);
     const pagination = ref({
         page: 1,
-        size: 5,
+        size: 10,
         totalElements: 0,
         totalPages: 0
     });

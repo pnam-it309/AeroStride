@@ -13,7 +13,7 @@ import { reactive, ref } from 'vue';
  * @param {{ pageSize?: number, onError?: (error: any) => void, onLoaded?: () => void }} [options]
  *        onLoaded: chạy sau mỗi lần tải trang thành công (vd. đồng bộ lựa chọn, cập nhật meta header).
  */
-export function useServerPagination(fetchPage, { pageSize = 5, onError, onLoaded } = {}) {
+export function useServerPagination(fetchPage, { pageSize = 10, onError, onLoaded } = {}) {
     const items = ref([]);
     const loading = ref(true);
     const pagination = reactive({ page: 1, size: pageSize });

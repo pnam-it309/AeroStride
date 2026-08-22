@@ -31,7 +31,7 @@ const size = computed({
     }
 });
 
-const pageSizes = [5, 10, 20, 50, 100];
+const pageSizes = [10, 20, 50, 100];
 
 const startItem = computed(() => (page.value - 1) * props.pageSize + 1);
 const endItem = computed(() => Math.min(startItem.value + props.currentSize - 1, props.totalElements));

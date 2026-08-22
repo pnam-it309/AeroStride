@@ -3,7 +3,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, Pressable, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Pressable, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { openBrowserAsync } from 'expo-web-browser';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useFeedback } from '@/context/FeedbackContext';
 import { orderService, type Order, type OrderItem } from '@/services/orderService';
 import { reviewService } from '@/services/reviewService';
 import { profileService } from '@/services/profileService';
@@ -26,6 +27,7 @@ export default function OrderDetailScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { showToast, confirm } = useFeedback();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,41 +83,41 @@ export default function OrderDetailScreen() {
       }
     } catch (err: any) {
       console.warn('Failed to load order:', err);
-      Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể tải đơn hàng'));
+      showToast({ type: 'error', title: 'Lỗi', message: getApiErrorMessage(err, 'Không thể tải đơn hàng') });
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, showToast]);
 
   useEffect(() => {
     loadOrder();
   }, [loadOrder]);
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     if (!order) return;
-    Alert.alert('Hủy đơn hàng', 'Bạn có chắc muốn hủy đơn hàng này?', [
-      { text: 'Không', style: 'cancel' },
-      {
-        text: 'Hủy đơn',
-        style: 'destructive',
-        onPress: async () => {
-          setCancelling(true);
-          try {
-            await orderService.cancelOrder(order.id);
-            setOrder((prev) =>
-              prev
-                ? { ...prev, trangThai: 'DA_HUY', trangThaiDisplay: 'Đã hủy', choPhepHuy: false, choPhepSuaThongTin: false }
-                : null
-            );
-            Alert.alert('Thành công', 'Đơn hàng đã được hủy');
-          } catch (err: any) {
-            Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể hủy đơn hàng'));
-          } finally {
-            setCancelling(false);
-          }
-        },
-      },
-    ]);
+    const confirmed = await confirm({
+      title: 'Hủy đơn hàng',
+      message: 'Bạn có chắc muốn hủy đơn hàng này?',
+      confirmText: 'Hủy đơn',
+      cancelText: 'Không',
+      destructive: true,
+    });
+    if (!confirmed) return;
+
+    setCancelling(true);
+    try {
+      await orderService.cancelOrder(order.id);
+      setOrder((prev) =>
+        prev
+          ? { ...prev, trangThai: 'DA_HUY', trangThaiDisplay: 'Đã hủy', choPhepHuy: false, choPhepSuaThongTin: false }
+          : null
+      );
+      showToast({ type: 'success', title: 'Thành công', message: 'Đơn hàng đã được hủy' });
+    } catch (err: any) {
+      showToast({ type: 'error', title: 'Lỗi', message: getApiErrorMessage(err, 'Không thể hủy đơn hàng') });
+    } finally {
+      setCancelling(false);
+    }
   };
 
   const handleRepayVnPay = async () => {
@@ -129,7 +131,7 @@ export default function OrderDetailScreen() {
         await loadOrder();
       }
     } catch (err: any) {
-      Alert.alert('Lỗi thanh toán', getApiErrorMessage(err, 'Không thể tạo liên kết thanh toán VNPay'));
+      showToast({ type: 'error', title: 'Lỗi thanh toán', message: getApiErrorMessage(err, 'Không thể tạo liên kết thanh toán VNPay') });
     } finally {
       setPayingVnPay(false);
     }
@@ -147,15 +149,15 @@ export default function OrderDetailScreen() {
   const handleSaveShipping = async () => {
     if (!order) return;
     if (!editTenNguoiNhan.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập tên người nhận');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập tên người nhận' });
       return;
     }
     if (!editSoDienThoai.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập số điện thoại' });
       return;
     }
     if (!editDiaChi.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập địa chỉ nhận hàng');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập địa chỉ nhận hàng' });
       return;
     }
 
@@ -169,9 +171,9 @@ export default function OrderDetailScreen() {
       });
       setOrder(updated);
       setEditShippingModalVisible(false);
-      Alert.alert('Thành công', 'Đã cập nhật thông tin giao nhận thành công (1/1 lần)');
+      showToast({ type: 'success', title: 'Thành công', message: 'Đã cập nhật thông tin giao nhận thành công (1/1 lần)' });
     } catch (err: any) {
-      Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể cập nhật thông tin giao nhận'));
+      showToast({ type: 'error', title: 'Lỗi', message: getApiErrorMessage(err, 'Không thể cập nhật thông tin giao nhận') });
     } finally {
       setSavingShipping(false);
     }
@@ -187,7 +189,7 @@ export default function OrderDetailScreen() {
   const handleSubmitReview = async () => {
     if (!selectedReviewItem || !customerId || !order) return;
     if (!comment.trim()) {
-      Alert.alert('Thông báo', 'Vui lòng nhập nội dung đánh giá của bạn');
+      showToast({ type: 'warning', title: 'Thông báo', message: 'Vui lòng nhập nội dung đánh giá của bạn' });
       return;
     }
 
@@ -205,9 +207,9 @@ export default function OrderDetailScreen() {
         ...prev,
         [selectedReviewItem.idSanPham]: false,
       }));
-      Alert.alert('Cảm ơn bạn', 'Đánh giá của bạn đã được gửi thành công!');
+      showToast({ type: 'success', title: 'Cảm ơn bạn', message: 'Đánh giá của bạn đã được gửi thành công!' });
     } catch (err: any) {
-      Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể gửi đánh giá'));
+      showToast({ type: 'error', title: 'Lỗi', message: getApiErrorMessage(err, 'Không thể gửi đánh giá') });
     } finally {
       setSubmittingReview(false);
     }

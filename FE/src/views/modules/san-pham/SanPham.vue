@@ -39,7 +39,7 @@ const {
     load: loadProducts,
     reload: reloadProducts
 } = useServerPagination((pageable) => dichVuSanPham.layDanhSachSanPham({ ...pageable, ...buildProductFilterParams() }), {
-    pageSize: 5,
+    pageSize: 10,
     onLoaded: () => syncProductSelection(),
     onError: () => {
         clearProductSelection();

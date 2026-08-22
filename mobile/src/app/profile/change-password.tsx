@@ -3,11 +3,12 @@
  */
 
 import React, { useState } from 'react';
-import { StyleSheet, View, Pressable, Text, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, Pressable, Text, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useFeedback } from '@/context/FeedbackContext';
 import { profileService } from '@/services/profileService';
 import { getApiErrorMessage } from '@/services/apiClient';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -17,6 +18,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 export default function ChangePasswordScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { showToast } = useFeedback();
 
   const [matKhauCu, setMatKhauCu] = useState('');
   const [matKhauMoi, setMatKhauMoi] = useState('');
@@ -26,23 +28,23 @@ export default function ChangePasswordScreen() {
 
   const handleSubmit = async () => {
     if (!matKhauCu || !matKhauMoi || !xacNhanMatKhau) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập đầy đủ thông tin' });
       return;
     }
     if (matKhauMoi.length < 6) {
-      Alert.alert('Lỗi', 'Mật khẩu mới phải có ít nhất 6 ký tự');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
       return;
     }
     if (matKhauMoi !== xacNhanMatKhau) {
-      Alert.alert('Lỗi', 'Mật khẩu xác nhận không khớp');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Mật khẩu xác nhận không khớp' });
       return;
     }
     setSaving(true);
     try {
       await profileService.changePassword({ matKhauCu, matKhauMoi, xacNhanMatKhau });
-      Alert.alert('Thành công', 'Đã đổi mật khẩu');
+      showToast({ type: 'success', title: 'Thành công', message: 'Đã đổi mật khẩu' });
     } catch (err: any) {
-      Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể đổi mật khẩu'));
+      showToast({ type: 'error', title: 'Lỗi', message: getApiErrorMessage(err, 'Không thể đổi mật khẩu') });
     } finally {
       setSaving(false);
     }

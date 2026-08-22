@@ -77,7 +77,7 @@ export default function RegisterScreen() {
       router.replace('/(tabs)/account');
     } catch (error: any) {
       const message = getApiErrorMessage(error, `Đăng ký qua ${provider} thất bại`);
-      Alert.alert('Đăng ký thất bại', message);
+      showToast({ type: 'error', title: 'Đăng ký thất bại', message });
     } finally {
       setSocialLoading(null);
     }
@@ -85,19 +85,19 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!form.ten.trim() || !form.tenTaiKhoan.trim() || !form.email.trim() || !form.sdt.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập đầy đủ thông tin' });
       return;
     }
     if (form.tenTaiKhoan.trim().length < 4) {
-      Alert.alert('Lỗi', 'Tên tài khoản phải có ít nhất 4 ký tự');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Tên tài khoản phải có ít nhất 4 ký tự' });
       return;
     }
     if (form.matKhau.length < 6) {
-      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Mật khẩu phải có ít nhất 6 ký tự' });
       return;
     }
     if (form.matKhau !== form.xacNhan) {
-      Alert.alert('Lỗi', 'Mật khẩu xác nhận không khớp');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Mật khẩu xác nhận không khớp' });
       return;
     }
 
@@ -114,7 +114,7 @@ export default function RegisterScreen() {
       router.back();
     } catch (error: any) {
       const message = getApiErrorMessage(error, 'Đăng ký thất bại. Vui lòng thử lại.');
-      Alert.alert('Đăng ký thất bại', message);
+      showToast({ type: 'error', title: 'Đăng ký thất bại', message });
     } finally {
       setLoading(false);
     }

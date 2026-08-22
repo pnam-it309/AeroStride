@@ -76,7 +76,7 @@ const {
     load: fetchSelectedProduct,
     reload: reloadVariants
 } = useServerPagination((pageable) => dichVuBienThe.layBienThePhanTrang({ ...pageable, ...buildVariantFilterParams() }), {
-    pageSize: 5,
+    pageSize: 10,
     onLoaded: () => updateSelectedProductMeta(),
     onError: () => {
         clearVariantSelection();

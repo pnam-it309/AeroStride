@@ -9,6 +9,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -71,7 +72,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
     message: string;
   }
   const [toastState, setToastState] = useState<ToastState | null>(null);
-  const toastAnim = useRef(new Animated.Value(0)).current;
+  const toastAnim = useMemo(() => new Animated.Value(0), []);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -112,7 +113,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
   }
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const resolverRef = useRef<((value: boolean) => void) | null>(null);
-  const dialogAnim = useRef(new Animated.Value(0)).current;
+  const dialogAnim = useMemo(() => new Animated.Value(0), []);
 
   const confirm = useCallback(
     ({ title, message, confirmText, cancelText, destructive = false }: ConfirmOptions) =>

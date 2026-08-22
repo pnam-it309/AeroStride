@@ -55,7 +55,7 @@ const materials = ref([]);
 const selectionLoading = ref(false);
 const productsList = ref([]); // Danh sách sản phẩm trên trang hiện tại
 const selectionPage = ref(1);
-const selectionPageSize = ref(5);
+const selectionPageSize = ref(10);
 const selectionTotalElements = ref(0);
 const selectionTotalPages = ref(1);
 const searchQuery = ref('');
@@ -319,7 +319,7 @@ const detailFilters = ref({
 });
 
 const bottomPage = ref(1);
-const bottomPageSize = ref(5);
+const bottomPageSize = ref(10);
 const bottomTableSelection = ref([]); // Bulk action xóa ở bảng dưới
 
 const resetDetailFilters = () => {

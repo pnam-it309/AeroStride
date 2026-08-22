@@ -9,7 +9,6 @@ import {
   Text,
   ScrollView,
   Pressable,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -20,6 +19,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/context/AuthContext';
+import { useFeedback } from '@/context/FeedbackContext';
 import { profileService, type CustomerProfile } from '@/services/profileService';
 import { getApiErrorMessage } from '@/services/apiClient';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -31,6 +31,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const { showToast } = useFeedback();
 
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,18 +55,18 @@ export default function ProfileScreen() {
       })
       .catch((err) => {
         console.warn('Failed to load profile:', err);
-        Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể tải hồ sơ'));
+        showToast({ type: 'error', title: 'Lỗi', message: getApiErrorMessage(err, 'Không thể tải hồ sơ') });
       })
       .finally(() => setLoading(false));
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, showToast]);
 
   const handleSave = async () => {
     if (!ten.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập họ và tên');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập họ và tên' });
       return;
     }
     if (!sdt.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập số điện thoại' });
       return;
     }
     setSaving(true);
@@ -73,9 +74,9 @@ export default function ProfileScreen() {
       await profileService.updateProfile({ ten: ten.trim(), sdt: sdt.trim() });
       setProfile((prev) => (prev ? { ...prev, ten: ten.trim(), sdt: sdt.trim() } : prev));
       setEditing(false);
-      Alert.alert('Thành công', 'Đã cập nhật hồ sơ');
+      showToast({ type: 'success', title: 'Thành công', message: 'Đã cập nhật hồ sơ' });
     } catch (err: any) {
-      Alert.alert('Lỗi', getApiErrorMessage(err, 'Không thể cập nhật hồ sơ'));
+      showToast({ type: 'error', title: 'Lỗi', message: getApiErrorMessage(err, 'Không thể cập nhật hồ sơ') });
     } finally {
       setSaving(false);
     }

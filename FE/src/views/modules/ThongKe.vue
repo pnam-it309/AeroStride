@@ -447,9 +447,8 @@ const productStats = ref([]);
 const productSearchKeyword = ref('');
 const productSortBy = ref('bestSelling');
 const productPage = ref(1);
-const productPageSize = ref(5);
+const productPageSize = ref(10);
 const productPageSizeOptions = [
-    { title: '5 dòng', value: 5 },
     { title: '10 dòng', value: 10 },
     { title: '20 dòng', value: 20 }
 ];

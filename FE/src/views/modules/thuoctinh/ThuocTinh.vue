@@ -37,7 +37,7 @@ const statusFilter = ref(null);
 
 const pagination = ref({
     page: 1,
-    size: 5,
+    size: 10,
     totalElements: 0,
     totalPages: 1
 });

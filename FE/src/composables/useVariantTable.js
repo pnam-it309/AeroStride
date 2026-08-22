@@ -29,7 +29,7 @@ export function useVariantTable(
     });
     const variantPriceBounds = ref({ min: minPrice, max: maxPrice });
     const variantPage = ref(1);
-    const variantPageSize = ref(5);
+    const variantPageSize = ref(10);
     const selectedVariantKeys = ref([]);
 
     const variantPriceStep = computed(() => (variantPriceBounds.value.max > 1000000 ? 50000 : 1000));

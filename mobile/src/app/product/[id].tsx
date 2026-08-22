@@ -81,7 +81,7 @@ export default function ProductDetailScreen() {
         console.warn('Failed to load reviews:', err);
       })
       .finally(() => setReviewsLoading(false));
-  }, [id]);
+  }, [id, showToast]);
 
   // Unique colors from variants
   const availableColors = useMemo(() => {
