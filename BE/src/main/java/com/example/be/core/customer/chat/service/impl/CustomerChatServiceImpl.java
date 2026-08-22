@@ -5,14 +5,20 @@ import com.example.be.core.customer.chat.repository.CustomerCuocHoiThoaiReposito
 import com.example.be.core.customer.chat.repository.CustomerTinNhanRepository;
 import com.example.be.core.customer.chat.service.CustomerChatService;
 import com.example.be.entity.CuocHoiThoai;
+import com.example.be.entity.KhachHang;
 import com.example.be.entity.TinNhan;
 import com.example.be.infrastructure.constants.ChatConstants;
+import com.example.be.infrastructure.constants.VaiTro;
+import com.example.be.repository.KhachHangRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -38,6 +44,7 @@ public class CustomerChatServiceImpl implements CustomerChatService {
 
     private final CustomerCuocHoiThoaiRepository conversationRepository;
     private final CustomerTinNhanRepository messageRepository;
+    private final KhachHangRepository khachHangRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
     private final com.example.be.core.admin.chat.service.AiChatService aiChatService;
@@ -84,6 +91,37 @@ public class CustomerChatServiceImpl implements CustomerChatService {
         return "data:image/jpeg;base64," + imageBase64;
     }
 
+    /** Trả về khách hàng đang đăng nhập (nếu có) dựa trên JWT. */
+    private KhachHang getLoggedInCustomer() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        boolean isCustomer = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(a -> a.equals("ROLE_" + VaiTro.CUSTOMER) || a.equals(VaiTro.CUSTOMER));
+        if (!isCustomer) {
+            return null;
+        }
+        return khachHangRepository.findByTenTaiKhoan(authentication.getName()).orElse(null);
+    }
+
+    /**
+     * Gắn cuộc hội thoại với tài khoản khách hàng đang đăng nhập
+     * để phía nhân viên thấy đúng tên thay vì "Khách vãng lai".
+     */
+    private CuocHoiThoai linkLoggedInCustomer(CuocHoiThoai conversation) {
+        if (conversation.getKhachHang() != null) {
+            return conversation;
+        }
+        KhachHang khachHang = getLoggedInCustomer();
+        if (khachHang == null) {
+            return conversation;
+        }
+        conversation.setKhachHang(khachHang);
+        return conversationRepository.save(conversation);
+    }
+
     @Override
     @Transactional
     public void sendMessage(String conversationId, String text, String senderType, String sessionId, String imageBase64) {
@@ -112,6 +150,10 @@ public class CustomerChatServiceImpl implements CustomerChatService {
             }
         } else {
             throw new RuntimeException("Phải có Conversation ID hoặc Session ID");
+        }
+
+        if (ChatConstants.SENDER_TYPE_CUSTOMER.equals(senderType)) {
+            conversation = linkLoggedInCustomer(conversation);
         }
 
         // Nếu khách hàng gửi tin nhắn vào cuộc trò chuyện đã đóng, tự động mở lại
