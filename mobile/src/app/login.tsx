@@ -11,7 +11,6 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -21,12 +20,14 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useFeedback } from '@/context/FeedbackContext';
 import { getApiErrorMessage } from '@/services/apiClient';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { login, socialLogin } = useAuth();
+  const { showToast } = useFeedback();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -36,7 +37,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập tài khoản và mật khẩu');
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập tài khoản và mật khẩu' });
       return;
     }
 
@@ -50,7 +51,7 @@ export default function LoginScreen() {
       router.back();
     } catch (error: any) {
       const message = getApiErrorMessage(error, 'Tài khoản hoặc mật khẩu không đúng');
-      Alert.alert('Đăng nhập thất bại', message);
+      showToast({ type: 'error', title: 'Đăng nhập thất bại', message });
     } finally {
       setLoading(false);
     }
@@ -72,7 +73,7 @@ export default function LoginScreen() {
     } catch (error: any) {
       const message =
         error?.response?.data?.message || `Đăng nhập qua ${provider} thất bại`;
-      Alert.alert('Đăng nhập thất bại', message);
+      showToast({ type: 'error', title: 'Đăng nhập thất bại', message });
     } finally {
       setSocialLoading(null);
     }

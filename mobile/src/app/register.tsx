@@ -11,7 +11,6 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -21,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useFeedback } from '@/context/FeedbackContext';
 import { getApiErrorMessage } from '@/services/apiClient';
 
 interface FieldConfig {
@@ -45,6 +45,7 @@ export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { register, socialLogin } = useAuth();
+  const { showToast } = useFeedback();
 
   const [form, setForm] = useState({
     ten: '',

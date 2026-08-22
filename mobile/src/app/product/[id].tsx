@@ -10,7 +10,6 @@ import {
   ScrollView,
   Pressable,
   Dimensions,
-  Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -20,6 +19,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useCart } from '@/context/CartContext';
+import { useFeedback } from '@/context/FeedbackContext';
 import { productService, type ProductDetail, type ProductVariant } from '@/services/productService';
 import { reviewService, type ReviewResponse } from '@/services/reviewService';
 import { fileService } from '@/services/fileService';
@@ -33,7 +33,8 @@ export default function ProductDetailScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { addToCart } = useCart();
+  const { addToCart, cartCount } = useCart();
+  const { showToast } = useFeedback();
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,7 +60,7 @@ export default function ProductDetailScreen() {
       })
       .catch((err) => {
         console.warn('Failed to load product:', err);
-        Alert.alert('Lỗi', 'Không thể tải sản phẩm');
+        showToast({ type: 'error', message: 'Không thể tải sản phẩm' });
       })
       .finally(() => setLoading(false));
 
@@ -149,7 +150,7 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = () => {
     if (!selectedVariant || !product) {
-      Alert.alert('Thông báo', 'Vui lòng chọn màu sắc và kích thước');
+      showToast({ type: 'warning', title: 'Thông báo', message: 'Vui lòng chọn màu sắc và kích thước' });
       return;
     }
 
@@ -165,9 +166,9 @@ export default function ProductDetailScreen() {
     });
 
     if (result.success) {
-      Alert.alert('Thành công', result.message);
+      showToast({ type: 'success', title: 'Thành công', message: result.message });
     } else {
-      Alert.alert('Lưu ý', result.message);
+      showToast({ type: 'warning', title: 'Lưu ý', message: result.message });
     }
   };
 
@@ -203,6 +204,19 @@ export default function ProductDetailScreen() {
             onPress={() => router.back()}
           >
             <Ionicons name="arrow-back" size={22} color={theme.text} />
+          </Pressable>
+
+          {/* Cart shortcut */}
+          <Pressable
+            style={[styles.cartButton, { top: insets.top + Spacing.two }]}
+            onPress={() => router.push('/cart' as any)}
+          >
+            <Ionicons name="cart-outline" size={22} color={theme.text} />
+            {cartCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cartCount > 99 ? '99+' : cartCount}</Text>
+              </View>
+            )}
           </Pressable>
 
           {images.length > 0 ? (
@@ -516,6 +530,36 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  cartButton: {
+    position: 'absolute',
+    right: Spacing.three,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    minWidth: 17,
+    height: 17,
+    paddingHorizontal: 4,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Brand.accent,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cartBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: FontWeights.bold,
   },
   placeholderImage: {
     width: '100%',

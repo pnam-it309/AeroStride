@@ -3,12 +3,13 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, View, Text, Pressable, FlatList, RefreshControl, Alert } from 'react-native';
+import { StyleSheet, View, Text, Pressable, FlatList, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useFeedback } from '@/context/FeedbackContext';
 import { voucherService } from '@/services/voucherService';
 import { type Voucher } from '@/services/orderService';
 import { formatCurrency, formatDate, formatVoucherValue } from '@/utils/format';
@@ -18,6 +19,7 @@ export default function VouchersScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { showToast } = useFeedback();
 
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,11 @@ export default function VouchersScreen() {
             <Pressable
               style={[styles.codeChip, { borderColor: Brand.primary }]}
               onPress={() => {
-                Alert.alert('Mã Voucher', `Mã "${item.ma}" đã sẵn sàng. Bạn có thể chọn voucher này khi đặt hàng!`);
+                showToast({
+                  type: 'info',
+                  title: 'Mã Voucher',
+                  message: `Mã "${item.ma}" đã sẵn sàng. Bạn có thể chọn voucher này khi đặt hàng!`,
+                });
               }}
             >
               <Ionicons name="copy-outline" size={12} color={Brand.primary} style={{ marginRight: 3 }} />

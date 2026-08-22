@@ -661,19 +661,19 @@ onMounted(init);
         </div>
 
 
-        <v-row class="match-height-row pb-16">
-            <v-col cols="12" md="5" class="d-flex flex-column">
-                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1" style="min-height: 580px">
+        <v-row class="campaign-equal-row pb-16" align="stretch">
+            <v-col cols="12" md="5" class="d-flex">
+                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 campaign-side-card">
                     <v-card-text class="pa-8 d-flex flex-column h-100">
-                        <div class="section-header d-flex align-center mb-6">
+                        <div class="section-header d-flex align-center mb-4">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
                                 <v-icon color="primary" size="18">mdi-ticket-percent</v-icon>
                             </div>
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin đợt giảm giá</span>
                         </div>
 
-                        <div class="form-fields-container flex-grow-1 d-flex flex-column justify-center">
-                            <div class="mb-5">
+                        <div class="form-fields-container flex-grow-1 d-flex flex-column">
+                            <div class="mb-3">
                                 <div class="field-label">Mã đợt giảm giá</div>
                                 <v-text-field
                                     v-model="form.ma"
@@ -686,7 +686,7 @@ onMounted(init);
                                 ></v-text-field>
                             </div>
 
-                            <div class="mb-5">
+                            <div class="mb-3">
                                 <div class="field-label">Tên đợt giảm giá <span class="text-error">*</span></div>
                                 <v-text-field
                                     v-model="form.ten"
@@ -696,12 +696,11 @@ onMounted(init);
                                     variant="outlined"
                                     density="compact"
                                     maxlength="255"
-                                    counter="255"
-                                    hide-details="auto"
+                                    hide-details
                                 ></v-text-field>
                             </div>
 
-                            <div class="mb-5">
+                            <div class="mb-3">
                                 <div class="field-label">Mức giảm giá (%) <span class="text-error">*</span></div>
                                 <FormattedPercentField
                                     v-model="form.soTienGiam"
@@ -713,7 +712,7 @@ onMounted(init);
                                 />
                             </div>
 
-                            <div class="mb-5">
+                            <div class="mb-3">
                                 <div class="field-label">Giảm tối đa (đ)</div>
                                 <FormattedNumberField
                                     v-model="form.giamToiDa"
@@ -725,7 +724,7 @@ onMounted(init);
                                 />
                             </div>
 
-                            <div class="mb-5">
+                            <div class="mb-3">
                                 <div class="field-label">Ngày bắt đầu <span class="text-error">*</span></div>
                                 <AppDatePicker
                                     v-model="form.ngayBatDau"
@@ -736,7 +735,7 @@ onMounted(init);
                                 />
                             </div>
 
-                            <div class="mb-5">
+                            <div class="mb-3">
                                 <div class="field-label">Ngày kết thúc <span class="text-error">*</span></div>
                                 <AppDatePicker
                                     v-model="form.ngayKetThuc"
@@ -748,7 +747,7 @@ onMounted(init);
                                 />
                             </div>
 
-                            <div class="mb-5">
+                            <div class="mo-ta-field flex-grow-1 d-flex flex-column">
                                 <div class="field-label">Mô tả</div>
                                 <v-textarea
                                     v-model="form.moTa"
@@ -756,10 +755,10 @@ onMounted(init);
                                     placeholder="Nhập mô tả đợt giảm giá (không bắt buộc)..."
                                     variant="outlined"
                                     density="compact"
-                                    rows="2"
+                                    rows="3"
                                     maxlength="1000"
-                                    counter="1000"
-                                    hide-details="auto"
+                                    hide-details
+                                    class="mo-ta-textarea flex-grow-1"
                                 ></v-textarea>
                             </div>
                         </div>
@@ -767,17 +766,17 @@ onMounted(init);
                 </v-card>
             </v-col>
 
-            <v-col cols="12" md="7" class="d-flex flex-column">
-                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1" style="min-height: 580px">
-                    <v-card-text class="pa-8">
-                        <div class="section-header d-flex align-center mb-6">
+            <v-col cols="12" md="7" class="d-flex">
+                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 campaign-side-card">
+                    <v-card-text class="pa-8 d-flex flex-column h-100">
+                        <div class="section-header d-flex align-center mb-4">
                             <div class="icon-blob bg-amber-lighten-5 mr-3">
                                 <v-icon color="amber-darken-3" size="18">mdi-package-variant</v-icon>
                             </div>
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách sản phẩm</span>
                         </div>
 
-                        <div class="d-flex align-center ga-3 mb-4 mt-2">
+                        <div class="d-flex align-center ga-3 mb-3">
                             <span class="text-slate-800 text-no-wrap" style="font-size: 14px">Tìm kiếm sản phẩm</span>
                             <v-text-field
                                 v-model="searchQuery"
@@ -796,7 +795,7 @@ onMounted(init);
                             </v-btn>
                         </div>
 
-                        <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="height: 380px">
+                        <div class="table-wrapper campaign-product-table border rounded-lg overflow-y-auto">
                             <div v-if="selectionLoading" class="d-flex flex-column align-center justify-center h-100 py-12">
                                 <v-progress-circular indeterminate color="primary" size="36" width="3" />
                                 <span class="text-caption text-slate-500 mt-2">Đang tải danh sách sản phẩm...</span>
@@ -1192,7 +1191,39 @@ onMounted(init);
 </template>
 
 <style scoped>
-/* All styles migrated to _admin-common.scss under .admin-module-page */
+.campaign-equal-row {
+    align-items: stretch;
+}
+
+.campaign-side-card {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+}
+
+.campaign-side-card :deep(.v-card-text) {
+    flex: 1 1 auto;
+}
+
+.campaign-product-table {
+    flex: 1 1 auto;
+    min-height: 280px;
+}
+
+.mo-ta-textarea {
+    flex: 1 1 auto;
+}
+
+.mo-ta-textarea :deep(.v-input__control),
+.mo-ta-textarea :deep(.v-field),
+.mo-ta-textarea :deep(.v-field__field) {
+    height: 100%;
+}
+
+.mo-ta-textarea :deep(textarea) {
+    height: 100% !important;
+}
 
 :deep(.v-field),
 :deep(.v-field__outline) {
