@@ -632,7 +632,10 @@ const getStoredActiveOrderId = () => {
 
 watch(
     () => selectedOrder.value?.id,
-    (id) => {
+    (id, oldId) => {
+        if (oldId && oldId !== id) {
+            flushPendingQtyUpdates();
+        }
         try {
             if (id) localStorage.setItem(POS_ACTIVE_ORDER_KEY, id);
             else localStorage.removeItem(POS_ACTIVE_ORDER_KEY);
@@ -870,6 +873,7 @@ onMounted(async () => {
 onUnmounted(() => {
     window.removeEventListener('keydown', handleGlobalKeyDown);
     stopScanner();
+    flushPendingQtyUpdates();
 });
 
 // Customer shipping address restore helpers.
@@ -1286,6 +1290,12 @@ const closeOrder = (orderId, index) => {
         action: async () => {
             confirmDialog.value.loading = true;
             try {
+                for (const [key, entry] of Array.from(pendingQtyUpdates.entries())) {
+                    if (entry.orderId === orderId) {
+                        clearTimeout(entry.timer);
+                        pendingQtyUpdates.delete(key);
+                    }
+                }
                 await dichVuDonHang.xoaDonHang(orderId);
                 orders.value.splice(index, 1);
                 clampActiveOrderIndex();
@@ -1327,19 +1337,64 @@ const onAddProduct = async (product) => {
     }
 };
 
-const onUpdateQty = async (item, delta, inputEventTarget = null) => {
+// Pending debounced quantity updates per cart item: key = `${orderId}_${itemId}`
+const pendingQtyUpdates = new Map();
 
-    let newQty = item.soLuong + delta;
+const flushPendingQtyUpdates = async () => {
+    if (pendingQtyUpdates.size === 0) return;
+    const entries = Array.from(pendingQtyUpdates.entries());
+    const promises = [];
+    for (const [key, entry] of entries) {
+        clearTimeout(entry.timer);
+        pendingQtyUpdates.delete(key);
+        promises.push(
+            dichVuDonHang
+                .updateSoLuong(entry.orderId, entry.itemId, entry.targetQty)
+                .then((updated) => {
+                    updateOrderInList(updated);
+                })
+                .catch((e) => {
+                    const item = selectedOrder.value?.listsHoaDonChiTiet?.find((it) => it.id === entry.itemId);
+                    if (item) {
+                        item.soLuong = entry.originalQty;
+                        item.thanhTien = entry.originalQty * (Number(item.donGia) || 0);
+                    }
+                    const errorMsg = e.response?.data?.message || MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK;
+                    addNotification({ title: 'Lỗi', subtitle: errorMsg, color: 'error' });
+                })
+        );
+    }
+    await Promise.allSettled(promises);
+};
+
+const onUpdateQty = async (item, delta, inputEventTarget = null) => {
+    if (!selectedOrder.value || !item) return;
+
+    const currentOrderId = selectedOrder.value.id;
+    const updateKey = `${currentOrderId}_${item.id}`;
+    const existing = pendingQtyUpdates.get(updateKey);
+
+    const originalQty = existing ? existing.originalQty : item.soLuong;
+    const originalStock = existing ? existing.originalStock : (item.soLuongTon || 0);
+    const currentOptimisticQty = item.soLuong;
+    let newQty = currentOptimisticQty + delta;
+
     if (newQty < 1) {
-        if (inputEventTarget) {
-            inputEventTarget.value = item.soLuong;
+        if (existing) {
+            clearTimeout(existing.timer);
+            pendingQtyUpdates.delete(updateKey);
         }
+        if (inputEventTarget) {
+            inputEventTarget.value = originalQty;
+        }
+        item.soLuong = originalQty;
+        item.thanhTien = originalQty * (Number(item.donGia) || 0);
         onRemoveItem(item);
         return;
     }
 
     if (delta > 0) {
-        const maxAllowed = item.soLuong + (item.soLuongTon || 0);
+        const maxAllowed = originalQty + originalStock;
         if (newQty > maxAllowed) {
             addNotification({
                 title: 'Cảnh báo',
@@ -1347,29 +1402,67 @@ const onUpdateQty = async (item, delta, inputEventTarget = null) => {
                 color: 'warning'
             });
             newQty = maxAllowed;
-            if (newQty === item.soLuong) {
+            if (newQty === currentOptimisticQty) {
                 if (inputEventTarget) {
-                    inputEventTarget.value = item.soLuong;
+                    inputEventTarget.value = currentOptimisticQty;
                 }
                 return;
             }
         }
     }
 
-    try {
-        const updated = await dichVuDonHang.updateSoLuong(selectedOrder.value.id, item.id, newQty);
-        updateOrderInList(updated);
-    } catch (e) {
-        if (inputEventTarget) {
-            inputEventTarget.value = item.soLuong;
-        }
-        const errorMsg = e.response?.data?.message || MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK;
-        addNotification({ title: 'Lỗi', subtitle: errorMsg, color: 'error' });
+    if (existing) {
+        clearTimeout(existing.timer);
     }
+
+    // Optimistic UI updates (instant local response)
+    item.soLuong = newQty;
+    item.thanhTien = newQty * (Number(item.donGia) || 0);
+    if (inputEventTarget) {
+        inputEventTarget.value = newQty;
+    }
+
+    // Debounce API call (300ms after last click)
+    const timer = setTimeout(async () => {
+        pendingQtyUpdates.delete(updateKey);
+        try {
+            const updated = await dichVuDonHang.updateSoLuong(currentOrderId, item.id, newQty);
+            updateOrderInList(updated);
+        } catch (e) {
+            // Rollback on server rejection
+            item.soLuong = originalQty;
+            item.thanhTien = originalQty * (Number(item.donGia) || 0);
+            if (inputEventTarget) {
+                inputEventTarget.value = originalQty;
+            }
+            const errorMsg = e.response?.data?.message || MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK;
+            addNotification({ title: 'Lỗi', subtitle: errorMsg, color: 'error' });
+            try {
+                const data = await dichVuDonHang.layDonHangCho();
+                setOrders(data, { preferOrderId: currentOrderId });
+            } catch (_) {}
+        }
+    }, 300);
+
+    pendingQtyUpdates.set(updateKey, {
+        timer,
+        orderId: currentOrderId,
+        itemId: item.id,
+        originalQty,
+        originalStock,
+        targetQty: newQty
+    });
 };
 
 const onRemoveItem = (item) => {
     const currentOrderId = selectedOrder.value?.id || null;
+    if (currentOrderId && item?.id) {
+        const updateKey = `${currentOrderId}_${item.id}`;
+        if (pendingQtyUpdates.has(updateKey)) {
+            clearTimeout(pendingQtyUpdates.get(updateKey).timer);
+            pendingQtyUpdates.delete(updateKey);
+        }
+    }
     confirmDialog.value = {
         show: true,
         title: 'Xác nhận xóa sản phẩm',
@@ -1967,6 +2060,9 @@ const checkBetterVoucherBeforeCheckout = async () => {
 // Logic: Thanh toán
 // Handler chính cho nút "Thanh toán"
 const onCheckout = async () => {
+    if (pendingQtyUpdates.size > 0) {
+        await flushPendingQtyUpdates();
+    }
     const items = selectedOrder.value?.listsHoaDonChiTiet || [];
     if (!items.length) {
         addNotification({ title: 'Cảnh báo', subtitle: 'Vui lòng thêm sản phẩm trước khi thanh toán.', color: 'warning' });

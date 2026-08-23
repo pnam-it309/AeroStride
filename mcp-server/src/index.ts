@@ -53,7 +53,7 @@ app.get(["/sse", "/sse/sse"], async (req, res) => {
     }
     
     activeServer = createMcpServer();
-    const absoluteEndpoint = `http://aerostride-mcp-server:3000/message`;
+    const absoluteEndpoint = process.env.MCP_MESSAGE_ENDPOINT || "/message";
     sseTransport = new SSEServerTransport(absoluteEndpoint, res);
     await activeServer.connect(sseTransport);
     

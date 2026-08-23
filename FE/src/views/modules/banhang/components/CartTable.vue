@@ -79,13 +79,13 @@ const handleDirectInput = (item, event) => {
                     <td class="text-left font-weight-medium text-slate-700" style="font-size: 12px; white-space: nowrap !important">
                         {{ item.maChiTietSanPham || item.maSanPham || 'N/A' }}
                     </td>
-                    <td>
-                        <div class="d-flex align-center py-1.5">
+                    <td class="cart-name-cell">
+                        <div class="d-flex align-start py-1.5 ga-2">
                             <v-avatar
                                 color="grey-lighten-4"
                                 rounded="lg"
                                 size="34"
-                                class="cart-product-avatar border position-relative overflow-visible"
+                                class="cart-product-avatar border position-relative overflow-visible flex-shrink-0"
                             >
                                 <div class="w-100 h-100 rounded-lg overflow-hidden">
                                     <SafeProductImage :src="item.hinhAnh" :alt="item.tenSanPham" :iconSize="18" />
@@ -96,25 +96,19 @@ const handleDirectInput = (item, event) => {
                                     >
                                 </div>
                             </v-avatar>
-                            <div class="d-flex flex-column">
-                                <span
-                                    class="text-slate-700 text-body-2 font-weight-medium"
-                                    style="font-size: 12px !important; line-height: 1.3"
-                                >
+                            <div class="cart-product-info">
+                                <span class="cart-product-name">
                                     {{ item.tenSanPham }}
                                 </span>
-                                <transition name="fade-badge">
-                                    <span
-                                        v-if="item.giaCu && Number(item.giaCu) !== Number(item.donGia)"
-                                        class="price-change-chip"
-                                    >
-                                        <v-icon size="10" style="opacity:.8">mdi-swap-horizontal</v-icon>
-                                        <s style="opacity:.65">{{ formatCurrency(item.giaCu) }}</s>
-                                        <v-icon size="9" style="opacity:.6">mdi-arrow-right</v-icon>
-                                        <strong>{{ formatCurrency(item.donGia) }}</strong>
-                                    </span>
-                                </transition>
-
+                                <p
+                                    v-if="item.giaCu && Number(item.giaCu) !== Number(item.donGia)"
+                                    class="price-change-note"
+                                >
+                                    Sản phẩm này đổi giá từ
+                                    <s>{{ formatCurrency(item.giaCu) }}</s>
+                                    sang
+                                    <strong>{{ formatCurrency(item.donGia) }}</strong>
+                                </p>
                             </div>
                         </div>
                     </td>
@@ -199,6 +193,7 @@ const handleDirectInput = (item, event) => {
     align-items: center;
     padding: 1px;
     z-index: 2;
+    user-select: none;
 }
 
 .cart-card {
@@ -268,10 +263,10 @@ const handleDirectInput = (item, event) => {
     width: 6%;
 }
 .pos-table :deep(.col-code) {
-    width: 20%;
+    width: 16%;
 }
 .pos-table :deep(.col-name) {
-    width: 14%;
+    width: 22%;
 }
 .pos-table :deep(.col-color) {
     width: 9.5%;
@@ -398,44 +393,50 @@ const handleDirectInput = (item, event) => {
     align-items: center;
 }
 
-/* Price-change chip: compact, elegant, indigo tone */
-.price-change-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    margin-top: 4px;
-    padding: 2px 7px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-    border: 1px solid #c7d2fe;
-    color: #4338ca;
-    font-size: 10px;
+.cart-name-cell {
+    overflow: hidden;
+}
+
+.cart-product-info {
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cart-product-name {
+    color: #334155;
+    font-size: 12px !important;
     font-weight: 500;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
-    max-width: max-content;
-    box-shadow: 0 1px 2px rgba(99, 102, 241, 0.08);
+    line-height: 1.3;
+    word-break: break-word;
 }
 
-.price-change-chip s {
-    text-decoration-color: #a5b4fc;
-    color: #6366f1;
-    font-weight: 400;
-}
-
-.price-change-chip strong {
+.price-change-note {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
     color: #3730a3;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.45;
+    white-space: normal;
+    word-break: break-word;
 }
 
-/* Fade animation */
-.fade-badge-enter-active,
-.fade-badge-leave-active {
-    transition: opacity 0.25s ease, transform 0.25s ease;
+.price-change-note s {
+    text-decoration-color: #818cf8;
+    color: #6366f1;
+    font-weight: 500;
 }
-.fade-badge-enter-from,
-.fade-badge-leave-to {
-    opacity: 0;
-    transform: translateY(-4px);
+
+.price-change-note strong {
+    color: #1e3a8a;
+    font-weight: 700;
 }
 </style>
