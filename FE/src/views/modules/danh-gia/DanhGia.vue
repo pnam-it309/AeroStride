@@ -281,7 +281,7 @@ onMounted(async () => {
             :is-refreshing="isRefreshing"
             @refresh="onRefresh"
         >
-            <v-col cols="12" sm="7" md="8" class="filter-cell pb-1">
+            <v-col cols="12" sm="6" md="7" lg="8" class="filter-cell pb-1">
                 <div class="filter-field-label">Tìm kiếm đánh giá</div>
                 <v-text-field
                     v-model="filters.keyword"
@@ -296,7 +296,7 @@ onMounted(async () => {
                     @keyup.enter="handleSearch"
                 ></v-text-field>
             </v-col>
-            <v-col cols="12" sm="5" md="4" class="filter-cell pb-1">
+            <v-col cols="12" sm="5" md="4" lg="3" class="filter-cell pb-1">
                 <div class="filter-field-label">Số sao đánh giá</div>
                 <v-select
                     v-model="filters.diemDanhGia"

@@ -1310,30 +1310,100 @@ const closeOrder = (orderId, index) => {
     };
 };
 
-// Logic: Sản phẩm
+// Logic: Sản phẩm (Optimistic & Zero-latency Instant Cart Addition)
 const onAddProduct = async (product) => {
     if (!selectedOrder.value) {
         addNotification({ title: 'Cảnh báo', subtitle: 'Vui lòng chọn hoặc tạo hóa đơn trước.', color: 'warning' });
         return;
     }
-    if (isProcessing.value) return;
-    isProcessing.value = true;
-    try {
-        const updated = await dichVuDonHang.addSanPham(selectedOrder.value.id, {
+
+    const currentOrder = selectedOrder.value;
+    const qtyToAdd = Number(product._soLuongMuonThem) || 1;
+    const currentStock = Number(product.soLuongTon ?? product.soLuong ?? 0);
+
+    if (currentStock <= 0) {
+        addNotification({ title: 'Hết hàng', subtitle: 'Sản phẩm đã hết hàng trong kho.', color: 'warning' });
+        return;
+    }
+
+    if (!Array.isArray(currentOrder.listsHoaDonChiTiet)) {
+        currentOrder.listsHoaDonChiTiet = [];
+    }
+
+    // Check if variant already in cart
+    const existingIndex = currentOrder.listsHoaDonChiTiet.findIndex(
+        (it) =>
+            (it.idChiTietSanPham && it.idChiTietSanPham === product.id) ||
+            it.id === product.id ||
+            (it.maChiTietSanPham && it.maChiTietSanPham === product.maChiTietSanPham)
+    );
+
+    let prevQty = 0;
+    let prevTotal = 0;
+    let optimisticId = null;
+
+    if (existingIndex !== -1) {
+        const item = currentOrder.listsHoaDonChiTiet[existingIndex];
+        prevQty = item.soLuong;
+        prevTotal = item.thanhTien;
+        item.soLuong += qtyToAdd;
+        const unitPrice = Number(item.donGia) || Number(product.giaBan) || 0;
+        item.thanhTien = item.soLuong * unitPrice;
+        if (item.soLuongTon !== undefined) {
+            item.soLuongTon = Math.max(0, Number(item.soLuongTon) - qtyToAdd);
+        }
+    } else {
+        optimisticId = `opt_${Date.now()}_${product.id}`;
+        const unitPrice = Number(product.giaBan) || 0;
+        const optimisticItem = {
+            id: optimisticId,
             idChiTietSanPham: product.id,
-            soLuong: product._soLuongMuonThem || 1
+            maChiTietSanPham: product.maChiTietSanPham || '',
+            maSanPham: product.maSanPham || '',
+            tenSanPham: product.tenSanPham || '',
+            tenMauSac: product.tenMauSac || '',
+            tenKichThuoc: product.tenKichThuoc || '',
+            soLuong: qtyToAdd,
+            donGia: unitPrice,
+            giaBan: unitPrice,
+            thanhTien: qtyToAdd * unitPrice,
+            hinhAnh: product.hinhAnh || '',
+            phanTramGiam: Number(product.phanTramGiam) || 0,
+            soLuongTon: Math.max(0, currentStock - qtyToAdd),
+            _isOptimistic: true
+        };
+        currentOrder.listsHoaDonChiTiet.unshift(optimisticItem);
+    }
+
+    // Cập nhật tổng tiền đơn hàng và tồn kho tức thì
+    currentOrder.tongTien = currentOrder.listsHoaDonChiTiet.reduce((sum, it) => sum + (Number(it.thanhTien) || 0), 0);
+    banHangStore.updateProductStock(product.id, Math.max(0, currentStock - qtyToAdd));
+
+    // Đồng bộ với backend qua background request không làm đơ giao diện
+    try {
+        const updated = await dichVuDonHang.addSanPham(currentOrder.id, {
+            idChiTietSanPham: product.id,
+            soLuong: qtyToAdd
         });
         updateOrderInList(updated);
 
         if (updated.priceChanged) {
             addNotification({ title: 'Giá sản phẩm thay đổi', subtitle: updated.priceChangeMessage, color: 'warning' });
-        } else {
-            addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm vào giỏ hàng', color: 'success' });
         }
     } catch (e) {
-        addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK, color: 'error' });
-    } finally {
-        isProcessing.value = false;
+        // Rollback nếu backend từ chối
+        if (existingIndex !== -1 && currentOrder.listsHoaDonChiTiet[existingIndex]) {
+            currentOrder.listsHoaDonChiTiet[existingIndex].soLuong = prevQty;
+            currentOrder.listsHoaDonChiTiet[existingIndex].thanhTien = prevTotal;
+        } else if (optimisticId) {
+            const idx = currentOrder.listsHoaDonChiTiet.findIndex((it) => it.id === optimisticId);
+            if (idx !== -1) currentOrder.listsHoaDonChiTiet.splice(idx, 1);
+        }
+        currentOrder.tongTien = currentOrder.listsHoaDonChiTiet.reduce((sum, it) => sum + (Number(it.thanhTien) || 0), 0);
+        banHangStore.updateProductStock(product.id, currentStock);
+
+        const errorMsg = e.response?.data?.message || MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK;
+        addNotification({ title: 'Lỗi', subtitle: errorMsg, color: 'error' });
     }
 };
 
@@ -2227,8 +2297,6 @@ const updateOrderInList = (updated) => {
                 subtitle: normalized.voucherIneligibleMessage || 'Đơn hàng chưa đạt giá trị tối thiểu của phiếu giảm giá.',
                 color: 'warning'
             });
-        } else if (voucherIneligibleDialog.value.show && !normalized.voucherIneligible) {
-            voucherIneligibleDialog.value.show = false;
         }
 
         if (normalized.canApplySuggestedVoucher && normalized.betterVoucherCode) {

@@ -45,16 +45,16 @@
                     <!-- CUSTOMER SEARCH SUGGESTIONS POPOVER -->
                     <div
                         v-if="showCustomerSuggestions"
-                        class="suggestion-popover overflow-y-auto"
+                        class="suggestion-popover d-flex flex-column"
                         v-click-outside="() => (showCustomerSuggestions = false)"
                     >
-                        <!-- Khi có kết quả tìm kiếm -->
-                        <div v-if="customerResults.length > 0" class="d-flex flex-column">
+                        <!-- Khi có kết quả tìm kiếm (vùng cuộn) -->
+                        <div v-if="customerResults.length > 0" class="suggestion-list-scroll overflow-y-auto flex-grow-1">
                             <div
                                 v-for="c in customerResults"
                                 :key="c.id"
                                 @click="onSelectSuggestedCustomer(c)"
-                                class="suggestion-item d-flex align-center justify-space-between px-4 py-3 cursor-pointer"
+                                class="suggestion-item d-flex align-center justify-space-between px-4 py-2.5 cursor-pointer"
                             >
                                 <div class="d-flex flex-column text-truncate pr-2">
                                     <span class="customer-name-text text-truncate">{{ c.tenKhachHang || c.hoTen || c.ten || 'Khách hàng' }}</span>
@@ -64,45 +64,35 @@
                                     {{ c.sdt }}
                                 </div>
                             </div>
-
-                            <!-- Nút thêm nhanh luôn hiển thị ở dưới danh sách khi có kết quả -->
-                            <div class="pa-2 border-t bg-slate-50">
-                                <v-btn
-                                    size="small"
-                                    variant="flat"
-                                    color="#2563eb"
-                                    class="text-white text-none font-weight-bold w-100 rounded-lg py-2"
-                                    style="height: 34px !important"
-                                    @click="quickCreateCustomer"
-                                >
-                                    <v-icon size="16" class="mr-1">mdi-plus</v-icon>
-                                    {{ customerSearch.trim() ? `Thêm nhanh: "${customerSearch.trim()}"` : 'Thêm khách hàng mới' }}
-                                </v-btn>
-                            </div>
                         </div>
 
                         <!-- Khi không có kết quả tìm kiếm -->
-                        <div v-else-if="!isLoadingCustomerSearch" class="pa-4 text-center">
-                            <div class="text-slate-500 text-caption mb-3">
+                        <div v-else-if="!isLoadingCustomerSearch" class="px-4 py-3 text-center">
+                            <div class="text-slate-500 text-caption font-weight-medium">
                                 {{ customerSearch.trim() ? 'Không tìm thấy khách hàng phù hợp' : 'Chưa có gợi ý khách hàng' }}
                             </div>
-                            <v-btn
-                                size="small"
-                                variant="flat"
-                                color="#2563eb"
-                                class="text-white text-none font-weight-bold w-100 rounded-lg py-2"
-                                style="height: auto !important"
-                                @click="quickCreateCustomer"
-                            >
-                                <v-icon size="16" class="mr-1">mdi-plus</v-icon>
-                                {{ customerSearch.trim() ? `Thêm nhanh: "${customerSearch.trim()}"` : 'Thêm khách hàng mới' }}
-                            </v-btn>
                         </div>
 
                         <!-- Khi đang tải -->
                         <div v-else class="pa-4 text-center text-caption text-slate-500 d-flex align-center justify-center">
                             <v-progress-circular indeterminate size="18" width="2" color="primary" class="mr-2" />
                             Đang tìm kiếm...
+                        </div>
+
+                        <!-- Nút thêm nhanh LUÔN GHIM Ở ĐÁY POPOVER -->
+                        <div class="pa-2 border-t bg-slate-50 flex-shrink-0">
+                            <v-btn
+                                size="small"
+                                variant="flat"
+                                color="#2563eb"
+                                class="text-white text-none font-weight-bold w-100 rounded-lg py-2 quick-add-btn"
+                                style="height: 36px !important"
+                                @mousedown.prevent.stop="quickCreateCustomer"
+                                @click.stop="quickCreateCustomer"
+                            >
+                                <v-icon size="16" class="mr-1">mdi-plus</v-icon>
+                                {{ customerSearch.trim() ? `Thêm nhanh: "${customerSearch.trim()}"` : 'Thêm khách hàng mới' }}
+                            </v-btn>
                         </div>
                     </div>
                 </div>
@@ -729,24 +719,29 @@ watch(
     top: calc(100% + 6px);
     right: 0;
     width: 360px !important;
-    max-height: 280px;
+    max-height: 320px;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
     border-radius: 14px !important;
     box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(15, 23, 42, 0.06) !important;
     z-index: 9999 !important;
-    overflow-y: auto !important;
-    padding: 4px 0;
+    overflow: hidden !important;
+    padding: 0;
 }
 
-.suggestion-popover::-webkit-scrollbar {
+.suggestion-list-scroll {
+    max-height: 220px;
+    overflow-y: auto !important;
+}
+
+.suggestion-list-scroll::-webkit-scrollbar {
     width: 5px;
 }
-.suggestion-popover::-webkit-scrollbar-thumb {
+.suggestion-list-scroll::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 10px;
 }
-.suggestion-popover::-webkit-scrollbar-track {
+.suggestion-list-scroll::-webkit-scrollbar-track {
     background: transparent;
 }
 
