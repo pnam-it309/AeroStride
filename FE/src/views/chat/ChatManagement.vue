@@ -568,8 +568,13 @@ const sendMessage = async () => {
     const textToSend = newMessage.value ? newMessage.value.trim() : null;
     const currentUsername = authStore.user?.username || 'STAFF';
 
-    // Tự động chuyển trạng thái cuộc hội thoại sang ACTIVE khi nhân viên gửi tin
-    if (activeChat.value.type !== CHAT_TYPES.INTERNAL && (activeChat.value.status === 'PENDING' || activeChat.value.status === 'CLOSED')) {
+    // Chặn gửi tin nhắn vào cuộc hội thoại đã đóng
+    if (activeChat.value.type !== CHAT_TYPES.INTERNAL && activeChat.value.status === 'CLOSED') {
+        return;
+    }
+
+    // Tự động chuyển trạng thái cuộc hội thoại sang ACTIVE khi nhân viên gửi tin (nếu đang chờ)
+    if (activeChat.value.type !== CHAT_TYPES.INTERNAL && activeChat.value.status === 'PENDING') {
         activeChat.value.status = 'ACTIVE';
         activeChat.value.isAccepted = true;
         isAccepted.value = true;
@@ -1200,27 +1205,21 @@ const handleRefresh = async () => {
                         <!-- Banner khi phiên trò chuyện đã đóng (chỉ hiện với khách hàng) -->
                         <div
                             v-else-if="activeChat.status === 'CLOSED' && activeChat.type !== CHAT_TYPES.INTERNAL"
-                            class="status-action-banner d-flex align-center justify-space-between px-4 py-2 mb-2 rounded-xl"
+                            class="status-action-banner d-flex align-center justify-center px-4 py-3 rounded-xl"
                             style="background: #f8fafc; border: 1px solid #e2e8f0;"
                         >
-                            <div class="d-flex align-center">
-                                <v-icon color="#64748b" size="20" class="mr-2">mdi-lock-outline</v-icon>
-                                <span style="font-size: 0.85rem; font-weight: 600; color: #64748b;">
-                                    Phiên trò chuyện đã đóng
-                                </span>
-                            </div>
-                            <v-btn
-                                color="#1e257c"
-                                variant="outlined"
-                                size="small"
-                                class="text-none font-weight-bold rounded-pill px-3"
-                                @click="acceptChat"
-                            >
-                                <v-icon size="16" class="mr-1">mdi-refresh</v-icon> Mở lại trò chuyện
-                            </v-btn>
+                            <v-icon color="#64748b" size="20" class="mr-2">mdi-lock-outline</v-icon>
+                            <span style="font-size: 0.85rem; font-weight: 600; color: #64748b;">
+                                Phiên trò chuyện đã đóng
+                            </span>
                         </div>
 
-                        <v-row no-gutters align="center">
+                        <!-- Cụm soạn tin nhắn (chỉ hiện khi chưa đóng hoặc là chat nội bộ) -->
+                        <v-row
+                            v-if="activeChat.status !== 'CLOSED' || activeChat.type === CHAT_TYPES.INTERNAL"
+                            no-gutters
+                            align="center"
+                        >
                             <!-- Input ẩn để chọn file ảnh -->
                             <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleImageUpload" />
 
@@ -1244,7 +1243,7 @@ const handleRefresh = async () => {
                                 </div>
                                 <v-textarea
                                     v-model="newMessage"
-                                    :placeholder="activeChat.status === 'PENDING' && activeChat.type !== CHAT_TYPES.INTERNAL ? 'Nhập tin nhắn để tự động tiếp nhận...' : (activeChat.status === 'CLOSED' && activeChat.type !== CHAT_TYPES.INTERNAL ? 'Nhập tin nhắn để mở lại cuộc trò chuyện...' : 'Nhập tin nhắn...')"
+                                    :placeholder="activeChat.status === 'PENDING' && activeChat.type !== CHAT_TYPES.INTERNAL ? 'Nhập tin nhắn để tự động tiếp nhận...' : 'Nhập tin nhắn...'"
                                     rows="1"
                                     auto-grow
                                     variant="solo"

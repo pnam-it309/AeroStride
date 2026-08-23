@@ -38,6 +38,7 @@ public class CustomerChatServiceImpl implements CustomerChatService {
 
     private final CustomerCuocHoiThoaiRepository conversationRepository;
     private final CustomerTinNhanRepository messageRepository;
+    private final com.example.be.repository.KhachHangRepository khachHangRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
     private final com.example.be.core.admin.chat.service.AiChatService aiChatService;
@@ -47,6 +48,28 @@ public class CustomerChatServiceImpl implements CustomerChatService {
 
     @Value("${app.base_url}")
     private String appBaseUrl;
+
+    private com.example.be.entity.KhachHang resolveCustomer(String sessionId) {
+        try {
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equalsIgnoreCase(auth.getName())) {
+                String principalName = auth.getName();
+                var kh = khachHangRepository.findByTenTaiKhoan(principalName);
+                if (kh.isPresent()) return kh.get();
+                kh = khachHangRepository.findFirstByEmailIgnoreCase(principalName);
+                if (kh.isPresent()) return kh.get();
+            }
+        } catch (Exception ignored) {}
+
+        if (sessionId != null && sessionId.startsWith("user_")) {
+            String username = sessionId.substring(5);
+            var kh = khachHangRepository.findByTenTaiKhoan(username);
+            if (kh.isPresent()) return kh.get();
+            kh = khachHangRepository.findFirstByEmailIgnoreCase(username);
+            if (kh.isPresent()) return kh.get();
+        }
+        return null;
+    }
 
     private String formatTime(Long timestamp) {
         if (timestamp == null) return "Vừa xong";
@@ -88,6 +111,7 @@ public class CustomerChatServiceImpl implements CustomerChatService {
     @Transactional
     public void sendMessage(String conversationId, String text, String senderType, String sessionId, String imageBase64) {
         CuocHoiThoai conversation;
+        com.example.be.entity.KhachHang currentCustomer = resolveCustomer(sessionId);
 
         if (conversationId != null && !conversationId.isEmpty() && !conversationId.equals("undefined")) {
             conversation = conversationRepository.findById(conversationId)
@@ -98,6 +122,7 @@ public class CustomerChatServiceImpl implements CustomerChatService {
                     .orElseGet(() -> {
                         CuocHoiThoai newConv = CuocHoiThoai.builder()
                                 .maPhien(sessionId)
+                                .khachHang(currentCustomer)
                                 .daChapNhan(false)
                                 .trangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.PENDING)
                                 .build();
@@ -112,6 +137,12 @@ public class CustomerChatServiceImpl implements CustomerChatService {
             }
         } else {
             throw new RuntimeException("Phải có Conversation ID hoặc Session ID");
+        }
+
+        // Tự động gắn Khách Hàng vào cuộc hội thoại nếu chưa có
+        if (conversation.getKhachHang() == null && currentCustomer != null) {
+            conversation.setKhachHang(currentCustomer);
+            conversation = conversationRepository.save(conversation);
         }
 
         // Nếu khách hàng gửi tin nhắn vào cuộc trò chuyện đã đóng, tự động mở lại

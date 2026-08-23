@@ -39,10 +39,16 @@ public final class CustomerSanPhamSpecification {
             return null;
         }
         String normalizedKeyword = "%" + keyword.trim().toLowerCase() + "%";
-        return (root, query, criteriaBuilder) -> criteriaBuilder.or(
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("ma")), normalizedKeyword),
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("ten")), normalizedKeyword)
-        );
+        return (root, query, criteriaBuilder) -> {
+            query.distinct(true);
+            return criteriaBuilder.or(
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("ma")), normalizedKeyword),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("ten")), normalizedKeyword),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("thuongHieu").get("ten")), normalizedKeyword),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("mucDichChay").get("ten")), normalizedKeyword),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("chatLieu").get("ten")), normalizedKeyword)
+            );
+        };
     }
 
     public static Specification<SanPham> hasThuongHieu(String thuongHieuId) {
@@ -191,26 +197,37 @@ public final class CustomerSanPhamSpecification {
     }
 
     /**
-     * Filter sản phẩm có ít nhất 1 biến thể với kích thước tên (e.g. "40", "41")
+     * Filter sản phẩm có ít nhất 1 biến thể với kích thước tên hoặc giá trị (e.g. "40", "Size 40", ID)
      */
     public static Specification<SanPham> hasKichThuoc(String kichThuocTen) {
         if (!isValidParam(kichThuocTen)) {
             return null;
         }
+        String clean = kichThuocTen.trim().toLowerCase();
+        String numOnly = clean.replaceAll("[^0-9.]", "");
         return (root, query, criteriaBuilder) -> {
             Subquery<String> subquery = query.subquery(String.class);
             Root<?> variant = subquery.from(com.example.be.entity.ChiTietSanPham.class);
             subquery.select(variant.get("sanPham").get("id"));
+
+            List<jakarta.persistence.criteria.Predicate> orPreds = new java.util.ArrayList<>();
+            orPreds.add(criteriaBuilder.equal(criteriaBuilder.lower(variant.get("kichThuoc").get("ten")), clean));
+            orPreds.add(criteriaBuilder.like(criteriaBuilder.lower(variant.get("kichThuoc").get("ten")), "%" + clean + "%"));
+            orPreds.add(criteriaBuilder.equal(criteriaBuilder.lower(variant.get("kichThuoc").get("giaTriKichThuoc")), clean));
+            orPreds.add(criteriaBuilder.equal(criteriaBuilder.lower(variant.get("kichThuoc").get("id")), clean));
+            orPreds.add(criteriaBuilder.equal(criteriaBuilder.lower(variant.get("kichThuoc").get("ma")), clean));
+            if (!numOnly.isEmpty()) {
+                orPreds.add(criteriaBuilder.like(criteriaBuilder.lower(variant.get("kichThuoc").get("ten")), "%" + numOnly + "%"));
+                orPreds.add(criteriaBuilder.equal(criteriaBuilder.lower(variant.get("kichThuoc").get("giaTriKichThuoc")), numOnly));
+            }
+
             subquery.where(
                     criteriaBuilder.equal(variant.get("sanPham").get("id"), root.get("id")),
                     criteriaBuilder.or(
                             criteriaBuilder.isNull(variant.get("xoaMem")),
                             criteriaBuilder.isFalse(variant.get("xoaMem"))
                     ),
-                    criteriaBuilder.equal(
-                            criteriaBuilder.lower(variant.get("kichThuoc").get("ten")),
-                            kichThuocTen.trim().toLowerCase()
-                    )
+                    criteriaBuilder.or(orPreds.toArray(new jakarta.persistence.criteria.Predicate[0]))
             );
             return criteriaBuilder.exists(subquery);
         };
@@ -234,13 +251,30 @@ public final class CustomerSanPhamSpecification {
             Subquery<String> subquery = query.subquery(String.class);
             Root<?> variant = subquery.from(com.example.be.entity.ChiTietSanPham.class);
             subquery.select(variant.get("sanPham").get("id"));
+
+            List<jakarta.persistence.criteria.Predicate> sizePredicates = new java.util.ArrayList<>();
+            for (String size : validSizes) {
+                String num = size.replaceAll("[^0-9.]", "");
+                List<jakarta.persistence.criteria.Predicate> orPreds = new java.util.ArrayList<>();
+                orPreds.add(criteriaBuilder.equal(criteriaBuilder.lower(variant.get("kichThuoc").get("ten")), size));
+                orPreds.add(criteriaBuilder.like(criteriaBuilder.lower(variant.get("kichThuoc").get("ten")), "%" + size + "%"));
+                orPreds.add(criteriaBuilder.equal(criteriaBuilder.lower(variant.get("kichThuoc").get("giaTriKichThuoc")), size));
+                orPreds.add(criteriaBuilder.equal(criteriaBuilder.lower(variant.get("kichThuoc").get("id")), size));
+                orPreds.add(criteriaBuilder.equal(criteriaBuilder.lower(variant.get("kichThuoc").get("ma")), size));
+                if (!num.isEmpty()) {
+                    orPreds.add(criteriaBuilder.like(criteriaBuilder.lower(variant.get("kichThuoc").get("ten")), "%" + num + "%"));
+                    orPreds.add(criteriaBuilder.equal(criteriaBuilder.lower(variant.get("kichThuoc").get("giaTriKichThuoc")), num));
+                }
+                sizePredicates.add(criteriaBuilder.or(orPreds.toArray(new jakarta.persistence.criteria.Predicate[0])));
+            }
+
             subquery.where(
                     criteriaBuilder.equal(variant.get("sanPham").get("id"), root.get("id")),
                     criteriaBuilder.or(
                             criteriaBuilder.isNull(variant.get("xoaMem")),
                             criteriaBuilder.isFalse(variant.get("xoaMem"))
                     ),
-                    criteriaBuilder.lower(variant.get("kichThuoc").get("ten")).in(validSizes)
+                    criteriaBuilder.or(sizePredicates.toArray(new jakarta.persistence.criteria.Predicate[0]))
             );
             return criteriaBuilder.exists(subquery);
         };

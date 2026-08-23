@@ -87,28 +87,36 @@ public class AuthController {
     @PostMapping("/register")
     @RateLimit(limit = 5, windowSeconds = 60)
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
-        log.info("REGISTER ATTEMPT: account [{}], email [{}]", request.getTenTaiKhoan(), request.getEmail());
+        String username = request.getTenTaiKhoan() != null ? request.getTenTaiKhoan().trim() : "";
+        String email = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
+        String sdt = request.getSdt() != null ? request.getSdt().trim() : "";
 
-        if (khachHangRepository.findByTenTaiKhoan(request.getTenTaiKhoan()).isPresent()) {
-            throw new RuntimeException("Tên tài khoản đã được sử dụng");
+        log.info("REGISTER ATTEMPT: account [{}], email [{}]", username, email);
+
+        if (khachHangRepository.existsByTenTaiKhoanIgnoreCase(username) || nhanVienRepository.findByTenTaiKhoan(username).isPresent()) {
+            throw new BusinessException("Tên tài khoản '" + username + "' đã được sử dụng. Vui lòng chọn tên tài khoản khác.");
         }
-        if (khachHangRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email đã được sử dụng");
+        if (khachHangRepository.existsByEmailIgnoreCase(email) || nhanVienRepository.findByEmail(email).isPresent()) {
+            throw new BusinessException("Email '" + email + "' đã tồn tại trong hệ thống. Vui lòng đăng nhập hoặc sử dụng chức năng Đăng nhập bằng Google / Quên mật khẩu.");
+        }
+        if (!sdt.isBlank() && khachHangRepository.findFirstBySdt(sdt).isPresent()) {
+            throw new BusinessException("Số điện thoại '" + sdt + "' đã được sử dụng cho một tài khoản khác.");
         }
 
         KhachHang khachHang = KhachHang.builder()
-                .tenTaiKhoan(request.getTenTaiKhoan())
-                .email(request.getEmail())
-                .sdt(request.getSdt())
+                .tenTaiKhoan(username)
+                .email(email)
+                .sdt(sdt)
                 .matKhau(passwordEncoder.encode(request.getMatKhau()))
                 .xoaMem(false)
                 .build();
         khachHang.setTen(request.getTen());
+        khachHang.setMa("KH_" + (System.currentTimeMillis() % 1000000));
         khachHangRepository.save(khachHang);
 
         // Tự động đăng nhập sau khi đăng ký thành công (luồng CLIENT)
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken("CLIENT|" + request.getTenTaiKhoan(), request.getMatKhau()));
+                new UsernamePasswordAuthenticationToken("CLIENT|" + username, request.getMatKhau()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();

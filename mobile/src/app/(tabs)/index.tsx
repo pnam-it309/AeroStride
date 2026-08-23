@@ -26,6 +26,7 @@ import { productService, type LandingProduct, type Product } from '@/services/pr
 import { fileService } from '@/services/fileService';
 import { formatPriceRange } from '@/utils/format';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { FloatingChatButton } from '@/components/FloatingChatButton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -73,8 +74,9 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.background }]}
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <ScrollView
+        style={[styles.container, { backgroundColor: theme.background }]}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Brand.primary} />
@@ -283,6 +285,8 @@ export default function HomeScreen() {
         )}
       </View>
     </ScrollView>
+    <FloatingChatButton bottomOffset={75} />
+  </View>
   );
 }
 

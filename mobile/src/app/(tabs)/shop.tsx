@@ -25,6 +25,7 @@ import { productService, type Product, type ProductFilters, type ProductSearchPa
 import { fileService } from '@/services/fileService';
 import { formatPriceRange } from '@/utils/format';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { FloatingChatButton } from '@/components/FloatingChatButton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - Spacing.three * 2 - Spacing.two) / 2;
@@ -346,6 +347,7 @@ export default function ShopScreen() {
           </View>
         </View>
       </Modal>
+      <FloatingChatButton bottomOffset={75} />
     </View>
   );
 }

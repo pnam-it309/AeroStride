@@ -573,7 +573,10 @@ watch(
     () => route.params.tab,
     (n) => {
         if (n && routeMap[n]) {
-            selectedTab.value = routeMap[n];
+            const mappedTab = routeMap[n];
+            if (selectedTab.value !== mappedTab) {
+                selectedTab.value = mappedTab;
+            }
             pagination.value.page = 1;
             loadItems();
         }
@@ -582,7 +585,10 @@ watch(
 );
 
 watch(selectedTab, (n) => {
-    router.replace(`${PATH.THUOC_TINH}/${reverseRouteMap[n]}`);
+    const targetParam = reverseRouteMap[n];
+    if (targetParam && route.params.tab !== targetParam) {
+        router.replace(`${PATH.THUOC_TINH}/${targetParam}`);
+    }
 });
 </script>
 

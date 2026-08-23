@@ -42,83 +42,6 @@
         <span class="social-btn-text">Facebook</span>
       </v-btn>
     </div>
-
-    <!-- Quick Account Modal (Dùng khi dev/test hoặc tùy chọn đăng nhập) -->
-    <v-dialog v-model="showCustomDialog" max-width="440px" persistent>
-      <v-card class="rounded-xl overflow-hidden elevation-12">
-        <v-card-title class="d-flex align-center justify-space-between pa-5 bg-grey-lighten-4">
-          <div class="d-flex align-center ga-2">
-            <GoogleIcon v-if="selectedProvider === 'GOOGLE'" :size="24" />
-            <FacebookIcon v-else :size="24" />
-            <span class="text-subtitle-1 font-weight-bold text-grey-darken-4">
-              Đăng nhập bằng {{ selectedProvider === 'GOOGLE' ? 'Google' : 'Facebook' }}
-            </span>
-          </div>
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showCustomDialog = false"></v-btn>
-        </v-card-title>
-
-        <v-card-text class="pa-5">
-          <p class="text-caption text-grey-darken-1 mb-4">
-            Đăng nhập nhanh với tài khoản {{ selectedProvider === 'GOOGLE' ? 'Google' : 'Facebook' }} của bạn để đồng bộ giỏ hàng và lịch sử đơn hàng.
-          </p>
-
-          <v-text-field
-            v-model="customAccount.name"
-            label="Họ và tên hiển thị"
-            variant="outlined"
-            density="comfortable"
-            color="primary"
-            class="mb-3"
-            prepend-inner-icon="mdi-account"
-            hide-details="auto"
-          ></v-text-field>
-
-          <v-text-field
-            v-model="customAccount.email"
-            label="Email tài khoản"
-            variant="outlined"
-            density="comfortable"
-            color="primary"
-            class="mb-4"
-            prepend-inner-icon="mdi-email"
-            type="email"
-            hide-details="auto"
-          ></v-text-field>
-
-          <v-alert
-            v-if="modalError"
-            type="error"
-            variant="tonal"
-            density="compact"
-            class="mb-3 rounded-lg"
-          >
-            {{ modalError }}
-          </v-alert>
-
-          <v-btn
-            block
-            size="large"
-            :color="selectedProvider === 'GOOGLE' ? '#4285F4' : '#1877F2'"
-            class="text-white font-weight-bold rounded-lg mb-2"
-            :loading="isSubmitting"
-            @click="submitSocialLogin"
-          >
-            Xác nhận đăng nhập
-          </v-btn>
-
-          <v-btn
-            block
-            variant="text"
-            size="small"
-            color="grey-darken-1"
-            class="text-caption"
-            @click="quickDefaultLogin"
-          >
-            Sử dụng tài khoản mẫu mặc định
-          </v-btn>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -152,17 +75,6 @@ const uiStore = useUIStore();
 const toastStore = useToastStore?.() || null;
 
 const loadingProvider = ref(null);
-const showCustomDialog = ref(false);
-const selectedProvider = ref('GOOGLE');
-const isSubmitting = ref(false);
-const modalError = ref('');
-
-const customAccount = ref({
-  name: '',
-  email: '',
-  avatarUrl: '',
-  providerId: ''
-});
 
 onMounted(() => {
   socialAuthService.initGoogle(null, handleGoogleCredentialResponse);
@@ -173,6 +85,7 @@ const handleGoogleCredentialResponse = async (response) => {
   if (response.credential) {
     loadingProvider.value = 'GOOGLE';
     try {
+      uiStore.showLoading?.('Đang đăng nhập bằng Google...');
       await authStore.socialLogin({
         provider: 'GOOGLE',
         token: response.credential
@@ -182,89 +95,34 @@ const handleGoogleCredentialResponse = async (response) => {
       handleError(err, 'Google');
     } finally {
       loadingProvider.value = null;
+      uiStore.hideLoading?.();
     }
   }
 };
 
 const handleSocialClick = async (provider) => {
-  selectedProvider.value = provider;
   loadingProvider.value = provider;
-  modalError.value = '';
 
   try {
-    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const fbAppId = import.meta.env.VITE_FACEBOOK_APP_ID;
-
-    if (provider === 'GOOGLE' && googleClientId && window.google?.accounts?.oauth2) {
-      // Có Google SDK thực tế
-      const res = await socialAuthService.loginWithGoogle();
+    if (provider === 'GOOGLE') {
+      uiStore.showLoading?.('Đang kết nối tới Google...');
+      await socialAuthService.loginWithGoogle();
       handleSuccess('Google');
       return;
     }
 
-    if (provider === 'FACEBOOK' && fbAppId && window.FB) {
-      // Có Facebook SDK thực tế
-      const res = await socialAuthService.loginWithFacebook();
+    if (provider === 'FACEBOOK') {
+      uiStore.showLoading?.('Đang kết nối tới Facebook...');
+      await socialAuthService.loginWithFacebook();
       handleSuccess('Facebook');
       return;
     }
-
-    // Nếu chưa cấu hình OAuth key bên thứ ba hoặc chạy dev, mở modal hỗ trợ đăng nhập 1 chạm
-    customAccount.value = {
-      name: provider === 'GOOGLE' ? 'Nguyễn Văn Google' : 'Trần Thị Facebook',
-      email: provider === 'GOOGLE' ? 'khachhang.google@gmail.com' : 'khachhang.facebook@gmail.com',
-      avatarUrl: provider === 'GOOGLE'
-        ? 'https://lh3.googleusercontent.com/a/default-user=s96-c'
-        : 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg',
-      providerId: (provider === 'GOOGLE' ? 'gg_' : 'fb_') + Date.now()
-    };
-    showCustomDialog.value = true;
   } catch (err) {
     handleError(err, provider === 'GOOGLE' ? 'Google' : 'Facebook');
   } finally {
     loadingProvider.value = null;
-  }
-};
-
-const submitSocialLogin = async () => {
-  if (!customAccount.value.email || !customAccount.value.email.includes('@')) {
-    modalError.value = 'Vui lòng nhập địa chỉ email hợp lệ';
-    return;
-  }
-
-  isSubmitting.value = true;
-  modalError.value = '';
-
-  try {
-    uiStore.showLoading?.(`Đang đăng nhập bằng ${selectedProvider.value}...`);
-    await authStore.socialLogin({
-      provider: selectedProvider.value,
-      email: customAccount.value.email.trim(),
-      name: customAccount.value.name.trim() || (selectedProvider.value === 'GOOGLE' ? 'Khách Hàng Google' : 'Khách Hàng Facebook'),
-      avatarUrl: customAccount.value.avatarUrl,
-      providerId: customAccount.value.providerId || (selectedProvider.value.toLowerCase() + '_' + Date.now())
-    });
-
-    showCustomDialog.value = false;
-    handleSuccess(selectedProvider.value === 'GOOGLE' ? 'Google' : 'Facebook');
-  } catch (err) {
-    modalError.value = err?.response?.data?.message || err.message || 'Đăng nhập thất bại';
-  } finally {
-    isSubmitting.value = false;
     uiStore.hideLoading?.();
   }
-};
-
-const quickDefaultLogin = async () => {
-  customAccount.value = {
-    name: selectedProvider.value === 'GOOGLE' ? 'Khách Hàng Google' : 'Khách Hàng Facebook',
-    email: selectedProvider.value === 'GOOGLE' ? 'customer.google@aerostride.vn' : 'customer.facebook@aerostride.vn',
-    avatarUrl: selectedProvider.value === 'GOOGLE'
-      ? 'https://lh3.googleusercontent.com/a/default-user=s96-c'
-      : 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg',
-    providerId: (selectedProvider.value === 'GOOGLE' ? 'gg_' : 'fb_') + Date.now()
-  };
-  await submitSocialLogin();
 };
 
 const handleSuccess = (providerName) => {

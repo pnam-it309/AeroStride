@@ -1,7 +1,14 @@
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import api from '@/services/apiService';
 import { API_ADMIN } from '@/constants/apiPaths';
+import {
+    LOCAL_PROVINCES,
+    LOCAL_DISTRICTS,
+    LOCAL_WARDS,
+    getFallbackDistricts,
+    getFallbackWards
+} from '@/constants/localLocations';
 
 export function useLocation(options = {}) {
     const allowFallback = options.allowFallback !== false;
@@ -47,39 +54,109 @@ export function useLocation(options = {}) {
         }
     };
 
-    const loadFallbackProvinces = async () => {
-        const fallback = await axios.get('https://provinces.open-api.vn/api/p/');
-        provinces.value = (fallback.data || []).map((p) => ({
+    const loadLocalProvinces = () => {
+        provinces.value = LOCAL_PROVINCES.map((p) => ({
             code: p.code,
             name: p.name,
-            source: 'OPEN_API'
+            source: 'LOCAL'
         }));
     };
 
-    const loadFallbackDistricts = async (provinceCode) => {
-        const fallback = await axios.get(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
-        districts.value = (fallback.data?.districts || []).map((d) => ({
-            code: d.code,
-            name: d.name,
-            source: 'OPEN_API'
-        }));
+    const loadLocalDistricts = (provinceCode, provinceName) => {
+        const localList = LOCAL_DISTRICTS[provinceCode] || LOCAL_DISTRICTS[String(provinceCode)];
+        if (localList && localList.length) {
+            districts.value = localList.map((d) => ({
+                code: d.code,
+                name: d.name,
+                source: 'LOCAL'
+            }));
+        } else {
+            districts.value = getFallbackDistricts(provinceName).map((d) => ({
+                code: d.code,
+                name: d.name,
+                source: 'LOCAL'
+            }));
+        }
     };
 
-    const loadFallbackWards = async (districtCode) => {
-        const fallback = await axios.get(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
-        wards.value = (fallback.data?.wards || []).map((w) => ({
-            code: w.code,
-            name: w.name,
-            source: 'OPEN_API'
-        }));
+    const loadLocalWards = (districtCode, districtName) => {
+        const localList = LOCAL_WARDS[districtCode] || LOCAL_WARDS[String(districtCode)];
+        if (localList && localList.length) {
+            wards.value = localList.map((w) => ({
+                code: w.code,
+                name: w.name,
+                source: 'LOCAL'
+            }));
+        } else {
+            wards.value = getFallbackWards(districtName).map((w) => ({
+                code: w.code,
+                name: w.name,
+                source: 'LOCAL'
+            }));
+        }
     };
 
-    const fetchProvinces = async () => {
-        if (provinces.value.length) return;
+    const loadFallbackProvinces = async () => {
+        try {
+            const fallback = await axios.get('https://provinces.open-api.vn/api/p/', { timeout: 3000 });
+            if (fallback.data && fallback.data.length) {
+                provinces.value = fallback.data.map((p) => ({
+                    code: p.code,
+                    name: p.name,
+                    source: 'OPEN_API'
+                }));
+                return;
+            }
+        } catch (e) {
+            logLocationFallback('Open-api provinces failed, using local offline provinces.', e);
+        }
+        loadLocalProvinces();
+    };
+
+    const loadFallbackDistricts = async (provinceCode, provinceName) => {
+        try {
+            const fallback = await axios.get(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`, { timeout: 3000 });
+            if (fallback.data?.districts && fallback.data.districts.length) {
+                districts.value = fallback.data.districts.map((d) => ({
+                    code: d.code,
+                    name: d.name,
+                    source: 'OPEN_API'
+                }));
+                return;
+            }
+        } catch (e) {
+            logLocationFallback('Open-api districts failed, using local offline districts.', e);
+        }
+        loadLocalDistricts(provinceCode, provinceName);
+    };
+
+    const loadFallbackWards = async (districtCode, districtName) => {
+        try {
+            const fallback = await axios.get(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`, { timeout: 3000 });
+            if (fallback.data?.wards && fallback.data.wards.length) {
+                wards.value = fallback.data.wards.map((w) => ({
+                    code: w.code,
+                    name: w.name,
+                    source: 'OPEN_API'
+                }));
+                return;
+            }
+        } catch (e) {
+            logLocationFallback('Open-api wards failed, using local offline wards.', e);
+        }
+        loadLocalWards(districtCode, districtName);
+    };
+
+    const fetchProvinces = async (forceRefresh = false) => {
+        // Neu da co du lieu live tu GHN va khong force thi khong can goi lai
+        if (provinces.value.length && !forceRefresh && provinces.value[0]?.source === 'GHN') {
+            return;
+        }
+
         loadingLocations.value.provinces = true;
         try {
-            // Nguồn chính: đi qua backend để giữ token GHN ở server và dùng chung prefix /api/v1.
-            const res = await api.get(`${API_ADMIN.GHN}/provinces`, { silent: true });
+            // Nguon 1: Backend GHN
+            const res = await api.get(`${API_ADMIN.GHN}/provinces`, { silent: true, timeout: 3000 });
             const list = extractList(res);
             if (!list.length) throw new Error('GHN provinces empty');
             provinces.value = list
@@ -90,15 +167,20 @@ export function useLocation(options = {}) {
                 }))
                 .filter((p) => p.code && p.name);
         } catch (e) {
-            logLocationFallback('GHN provinces unavailable, fallback to open-api.', e);
-            if (!allowFallback) return;
+            logLocationFallback('GHN provinces unavailable, fallback to open-api / local.', e);
+            if (!allowFallback) {
+                loadLocalProvinces();
+                return;
+            }
             try {
-                // Fallback chỉ để form địa chỉ vẫn chọn được khu vực khi GHN tạm lỗi; không dùng mã này để tính phí GHN.
                 await loadFallbackProvinces();
             } catch (fallbackError) {
-                logLocationFallback('Fallback provinces unavailable.', fallbackError);
+                loadLocalProvinces();
             }
         } finally {
+            if (!provinces.value.length) {
+                loadLocalProvinces();
+            }
             loadingLocations.value.provinces = false;
         }
     };
@@ -108,15 +190,10 @@ export function useLocation(options = {}) {
         loadingLocations.value.districts = true;
         districts.value = [];
         wards.value = [];
+        const selectedProvince = provinces.value.find((p) => String(p.code) === String(provinceCode));
         try {
-            // Quận/huyện lấy theo mã GHN từ tỉnh đã chọn; nếu tỉnh là fallback thì dùng open-api.
-            const selectedProvince = provinces.value.find((p) => String(p.code) === String(provinceCode));
-            if (selectedProvince?.source === 'OPEN_API') {
-                if (!allowFallback) return;
-                await loadFallbackDistricts(provinceCode);
-                return;
-            }
-            const res = await api.get(`${API_ADMIN.GHN}/districts`, { params: { provinceId: provinceCode }, silent: true });
+            // Neu tinh duoc chon dang la fallback OPEN_API hoac LOCAL thi thu goi GHN truoc neu co mang
+            const res = await api.get(`${API_ADMIN.GHN}/districts`, { params: { provinceId: provinceCode }, silent: true, timeout: 3000 });
             const list = extractList(res);
             if (!list.length) throw new Error('GHN districts empty');
             districts.value = list
@@ -127,8 +204,16 @@ export function useLocation(options = {}) {
                 }))
                 .filter((d) => d.code && d.name);
         } catch (e) {
-            logLocationFallback('GHN districts unavailable.', e);
+            logLocationFallback('GHN districts unavailable, fallback to open-api / local.', e);
+            if (selectedProvince?.source === 'LOCAL') {
+                loadLocalDistricts(provinceCode, selectedProvince?.name);
+            } else {
+                await loadFallbackDistricts(provinceCode, selectedProvince?.name);
+            }
         } finally {
+            if (!districts.value.length) {
+                loadLocalDistricts(provinceCode, selectedProvince?.name);
+            }
             loadingLocations.value.districts = false;
         }
     };
@@ -137,15 +222,9 @@ export function useLocation(options = {}) {
         if (!districtCode) return;
         loadingLocations.value.wards = true;
         wards.value = [];
+        const selectedDistrict = districts.value.find((d) => String(d.code) === String(districtCode));
         try {
-            // Phường/xã đi cùng nguồn với quận/huyện để tránh lệch mã khi tính phí ship.
-            const selectedDistrict = districts.value.find((d) => String(d.code) === String(districtCode));
-            if (selectedDistrict?.source === 'OPEN_API') {
-                if (!allowFallback) return;
-                await loadFallbackWards(districtCode);
-                return;
-            }
-            const res = await api.get(`${API_ADMIN.GHN}/wards`, { params: { districtId: districtCode }, silent: true });
+            const res = await api.get(`${API_ADMIN.GHN}/wards`, { params: { districtId: districtCode }, silent: true, timeout: 3000 });
             const list = extractList(res);
             if (!list.length) throw new Error('GHN wards empty');
             wards.value = list
@@ -156,11 +235,30 @@ export function useLocation(options = {}) {
                 }))
                 .filter((w) => w.code && w.name);
         } catch (e) {
-            logLocationFallback('GHN wards unavailable.', e);
+            logLocationFallback('GHN wards unavailable, fallback to open-api / local.', e);
+            if (selectedDistrict?.source === 'LOCAL') {
+                loadLocalWards(districtCode, selectedDistrict?.name);
+            } else {
+                await loadFallbackWards(districtCode, selectedDistrict?.name);
+            }
         } finally {
+            if (!wards.value.length) {
+                loadLocalWards(districtCode, selectedDistrict?.name);
+            }
             loadingLocations.value.wards = false;
         }
     };
+
+    // Tu dong lang nghe su kien bat mang tro lai (Online) de chuyen ve Live API
+    const handleOnline = () => {
+        if (provinces.value.some((p) => p.source === 'LOCAL' || p.source === 'OPEN_API')) {
+            fetchProvinces(true);
+        }
+    };
+
+    if (typeof window !== 'undefined') {
+        window.addEventListener('online', handleOnline);
+    }
 
     return {
         provinces,

@@ -151,7 +151,7 @@ onMounted(() => {
                     </v-breadcrumbs>
                 </div>
                 <div class="d-flex align-center">
-                    <v-btn icon variant="text" class="custom-hover-primary text-muted mr-1" :to="PATH.QUAN_LY_CHAT">
+                    <!-- <v-btn icon variant="text" class="custom-hover-primary text-muted mr-1" :to="PATH.QUAN_LY_CHAT">
                         <v-badge
                             :content="unreadChatCount"
                             :model-value="unreadChatCount > 0"
@@ -163,7 +163,7 @@ onMounted(() => {
                         </v-badge>
                         <v-tooltip activator="parent" location="bottom">Quản lý tin nhắn</v-tooltip>
                     </v-btn>
-                    <NotificationDD />
+                    <NotificationDD /> -->
                     <ProfileDD />
                 </div>
             </div>

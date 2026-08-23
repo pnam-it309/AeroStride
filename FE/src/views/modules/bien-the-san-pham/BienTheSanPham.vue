@@ -864,16 +864,16 @@ onBeforeUnmount(() => {
             title="Danh mục biến thể"
             :headers="[
                 { text: 'Chọn', width: '40px' },
-                { text: 'STT', width: '70px' },
-                { text: 'Mã sản phẩm', width: '100px' },
+                { text: 'STT', width: '60px' },
+                { text: 'Mã sản phẩm', width: '110px' },
                 { text: 'Hình ảnh', width: '70px' },
-                { text: 'Mã SKU', width: '100px' },
-                { text: 'Màu sắc', width: '100px' },
-                { text: 'Kích thước', width: '100px' },
-                { text: 'Số lượng', width: '80px' },
-                { text: 'Giá bán', width: '120px' },
-                { text: 'Trạng thái', width: '120px' },
-                { text: 'Hành động', width: '160px' }
+                { text: 'Mã SKU', width: '220px' },
+                { text: 'Màu sắc', width: '90px' },
+                { text: 'Kích thước', width: '90px' },
+                { text: 'Số lượng', width: '90px' },
+                { text: 'Giá bán', width: '110px' },
+                { text: 'Trạng thái', width: '130px' },
+                { text: 'Hành động', width: '110px' }
             ]"
             :items="variants"
             :loading="loading"
@@ -895,7 +895,7 @@ onBeforeUnmount(() => {
 
             <template #headers>
                 <tr>
-                    <th class="header-cell px-0" style="width: 50px; text-align: center">
+                    <th class="header-cell px-0" style="width: 40px; text-align: center">
                         <v-checkbox-btn
                             :model-value="allVariantsSelected"
                             :indeterminate="someVariantsSelected"
@@ -906,16 +906,16 @@ onBeforeUnmount(() => {
                             @update:model-value="toggleSelectAllVariants"
                         />
                     </th>
-                    <th class="header-cell" style="width: 70px">STT</th>
-                    <th class="header-cell" style="width: 100px">Mã sản phẩm</th>
-                    <th class="header-cell" style="width: 100px">Hình ảnh</th>
-                    <th class="header-cell" style="width: 100px">Mã SKU</th>
-                    <th class="header-cell" style="width: 100px">Màu sắc</th>
-                    <th class="header-cell" style="width: 100px">Kích thước</th>
-                    <th class="header-cell" style="width: 80px">Số lượng</th>
-                    <th class="header-cell" style="width: 120px">Giá bán</th>
-                    <th class="header-cell" style="width: 120px">Trạng thái</th>
-                    <th class="header-cell" style="width: 120px">Hành động</th>
+                    <th class="header-cell" style="width: 60px">STT</th>
+                    <th class="header-cell" style="width: 110px">Mã sản phẩm</th>
+                    <th class="header-cell" style="width: 70px">Hình ảnh</th>
+                    <th class="header-cell" style="width: 220px">Mã SKU</th>
+                    <th class="header-cell" style="width: 90px">Màu sắc</th>
+                    <th class="header-cell" style="width: 90px">Kích thước</th>
+                    <th class="header-cell" style="width: 90px">Số lượng</th>
+                    <th class="header-cell" style="width: 110px">Giá bán</th>
+                    <th class="header-cell" style="width: 130px">Trạng thái</th>
+                    <th class="header-cell" style="width: 110px">Hành động</th>
                 </tr>
             </template>
 
@@ -931,7 +931,7 @@ onBeforeUnmount(() => {
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell px-0" style="width: 50px; text-align: center">
+                    <td class="data-cell px-0" style="width: 40px; text-align: center">
                         <v-checkbox-btn
                             :model-value="selectedVariantIds.includes(item.id)"
                             color="primary"
@@ -959,10 +959,8 @@ onBeforeUnmount(() => {
                             <div v-if="item.phanTramGiam > 0" class="discount-badge">-{{ Math.round(item.phanTramGiam) }}%</div>
                         </div>
                     </td>
-                    <td class="data-cell text-center">
-                        <div class="text-truncate" :title="item.maChiTietSanPham">
-                            <span class="text-truncate">{{ item.maChiTietSanPham || '--' }}</span>
-                        </div>
+                    <td class="data-cell text-center font-weight-medium">
+                        <span class="text-no-wrap text-slate-700" :title="item.maChiTietSanPham">{{ item.maChiTietSanPham || '--' }}</span>
                     </td>
                     <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.tenMauSac">

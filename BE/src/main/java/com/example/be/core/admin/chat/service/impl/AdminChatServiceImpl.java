@@ -49,6 +49,7 @@ public class AdminChatServiceImpl implements AdminChatService {
     private final AdminCuocHoiThoaiRepository conversationRepository;
     private final AdminTinNhanRepository messageRepository;
     private final NhanVienRepository nhanVienRepository;
+    private final com.example.be.repository.KhachHangRepository khachHangRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
     private final com.example.be.core.admin.chat.service.AiChatService aiChatService;
@@ -74,6 +75,16 @@ public class AdminChatServiceImpl implements AdminChatService {
             String hinhAnh = c.getKhachHang().getHinhAnh();
             return (hinhAnh != null && !hinhAnh.trim().isEmpty()) ? hinhAnh : DEFAULT_AVATAR;
         }
+
+        if (c.getMaPhien() != null && c.getMaPhien().startsWith("user_")) {
+            String username = c.getMaPhien().substring(5);
+            var kh = khachHangRepository.findByTenTaiKhoan(username)
+                    .or(() -> khachHangRepository.findFirstByEmailIgnoreCase(username))
+                    .orElse(null);
+            if (kh != null && kh.getHinhAnh() != null && !kh.getHinhAnh().trim().isEmpty()) {
+                return kh.getHinhAnh();
+            }
+        }
         
         if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
             NhanVien partner = null;
@@ -97,7 +108,37 @@ public class AdminChatServiceImpl implements AdminChatService {
 
     private String getConversationName(CuocHoiThoai c, String currentUsername) {
         if (c.getKhachHang() != null) {
-            return c.getKhachHang().getTenTaiKhoan();
+            String fullName = c.getKhachHang().getTen();
+            if (fullName != null && !fullName.trim().isEmpty()) {
+                return fullName.trim();
+            }
+            String username = c.getKhachHang().getTenTaiKhoan();
+            if (username != null && !username.trim().isEmpty()) {
+                return username.trim();
+            }
+            String email = c.getKhachHang().getEmail();
+            if (email != null && !email.trim().isEmpty()) {
+                return email.trim();
+            }
+            return "Khách hàng";
+        }
+
+        // Tự động giải mã tên khách hàng nếu mã phiên là user_
+        if (c.getMaPhien() != null && c.getMaPhien().startsWith("user_")) {
+            String username = c.getMaPhien().substring(5);
+            var khOpt = khachHangRepository.findByTenTaiKhoan(username)
+                    .or(() -> khachHangRepository.findFirstByEmailIgnoreCase(username));
+            if (khOpt.isPresent()) {
+                var kh = khOpt.get();
+                c.setKhachHang(kh);
+                conversationRepository.save(c);
+                String fullName = kh.getTen();
+                if (fullName != null && !fullName.trim().isEmpty()) return fullName.trim();
+                String uName = kh.getTenTaiKhoan();
+                if (uName != null && !uName.trim().isEmpty()) return uName.trim();
+                return kh.getEmail() != null ? kh.getEmail() : "Khách hàng";
+            }
+            return username;
         }
         
         if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
@@ -400,6 +441,7 @@ public class AdminChatServiceImpl implements AdminChatService {
         CuocHoiThoai conversation = conversationRepository.findById(id).orElse(null);
         if (conversation != null) {
             conversation.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.CLOSED);
+            conversation.setNgayCapNhat(System.currentTimeMillis());
             
             String currentUsername = getCurrentUsername();
             Optional<NhanVien> nhanVienOpt = nhanVienRepository.findByTenTaiKhoan(currentUsername);
@@ -532,8 +574,11 @@ public class AdminChatServiceImpl implements AdminChatService {
             conversation = conversationRepository.save(conversation);
         }
 
-        // Nếu là nhân viên gửi, tự động tiếp nhận / mở lại cuộc trò chuyện
+        // Nếu là nhân viên gửi, tự động tiếp nhận cuộc trò chuyện (nếu đang chờ), chặn nếu đã đóng
         if (ChatConstants.SENDER_TYPE_STAFF.equals(senderType) && conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
+            if (conversation.getTrangThaiHoiThoai() == CuocHoiThoai.TrangThaiHoiThoai.CLOSED) {
+                throw new RuntimeException("Phiên trò chuyện đã đóng, không thể gửi thêm tin nhắn.");
+            }
             if (Boolean.FALSE.equals(conversation.getDaChapNhan()) || conversation.getTrangThaiHoiThoai() != CuocHoiThoai.TrangThaiHoiThoai.ACTIVE) {
                 conversation.setDaChapNhan(true);
                 conversation.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.ACTIVE);

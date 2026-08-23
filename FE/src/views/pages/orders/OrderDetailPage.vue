@@ -226,10 +226,30 @@ const cancelEditItems = () => {
 };
 
 const changeQty = (idChiTietSanPham, delta) => {
-    const current = editQuantities.value[idChiTietSanPham] || 1;
+    const current = parseInt(editQuantities.value[idChiTietSanPham], 10) || 1;
     const next = current + delta;
     if (next < 1) return;
     editQuantities.value[idChiTietSanPham] = next;
+};
+
+const handleQuantityInput = (idChiTietSanPham, event) => {
+    let val = event?.target?.value ?? '';
+    val = val.replace(/\D/g, '');
+    if (val === '') {
+        editQuantities.value[idChiTietSanPham] = '';
+        return;
+    }
+    const num = parseInt(val, 10);
+    editQuantities.value[idChiTietSanPham] = num > 0 ? num : 1;
+};
+
+const handleQuantityBlur = (idChiTietSanPham) => {
+    const current = editQuantities.value[idChiTietSanPham];
+    if (!current || parseInt(current, 10) < 1) {
+        editQuantities.value[idChiTietSanPham] = 1;
+    } else {
+        editQuantities.value[idChiTietSanPham] = parseInt(current, 10);
+    }
 };
 
 const handleSaveItems = async () => {
@@ -438,12 +458,14 @@ onMounted(async () => {
                                             variant="flat"
                                             size="small"
                                             rounded="pill"
-                                            class="text-none font-weight-bold"
+                                            color="#1e257c"
+                                            class="text-none font-weight-bold text-white"
+                                            style="background: #1e257c !important; color: #ffffff !important;"
                                             :loading="itemsLoading"
-                                            style="background: #1e257c; color: white"
                                             @click="handleSaveItems"
                                         >
-                                            <v-icon size="16" class="mr-1">mdi-content-save</v-icon>Lưu
+                                            <v-icon size="16" class="mr-1" style="color: #ffffff !important;">mdi-content-save</v-icon>
+                                            <span style="color: #ffffff !important;">Lưu</span>
                                         </v-btn>
                                     </template>
                                 </div>
@@ -486,13 +508,22 @@ onMounted(async () => {
                                                 icon
                                                 size="x-small"
                                                 variant="tonal"
-                                                :disabled="(editQuantities[item.idChiTietSanPham] || 1) <= 1"
+                                                :disabled="(parseInt(editQuantities[item.idChiTietSanPham], 10) || 1) <= 1"
                                                 style="color: #1e257c; background: #f0f4ff"
                                                 @click="changeQty(item.idChiTietSanPham, -1)"
                                             >
                                                 <v-icon size="16">mdi-minus</v-icon>
                                             </v-btn>
-                                            <span class="qty-value font-weight-bold mx-2">{{ editQuantities[item.idChiTietSanPham] }}</span>
+                                            <input
+                                                type="text"
+                                                inputmode="numeric"
+                                                pattern="[0-9]*"
+                                                class="qty-input font-weight-bold mx-1"
+                                                :value="editQuantities[item.idChiTietSanPham]"
+                                                @input="handleQuantityInput(item.idChiTietSanPham, $event)"
+                                                @blur="handleQuantityBlur(item.idChiTietSanPham)"
+                                                style="width: 48px; height: 28px; border: 1.5px solid #cbd5e1; border-radius: 8px; text-align: center; font-size: 13px; font-weight: 700; color: #1e257c; outline: none; background: #ffffff;"
+                                            />
                                             <v-btn
                                                 icon
                                                 size="x-small"
@@ -751,12 +782,15 @@ onMounted(async () => {
 
         <!-- Edit Shipping Info Dialog -->
         <v-dialog v-model="showEditDialog" max-width="520">
-            <div class="dialog-content pa-6 bg-white">
-                <div class="d-flex align-center mb-5">
-                    <div class="card-icon mr-3" style="background: #f0f4ff">
-                        <v-icon style="color: #1e257c" size="22">mdi-truck-outline</v-icon>
+            <v-card class="pa-6 border" elevation="10" style="border-radius: 20px !important; background: #ffffff !important;">
+                <div class="d-flex align-center justify-space-between mb-5">
+                    <div class="d-flex align-center">
+                        <div class="card-icon mr-3" style="background: #f0f4ff">
+                            <v-icon style="color: #1e257c" size="22">mdi-truck-outline</v-icon>
+                        </div>
+                        <h3 class="text-h6 font-weight-bold mb-0" style="color: #1e257c">Sửa thông tin nhận hàng</h3>
                     </div>
-                    <h3 class="text-h6 font-weight-bold mb-0" style="color: #1e257c">Sửa thông tin nhận hàng</h3>
+                    <v-btn icon="mdi-close" variant="text" size="small" density="comfortable" @click="showEditDialog = false"></v-btn>
                 </div>
 
                 <v-text-field
@@ -764,7 +798,9 @@ onMounted(async () => {
                     label="Tên người nhận *"
                     variant="outlined"
                     density="comfortable"
-                    class="mb-3"
+                    bg-color="#f8fafc"
+                    color="#1e257c"
+                    class="mb-3 rounded-lg"
                     hide-details="auto"
                     prepend-inner-icon="mdi-account-outline"
                     maxlength="100"
@@ -776,7 +812,9 @@ onMounted(async () => {
                     label="Số điện thoại người nhận *"
                     variant="outlined"
                     density="comfortable"
-                    class="mb-3"
+                    bg-color="#f8fafc"
+                    color="#1e257c"
+                    class="mb-3 rounded-lg"
                     hide-details="auto"
                     prepend-inner-icon="mdi-phone-outline"
                     maxlength="10"
@@ -788,9 +826,11 @@ onMounted(async () => {
                     label="Địa chỉ nhận hàng *"
                     variant="outlined"
                     density="comfortable"
+                    bg-color="#f8fafc"
+                    color="#1e257c"
                     rows="2"
                     auto-grow
-                    class="mb-3"
+                    class="mb-3 rounded-lg"
                     hide-details="auto"
                     prepend-inner-icon="mdi-map-marker-outline"
                     maxlength="255"
@@ -802,9 +842,11 @@ onMounted(async () => {
                     label="Ghi chú (tùy chọn)"
                     variant="outlined"
                     density="comfortable"
+                    bg-color="#f8fafc"
+                    color="#1e257c"
                     rows="2"
                     auto-grow
-                    class="mb-2"
+                    class="mb-2 rounded-lg"
                     hide-details="auto"
                     prepend-inner-icon="mdi-note-text-outline"
                     maxlength="500"
@@ -816,7 +858,7 @@ onMounted(async () => {
                     type="info"
                     variant="tonal"
                     density="compact"
-                    class="mb-4 text-caption"
+                    class="mb-4 text-caption rounded-lg"
                     icon="mdi-information-outline"
                 >
                     Đổi địa chỉ không làm thay đổi phí vận chuyển đã chốt của đơn.
@@ -827,6 +869,7 @@ onMounted(async () => {
                         variant="outlined"
                         rounded="pill"
                         class="font-weight-bold text-none flex-grow-1"
+                        style="color: #64748b; border-color: #cbd5e1"
                         :disabled="editLoading"
                         @click="showEditDialog = false"
                     >
@@ -834,20 +877,22 @@ onMounted(async () => {
                     </v-btn>
                     <v-btn
                         rounded="pill"
+                        color="#1e257c"
+                        variant="flat"
                         class="font-weight-bold text-none flex-grow-1 text-white"
-                        style="background: #1e257c"
+                        style="background: #1e257c !important; color: #ffffff !important;"
                         :loading="editLoading"
                         @click="handleSaveShipping"
                     >
-                        Lưu thay đổi
+                        <span style="color: #ffffff !important; font-weight: 700;">Lưu thay đổi</span>
                     </v-btn>
                 </div>
-            </div>
+            </v-card>
         </v-dialog>
 
         <!-- Cancel Dialog -->
         <v-dialog v-model="showCancelDialog" max-width="440">
-            <div class="dialog-content pa-6 bg-white">
+            <v-card class="pa-6 border" elevation="10" style="border-radius: 20px !important; background: #ffffff !important;">
                 <div class="text-center mb-6">
                     <div class="cancel-dialog-icon mx-auto mb-4">
                         <v-icon size="40" style="color: #1e257c">mdi-alert-circle-outline</v-icon>
@@ -864,21 +909,24 @@ onMounted(async () => {
                         variant="outlined"
                         rounded="pill"
                         class="font-weight-bold text-none flex-grow-1"
+                        style="color: #64748b; border-color: #cbd5e1"
                         @click="showCancelDialog = false"
                     >
                         Giữ lại đơn hàng
                     </v-btn>
                     <v-btn
                         rounded="pill"
+                        color="#1e257c"
+                        variant="flat"
                         class="font-weight-bold text-none flex-grow-1 text-white"
-                        style="background: #1e257c"
+                        style="background: #1e257c !important; color: #ffffff !important;"
                         :loading="cancelLoading"
                         @click="handleCancel"
                     >
-                        Xác nhận hủy
+                        <span style="color: #ffffff !important; font-weight: 700;">Xác nhận hủy</span>
                     </v-btn>
                 </div>
-            </div>
+            </v-card>
         </v-dialog>
 
         <CustomerChat />

@@ -221,6 +221,7 @@ const hourlyPercentageInfo = computed(() => {
 
 const getHourlyChartOptions = (color, maxVal, maxCust) => {
     const isUnder50M = !maxVal || maxVal <= 50000000;
+    const yaxisMaxRevenue = isUnder50M ? 50000000 : Math.ceil((maxVal * 1.2) / 10000000) * 10000000;
     return {
         chart: {
             type: 'line',
@@ -237,8 +238,14 @@ const getHourlyChartOptions = (color, maxVal, maxCust) => {
         dataLabels: {
             enabled: true,
             enabledOnSeries: [0],
-            formatter: function (val) {
+            formatter: function (val, opts) {
                 if (!val) return '';
+                const idx = opts?.dataPointIndex;
+                const totalPoints = opts?.w?.config?.series?.[opts?.seriesIndex]?.data?.length || hourlyCategories.length;
+                // Ẩn số ở 2 điểm ngoài cùng (điểm đầu và điểm cuối) để không bị tràn mép/vỡ chữ
+                if (idx === 0 || idx === totalPoints - 1) {
+                    return '';
+                }
                 return new Intl.NumberFormat('vi-VN').format(val) + 'đ';
             },
             style: {
@@ -268,7 +275,11 @@ const getHourlyChartOptions = (color, maxVal, maxCust) => {
         },
         grid: {
             borderColor: '#f1f5f9',
-            strokeDashArray: 4
+            strokeDashArray: 4,
+            padding: {
+                top: 15,
+                right: 15
+            }
         },
         xaxis: {
             categories: hourlyCategories,
@@ -289,7 +300,7 @@ const getHourlyChartOptions = (color, maxVal, maxCust) => {
         yaxis: [
             {
                 min: 0,
-                max: isUnder50M ? 50000000 : undefined,
+                max: yaxisMaxRevenue,
                 tickAmount: isUnder50M ? 5 : undefined,
                 labels: {
                     formatter: function (value) {
@@ -481,23 +492,7 @@ const areaChartOptions = ref({
     },
     colors: ['#4f46e5', '#10b981'],
     dataLabels: {
-        enabled: true,
-        enabledOnSeries: [0],
-        formatter: function (val) {
-            if (!val) return '';
-            return new Intl.NumberFormat('vi-VN').format(val) + 'đ';
-        },
-        style: {
-            fontSize: '10px',
-            fontWeight: '800',
-            colors: ['#4f46e5']
-        },
-        textAnchor: 'start',
-        offsetX: 8,
-        offsetY: -2,
-        background: {
-            enabled: false
-        }
+        enabled: false
     },
     markers: {
         size: [5, 4],

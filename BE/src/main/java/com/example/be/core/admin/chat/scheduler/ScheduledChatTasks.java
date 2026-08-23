@@ -4,16 +4,21 @@ import com.example.be.core.admin.chat.repository.AdminCuocHoiThoaiRepository;
 import com.example.be.core.admin.chat.repository.AdminTinNhanRepository;
 import com.example.be.entity.CuocHoiThoai;
 import com.example.be.entity.TinNhan;
+import com.example.be.infrastructure.constants.ChatConstants;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-
 @Component
+@Slf4j
 public class ScheduledChatTasks {
 
     @Autowired
@@ -22,7 +27,10 @@ public class ScheduledChatTasks {
     @Autowired
     private AdminTinNhanRepository tinNhanRepository;
 
-    // Run every 5 minutes
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    // Run every 5 minutes: auto-close inactive chats after 30 minutes
     @Scheduled(fixedRate = 300000)
     @Transactional
     public void autoCloseInactiveChats() {
@@ -46,6 +54,7 @@ public class ScheduledChatTasks {
                 // If no activity in the last 30 minutes, close the chat
                 if (minutesSinceLastMsg >= 30) {
                     chat.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.CLOSED);
+                    chat.setNgayCapNhat(now);
                     
                     // Add a system message notifying auto-close
                     TinNhan systemMsg = TinNhan.builder()
@@ -57,6 +66,43 @@ public class ScheduledChatTasks {
                     
                     tinNhanRepository.save(systemMsg);
                     cuocHoiThoaiRepository.save(chat);
+                }
+            }
+        }
+    }
+
+    // Run every 30 seconds: auto-delete closed guest conversations after 2 minutes
+    @Scheduled(fixedRate = 30000)
+    @Transactional
+    public void cleanupClosedGuestChats() {
+        long now = System.currentTimeMillis();
+        long twoMinutesInMillis = 2 * 60 * 1000L; // 2 minutes
+
+        // Find all CLOSED conversations
+        List<CuocHoiThoai> closedChats = cuocHoiThoaiRepository.findByTrangThaiHoiThoaiIn(
+                List.of(CuocHoiThoai.TrangThaiHoiThoai.CLOSED));
+
+        for (CuocHoiThoai chat : closedChats) {
+            // Check if guest customer (khachHang is null, loaiHoiThoai is CUSTOMER)
+            if (chat.getKhachHang() == null && chat.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
+                Long closedTime = chat.getNgayCapNhat() != null ? chat.getNgayCapNhat() : chat.getNgayTao();
+                if (closedTime != null && (now - closedTime) >= twoMinutesInMillis) {
+                    String chatId = chat.getId();
+                    String session = chat.getMaPhien();
+                    log.info("Auto deleting closed guest conversation: {} (session: {})", chatId, session);
+                    try {
+                        tinNhanRepository.deleteByConversationId(chatId);
+                        cuocHoiThoaiRepository.delete(chat);
+
+                        // Broadcast notification so admin UI removes this conversation
+                        Map<String, Object> deletedEvent = new HashMap<>();
+                        deletedEvent.put("type", "CONVERSATION_DELETED");
+                        deletedEvent.put("conversationId", chatId);
+                        deletedEvent.put("sessionId", session);
+                        messagingTemplate.convertAndSend(ChatConstants.TOPIC_NOTIFICATIONS, deletedEvent);
+                    } catch (Exception e) {
+                        log.error("Error deleting closed guest chat {}: {}", chatId, e.getMessage());
+                    }
                 }
             }
         }

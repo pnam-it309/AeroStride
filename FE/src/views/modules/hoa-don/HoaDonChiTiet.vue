@@ -550,7 +550,8 @@ const allowedStatuses = computed(() => {
     if (!current) return allItems;
 
     return allItems.filter((item) => {
-        if (item.value === current) return true;
+        // Không hiển thị trạng thái hiện tại trong danh sách chọn
+        if (item.value === current) return false;
 
         switch (current) {
             case ORDER_STATUS.CHO_XAC_NHAN:
@@ -804,7 +805,7 @@ const openEditModal = () => {
     }
     activeTab.value = 0;
     editForm.value = {
-        trangThai: order.value.trangThai,
+        trangThai: allowedStatuses.value.length > 0 ? allowedStatuses.value[0].value : null,
         tenNguoiNhan: order.value.tenNguoiNhan || '',
         soDienThoaiNguoiNhan: order.value.soDienThoaiNguoiNhan || '',
         diaChiNguoiNhan: order.value.diaChiNguoiNhan || '',
@@ -828,7 +829,7 @@ const submitEditOrder = async () => {
         }
 
         // 2. Update Status if changed
-        if (editForm.value.trangThai !== order.value.trangThai) {
+        if (editForm.value.trangThai && editForm.value.trangThai !== order.value.trangThai) {
             const targetOrdinal = getOrderStatusOrdinal(editForm.value.trangThai);
             await dichVuHoaDon.capNhatTrangThaiHoaDon(
                 order.value.id,
@@ -1785,12 +1786,13 @@ onMounted(() => {
                             <v-row class="ga-3" dense>
                                 <!-- Order Status Selection -->
                                 <v-col cols="12" class="mb-2">
-                                    <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Trạng thái đơn hàng</span>
+                                    <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Trạng thái mới chuyển tới</span>
                                     <v-select
                                         v-model="editForm.trangThai"
                                         :items="allowedStatuses"
                                         item-title="title"
                                         item-value="value"
+                                        placeholder="Chọn trạng thái mới"
                                         variant="outlined"
                                         rounded="lg"
                                         density="comfortable"
@@ -1799,7 +1801,7 @@ onMounted(() => {
                                 </v-col>
 
                                 <!-- Status Update Note (Visible if status changed) -->
-                                <v-col cols="12" v-if="editForm.trangThai !== order.trangThai" class="mb-2">
+                                <v-col cols="12" v-if="editForm.trangThai && editForm.trangThai !== order.trangThai" class="mb-2">
                                     <span class="text-body-2 text-warning font-weight-bold d-block mb-2">Mô tả cập nhật trạng thái</span>
                                     <v-text-field
                                         v-model="editForm.ghiChuTrangThai"

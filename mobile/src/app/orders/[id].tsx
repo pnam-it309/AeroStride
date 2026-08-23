@@ -21,6 +21,7 @@ import { formatCurrency, formatDate, getOrderStatusColor } from '@/utils/format'
 import { StatusBadge } from '@/components/ui/Badge';
 import { StatusTimeline } from '@/components/StatusTimeline';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { AddressInputGroup, type AddressData } from '@/components/ui/AddressInputGroup';
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -47,7 +48,13 @@ export default function OrderDetailScreen() {
   const [editShippingModalVisible, setEditShippingModalVisible] = useState(false);
   const [editTenNguoiNhan, setEditTenNguoiNhan] = useState('');
   const [editSoDienThoai, setEditSoDienThoai] = useState('');
-  const [editDiaChi, setEditDiaChi] = useState('');
+  const [editAddressData, setEditAddressData] = useState<AddressData>({
+    tinhThanh: '',
+    quanHuyen: '',
+    phuongXa: '',
+    diaChiChiTiet: '',
+    fullAddress: '',
+  });
   const [editGhiChu, setEditGhiChu] = useState('');
   const [savingShipping, setSavingShipping] = useState(false);
 
@@ -141,7 +148,6 @@ export default function OrderDetailScreen() {
     if (!order) return;
     setEditTenNguoiNhan(order.tenNguoiNhan || '');
     setEditSoDienThoai(order.soDienThoaiNguoiNhan || '');
-    setEditDiaChi(order.diaChiNguoiNhan || '');
     setEditGhiChu(order.ghiChu || '');
     setEditShippingModalVisible(true);
   };
@@ -156,8 +162,20 @@ export default function OrderDetailScreen() {
       showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập số điện thoại' });
       return;
     }
-    if (!editDiaChi.trim()) {
-      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập địa chỉ nhận hàng' });
+    if (!editAddressData.tinhThanh) {
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng chọn Tỉnh / Thành phố' });
+      return;
+    }
+    if (!editAddressData.quanHuyen) {
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng chọn Quận / Huyện' });
+      return;
+    }
+    if (!editAddressData.phuongXa) {
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng chọn Phường / Xã' });
+      return;
+    }
+    if (!editAddressData.diaChiChiTiet.trim()) {
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập địa chỉ chi tiết (số nhà, tên đường...)' });
       return;
     }
 
@@ -166,7 +184,7 @@ export default function OrderDetailScreen() {
       const updated = await orderService.updateShippingInfo(order.id, {
         tenNguoiNhan: editTenNguoiNhan.trim(),
         soDienThoaiNguoiNhan: editSoDienThoai.trim(),
-        diaChiNguoiNhan: editDiaChi.trim(),
+        diaChiNguoiNhan: editAddressData.fullAddress.trim(),
         ghiChu: editGhiChu.trim(),
       });
       setOrder(updated);
@@ -628,14 +646,9 @@ export default function OrderDetailScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Địa chỉ giao hàng</Text>
-              <TextInput
-                style={[styles.inputField, { borderColor: theme.border, color: theme.text, backgroundColor: theme.background, minHeight: 60 }]}
-                placeholder="Nhập số nhà, đường, phường/xã, quận/huyện..."
-                placeholderTextColor={theme.textTertiary}
-                multiline
-                value={editDiaChi}
-                onChangeText={setEditDiaChi}
+              <AddressInputGroup
+                initialFullAddress={order.diaChiNguoiNhan}
+                onChange={setEditAddressData}
               />
             </View>
 

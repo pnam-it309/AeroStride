@@ -31,8 +31,12 @@ const generateSessionId = (): string =>
   `mobile-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
 export const chatService = {
-  /** Get a stable session id for this device, creating one on first use. */
+  /** Get a stable session id for this device or user account. */
   async getSessionId(): Promise<string> {
+    const user = await storage.getUser();
+    if (user?.username) {
+      return `user_${user.username}`;
+    }
     let sessionId = await storage.getChatSessionId();
     if (!sessionId) {
       sessionId = generateSessionId();

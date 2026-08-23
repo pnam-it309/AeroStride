@@ -616,15 +616,24 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
                                         <div class="field-label">Màu sắc <span class="text-error">*</span></div>
+                                        <v-text-field
+                                            v-if="isEditing"
+                                            :model-value="lockedColorLabel"
+                                            readonly
+                                            variant="outlined"
+                                            density="comfortable"
+                                            hide-details="auto"
+                                            class="modern-input readonly-variant-field"
+                                        ></v-text-field>
                                         <v-combobox
+                                            v-else
                                             v-model="formData.idMauSac"
                                             v-bind="comboboxProps"
-                                            :disabled="isEditing"
                                             :custom-filter="comboboxFilter"
                                             :items="colorComboboxItems"
                                             item-title="ten"
                                             item-value="id"
-                                            :placeholder="lockedColorLabel || 'Chọn màu sắc'"
+                                            placeholder="Chọn màu sắc"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
@@ -641,15 +650,24 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
                                         <div class="field-label">Kích thước <span class="text-error">*</span></div>
+                                        <v-text-field
+                                            v-if="isEditing"
+                                            :model-value="lockedSizeLabel"
+                                            readonly
+                                            variant="outlined"
+                                            density="comfortable"
+                                            hide-details="auto"
+                                            class="modern-input readonly-variant-field"
+                                        ></v-text-field>
                                         <v-combobox
+                                            v-else
                                             v-model="formData.idKichThuoc"
                                             v-bind="comboboxProps"
-                                            :disabled="isEditing"
                                             :custom-filter="comboboxFilter"
                                             :items="sizeComboboxItems"
                                             item-title="ten"
                                             item-value="id"
-                                            :placeholder="lockedSizeLabel || 'Chọn kích thước'"
+                                            placeholder="Chọn kích thước"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
@@ -692,7 +710,7 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                                             readonly
                                             hide-details="auto"
                                             maxlength="100"
-                                            class="modern-input bg-slate-50"
+                                            class="modern-input readonly-variant-field"
                                         ></v-text-field>
                                     </div>
                                 </v-col>
@@ -821,6 +839,20 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 :deep(.modern-input .v-field) {
     border-radius: 12px !important;
     background-color: #fcfdfe !important;
+}
+
+:deep(.readonly-variant-field .v-field) {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    opacity: 1 !important;
+}
+
+:deep(.readonly-variant-field input) {
+    color: #0f172a !important;
+    font-weight: 600 !important;
+    opacity: 1 !important;
+    -webkit-text-fill-color: #0f172a !important;
+    cursor: default !important;
 }
 
 :deep(.v-field--focused .v-field__outline) {

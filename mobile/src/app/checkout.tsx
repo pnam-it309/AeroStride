@@ -28,6 +28,7 @@ import { orderService, type CheckoutRequest, type Voucher } from '@/services/ord
 import { profileService } from '@/services/profileService';
 import { getApiErrorMessage } from '@/services/apiClient';
 import { FormField } from '@/components/ui/FormField';
+import { AddressInputGroup, type AddressData } from '@/components/ui/AddressInputGroup';
 import {
   formatCurrency,
   formatVoucherValue,
@@ -47,7 +48,20 @@ export default function CheckoutScreen() {
 
   const [tenNguoiNhan, setTenNguoiNhan] = useState('');
   const [soDienThoai, setSoDienThoai] = useState('');
-  const [diaChi, setDiaChi] = useState('');
+  const [addressData, setAddressData] = useState<AddressData>({
+    tinhThanh: '',
+    quanHuyen: '',
+    phuongXa: '',
+    diaChiChiTiet: '',
+    fullAddress: '',
+  });
+  const [initialProfileAddress, setInitialProfileAddress] = useState<{
+    tinhThanh?: string;
+    quanHuyen?: string;
+    phuongXa?: string;
+    diaChiChiTiet?: string;
+    fullAddress?: string;
+  }>({});
   const [ghiChu, setGhiChu] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [loading, setLoading] = useState(false);
@@ -84,7 +98,13 @@ export default function CheckoutScreen() {
         const addr = [p.diaChiChiTiet, p.phuongXa, p.quanHuyen, p.tinhThanh]
           .filter(Boolean)
           .join(', ');
-        setDiaChi((prev) => prev || addr);
+        setInitialProfileAddress({
+          tinhThanh: p.tinhThanh,
+          quanHuyen: p.quanHuyen,
+          phuongXa: p.phuongXa,
+          diaChiChiTiet: p.diaChiChiTiet,
+          fullAddress: addr,
+        });
       })
       .catch(() => {});
   }, [isAuthenticated]);
@@ -116,8 +136,20 @@ export default function CheckoutScreen() {
       showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập số điện thoại' });
       return;
     }
-    if (!diaChi.trim()) {
-      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập địa chỉ giao hàng' });
+    if (!addressData.tinhThanh) {
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng chọn Tỉnh / Thành phố' });
+      return;
+    }
+    if (!addressData.quanHuyen) {
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng chọn Quận / Huyện' });
+      return;
+    }
+    if (!addressData.phuongXa) {
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng chọn Phường / Xã' });
+      return;
+    }
+    if (!addressData.diaChiChiTiet.trim()) {
+      showToast({ type: 'error', title: 'Lỗi', message: 'Vui lòng nhập địa chỉ chi tiết (số nhà, tên đường...)' });
       return;
     }
 
@@ -131,7 +163,7 @@ export default function CheckoutScreen() {
         })),
         tenNguoiNhan: tenNguoiNhan.trim(),
         soDienThoai: soDienThoai.trim(),
-        diaChi: diaChi.trim(),
+        diaChi: addressData.fullAddress.trim(),
         idPhieuGiamGia: selectedVoucher?.id,
         phuongThucThanhToan: paymentMethod,
         ghiChu: ghiChu.trim() || undefined,
@@ -229,14 +261,13 @@ export default function CheckoutScreen() {
               icon="call-outline"
             />
 
-            <FormField
-              label="Địa chỉ *"
-              value={diaChi}
-              onChangeText={setDiaChi}
-              placeholder="Số nhà, đường, phường, quận, thành phố"
-              multiline
-              numberOfLines={2}
-              icon="location-outline"
+            <AddressInputGroup
+              initialTinhThanh={initialProfileAddress.tinhThanh}
+              initialQuanHuyen={initialProfileAddress.quanHuyen}
+              initialPhuongXa={initialProfileAddress.phuongXa}
+              initialDiaChiChiTiet={initialProfileAddress.diaChiChiTiet}
+              initialFullAddress={initialProfileAddress.fullAddress}
+              onChange={setAddressData}
             />
 
             <FormField

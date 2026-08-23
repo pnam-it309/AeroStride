@@ -52,6 +52,12 @@
     border-collapse: separate;
     border-spacing: 0;
 
+    &.is-empty,
+    &:has(.empty-state),
+    &:has(.empty-state-row) {
+        table-layout: auto !important;
+    }
+
     .header-cell {
         position: sticky;
         top: 0;
@@ -77,6 +83,12 @@
         text-align: center;
         height: 52px !important;
         line-height: 1.4 !important;
+    }
+
+    .empty-state {
+        width: 100% !important;
+        text-align: center !important;
+        border-bottom: none !important;
     }
 
     .data-row {

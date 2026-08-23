@@ -219,6 +219,9 @@ const updateSeo = () => {
 };
 
 onMounted(() => {
+    if (route.query.kichThuoc) {
+        selectedSizes.value = String(route.query.kichThuoc).split(',').map((s) => s.trim()).filter(Boolean);
+    }
     fetchFilters();
     fetchProducts().then(() => nextTick(updateSeo));
     updateFavoriteIds();
@@ -237,6 +240,9 @@ watch(
     () => route.query,
     (newQuery) => {
         searchParams.value = { ...searchParams.value, ...newQuery };
+        if (newQuery.kichThuoc) {
+            selectedSizes.value = String(newQuery.kichThuoc).split(',').map((s) => s.trim()).filter(Boolean);
+        }
         fetchProducts();
     }
 );

@@ -1,5 +1,6 @@
 /**
- * Support Chat Screen - talks to BE customer chat (AI + staff)
+ * Support Chat Screen - AeroStride AI & Staff Chat
+ * Designed with custom AeroStride Glassmorphism & Brand aesthetics
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -12,22 +13,20 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { chatService, type ChatMessage, SENDER_CUSTOMER } from '@/services/chatService';
 import { ChatSocket } from '@/services/chatSocket';
 
+const SENDER_BOT = 'bot';
+const SENDER_STAFF = 'staff';
 const POLL_DELAYS = [1200, 2600, 4200, 6000];
-
-const senderLabel = (sender: string): string => {
-  if (sender === 'bot') return 'Trợ lý AI';
-  if (sender === 'staff') return 'Nhân viên';
-  return 'Hỗ trợ';
-};
 
 export default function ChatScreen() {
   const theme = useTheme();
@@ -45,8 +44,6 @@ export default function ChatScreen() {
   const [sending, setSending] = useState(false);
   const [connected, setConnected] = useState(false);
 
-  // Merge a single incoming message: dedupe by id and reconcile the optimistic
-  // local bubble (which has a temporary `local-` id) with its server echo.
   const mergeMessage = useCallback((incoming: ChatMessage) => {
     setMessages((prev) => {
       if (prev.some((m) => m.id === incoming.id)) return prev;
@@ -68,7 +65,6 @@ export default function ChatScreen() {
     try {
       const history = await chatService.getHistory(sid);
       setMessages((prev) => {
-        // Preserve any optimistic local bubbles not yet returned by the server
         const pending = prev.filter(
           (m) => m.id.startsWith('local-') && !history.some((h) => h.text === m.text)
         );
@@ -108,7 +104,6 @@ export default function ChatScreen() {
       setMessages(history);
       setSuggestions(sugg);
 
-      // Live updates: BE broadcasts every message to /topic/messages; only keep ours.
       socket.connect({
         onStatusChange: (isUp) => active && setConnected(isUp),
         onMessage: (msg) => {
@@ -123,84 +118,104 @@ export default function ChatScreen() {
       active = false;
       pollTimers.current.forEach(clearTimeout);
       socket.disconnect();
-      socketRef.current = null;
     };
   }, [mergeMessage]);
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
+  const send = async (textToSend?: string) => {
+    const content = (textToSend ?? input).trim();
+    if (!content || !sessionId || sending) return;
+
+    if (!textToSend) setInput('');
+    setSending(true);
+
+    const optimistic: ChatMessage = {
+      id: `local-${Date.now()}`,
+      sender: SENDER_CUSTOMER,
+      text: content,
+      time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+    };
+    setMessages((prev) => [...prev, optimistic]);
+
+    try {
+      await chatService.sendMessage(sessionId, content);
+      schedulePolls(sessionId);
+    } catch (err) {
+      console.warn('Failed to send chat message:', err);
+    } finally {
+      setSending(false);
     }
-  }, [messages]);
-
-  const send = useCallback(
-    async (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed || !sessionId || sending) return;
-      setInput('');
-      setSuggestions([]);
-      setSending(true);
-
-      // Optimistic customer bubble
-      const optimistic: ChatMessage = {
-        id: `local-${Date.now()}`,
-        sender: SENDER_CUSTOMER,
-        text: trimmed,
-        time: '',
-      };
-      setMessages((prev) => [...prev, optimistic]);
-
-      try {
-        await chatService.sendMessage(sessionId, trimmed);
-        await reloadHistory(sessionId);
-        schedulePolls(sessionId);
-      } catch {
-        // leave the optimistic message; user can retry
-      } finally {
-        setSending(false);
-      }
-    },
-    [sessionId, sending, reloadHistory, schedulePolls]
-  );
+  };
 
   const renderItem = ({ item }: { item: ChatMessage }) => {
     const isMine = item.sender === SENDER_CUSTOMER;
-    const isSystem = item.sender === 'system';
-    if (isSystem) {
+    const isBot = item.sender === SENDER_BOT || item.sender === 'bot';
+    const isStaff = item.sender === SENDER_STAFF || item.sender === 'staff';
+
+    if (item.sender === 'system') {
       return (
         <View style={styles.systemWrap}>
           <Text style={[styles.systemText, { color: theme.textTertiary }]}>{item.text}</Text>
         </View>
       );
     }
+
     return (
       <View style={[styles.bubbleRow, isMine ? styles.rowMine : styles.rowOther]}>
         {!isMine && (
-          <View style={[styles.botAvatar, { backgroundColor: Brand.primary + '15' }]}>
-            <Ionicons name="headset-outline" size={16} color={Brand.primary} />
+          <View style={[styles.avatarWrap, isBot ? styles.botAvatarWrap : styles.staffAvatarWrap]}>
+            {isBot ? (
+              <LinearGradient
+                colors={[Brand.primaryLight, Brand.primaryDark]}
+                style={styles.avatarGradient}
+              >
+                <MaterialCommunityIcons name="robot-outline" size={16} color="#FFFFFF" />
+              </LinearGradient>
+            ) : (
+              <LinearGradient
+                colors={[Brand.accent, Brand.accentLight]}
+                style={styles.avatarGradient}
+              >
+                <Ionicons name="headset" size={15} color="#FFFFFF" />
+              </LinearGradient>
+            )}
           </View>
         )}
-        <View
-          style={[
-            styles.bubble,
-            isMine
-              ? { backgroundColor: Brand.primary, borderBottomRightRadius: 4 }
-              : { backgroundColor: theme.surface, borderColor: theme.border, borderWidth: 1, borderBottomLeftRadius: 4 },
-          ]}
-        >
+
+        <View style={styles.bubbleContainer}>
           {!isMine && (
-            <Text style={[styles.senderName, { color: Brand.primary }]}>
-              {senderLabel(item.sender)}
-            </Text>
+            <View style={styles.senderHeader}>
+              <Text style={[styles.senderName, { color: isBot ? Brand.primary : Brand.accent }]}>
+                {isBot ? 'AeroStride AI' : 'Chăm sóc khách hàng'}
+              </Text>
+              {isBot && (
+                <View style={styles.aiTag}>
+                  <Ionicons name="sparkles" size={10} color="#FFD700" />
+                  <Text style={styles.aiTagText}>AI</Text>
+                </View>
+              )}
+            </View>
           )}
-          <Text style={[styles.bubbleText, { color: isMine ? '#FFFFFF' : theme.text }]}>
-            {item.text}
-          </Text>
-          {item.time ? (
-            <Text style={[styles.bubbleTime, { color: isMine ? 'rgba(255,255,255,0.7)' : theme.textTertiary }]}>
-              {item.time}
-            </Text>
-          ) : null}
+
+          {isMine ? (
+            <LinearGradient
+              colors={[Brand.primary, Brand.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.bubble, styles.bubbleMine]}
+            >
+              <Text style={styles.bubbleTextMine}>{item.text}</Text>
+              {item.time ? (
+                <Text style={styles.bubbleTimeMine}>{item.time}</Text>
+              ) : null}
+            </LinearGradient>
+          ) : (
+            <View style={[styles.bubble, styles.bubbleOther, { backgroundColor: theme.surfaceElevated, borderColor: theme.borderLight }]}>
+              <Text style={[styles.bubbleTextOther, { color: theme.text }]}>{item.text}</Text>
+              {item.time ? (
+                <Text style={[styles.bubbleTimeOther, { color: theme.textTertiary }]}>{item.time}</Text>
+              ) : null}
+            </View>
+          )}
         </View>
       </View>
     );
@@ -208,17 +223,38 @@ export default function ChatScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.two, borderBottomColor: theme.borderLight }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="arrow-back" size={24} color={theme.text} />
+      {/* Signature AeroStride Header */}
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.two, borderBottomColor: theme.borderLight, backgroundColor: theme.surface }]}>
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={12}
+          style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.7 : 1, backgroundColor: theme.backgroundElement }]}
+        >
+          <Ionicons name="chevron-back" size={22} color={theme.text} />
         </Pressable>
+
         <View style={styles.headerCenter}>
-          <Text style={[styles.title, { color: theme.text }]}>Hỗ trợ AeroStride</Text>
-          <Text style={[styles.subtitle, { color: connected ? Brand.success : theme.textTertiary }]}>
-            {connected ? '● Trực tuyến' : '○ Đang kết nối...'}
-          </Text>
+          <View style={styles.brandTitleRow}>
+            <Text style={[styles.title, { color: theme.text }]}>Trợ lý AeroStride</Text>
+            <Ionicons name="sparkles" size={14} color="#FFB800" />
+          </View>
+          <View style={styles.statusRow}>
+            <View style={[styles.statusDot, { backgroundColor: connected ? Brand.success : Brand.warning }]} />
+            <Text style={[styles.subtitle, { color: connected ? Brand.success : theme.textTertiary }]}>
+              {connected ? 'Trực tuyến 24/7' : 'Đang kết nối...'}
+            </Text>
+          </View>
         </View>
-        <View style={{ width: 24 }} />
+
+        <View style={styles.headerRightAction}>
+          <Pressable
+            onPress={() => setMessages([])}
+            hitSlop={10}
+            style={({ pressed }) => [styles.clearBtn, { opacity: pressed ? 0.7 : 1, backgroundColor: theme.backgroundElement }]}
+          >
+            <Ionicons name="refresh-outline" size={18} color={theme.textSecondary} />
+          </Pressable>
+        </View>
       </View>
 
       <KeyboardAvoidingView
@@ -232,61 +268,104 @@ export default function ChatScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
+          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
-              <View style={[styles.emptyIcon, { backgroundColor: Brand.primary + '12' }]}>
-                <Ionicons name="chatbubbles-outline" size={40} color={Brand.primary} />
-              </View>
-              <Text style={[styles.emptyTitle, { color: theme.text }]}>Chào bạn 👋</Text>
+              <LinearGradient
+                colors={[Brand.primaryLight + '20', Brand.primary + '10']}
+                style={styles.emptyIconContainer}
+              >
+                <MaterialCommunityIcons name="robot-happy-outline" size={44} color={Brand.primary} />
+                <View style={styles.emptySparkle}>
+                  <Ionicons name="sparkles" size={14} color="#FFD700" />
+                </View>
+              </LinearGradient>
+
+              <Text style={[styles.emptyTitle, { color: theme.text }]}>
+                Xin chào! Tôi có thể giúp gì cho bạn?
+              </Text>
               <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-                Chúng tôi có thể giúp gì cho bạn hôm nay?
+                Hỏi về tư vấn chọn size giày, chính sách đổi trả, ưu đãi hoặc tra cứu đơn hàng...
               </Text>
             </View>
           }
         />
 
-        {/* Welcome suggestion chips */}
+        {/* Suggestion Chips */}
         {messages.length === 0 && suggestions.length > 0 && (
-          <View style={styles.suggestions}>
-            {suggestions.slice(0, 4).map((s) => (
-              <Pressable
-                key={s}
-                style={[styles.chip, { borderColor: Brand.primary, backgroundColor: Brand.primary + '08' }]}
-                onPress={() => send(s)}
-              >
-                <Text style={[styles.chipText, { color: Brand.primary }]} numberOfLines={1}>
-                  {s}
-                </Text>
-              </Pressable>
-            ))}
+          <View style={styles.suggestionsContainer}>
+            <Text style={[styles.suggestionsHeader, { color: theme.textTertiary }]}>Gợi ý câu hỏi:</Text>
+            <View style={styles.suggestionsList}>
+              {suggestions.slice(0, 4).map((s) => (
+                <Pressable
+                  key={s}
+                  style={({ pressed }) => [
+                    styles.chip,
+                    {
+                      borderColor: Brand.primary + '40',
+                      backgroundColor: theme.surfaceElevated,
+                      opacity: pressed ? 0.75 : 1,
+                    },
+                  ]}
+                  onPress={() => send(s)}
+                >
+                  <Ionicons name="chatbubble-outline" size={13} color={Brand.primary} style={{ marginRight: 6 }} />
+                  <Text style={[styles.chipText, { color: theme.text }]} numberOfLines={1}>
+                    {s}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
         )}
 
-        {/* Input bar */}
+        {/* Input Bar */}
         <View
           style={[
             styles.inputBar,
-            { backgroundColor: theme.surface, borderTopColor: theme.border, paddingBottom: insets.bottom + Spacing.two },
+            {
+              backgroundColor: theme.surface,
+              borderTopColor: theme.borderLight,
+              paddingBottom: insets.bottom + Spacing.two,
+            },
           ]}
         >
-          <TextInput
-            style={[styles.textInput, { color: theme.text, backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
-            placeholder="Nhập tin nhắn..."
-            placeholderTextColor={theme.textTertiary}
-            value={input}
-            onChangeText={setInput}
-            multiline
-            onSubmitEditing={() => send(input)}
-          />
+          <View style={[styles.inputContainer, { backgroundColor: theme.backgroundElement, borderColor: theme.borderLight }]}>
+            <TextInput
+              style={[styles.textInput, { color: theme.text }]}
+              placeholder="Nhập câu hỏi cho trợ lý AI..."
+              placeholderTextColor={theme.textTertiary}
+              value={input}
+              onChangeText={setInput}
+              multiline
+              maxLength={500}
+              onSubmitEditing={() => send(input)}
+            />
+          </View>
+
           <Pressable
             style={({ pressed }) => [
               styles.sendBtn,
-              { backgroundColor: input.trim() ? Brand.primary : theme.textTertiary, opacity: pressed ? 0.8 : 1 },
+              {
+                opacity: pressed ? 0.85 : 1,
+                transform: [{ scale: pressed ? 0.95 : 1 }],
+              },
             ]}
             onPress={() => send(input)}
             disabled={!input.trim() || sending}
           >
-            <Ionicons name="send" size={18} color="#FFFFFF" />
+            <LinearGradient
+              colors={input.trim() ? [Brand.primaryLight, Brand.primaryDark] : ['#94A3B8', '#64748B']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.sendGradient}
+            >
+              {sending ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Ionicons name="send" size={16} color="#FFFFFF" style={{ marginLeft: 2 }} />
+              )}
+            </LinearGradient>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -295,93 +374,267 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.three,
-    paddingBottom: Spacing.two + 2,
+    paddingBottom: Spacing.two + 4,
     borderBottomWidth: 1,
   },
-  headerCenter: { alignItems: 'center' },
-  title: { fontSize: FontSizes.md, fontWeight: FontWeights.bold },
-  subtitle: { fontSize: FontSizes.xs, marginTop: 1 },
-  listContent: { padding: Spacing.three, gap: Spacing.two, flexGrow: 1 },
-  bubbleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.one + 2,
-    maxWidth: '88%',
-  },
-  rowMine: { alignSelf: 'flex-end', justifyContent: 'flex-end' },
-  rowOther: { alignSelf: 'flex-start' },
-  botAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  bubble: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: BorderRadius.lg,
+  headerCenter: {
+    alignItems: 'center',
+  },
+  brandTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  title: {
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.bold,
+    letterSpacing: -0.2,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 2,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  subtitle: {
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.medium,
+  },
+  clearBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerRightAction: {
+    width: 36,
+  },
+  listContent: {
+    padding: Spacing.three,
+    gap: Spacing.three,
+    flexGrow: 1,
+  },
+  bubbleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: Spacing.two,
+    maxWidth: '85%',
+  },
+  rowMine: {
+    alignSelf: 'flex-end',
+  },
+  rowOther: {
+    alignSelf: 'flex-start',
+  },
+  avatarWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  avatarGradient: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  botAvatarWrap: {
+    borderWidth: 1.5,
+    borderColor: Brand.primaryLight,
+  },
+  staffAvatarWrap: {
+    borderWidth: 1.5,
+    borderColor: Brand.accentLight,
+  },
+  bubbleContainer: {
     flexShrink: 1,
   },
-  senderName: { fontSize: 11, fontWeight: FontWeights.bold, marginBottom: 2 },
-  bubbleText: { fontSize: FontSizes.sm, lineHeight: 20 },
-  bubbleTime: { fontSize: 10, marginTop: 3, alignSelf: 'flex-end' },
-  systemWrap: { alignItems: 'center', paddingVertical: Spacing.one },
-  systemText: { fontSize: FontSizes.xs, fontStyle: 'italic' },
-  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.two, paddingHorizontal: Spacing.five },
-  emptyIcon: {
+  senderHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+    marginLeft: 2,
+  },
+  senderName: {
+    fontSize: 11,
+    fontWeight: FontWeights.bold,
+  },
+  aiTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: '#0F172A',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 6,
+  },
+  aiTagText: {
+    color: '#FFD700',
+    fontSize: 9,
+    fontWeight: FontWeights.bold,
+  },
+  bubble: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two + 2,
+    borderRadius: BorderRadius.xl,
+  },
+  bubbleMine: {
+    borderBottomRightRadius: 4,
+  },
+  bubbleOther: {
+    borderBottomLeftRadius: 4,
+    borderWidth: 1,
+  },
+  bubbleTextMine: {
+    color: '#FFFFFF',
+    fontSize: FontSizes.sm + 1,
+    lineHeight: 20,
+    fontWeight: FontWeights.regular,
+  },
+  bubbleTextOther: {
+    fontSize: FontSizes.sm + 1,
+    lineHeight: 20,
+  },
+  bubbleTimeMine: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 4,
+    alignSelf: 'flex-end',
+  },
+  bubbleTimeOther: {
+    fontSize: 10,
+    marginTop: 4,
+    alignSelf: 'flex-end',
+  },
+  systemWrap: {
+    alignItems: 'center',
+    paddingVertical: Spacing.one,
+  },
+  systemText: {
+    fontSize: FontSizes.xs,
+    fontStyle: 'italic',
+  },
+  emptyWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.five,
+    paddingTop: Spacing.six,
+  },
+  emptyIconContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.two,
+    marginBottom: Spacing.three,
+    borderWidth: 1.5,
+    borderColor: Brand.primary + '30',
+    position: 'relative',
   },
-  emptyTitle: { fontSize: FontSizes.lg, fontWeight: FontWeights.bold },
-  emptyText: { fontSize: FontSizes.sm, textAlign: 'center' },
-  suggestions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
+  emptySparkle: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#0F172A',
+    borderRadius: 10,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  emptyTitle: {
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.bold,
+    textAlign: 'center',
+    marginBottom: Spacing.one,
+  },
+  emptyText: {
+    fontSize: FontSizes.sm,
+    textAlign: 'center',
+    lineHeight: 19,
+  },
+  suggestionsContainer: {
     paddingHorizontal: Spacing.three,
     paddingBottom: Spacing.two,
   },
-  chip: {
-    borderWidth: 1,
-    borderRadius: BorderRadius.full,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one + 2,
-    maxWidth: '100%',
+  suggestionsHeader: {
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.semibold,
+    marginBottom: Spacing.one,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  chipText: { fontSize: FontSizes.sm, fontWeight: FontWeights.medium },
+  suggestionsList: {
+    gap: Spacing.one + 2,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+  },
+  chipText: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.medium,
+    flexShrink: 1,
+  },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: Spacing.two,
     paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.two + 2,
+    paddingTop: Spacing.two,
     borderTopWidth: 1,
   },
-  textInput: {
+  inputContainer: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.two,
-    paddingBottom: Spacing.two,
+    paddingVertical: Platform.OS === 'ios' ? Spacing.two : Spacing.one,
+    minHeight: 44,
+    maxHeight: 120,
+    justifyContent: 'center',
+  },
+  textInput: {
     fontSize: FontSizes.base,
-    maxHeight: 110,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   sendBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
+  },
+  sendGradient: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },

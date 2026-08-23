@@ -115,7 +115,7 @@ public class SocialAuthService {
     }
 
     private KhachHang findOrCreateCustomer(String email, String name, String avatarUrl, String provider, String providerId) {
-        Optional<KhachHang> existingByEmail = khachHangRepository.findFirstByEmail(email);
+        Optional<KhachHang> existingByEmail = khachHangRepository.findFirstByEmailIgnoreCase(email);
         if (existingByEmail.isPresent()) {
             KhachHang kh = existingByEmail.get();
             boolean needSave = false;
@@ -132,9 +132,15 @@ public class SocialAuthService {
                 kh.setTrangThai(TrangThai.DANG_HOAT_DONG);
                 needSave = true;
             }
+            if (kh.getXoaMem() != null && kh.getXoaMem()) {
+                kh.setXoaMem(false);
+                needSave = true;
+            }
             if (needSave) {
                 kh = khachHangRepository.save(kh);
             }
+            log.info("Đã liên kết đăng nhập {} với tài khoản khách hàng có sẵn: username=[{}], email=[{}]", 
+                    provider, kh.getTenTaiKhoan(), kh.getEmail());
             return kh;
         }
 

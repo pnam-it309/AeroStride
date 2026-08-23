@@ -35,5 +35,9 @@ public interface AdminTinNhanRepository extends TinNhanRepository, JpaSpecificat
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.data.jpa.repository.Query("UPDATE TinNhan t SET t.daDoc = true WHERE t.cuocHoiThoai.maPhien = :sessionId AND (t.daDoc = false OR t.daDoc IS NULL)")
     void markAllAsReadBySessionId(@org.springframework.data.repository.query.Param("sessionId") String sessionId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM TinNhan t WHERE t.cuocHoiThoai.id = :conversationId")
+    void deleteByConversationId(@org.springframework.data.repository.query.Param("conversationId") String conversationId);
 }
 

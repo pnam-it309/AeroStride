@@ -145,8 +145,16 @@ marked.setOptions({
 
 // Logic xác định sessionId
 const getSessionId = () => {
-    if (authStore.isLoggedIn && authStore.user?.username) {
-        return `user_${authStore.user.username}`;
+    let username = authStore.user?.username;
+    if (!username) {
+        try {
+            const stored = JSON.parse(sessionStorage.getItem('user'));
+            if (stored?.username) username = stored.username;
+        } catch (e) {}
+    }
+
+    if (authStore.isLoggedIn && username) {
+        return `user_${username}`;
     }
 
     const now = Date.now();
@@ -161,7 +169,7 @@ const getSessionId = () => {
         return newId;
     }
 
-    if (savedSessionId) {
+    if (savedSessionId && savedSessionId.startsWith('guest_')) {
         localStorage.setItem('chat_last_activity', now.toString());
         return savedSessionId;
     }
@@ -182,7 +190,7 @@ const updateActivity = () => {
 };
 
 watch(
-    () => authStore.isLoggedIn,
+    () => [authStore.isLoggedIn, authStore.user?.username],
     () => {
         clearGuestTimer();
         chatHistory.value = [];

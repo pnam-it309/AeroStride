@@ -801,7 +801,7 @@ onMounted(init);
                                 <span class="text-caption text-slate-500 mt-2">Đang tải danh sách sản phẩm...</span>
                             </div>
 
-                            <table v-else class="native-admin-table">
+                            <table v-else class="native-admin-table" :class="{ 'is-empty': !selectionLoading && productsList.length === 0 }">
                                 <thead>
                                     <tr>
                                         <th class="header-cell text-center text-no-wrap" style="width: 40px"></th>
@@ -1071,7 +1071,7 @@ onMounted(init);
                         </AdminFilter>
 
                         <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="max-height: 400px">
-                            <table class="native-admin-table">
+                            <table class="native-admin-table" :class="{ 'is-empty': filteredSelectedDetails.length === 0 }">
                                 <thead>
                                     <tr>
                                         <th class="header-cell text-center text-no-wrap" style="width: 50px">

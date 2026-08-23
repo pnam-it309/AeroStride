@@ -12,9 +12,9 @@ defineEmits(['action']);
 </script>
 
 <template>
-    <tr>
-        <td :colspan="colspan" class="empty-state py-8 text-center">
-            <div class="d-flex flex-column align-center justify-center py-4 px-4 w-100 animate-fade-in">
+    <tr class="empty-state-row" style="width: 100% !important;">
+        <td :colspan="colspan || 20" class="empty-state py-8 text-center" style="width: 100% !important; text-align: center !important;">
+            <div class="d-flex flex-column align-center justify-center py-4 px-4 w-100 mx-auto animate-fade-in" style="width: 100% !important; max-width: 100% !important;">
                 <div
                     class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3 mx-auto"
                     style="width: 68px; height: 68px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
@@ -41,7 +41,12 @@ defineEmits(['action']);
 </template>
 
 <style scoped>
+.empty-state-row {
+    width: 100% !important;
+}
 .empty-state {
     border-bottom: none !important;
+    width: 100% !important;
+    text-align: center !important;
 }
 </style>

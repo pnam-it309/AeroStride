@@ -18,7 +18,7 @@ import MainView from './Main.vue';
                             <transition name="route-shell" mode="out-in">
                                 <Suspense>
                                     <template #default>
-                                        <component :is="Component" :key="route.path" />
+                                        <component :is="Component" :key="route.meta?.key || (route.name === 'ThuocTinh' ? 'ThuocTinh' : route.path)" />
                                     </template>
                                     <template #fallback>
                                         <div
