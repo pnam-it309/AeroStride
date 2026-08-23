@@ -470,26 +470,32 @@ const toggleProductSelection = (productId, checked) => {
     selectedProductIds.value = selectedProductIds.value.filter((id) => id !== productId);
 };
 
-// Chọn/Bỏ chọn tất cả các sản phẩm đang hiển thị trên tất cả phân trang
+// Chọn/Bỏ chọn tất cả các sản phẩm đang hiển thị trên tất cả phân trang (Tức thì 0ms, 1 phát ăn ngay)
 const toggleSelectAllProducts = async (checked) => {
-    if (checked) {
-        try {
-            // Lấy tất cả danh sách sản phẩm theo bộ lọc hiện tại thay vì chỉ lấy ID trên trang hiện tại
-            const response = await dichVuSanPham.layDanhSachSanPham({
-                ...buildProductFilterParams(),
-                page: 0,
-                size: Math.max(totalElements.value, 1) // Tránh truyền size 10000 quá lớn bị Cloudflare/WAF chặn hoặc lỗi Render timeout
-            });
-            const allIds = response?.content?.map((item) => item.id) || [];
-            selectedProductIds.value = allIds;
-        } catch (e) {
-            console.error('Lỗi khi lấy tất cả sản phẩm', e);
-            selectedProductIds.value = [...filteredProductIds.value];
-        }
+    if (!checked) {
+        selectedProductIds.value = [];
         return;
     }
 
-    selectedProductIds.value = [];
+    // 1 phát ăn ngay: Chọn ngay lập tức toàn bộ sản phẩm trên trang hiện tại
+    selectedProductIds.value = filteredProductIds.value.slice();
+
+    // Đồng bộ thêm toàn bộ các trang khác ở chế độ background silent nếu có nhiều trang
+    if (totalElements.value > filteredProductIds.value.length) {
+        try {
+            const response = await dichVuSanPham.layDanhSachSanPham({
+                ...buildProductFilterParams(),
+                page: 0,
+                size: Math.min(totalElements.value, 1000)
+            });
+            const allIds = response?.content?.map((item) => item.id) || [];
+            if (allIds.length > 0) {
+                selectedProductIds.value = allIds;
+            }
+        } catch (e) {
+            console.error('Lỗi khi lấy tất cả sản phẩm', e);
+        }
+    }
 };
 
 // Format số thông thường sang định dạng có dấu phẩy

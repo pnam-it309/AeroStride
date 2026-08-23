@@ -635,18 +635,26 @@ const toggleVariantSelection = (variantId, checked) => {
     selectedVariantIds.value = selectedVariantIds.value.filter((id) => id !== variantId);
 };
 
-// Chọn tất cả biến thể khớp bộ lọc (mọi trang, không chỉ trang hiện tại) để hỗ trợ xuất QR toàn bộ.
+// Chọn tất cả biến thể khớp bộ lọc (mọi trang, không chỉ trang hiện tại) - 1 phát ăn ngay 0ms
 const toggleSelectAllVariants = async (checked) => {
     if (!checked) {
         selectedVariantIds.value = [];
         return;
     }
-    try {
-        const all = await fetchAllFilteredVariants();
-        selectedVariantIds.value = all.map((item) => item.id);
-    } catch (error) {
-        // Nếu không tải được toàn bộ, tối thiểu chọn các biến thể ở trang hiện tại
-        selectedVariantIds.value = filteredVariantIds.value.slice();
+
+    // 1 phát ăn ngay: chọn ngay lập tức toàn bộ biến thể trên trang hiện tại
+    selectedVariantIds.value = filteredVariantIds.value.slice();
+
+    // Đồng bộ thêm toàn bộ các trang khác ở chế độ background silent nếu có nhiều trang
+    if (totalElements.value > filteredVariantIds.value.length) {
+        try {
+            const all = await fetchAllFilteredVariants();
+            if (all && all.length > 0) {
+                selectedVariantIds.value = all.map((item) => item.id);
+            }
+        } catch (error) {
+            console.error('Lỗi lấy tất cả biến thể:', error);
+        }
     }
 };
 

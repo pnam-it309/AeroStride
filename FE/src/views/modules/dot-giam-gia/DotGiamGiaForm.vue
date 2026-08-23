@@ -258,15 +258,13 @@ const isAllCurrentPageSelected = computed(() => {
     return productsList.value.every((p) => isProductSelected(p));
 });
 
-const toggleAllProductsSelection = async () => {
+const toggleAllProductsSelection = () => {
     const allSelected = isAllCurrentPageSelected.value;
     const newMap = new Map(selectedVariantsMap.value);
 
+    // 1 phát ăn ngay: Chọn/Bỏ chọn ngay lập tức toàn bộ các sản phẩm và biến thể đã nạp trong cache
     for (const product of productsList.value) {
-        let variants = variantsCache.value.get(product.id);
-        if (!variants) {
-            variants = await loadProductVariants(product);
-        }
+        const variants = variantsCache.value.get(product.id) || product.variants || [];
         if (variants && variants.length > 0) {
             if (allSelected) {
                 variants.forEach((v) => newMap.delete(v.id));
@@ -276,6 +274,22 @@ const toggleAllProductsSelection = async () => {
         }
     }
     selectedVariantsMap.value = newMap;
+
+    // Tải ngầm các biến thể chưa có trong cache mà không làm đơ giao diện hay hiện thanh load
+    const unloadedProducts = productsList.value.filter((p) => !variantsCache.value.has(p.id));
+    if (!allSelected && unloadedProducts.length > 0) {
+        Promise.all(
+            unloadedProducts.map(async (p) => {
+                const variants = await loadProductVariants(p);
+                p.variants = variants;
+                if (variants && variants.length > 0) {
+                    variants.forEach((v) => selectedVariantsMap.value.set(v.id, v));
+                }
+            })
+        ).then(() => {
+            selectedVariantsMap.value = new Map(selectedVariantsMap.value);
+        });
+    }
 };
 
 // Tìm kiếm sản phẩm
