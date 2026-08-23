@@ -2,8 +2,8 @@
 
 > **Nền tảng thương mại điện tử giày & thời trang thể thao đa kênh (Web & Mobile App)**
 
-[![Android APK](https://img.shields.io/badge/Download-APK%20v1.0.0-brightgreen?logo=android&logoColor=white&style=for-the-badge)](https://expo.dev/artifacts/eas/w6cwjaB2SzivRFXkQN0pIFyC1Mv3KeQuchcvA2FMQVY.apk)
-[![Expo Build](https://img.shields.io/badge/EAS%20Build-Preview%20Ready-blue?logo=expo&logoColor=white&style=for-the-badge)](https://expo.dev/accounts/pnamits-team/projects/aerostride/builds/66813e20-500b-4ec5-8002-ba3fd1411868)
+[![Android APK](https://img.shields.io/badge/Download-APK%20v1.0.0-brightgreen?logo=android&logoColor=white&style=for-the-badge)](https://expo.dev/artifacts/eas/wY6IRXy7FRdCFJ-Y6n_wxQ4kxcwArqlhS5_w3Sueogc.apk)
+[![Expo Build](https://img.shields.io/badge/EAS%20Build-Preview%20Ready-blue?logo=expo&logoColor=white&style=for-the-badge)](https://expo.dev/accounts/pnamits-team/projects/aerostride/builds/72f788be-b38e-4a81-acb8-5225d891474c)
 
 ---
 
@@ -11,8 +11,8 @@
 
 Người dùng và nhà phát triển có thể tải trực tiếp file cài đặt APK để trải nghiệm trên thiết bị Android:
 
-- 📥 **Link tải trực tiếp APK:** [AeroStride-v1.0.0.apk](https://expo.dev/artifacts/eas/w6cwjaB2SzivRFXkQN0pIFyC1Mv3KeQuchcvA2FMQVY.apk)
-- 🌐 **Xem chi tiết bản build trên Expo Cloud:** [Expo Build #66813e20](https://expo.dev/accounts/pnamits-team/projects/aerostride/builds/66813e20-500b-4ec5-8002-ba3fd1411868)
+- 📥 **Link tải trực tiếp APK:** [AeroStride-v1.0.0.apk](https://expo.dev/artifacts/eas/wY6IRXy7FRdCFJ-Y6n_wxQ4kxcwArqlhS5_w3Sueogc.apk)
+- 🌐 **Xem chi tiết bản build trên Expo Cloud:** [Expo Build #72f788be](https://expo.dev/accounts/pnamits-team/projects/aerostride/builds/72f788be-b38e-4a81-acb8-5225d891474c)
 - 📲 **Cài đặt nhanh:** Quét mã QR hoặc mở link trên trình duyệt điện thoại Android để tải và cài đặt trực tiếp.
 
 > 🔄 Link tải APK ở trên được **tự động cập nhật** sau mỗi lần build (CI/CD). Ứng dụng đã cài trên máy cũng sẽ **tự hiện thông báo cập nhật** khi có phiên bản mới.
