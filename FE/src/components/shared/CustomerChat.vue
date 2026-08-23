@@ -615,8 +615,8 @@ const fetchHistory = async () => {
                     const products = parseProductJson(msg.text);
                     if (products) {
                         parsed.products = products;
-                        parsed.text = msg.text.replace(/\[\[PRODUCT_JSON:[\s\S]*?\]\]/, '');
                     }
+                    parsed.text = msg.text.replace(/\[\[PRODUCT_JSON:[\s\S]*?\]\]\]?/, '').trim();
                 }
 
                 // Thử parse gợi ý từ AI — luôn xóa marker khỏi text hiển thị (kể cả khi parse lỗi)
@@ -709,8 +709,8 @@ onMounted(() => {
                 const products = parseProductJson(text);
                 if (products) {
                     parsed.products = products;
-                    parsed.text = text.replace(/\[\[PRODUCT_JSON:[\s\S]*?\]\]/, '');
                 }
+                parsed.text = text.replace(/\[\[PRODUCT_JSON:[\s\S]*?\]\]\]?/, '').trim();
             }
 
             // 4. Parse gợi ý từ AI cho tin nhắn mới — luôn xóa marker khỏi text hiển thị
