@@ -10,9 +10,12 @@ import java.util.List;
 
 @Repository
 public interface AdminChiTietDotGiamGiaRepository extends ChiTietDotGiamGiaRepository, JpaSpecificationExecutor<ChiTietDotGiamGia> {
-    void deleteByDotGiamGiaId(String id);
 
-    @EntityGraph(attributePaths = {"chiTietSanPham", "chiTietSanPham.sanPham", "chiTietSanPham.sanPham.thuongHieu", "chiTietSanPham.sanPham.chatLieu", "chiTietSanPham.mauSac", "chiTietSanPham.kichThuoc", "chiTietSanPham.chiTietDotGiamGias", "chiTietSanPham.chiTietDotGiamGias.dotGiamGia"})
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM ChiTietDotGiamGia c WHERE c.dotGiamGia.id = :id")
+    void deleteByDotGiamGiaId(@org.springframework.data.repository.query.Param("id") String id);
+
+    @EntityGraph(attributePaths = {"chiTietSanPham", "chiTietSanPham.sanPham", "chiTietSanPham.sanPham.thuongHieu", "chiTietSanPham.sanPham.chatLieu", "chiTietSanPham.mauSac", "chiTietSanPham.kichThuoc"})
     List<ChiTietDotGiamGia> findByDotGiamGiaId(String id);
 
     @EntityGraph(attributePaths = {"dotGiamGia", "chiTietSanPham"})

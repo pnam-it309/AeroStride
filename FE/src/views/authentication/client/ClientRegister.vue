@@ -7,11 +7,11 @@ import { PATH } from '@/router/routePaths';
 const currentShoeIndex = ref(0);
 
 import s4 from '@/assets/images/products/s4.jpg';
-import s5 from '@/assets/images/products/s5.jpg';
+import catTraining from '@/assets/images/products/cat_training.jpg';
 import s7 from '@/assets/images/products/s7.jpg';
 import s11 from '@/assets/images/products/s11.jpg';
 
-const shoes = [s4, s5, s7, s11];
+const shoes = [s4, catTraining, s7, s11];
 
 onMounted(() => {
     setInterval(() => {

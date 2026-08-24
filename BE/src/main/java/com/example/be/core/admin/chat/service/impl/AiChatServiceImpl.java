@@ -190,9 +190,6 @@ public class AiChatServiceImpl implements AiChatService {
                 "Xem địa chỉ showroom AeroStride"
             );
             
-            String chatHistory = buildChatHistory(conversation.getId());
-            String prompt = buildPrompt(chatHistory, customerText, conversation);
-            
             try {
                 handoffResponse += "\n\n[[SUGGESTIONS:" + objectMapper.writeValueAsString(waitingSuggs) + "]]";
             } catch (Exception e) {
@@ -212,8 +209,10 @@ public class AiChatServiceImpl implements AiChatService {
         }
 
         // 1. Lấy danh sách sản phẩm thông minh dựa trên Index Database
+        List<ProductVariantResponse> relevantVariants = getActiveVariantsIntelligent(effectiveCustomerText);
+        String productContext = buildProductContextFromVariants(relevantVariants);
         String chatHistory = buildChatHistory(conversation.getId());
-        String prompt = buildPrompt(chatHistory, effectiveCustomerText, conversation);
+        String prompt = buildPrompt(chatHistory, productContext, effectiveCustomerText, conversation);
 
         // --- Cố gắng gọi OpenAI / Vision API (Primary Model) ---
         String activeOpenAiKey = getOpenAiApiKey();
@@ -542,11 +541,11 @@ public class AiChatServiceImpl implements AiChatService {
     }
 
     /**
-     * Xây dựng prompt hoàn chỉnh cho Gemini API.
+     * Xây dựng prompt hoàn chỉnh cho AI API.
      */
-    private String buildPrompt(String chatHistory, String customerText, CuocHoiThoai conversation) {
+    private String buildPrompt(String chatHistory, String productContext, String customerText, CuocHoiThoai conversation) {
         StringBuilder userContext = new StringBuilder();
-        userContext.append("THÔNG TIN NGƯỜI DÙNG HIỆN TẠI (Sử dụng ID này nếu gọi MCP Tool lấy dữ liệu cá nhân):\n");
+        userContext.append("THÔNG TIN NGƯỜI DÙNG HIỆN TẠI:\n");
         userContext.append("- Mã phiên (Session ID): ").append(conversation.getMaPhien() != null ? conversation.getMaPhien() : "Không có").append("\n");
         if (conversation.getKhachHang() != null) {
             com.example.be.entity.KhachHang kh = conversation.getKhachHang();
@@ -559,9 +558,14 @@ public class AiChatServiceImpl implements AiChatService {
         }
         userContext.append("\n");
 
+        String fullContext = userContext.toString()
+                + (productContext != null ? productContext : "") + "\n"
+                + AiChatPrompts.STORE_POLICIES_CONTEXT + "\n"
+                + (chatHistory != null ? chatHistory : "");
+
         return String.format(
                 AiChatPrompts.MAIN_SYSTEM_PROMPT,
-                userContext.toString() + chatHistory, customerText
+                fullContext, customerText
         );
     }
 

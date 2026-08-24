@@ -4,6 +4,7 @@ import { dichVuLanding } from '@/services/public/dichVuLanding';
 export function useLandingCatalog(activeSectionRef) {
     const landingProducts = ref([]);
     const featuredVariants = ref([]);
+    const discountedVariants = ref([]);
     const topVariantsByQty = ref([]);
     const isCatalogLoading = ref(true);
 
@@ -25,12 +26,14 @@ export function useLandingCatalog(activeSectionRef) {
         if (topVariantsByQty.value.length > 0 || featuredVariants.value.length > 0) return;
 
         try {
-            const [variants, topVariants] = await Promise.all([
+            const [variants, topVariants, discounted] = await Promise.all([
                 dichVuLanding.layBienTheNoiBat(12),
-                dichVuLanding.layTopBienTheTheoSoLuong(5)
+                dichVuLanding.layTopBienTheTheoSoLuong(5),
+                dichVuLanding.layBienTheGiamGia(12).catch(() => [])
             ]);
             featuredVariants.value = variants;
             topVariantsByQty.value = topVariants;
+            discountedVariants.value = discounted || [];
         } catch (error) {
             if (import.meta.env.DEV) {
                 console.warn('Failed to load secondary landing catalog:', error);
@@ -61,6 +64,7 @@ export function useLandingCatalog(activeSectionRef) {
 
     return {
         featuredVariants,
+        discountedVariants,
         heroProduct,
         howProducts,
         isCatalogLoading,

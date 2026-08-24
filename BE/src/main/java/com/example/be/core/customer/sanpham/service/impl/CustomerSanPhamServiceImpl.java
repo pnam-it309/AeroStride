@@ -120,9 +120,6 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
             CustomerProductVariantStats s = stats.get(sp.getId());
             String varImg = firstVariantImages.get(sp.getId());
             String finalImg = (varImg != null && !varImg.trim().isEmpty()) ? varImg : sp.getHinhAnh();
-            if (finalImg == null || finalImg.trim().isEmpty()) {
-                finalImg = "/assets/images/products/1.jpg";
-            }
 
             return CustomerProductResponse.builder()
                     .id(sp.getId())

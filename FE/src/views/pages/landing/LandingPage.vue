@@ -31,7 +31,7 @@ const toastStore = useToastStore();
 const { activeSection, handleLogout, handlePreloaderFinish, isLoading, isLoggedIn, LANDING_SECTIONS, isSectionWarm, mouseX, mouseY } =
     useLandingPage();
 
-const { heroProduct, isCatalogLoading, howProducts, topVariantsByQty, problemProducts, landingProducts, featuredVariants } =
+const { heroProduct, isCatalogLoading, howProducts, topVariantsByQty, problemProducts, landingProducts, featuredVariants, discountedVariants } =
     useLandingCatalog(activeSection);
 
 // SEO Setup
@@ -99,20 +99,6 @@ const isFavorite = (productId) => favoriteIds.value.includes(productId);
 const isAbsoluteUrl = (v) =>
     typeof v !== 'string' || /^(https?:)?\/\//i.test(v) || v.startsWith('data:') || v.startsWith('blob:') || v.startsWith('/');
 
-const isNonShoeImage = (v, itemName = '') => {
-    if (!v || typeof v !== 'string') return true;
-    const lowerStr = (v + ' ' + itemName).toLowerCase();
-    
-    // Danh sách từ khóa rác không phải giày thể thao cần lọc bỏ
-    const nonShoeKeywords = [
-        'placeholder', 'dummy', 'headphones', 'headphone', 'teddy', 'bear',
-        'dress', 'fashion', 'bag', 'watch', 'shirt', 'pants', 'dam',
-        'vay', 'thu-bong', 'tai-nghe', 'mock', 'sample', 'case'
-    ];
-    
-    return nonShoeKeywords.some((kw) => lowerStr.includes(kw));
-};
-
 const resolveImg = (v) => {
     if (!v) return '';
     if (typeof v !== 'string') return v;
@@ -141,35 +127,28 @@ const categoryCardImages = computed(() => {
 
     const getValidShoeImg = (item, defaultImg) => {
         if (!item) return defaultImg;
-        const title = item.tenSanPham || item.ten || '';
         let raw = item.hinhAnh ?? item.imageUrl ?? item.hinhAnhDaiDien ?? item.urlHinhAnh ?? item.sanPham?.hinhAnh;
         if (!raw && item.variants && item.variants.length > 0) {
             const v = item.variants[0];
             raw = v.hinhAnh || (v.images && v.images.length > 0 ? v.images[0].duongDanAnh || v.images[0].hinhAnh : null);
         }
         const resolved = resolveImg(raw);
-        if (resolved && !isNonShoeImage(resolved, title)) {
-            return resolved;
-        }
-        return defaultImg;
+        return resolved || defaultImg;
     };
 
     const runningShoe = list.find((p) => {
         const purpose = (p.tenMucDichChay || p.mucDichChay?.ten || '').toLowerCase();
-        const title = (p.tenSanPham || p.ten || '').toLowerCase();
-        return (purpose.includes('chạy') || purpose.includes('đường dài') || purpose.includes('chay')) && !isNonShoeImage(p.hinhAnh, title);
+        return purpose.includes('chạy') || purpose.includes('đường dài') || purpose.includes('chay');
     });
 
     const trainingShoe = list.find((p) => {
         const purpose = (p.tenMucDichChay || p.mucDichChay?.ten || '').toLowerCase();
-        const title = (p.tenSanPham || p.ten || '').toLowerCase();
-        return (purpose.includes('tập') || purpose.includes('luyện') || purpose.includes('tap')) && !isNonShoeImage(p.hinhAnh, title);
+        return purpose.includes('tập') || purpose.includes('luyện') || purpose.includes('tap');
     });
 
     const speedShoe = list.find((p) => {
         const purpose = (p.tenMucDichChay || p.mucDichChay?.ten || '').toLowerCase();
-        const title = (p.tenSanPham || p.ten || '').toLowerCase();
-        return (purpose.includes('tốc độ') || purpose.includes('toc do') || purpose.includes('speed')) && !isNonShoeImage(p.hinhAnh, title);
+        return purpose.includes('tốc độ') || purpose.includes('toc do') || purpose.includes('speed');
     });
 
     return {
@@ -182,7 +161,7 @@ const categoryCardImages = computed(() => {
 const mapToCard = (item) => {
     let raw = item.hinhAnh ?? item.imageUrl ?? item.hinhAnhDaiDien ?? item.urlHinhAnh ?? item.sanPham?.hinhAnh;
     let resolved = resolveImg(raw);
-    if (!resolved || isNonShoeImage(resolved, item.tenSanPham || item.ten || '')) {
+    if (!resolved) {
         resolved = DEFAULT_SHOE_IMAGE;
     }
     return {
@@ -203,7 +182,9 @@ const displayedProducts = computed(() => {
     } else if (activeTab.value === 'BÁN CHẠY') {
         source = topVariantsByQty.value || [];
     } else if (activeTab.value === 'ĐANG GIẢM GIÁ') {
-        source = (featuredVariants.value || []).filter((item) => Number(item.phanTramGiam ?? item.giamGia ?? 0) > 0);
+        source = discountedVariants.value?.length
+            ? discountedVariants.value
+            : (featuredVariants.value || []).filter((item) => Number(item.phanTramGiam ?? item.giamGia ?? 0) > 0);
     }
 
     return source.slice(0, 4).map(mapToCard);
@@ -265,7 +246,7 @@ const scrollToCategories = () => {
                             <model-viewer
                                 v-if="viewerReady"
                                 :src="heroProduct?.raw?.modelUrl || '/models/Shoe.glb'"
-                                :poster="heroProduct?.imageUrl || '/assets/images/products/1.jpg'"
+                                :poster="heroProduct?.imageUrl || defaultShoeImg"
                                 alt="AeroStride 3D Shoe"
                                 camera-controls
                                 auto-rotate
@@ -276,7 +257,7 @@ const scrollToCategories = () => {
                             ></model-viewer>
                             <img
                                 v-else
-                                :src="heroProduct?.imageUrl || '/assets/images/products/1.jpg'"
+                                :src="heroProduct?.imageUrl || defaultShoeImg"
                                 alt="AeroStride Shoe"
                                 class="fallback-shoe-img"
                             />
@@ -1030,9 +1011,9 @@ const scrollToCategories = () => {
     .hero-actions-row { justify-content: center; }
     .hero-title { font-size: 38px; }
     .hero-graphic-right { width: 100%; height: 220px; }
-    .blue-badge-card { width: 100%; height: 220px; justify-content: center; padding-left: 0; }
+    .blue-badge-card { width: 100%; height: 220px; justify-content: flex-start; padding-left: 28px; }
     .badge-brand-text { font-size: 38px; }
-    .shoe-model-container { width: 320px; height: 210px; right: 50%; transform: translate(50%, -50%); }
+    .shoe-model-container { width: 320px; height: 210px; right: -10px; left: auto; transform: translateY(-50%); }
 }
 
 /* Tablet portrait */
@@ -1078,10 +1059,10 @@ const scrollToCategories = () => {
         max-width: 160px;
     }
     /* Hero graphic: small strip */
-    .hero-graphic-right { height: 140px; }
-    .blue-badge-card { height: 140px; border-radius: 16px; }
-    .badge-brand-text { font-size: 26px; letter-spacing: 1px; }
-    .shoe-model-container { width: 200px; height: 140px; }
+    .hero-graphic-right { height: 140px; width: 100%; }
+    .blue-badge-card { height: 140px; border-radius: 16px; justify-content: flex-start; padding-left: 20px; }
+    .badge-brand-text { font-size: 24px; letter-spacing: 1px; }
+    .shoe-model-container { width: 190px; height: 130px; right: -5px; left: auto; transform: translateY(-50%); }
 
     /* Features: 2 columns, very compact */
     .features-grid-bar { grid-template-columns: repeat(2, 1fr); gap: 10px 12px; padding-bottom: 16px; }
@@ -1126,8 +1107,9 @@ const scrollToCategories = () => {
     .hero-title { font-size: 19px; }
     .hero-btn-primary, .hero-btn-secondary { font-size: 11px; padding: 0 12px !important; }
     .hero-graphic-right { height: 120px; }
-    .blue-badge-card { height: 120px; }
-    .shoe-model-container { width: 160px; height: 120px; }
+    .blue-badge-card { height: 120px; justify-content: flex-start; padding-left: 14px; }
+    .badge-brand-text { font-size: 20px; }
+    .shoe-model-container { width: 150px; height: 110px; right: -5px; left: auto; transform: translateY(-50%); }
     .products-grid-row { gap: 8px; }
     .product-name-title { font-size: 11px; }
 }

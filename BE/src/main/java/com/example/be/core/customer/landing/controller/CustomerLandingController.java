@@ -45,6 +45,15 @@ public class CustomerLandingController {
         return ResponseEntity.ok(ApiResponse.success(response, "Lay bien the noi bat thanh cong"));
     }
 
+    @GetMapping("/discounted-variants")
+    @RateLimit(limit = 60, windowSeconds = 60)
+    public ResponseEntity<ApiResponse<List<CustomerLandingVariantResponse>>> getDiscountedVariants(
+            @RequestParam(defaultValue = "12") Integer size
+    ) {
+        List<CustomerLandingVariantResponse> response = landingService.getDiscountedVariants(size);
+        return ResponseEntity.ok(ApiResponse.success(response, "Lay bien the giam gia thanh cong"));
+    }
+
     @GetMapping("/top-variants")
     @RateLimit(limit = 60, windowSeconds = 60)
     public ResponseEntity<ApiResponse<List<CustomerLandingVariantResponse>>> getTopVariantsByQuantity(

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import '@google/model-viewer';
+import defaultShoeImg from '@/assets/images/products/cat_running.jpg';
 
 const props = defineProps({
     active: Boolean,
@@ -166,7 +167,7 @@ onUnmounted(() => {
                                 <div class="shoe-wrapper">
                                     <model-viewer
                                         :src="activeProduct.modelUrl || '/models/Shoe.glb'"
-                                        :poster="activeProduct.image || '/assets/images/products/1.jpg'"
+                                        :poster="activeProduct.image || defaultShoeImg"
                                         :alt="activeProduct.code"
                                         camera-controls
                                         auto-rotate

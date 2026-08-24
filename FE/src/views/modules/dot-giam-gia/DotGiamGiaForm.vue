@@ -149,11 +149,13 @@ const loadProductsToSelect = async (page = 1) => {
             };
         });
 
-        // Tải sẵn biến thể của các sản phẩm trên trang hiện tại để trạng thái checkbox của sản phẩm hiển thị chính xác ngay lập tức
-        await Promise.all(
+        // Tải biến thể ngầm (non-blocking) để trạng thái checkbox cập nhật mà không làm đơ/chậm khi chuyển trang
+        Promise.all(
             productsList.value.map(async (p) => {
-                const variants = await loadProductVariants(p);
-                p.variants = variants;
+                if (!variantsCache.value.has(p.id)) {
+                    const variants = await loadProductVariants(p);
+                    p.variants = variants;
+                }
             })
         );
     } catch (e) {

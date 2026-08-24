@@ -44,6 +44,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     private final AdminAnhChiTietSanPhamRepository anhChiTietSanPhamRepo;
     private final AdminSanPhamMapper mapper;
     private final AdminChiTietDotGiamGiaRepository chiTietDotGiamGiaRepo;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
 
 
@@ -120,18 +121,36 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     private void saveProducts(DotGiamGia d, List<String> variantIds) {
         if (variantIds == null || variantIds.isEmpty()) return;
 
-        List<ChiTietSanPham> variants = chiTietSanPhamRepo.findAllById(variantIds);
-        List<ChiTietDotGiamGia> detailEntities = variants.stream()
-                .map(v -> {
-                    ChiTietDotGiamGia ct = new ChiTietDotGiamGia();
-                    ct.setDotGiamGia(d);
-                    ct.setChiTietSanPham(v);
-                    ct.setGiaTriGiam(d.getSoTienGiam());
-                    return ct;
-                })
+        List<String> distinctVariantIds = variantIds.stream()
+                .filter(id -> id != null && !id.trim().isEmpty())
+                .distinct()
                 .collect(Collectors.toList());
+        if (distinctVariantIds.isEmpty()) return;
 
-        chiTietDotGiamGiaRepo.saveAll(detailEntities);
+        String sql = "INSERT INTO chi_tiet_dot_giam_gia (id, id_dot_giam_gia, id_chi_tiet_san_pham, gia_tri_giam, trang_thai, ngay_tao, ngay_cap_nhat) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        long now = System.currentTimeMillis();
+        java.math.BigDecimal giaTriGiam = d.getSoTienGiam();
+        int trangThai = (d.getTrangThai() != null ? d.getTrangThai().ordinal() : TrangThai.DANG_HOAT_DONG.ordinal());
+
+        jdbcTemplate.batchUpdate(sql, new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(java.sql.PreparedStatement ps, int i) throws java.sql.SQLException {
+                ps.setString(1, java.util.UUID.randomUUID().toString());
+                ps.setString(2, d.getId());
+                ps.setString(3, distinctVariantIds.get(i));
+                ps.setBigDecimal(4, giaTriGiam);
+                ps.setInt(5, trangThai);
+                ps.setLong(6, now);
+                ps.setLong(7, now);
+            }
+
+            @Override
+            public int getBatchSize() {
+                return distinctVariantIds.size();
+            }
+        });
     }
 
     @Override

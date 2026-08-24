@@ -10,6 +10,7 @@ import java.util.List;
 public interface CustomerLandingService {
     List<CustomerLandingProductResponse> getLandingProducts(Integer size);
     List<CustomerLandingVariantResponse> getFeaturedVariants(Integer size);
+    List<CustomerLandingVariantResponse> getDiscountedVariants(Integer size);
     List<CustomerLandingVariantResponse> getTopVariantsByQuantity(Integer size);
     List<List<CustomerLandingFeatureItemResponse>> getLandingFeatures();
     CustomerLandingFlashSaleResponse getFlashSale();

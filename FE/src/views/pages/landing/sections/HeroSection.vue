@@ -1,6 +1,7 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { defineProps, onMounted, ref, watch } from 'vue';
 import { formatCurrency as formatPrice } from '@/utils/formatters';
+import defaultShoeImg from '@/assets/images/products/cat_running.jpg';
 
 const props = defineProps({
     active: Boolean,
@@ -81,7 +82,7 @@ watch(
                             <model-viewer
                                 v-if="viewerReady"
                                 :src="props.product?.modelUrl || '/models/Shoe.glb'"
-                                :poster="props.product?.imageUrl || '/assets/images/products/1.jpg'"
+                                :poster="props.product?.imageUrl || defaultShoeImg"
                                 alt="AeroStride 3D Shoe"
                                 camera-controls
                                 :auto-rotate="props.active"
@@ -96,7 +97,7 @@ watch(
                                  anything around it. -->
                             <img
                                 v-else
-                                :src="props.product?.imageUrl || '/assets/images/products/1.jpg'"
+                                :src="props.product?.imageUrl || defaultShoeImg"
                                 alt="AeroStride 3D Shoe"
                                 class="the-shoe mx-auto hero-shoe-main"
                                 style="width: 100%; max-width: 600px; height: 400px; display: block; object-fit: contain"
