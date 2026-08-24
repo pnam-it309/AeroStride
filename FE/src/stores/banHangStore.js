@@ -7,6 +7,8 @@ export const useBanHangStore = defineStore('banHang', {
         vouchers: [],
         loading: false,
         isProcessing: false,
+        isInitialized: false,
+        employeeDetail: null,
 
         // Config filters & products
         productSearchKeyword: '',

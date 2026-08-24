@@ -408,6 +408,7 @@ const fetchConversations = async (quiet = false) => {
         const data = response.data?.data || [];
         allConversations.value = data;
         customers.value = data;
+        notificationStore.syncUnreadConversations(data);
 
         if (activeChat.value) {
             const updatedChat = allConversations.value.find((c) => c.id === activeChat.value.id);
@@ -660,6 +661,7 @@ const closeChat = () => {
                 const response = await api.post(API_CHAT.CLOSE(target.id));
                 if (response.data?.success) {
                     target.status = 'CLOSED';
+                    notificationStore.markChatRead(target.id);
                     fetchConversations(true);
                 }
             } catch (error) {
@@ -704,6 +706,7 @@ const confirmDeleteChat = () => {
         action: async () => {
             try {
                 await api.delete(API_CHAT.DELETE(target.id));
+                notificationStore.markChatRead(target.id);
                 // Bỏ chọn nếu đang mở đúng cuộc vừa xóa
                 if (activeChat.value && activeChat.value.id === target.id) {
                     activeChat.value = null;
@@ -733,7 +736,15 @@ onMounted(() => {
     fetchConversations();
 
     chatSocket.connect(() => {
-        chatSocket.subscribe(CHAT_TOPICS.NOTIFICATIONS, () => {
+        chatSocket.subscribe(CHAT_TOPICS.NOTIFICATIONS, (msg) => {
+            const raw = typeof msg === 'string' ? msg : JSON.stringify(msg);
+            if (raw.includes('CLOSED_CONVERSATION_')) {
+                const closedId = raw.split('CLOSED_CONVERSATION_')[1]?.split('"')[0]?.split('}')[0];
+                if (closedId) notificationStore.markChatRead(closedId.trim());
+            } else if (raw.includes('DELETED_CONVERSATION_')) {
+                const deletedId = raw.split('DELETED_CONVERSATION_')[1]?.split('"')[0]?.split('}')[0];
+                if (deletedId) notificationStore.markChatRead(deletedId.trim());
+            }
             fetchConversations(true);
         });
 

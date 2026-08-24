@@ -139,6 +139,18 @@ export const useNotificationStore = defineStore('notification', {
             this.markChatUnread(conversationId);
         },
 
+        // Đồng bộ danh sách chưa đọc với danh sách hội thoại thực tế từ server (loại bỏ phiên đã đóng/đã xóa)
+        syncUnreadConversations(conversations) {
+            if (!Array.isArray(conversations)) return;
+            const validActiveOrPendingIds = new Set(
+                conversations
+                    .filter((c) => (c.status || c.trangThaiHoiThoai) !== 'CLOSED')
+                    .map((c) => c.id)
+            );
+            this.unreadChatConvIds = this.unreadChatConvIds.filter((id) => validActiveOrPendingIds.has(id));
+            localStorage.setItem('unread_chat_conv_ids', JSON.stringify(this.unreadChatConvIds));
+        },
+
         resetUnreadChat() {
             this.unreadChatConvIds = [];
             localStorage.removeItem('unread_chat_conv_ids');

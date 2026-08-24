@@ -69,7 +69,10 @@ const fetchProductSearchResults = async (keyword, force = false) => {
     }
 };
 
-const loadFilterOptions = async () => {
+const loadFilterOptions = async (force = false) => {
+    if (!force && store.filterBrands?.length > 1) {
+        return;
+    }
     try {
         const [th, md, ms, kt, maxPriceRes] = await Promise.allSettled([
             dichVuThuongHieu.layThuongHieu({ size: 1000 }),

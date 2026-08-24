@@ -113,16 +113,46 @@ const {
 // State
 const banHangStore = useBanHangStore();
 const loading = ref(false);
-const orders = ref([]);
-const activeOrderIndex = ref(0);
-const vouchers = ref([]);
+const orders = ref(banHangStore.orders || []);
+const activeOrderIndex = ref(banHangStore.activeOrderIndex || 0);
+const vouchers = ref(banHangStore.vouchers || []);
 const isProcessing = ref(false);
+
+// Sync local reactive state with Pinia store
+watch(
+    orders,
+    (val) => {
+        banHangStore.orders = val;
+    },
+    { deep: true }
+);
+
+watch(
+    activeOrderIndex,
+    (val) => {
+        banHangStore.activeOrderIndex = val;
+    }
+);
+
+watch(
+    vouchers,
+    (val) => {
+        banHangStore.vouchers = val;
+    }
+);
 
 // Dynamic Filter States for POS Products
 const maxProductPrice = ref(7000000);
 
 // Right Column Fields
-const currentEmployeeDetail = ref(null);
+const currentEmployeeDetail = ref(banHangStore.employeeDetail || null);
+
+watch(
+    currentEmployeeDetail,
+    (val) => {
+        banHangStore.employeeDetail = val;
+    }
+);
 
 const {
     customerSearch,
@@ -296,12 +326,14 @@ const orderChannel = computed({
 
 const isGiaoHang = computed({
     get() {
-        if (!selectedOrder.value) return false;
-        return !!selectedOrder.value.isGiaoHangLocal;
+        return !!selectedOrder.value?.isGiaoHangLocal;
     },
     set(val) {
         if (selectedOrder.value) {
             selectedOrder.value.isGiaoHangLocal = val;
+            if (val && (!provincesShip.value || provincesShip.value.length === 0)) {
+                fetchProvincesShip();
+            }
             selectedOrder.value.orderType = ORDER_TYPES.IN_STORE;
             selectedOrder.value.deliveryMethod = val ? DELIVERY_METHODS.SHIPPING : DELIVERY_METHODS.TAKEAWAY;
             selectedOrder.value.loaiDon = val ? 'GIAO_HANG' : 'TAI_QUAY';
@@ -837,36 +869,50 @@ onMounted(async () => {
         { title: 'Tạo đơn hàng', disabled: true }
     ]);
     window.addEventListener('keydown', handleGlobalKeyDown);
-    loading.value = true;
-    try {
-        await checkGiaoCa();
-        fetchProvincesShip();
-        await loadCurrentEmployeeDetails();
 
-        if (isStaff.value && !currentGiaoCa.value) {
-            // Nhân viên chưa mở ca: Mở modal mở ca để nhân viên nhập tiền đầu két, không tự tạo đơn rỗng ngầm tránh lỗi 400
-            openMoCaModal();
-        } else {
-            await initializePendingOrders({
+    const hasCache = banHangStore.isInitialized && orders.value.length > 0;
+    if (!hasCache) {
+        loading.value = true;
+    }
+
+    try {
+        // Tải song song tất cả các dữ liệu khởi tạo cốt lõi
+        const [shiftRes, empRes, pendingOrdersRes] = await Promise.allSettled([
+            checkGiaoCa(),
+            loadCurrentEmployeeDetails(),
+            initializePendingOrders({
                 fetchPendingOrders: () => dichVuDonHang.layDonHangCho(),
                 setPendingOrders: setOrders,
                 createEmptyOrder: () => createNewOrder({ force: true, silent: true }),
                 preferredOrderId: getStoredActiveOrderId()
-            });
+            })
+        ]);
+
+        if (isStaff.value && !currentGiaoCa.value) {
+            // Nhân viên chưa mở ca: Mở modal mở ca để nhân viên nhập tiền đầu két
+            openMoCaModal();
         }
 
-        // Tải danh sách + voucher tốt nhất một lần khi khởi tạo.
-        try {
-            await refreshBestVoucher();
-        } catch (e) {
-            console.error('Lỗi khi tải phiếu giảm giá', e);
-        }
-
-        await handleVnPayCallbackFromUrl();
+        banHangStore.isInitialized = true;
     } catch (error) {
         addNotification({ title: 'Lỗi', subtitle: getErrorMessage(error, MESSAGES.ERROR.CONNECT_SERVER), color: 'error' });
     } finally {
         loading.value = false;
+    }
+
+    // Tác vụ nền chạy sau khi UI đã sẵn sàng
+    try {
+        refreshBestVoucher();
+        handleVnPayCallbackFromUrl();
+
+        // Tải trước danh mục tỉnh thành sau khi màn hình POS đã hiển thị mượt mà
+        setTimeout(() => {
+            if (!provincesShip.value || provincesShip.value.length === 0) {
+                fetchProvincesShip();
+            }
+        }, 500);
+    } catch (e) {
+        console.error('Lỗi khi tải dữ liệu phụ:', e);
     }
 });
 
