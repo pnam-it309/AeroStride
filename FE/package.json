@@ -37,7 +37,7 @@
     "devDependencies": {
         "@mdi/font": "^7.4.0",
         "@stomp/stompjs": "^7.3.0",
-        "@vitejs/plugin-vue": "^5.2.0",
+        "@vitejs/plugin-vue": "^6.0.8",
         "@vue/eslint-config-prettier": "^10.2.0",
         "@vue/test-utils": "^2.4.0",
         "eslint": "^9.17.0",
