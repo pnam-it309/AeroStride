@@ -1297,6 +1297,27 @@ const openChatImage = (url) => {
         padding-left: 20px;
         margin-bottom: 8px;
     }
+    :deep(table) {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 8px 0;
+        font-size: 0.8rem;
+        display: block;
+        overflow-x: auto;
+        border-radius: 8px;
+    }
+    :deep(th),
+    :deep(td) {
+        border: 1px solid #e2e8f0;
+        padding: 6px 10px;
+        text-align: left;
+        white-space: nowrap;
+    }
+    :deep(th) {
+        background: #f1f5f9;
+        font-weight: 600;
+        color: #334155;
+    }
 }
 
 .message-time {

@@ -58,6 +58,7 @@ public class AiChatServiceImpl implements AiChatService {
 
     private final AdminSanPhamService sanPhamService;
     private final AdminTinNhanRepository messageRepository;
+    private final com.example.be.core.admin.chat.repository.AdminCuocHoiThoaiRepository cuocHoiThoaiRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -105,7 +106,7 @@ public class AiChatServiceImpl implements AiChatService {
     private volatile List<ProductVariantResponse> cachedVariants;
     private volatile long cacheTimestamp = 0;
     private static final long CACHE_TTL_MS = 5 * 60 * 1000; // 5 phút
-    private static final int MAX_CONTEXT_PRODUCTS = 20; // Giới hạn số lượng sản phẩm gửi lên AI để tránh quá tải
+    private static final int MAX_CONTEXT_PRODUCTS = 40; // Mở rộng danh mục sản phẩm gửi lên AI để AI thấy toàn bộ sự phong phú của shop
 
     // Circuit Breaker tracker for unhealthy model APIs
     private final Map<String, Long> unhealthyModels = new java.util.concurrent.ConcurrentHashMap<>();
@@ -135,6 +136,7 @@ public class AiChatServiceImpl implements AiChatService {
     public AiChatServiceImpl(
             AdminSanPhamService sanPhamService,
             AdminTinNhanRepository messageRepository,
+            com.example.be.core.admin.chat.repository.AdminCuocHoiThoaiRepository cuocHoiThoaiRepository,
             SimpMessagingTemplate messagingTemplate,
             RestTemplateBuilder restTemplateBuilder,
             AiLocalService aiLocalService,
@@ -143,17 +145,19 @@ public class AiChatServiceImpl implements AiChatService {
     ) {
         this.sanPhamService = sanPhamService;
         this.messageRepository = messageRepository;
+        this.cuocHoiThoaiRepository = cuocHoiThoaiRepository;
         this.messagingTemplate = messagingTemplate;
         this.aiLocalService = aiLocalService;
 
         ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
         this.chatClient = (builder != null) ? builder.build() : null;
 
-        // [Cải tiến 3] RestTemplate có Timeout 8s → chống treo luồng @Async, nhanh chóng chuyển Local AI
+        // [Cải tiến 3] RestTemplate có Timeout 8s và UTF-8 converter → chống treo luồng & không bao giờ lỗi icon / tiếng Việt
         int effectiveTimeout = Math.min(timeoutMs, 8000);
         this.restTemplate = restTemplateBuilder
                 .connectTimeout(Duration.ofMillis(effectiveTimeout))
                 .readTimeout(Duration.ofMillis(effectiveTimeout))
+                .additionalMessageConverters(new org.springframework.http.converter.StringHttpMessageConverter(java.nio.charset.StandardCharsets.UTF_8))
                 .build();
     }
 
@@ -181,6 +185,32 @@ public class AiChatServiceImpl implements AiChatService {
             lowerInput.contains("goi admin") || lowerInput.contains("gọi admin")) {
             
             log.info("Đã phát hiện từ khóa gặp nhân viên trong: '{}'. Thực hiện phản hồi handoff tức thì.", customerText);
+            
+            // Cập nhật trạng thái hội thoại sang PENDING để Admin nhận yêu cầu
+            try {
+                conversation.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.PENDING);
+                conversation.setNgayCapNhat(System.currentTimeMillis());
+                cuocHoiThoaiRepository.save(conversation);
+
+                // Phát thông báo đẩy thời gian thực (Push Notification) đến giao diện Admin
+                String senderName = (conversation.getKhachHang() != null && conversation.getKhachHang().getTen() != null)
+                        ? conversation.getKhachHang().getTen()
+                        : (conversation.getMaPhien() != null ? conversation.getMaPhien() : "Khách hàng");
+
+                Map<String, Object> handoffNotify = new HashMap<>();
+                handoffNotify.put("type", "CUSTOMER_HANDOFF_REQUEST");
+                handoffNotify.put("title", "Khách hàng cần gặp nhân viên");
+                handoffNotify.put("message", "Khách hàng [" + senderName + "] vừa yêu cầu gặp nhân viên hỗ trợ trực tiếp!");
+                handoffNotify.put("conversationId", conversation.getId());
+                handoffNotify.put("customerName", senderName);
+                handoffNotify.put("timestamp", System.currentTimeMillis());
+
+                messagingTemplate.convertAndSend("/topic/admin-notifications", handoffNotify);
+                messagingTemplate.convertAndSend("/topic/notifications", handoffNotify);
+            } catch (Exception ex) {
+                log.warn("Lỗi khi cập nhật trạng thái PENDING hoặc gửi notification handoff: {}", ex.getMessage());
+            }
+
             String handoffResponse = AiChatPrompts.HANDOFF_RESPONSE;
             
             // Đính kèm các câu hỏi gợi ý phù hợp trong lúc chờ nhân viên hỗ trợ
@@ -374,7 +404,7 @@ public class AiChatServiceImpl implements AiChatService {
         long now = System.currentTimeMillis();
         if (cachedVariants == null || (now - cacheTimestamp) > CACHE_TTL_MS) {
             log.info("Cache sản phẩm hết hạn hoặc chưa có → Truy vấn DB top sản phẩm...");
-            List<ProductVariantResponse> allVariants = sanPhamService.searchVariantsForAi(null, null, null, 50);
+            List<ProductVariantResponse> allVariants = sanPhamService.searchVariantsForAi(null, null, null, 100);
             cachedVariants = allVariants.stream()
                     .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
                     .collect(Collectors.toList());
@@ -678,7 +708,8 @@ public class AiChatServiceImpl implements AiChatService {
         requestBody.put("messages", List.of(message));
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentType(new MediaType("application", "json", java.nio.charset.StandardCharsets.UTF_8));
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         headers.setBearerAuth(getOpenAiApiKey());
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 

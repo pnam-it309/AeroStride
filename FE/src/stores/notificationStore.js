@@ -35,20 +35,56 @@ export const useNotificationStore = defineStore('notification', {
         },
 
         addNotification(message) {
-            // Check if it's a chat message
+            // 1. Kiểm tra nếu là thông báo yêu cầu gặp nhân viên (Handoff Request)
+            if (message.type === 'CUSTOMER_HANDOFF_REQUEST') {
+                const userStr = sessionStorage.getItem('user');
+                const user = userStr ? JSON.parse(userStr) : null;
+                const isAdminOrStaff = user?.role === APP_ROLES.ADMIN || user?.role === APP_ROLES.STAFF;
+
+                if (isAdminOrStaff) {
+                    if (message.conversationId) {
+                        this.markChatUnread(message.conversationId);
+                    }
+                    // Hiển thị thông báo Toast góc trên bên phải
+                    import('@/stores/toastStore').then(({ useToastStore }) => {
+                        const toastStore = useToastStore();
+                        toastStore.showToast(
+                            message.message || `Khách hàng [${message.customerName || 'Khách'}] vừa yêu cầu gặp nhân viên hỗ trợ!`,
+                            'warning'
+                        );
+                    });
+
+                    // Thêm vào danh sách chuông thông báo
+                    const notification = {
+                        id: Date.now(),
+                        title: message.title || 'Khách hàng yêu cầu hỗ trợ',
+                        message: message.message || 'Khách hàng yêu cầu gặp nhân viên tư vấn',
+                        type: 'warning',
+                        timestamp: new Date(),
+                        read: false
+                    };
+                    this.notifications.unshift(notification);
+                }
+                return;
+            }
+
+            // 2. Check if it's a chat message
             if (message.conversationId) {
-                // Lọc tin nhắn để tránh đếm thông báo cho tin nhắn của chính mình hoặc tin nhắn không thuộc phạm vi xử lý
+                // Tuyệt đối không đếm số cho tin nhắn bot tự động
+                if (message.sender === 'bot' || message.isBot) {
+                    return;
+                }
+
                 const userStr = sessionStorage.getItem('user');
                 const user = userStr ? JSON.parse(userStr) : null;
                 const currentUsername = user?.username;
                 const isAdmin = user?.role === APP_ROLES.ADMIN;
 
-                // 1. Không bao giờ thông báo tin nhắn do chính mình gửi đi
+                // Không bao giờ thông báo tin nhắn do chính mình gửi đi
                 if (message.sender === currentUsername) {
                     return;
                 }
 
-                // 2. Xử lý tin nhắn thuộc về mình (là người nhận/tiếp nhận), tin nhắn chờ (chưa có staffId), hoặc là Quản lý (Admin)
                 const isMyChat =
                     isAdmin ||
                     !message.staffId ||
@@ -59,8 +95,9 @@ export const useNotificationStore = defineStore('notification', {
                     return;
                 }
 
-                // Nếu không ở trang chat thì đánh dấu CUỘC hội thoại này là chưa đọc (không cộng dồn từng tin)
-                if (!window.location.pathname.includes('/quan-ly-chat')) {
+                // Chỉ đánh số khi khách hàng đang ở trạng thái PENDING (chờ nhân viên hỗ trợ)
+                const isPendingHandoff = message.trangThaiHoiThoai === 'PENDING' || message.isHandoff;
+                if (isPendingHandoff && !window.location.pathname.includes('/quan-ly-chat')) {
                     this.markChatUnread(message.conversationId);
                 }
                 return;
@@ -139,15 +176,15 @@ export const useNotificationStore = defineStore('notification', {
             this.markChatUnread(conversationId);
         },
 
-        // Đồng bộ danh sách chưa đọc với danh sách hội thoại thực tế từ server (loại bỏ phiên đã đóng/đã xóa)
+        // Đồng bộ danh sách chưa đọc với danh sách hội thoại thực tế từ server (chỉ đánh số các cuộc hội thoại PENDING chờ nhân viên)
         syncUnreadConversations(conversations) {
             if (!Array.isArray(conversations)) return;
-            const validActiveOrPendingIds = new Set(
+            const validPendingIds = new Set(
                 conversations
-                    .filter((c) => (c.status || c.trangThaiHoiThoai) !== 'CLOSED')
+                    .filter((c) => (c.status || c.trangThaiHoiThoai) === 'PENDING')
                     .map((c) => c.id)
             );
-            this.unreadChatConvIds = this.unreadChatConvIds.filter((id) => validActiveOrPendingIds.has(id));
+            this.unreadChatConvIds = this.unreadChatConvIds.filter((id) => validPendingIds.has(id));
             localStorage.setItem('unread_chat_conv_ids', JSON.stringify(this.unreadChatConvIds));
         },
 
