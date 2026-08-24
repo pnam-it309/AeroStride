@@ -16,19 +16,21 @@ import MainView from './Main.vue';
                     <RouterView v-slot="{ Component, route }">
                         <template v-if="Component">
                             <transition name="route-shell" mode="out-in">
-                                <Suspense>
-                                    <template #default>
-                                        <component :is="Component" :key="route.meta?.key || (route.name === 'ThuocTinh' ? 'ThuocTinh' : route.path)" />
-                                    </template>
-                                    <template #fallback>
-                                        <div
-                                            class="d-flex align-center justify-center w-100 h-100"
-                                            style="min-height: 400px; background-color: #ffffff"
-                                        >
-                                            <v-progress-circular indeterminate color="primary" size="48" />
-                                        </div>
-                                    </template>
-                                </Suspense>
+                                <keep-alive :max="10">
+                                    <Suspense>
+                                        <template #default>
+                                            <component :is="Component" :key="route.meta?.key || (route.name === 'ThuocTinh' ? 'ThuocTinh' : route.path)" />
+                                        </template>
+                                        <template #fallback>
+                                            <div
+                                                class="d-flex align-center justify-center w-100 h-100"
+                                                style="min-height: 400px; background-color: #ffffff"
+                                            >
+                                                <v-progress-circular indeterminate color="primary" size="48" />
+                                            </div>
+                                        </template>
+                                    </Suspense>
+                                </keep-alive>
                             </transition>
                         </template>
                     </RouterView>
