@@ -124,12 +124,15 @@ const selectedProductSummary = computed(() => {
 // variants / totalElements / totalPages / pagination / loading do useServerPagination cung cấp (khai báo phía trên).
 const filteredVariantIds = computed(() => variants.value.map((item) => item.id));
 const selectedVariants = computed(() => variants.value.filter((item) => selectedVariantIds.value.includes(item.id)));
-const allVariantsSelected = computed(
-    () => filteredVariantIds.value.length > 0 && filteredVariantIds.value.every((id) => selectedVariantIds.value.includes(id))
-);
-const someVariantsSelected = computed(
-    () => filteredVariantIds.value.some((id) => selectedVariantIds.value.includes(id)) && !allVariantsSelected.value
-);
+const allVariantsSelected = computed(() => {
+    if (totalElements.value > 0) {
+        return selectedVariantIds.value.length >= totalElements.value;
+    }
+    return filteredVariantIds.value.length > 0 && filteredVariantIds.value.every((id) => selectedVariantIds.value.includes(id));
+});
+const someVariantsSelected = computed(() => {
+    return selectedVariantIds.value.length > 0 && !allVariantsSelected.value;
+});
 
 // Bỏ chọn tất cả các biến thể
 const clearVariantSelection = () => {
@@ -635,18 +638,18 @@ const toggleVariantSelection = (variantId, checked) => {
     selectedVariantIds.value = selectedVariantIds.value.filter((id) => id !== variantId);
 };
 
-// Chọn tất cả biến thể khớp bộ lọc (mọi trang, không chỉ trang hiện tại) - 1 phát ăn ngay 0ms
+// Chọn tất cả biến thể khớp bộ lọc (toàn bộ danh sách mọi trang)
 const toggleSelectAllVariants = async (checked) => {
-    if (!checked) {
+    if (!checked || allVariantsSelected.value) {
         selectedVariantIds.value = [];
         return;
     }
 
-    // 1 phát ăn ngay: chọn ngay lập tức toàn bộ biến thể trên trang hiện tại
+    // Chọn ngay lập tức toàn bộ biến thể trên trang hiện tại
     selectedVariantIds.value = filteredVariantIds.value.slice();
 
-    // Đồng bộ thêm toàn bộ các trang khác ở chế độ background silent nếu có nhiều trang
-    if (totalElements.value > filteredVariantIds.value.length) {
+    // Đồng bộ thêm toàn bộ các trang khác
+    if (totalElements.value > 0) {
         try {
             const all = await fetchAllFilteredVariants();
             if (all && all.length > 0) {
@@ -982,15 +985,15 @@ onBeforeUnmount(() => {
                     </td>
                     <td class="data-cell text-center">
                         <div class="text-truncate" :title="formatNumber(item.soLuong)">
-                            <span class="text-truncate font-weight-medium">{{ formatNumber(item.soLuong) }}</span>
+                            <span class="text-truncate">{{ formatNumber(item.soLuong) }}</span>
                         </div>
                     </td>
                     <td class="data-cell text-center">
                         <div v-if="item.phanTramGiam && Number(item.phanTramGiam) > 0" class="d-flex flex-column align-center">
                             <span class="text-caption text-slate-400 text-decoration-line-through" style="font-size: 11px; line-height: 1.1">{{ formatCurrency(item.giaGoc || item.giaBan / (1 - Number(item.phanTramGiam) / 100)) }}</span>
                             <div class="d-flex align-center justify-center ga-1 mt-0.5">
-                                <span class="text-deep-orange font-weight-bold text-truncate" style="font-size: 13px">{{ formatCurrency(item.giaBan) }}</span>
-                                <v-chip size="x-small" color="deep-orange" variant="flat" class="font-weight-bold px-1" style="height: 16px; font-size: 10px">-{{ item.phanTramGiam }}%</v-chip>
+                                <span class="text-deep-orange text-truncate" style="font-size: 13px">{{ formatCurrency(item.giaBan) }}</span>
+                                <v-chip size="x-small" color="deep-orange" variant="flat" class="px-1" style="height: 16px; font-size: 10px">-{{ item.phanTramGiam }}%</v-chip>
                             </div>
                         </div>
                         <div v-else class="text-primary text-truncate" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>

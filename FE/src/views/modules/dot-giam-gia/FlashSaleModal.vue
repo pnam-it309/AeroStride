@@ -251,7 +251,8 @@ const handleSave = async () => {
                                 class="rounded-pill font-weight-bold text-none mr-2 mb-2"
                                 @click="selectPresetSlot(slot)"
                             >
-                                ⚡ {{ slot.label }}
+                                <v-icon start size="14">mdi-flash</v-icon>
+                                {{ slot.label }}
                                 <span class="ml-1 text-caption opacity-80">({{ slot.desc }})</span>
                             </v-btn>
                             <v-btn
@@ -261,7 +262,8 @@ const handleSave = async () => {
                                 class="rounded-pill font-weight-bold text-none mb-2"
                                 @click="isCustomSlot = true"
                             >
-                                🕒 Tùy chỉnh giờ
+                                <v-icon start size="14">mdi-clock-outline</v-icon>
+                                Tùy chỉnh giờ
                             </v-btn>
                         </div>
                     </v-col>
@@ -451,7 +453,7 @@ const handleSave = async () => {
                     :loading="submitting"
                     @click="handleSave"
                 >
-                    ⚡ Kích Hoạt Flash Sale Ngay
+                    Kích Hoạt Flash Sale Ngay
                 </v-btn>
             </v-card-actions>
         </v-card>

@@ -55,11 +55,11 @@ const isUpdatingConfig = ref(false);
 
 const ratingFilterOptions = [
     { title: 'Tất cả số sao', value: null },
-    { title: '⭐⭐⭐⭐⭐ 5 sao (Xuất sắc)', value: 5 },
-    { title: '⭐⭐⭐⭐ 4 sao (Tốt)', value: 4 },
-    { title: '⭐⭐⭐ 3 sao (Bình thường)', value: 3 },
-    { title: '⭐⭐ 2 sao (Kém)', value: 2 },
-    { title: '⭐ 1 sao (Rất tệ)', value: 1 }
+    { title: '5 sao (Xuất sắc)', value: 5 },
+    { title: '4 sao (Tốt)', value: 4 },
+    { title: '3 sao (Bình thường)', value: 3 },
+    { title: '2 sao (Kém)', value: 2 },
+    { title: '1 sao (Rất tệ)', value: 1 }
 ];
 
 const loadConfigAndStats = async () => {

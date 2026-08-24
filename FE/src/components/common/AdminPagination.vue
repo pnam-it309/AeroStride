@@ -33,19 +33,28 @@ const size = computed({
 
 const pageSizes = [10, 20, 50, 100];
 
+const computedTotalPages = computed(() => {
+    if (props.totalElements > 0 && props.pageSize > 0) {
+        return Math.max(1, Math.ceil(props.totalElements / props.pageSize));
+    }
+    return Math.max(1, props.totalPages || 1);
+});
+
 const startItem = computed(() => (page.value - 1) * props.pageSize + 1);
 const endItem = computed(() => Math.min(startItem.value + props.currentSize - 1, props.totalElements));
 const shouldShowPagination = computed(() => props.totalElements > 0);
 const hasPrev = computed(() => page.value > 1);
-const hasNext = computed(() => page.value < props.totalPages);
+const hasNext = computed(() => page.value < computedTotalPages.value);
 
 const visiblePages = computed(() => {
-    const total = props.totalPages || 1;
+    const total = computedTotalPages.value;
     const current = page.value;
     const maxVisible = 5;
     let start = Math.max(1, current - Math.floor(maxVisible / 2));
     let end = Math.min(total, start + maxVisible - 1);
     if (end - start + 1 < maxVisible) start = Math.max(1, end - maxVisible + 1);
+    start = Math.max(1, start);
+    end = Math.min(total, end);
     const pages = [];
     for (let i = start; i <= end; i++) pages.push(i);
     return pages;
@@ -58,7 +67,7 @@ const goNext = async () => {
     if (hasNext.value) page.value++;
 };
 const goToPage = async (p) => {
-    if (p >= 1 && p <= props.totalPages) page.value = p;
+    if (p >= 1 && p <= computedTotalPages.value) page.value = p;
 };
 
 const handleJump = (e) => {
@@ -110,9 +119,9 @@ const handleJump = (e) => {
                 >
                     {{ p }}
                 </button>
-                <template v-if="visiblePages[visiblePages.length - 1] < totalPages">
+                <template v-if="visiblePages[visiblePages.length - 1] < computedTotalPages">
                     <input
-                        v-if="visiblePages[visiblePages.length - 1] < totalPages - 1"
+                        v-if="visiblePages[visiblePages.length - 1] < computedTotalPages - 1"
                         type="text"
                         inputmode="numeric"
                         class="pager-ellipsis pager-jump-input"
@@ -121,7 +130,7 @@ const handleJump = (e) => {
                         @blur="handleJump"
                         title="Nhập trang và ấn Enter"
                     />
-                    <button type="button" class="pager-btn" @click="goToPage(totalPages)">{{ totalPages }}</button>
+                    <button type="button" class="pager-btn" @click="goToPage(computedTotalPages)">{{ computedTotalPages }}</button>
                 </template>
                 <button type="button" class="pager-btn" :disabled="!hasNext" @click="goNext">&gt;</button>
             </div>

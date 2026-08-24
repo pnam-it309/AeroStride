@@ -116,12 +116,15 @@ const toNumber = (value, fallback = 0) => {
 // Danh sách sản phẩm hiển thị là dữ liệu của đúng trang hiện tại do BE trả về.
 const filteredProductIds = computed(() => products.value.map((item) => item.id));
 const selectedProducts = computed(() => products.value.filter((item) => selectedProductIds.value.includes(item.id)));
-const allProductsSelected = computed(
-    () => filteredProductIds.value.length > 0 && filteredProductIds.value.every((id) => selectedProductIds.value.includes(id))
-);
-const someProductsSelected = computed(
-    () => filteredProductIds.value.some((id) => selectedProductIds.value.includes(id)) && !allProductsSelected.value
-);
+const allProductsSelected = computed(() => {
+    if (totalElements.value > 0) {
+        return selectedProductIds.value.length >= totalElements.value;
+    }
+    return filteredProductIds.value.length > 0 && filteredProductIds.value.every((id) => selectedProductIds.value.includes(id));
+});
+const someProductsSelected = computed(() => {
+    return selectedProductIds.value.length > 0 && !allProductsSelected.value;
+});
 const productExportButtonText = computed(() =>
     selectedProductIds.value.length ? `Xuất Excel (${selectedProductIds.value.length})` : 'Xuất Excel'
 );
@@ -301,13 +304,45 @@ const getPriceRange = (item) => {
     return `${formatCurrency(item.giaBanThapNhat)} - ${formatCurrency(item.giaBanCaoNhat)}`;
 };
 
-// Xuất danh sách sản phẩm (chỉ những sản phẩm đang chọn)
-const handleExportProducts = () => {
-    const targetProducts = selectedProducts.value;
+// Xuất danh sách sản phẩm (tất cả sản phẩm đã chọn hoặc tất cả theo bộ lọc)
+const handleExportProducts = async () => {
+    let targetProducts = [];
+    if (selectedProductIds.value.length > 0) {
+        if (
+            selectedProductIds.value.length === products.value.length &&
+            products.value.every((p) => selectedProductIds.value.includes(p.id))
+        ) {
+            targetProducts = products.value;
+        } else {
+            try {
+                const response = await dichVuSanPham.layDanhSachSanPham({
+                    ...buildProductFilterParams(),
+                    page: 0,
+                    size: Math.max(totalElements.value, 1000)
+                });
+                const allList = response?.content || [];
+                targetProducts = allList.filter((item) => selectedProductIds.value.includes(item.id));
+            } catch (e) {
+                targetProducts = products.value.filter((item) => selectedProductIds.value.includes(item.id));
+            }
+        }
+    } else {
+        try {
+            const response = await dichVuSanPham.layDanhSachSanPham({
+                ...buildProductFilterParams(),
+                page: 0,
+                size: Math.max(totalElements.value, 1000)
+            });
+            targetProducts = response?.content || products.value;
+        } catch (e) {
+            targetProducts = products.value;
+        }
+    }
+
     if (!targetProducts.length) {
         addNotification({
             title: 'Thông báo',
-            subtitle: 'Vui lòng chọn ít nhất 1 sản phẩm để xuất Excel',
+            subtitle: 'Không có sản phẩm nào để xuất Excel',
             color: 'warning'
         });
         return;
@@ -324,7 +359,7 @@ const handleExportProducts = () => {
             getPriceRange(item),
             getStatusLabel(item.trangThai)
         ]),
-        fileName: selectedProducts.value.length ? 'san_pham_da_chon.xls' : 'danh_sach_san_pham_da_loc.xls'
+        fileName: selectedProductIds.value.length ? 'san_pham_da_chon.xls' : 'danh_sach_san_pham_da_loc.xls'
     });
 
     addNotification({
@@ -470,23 +505,23 @@ const toggleProductSelection = (productId, checked) => {
     selectedProductIds.value = selectedProductIds.value.filter((id) => id !== productId);
 };
 
-// Chọn/Bỏ chọn tất cả các sản phẩm đang hiển thị trên tất cả phân trang (Tức thì 0ms, 1 phát ăn ngay)
+// Chọn/Bỏ chọn tất cả các sản phẩm trên toàn bộ danh sách (mọi trang)
 const toggleSelectAllProducts = async (checked) => {
-    if (!checked) {
+    if (!checked || allProductsSelected.value) {
         selectedProductIds.value = [];
         return;
     }
 
-    // 1 phát ăn ngay: Chọn ngay lập tức toàn bộ sản phẩm trên trang hiện tại
+    // Chọn ngay lập tức toàn bộ sản phẩm trên trang hiện tại
     selectedProductIds.value = filteredProductIds.value.slice();
 
-    // Đồng bộ thêm toàn bộ các trang khác ở chế độ background silent nếu có nhiều trang
-    if (totalElements.value > filteredProductIds.value.length) {
+    // Đồng bộ thêm toàn bộ các trang khác để chọn đủ 100% (ví dụ cả 31 sản phẩm)
+    if (totalElements.value > 0) {
         try {
             const response = await dichVuSanPham.layDanhSachSanPham({
                 ...buildProductFilterParams(),
                 page: 0,
-                size: Math.min(totalElements.value, 1000)
+                size: Math.max(totalElements.value, 1000)
             });
             const allIds = response?.content?.map((item) => item.id) || [];
             if (allIds.length > 0) {
@@ -584,7 +619,7 @@ onBeforeUnmount(() => {
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select
                         v-model="filters.trangThai"
-                        :items="STATUS_OPTIONS.ADMIN_FILTER"
+                        :items="STATUS_OPTIONS"
                         variant="outlined"
                         density="compact"
                         hide-details

@@ -1071,7 +1071,7 @@ const updateInvoicePaginationSize = (size) => {
                         <td class="data-cell text-center">
                             {{ item.tongDonHang || 0 }}
                         </td>
-                        <td class="data-cell text-center font-weight-bold" style="color: #1e257c !important">
+                        <td class="data-cell text-center" style="color: #1e257c !important">
                             {{ formatCurrency(item.tongChiTieu || 0) }}
                         </td>
                         <td class="data-cell text-center text-slate-800">
@@ -1182,13 +1182,13 @@ const updateInvoicePaginationSize = (size) => {
                 <template #row="{ item, index }">
                     <tr class="data-row">
                         <!-- STT -->
-                        <td class="data-cell text-center text-black font-weight-medium" style="font-size: 13px">
+                        <td class="data-cell text-center text-black" style="font-size: 13px">
                             {{ getInvoiceIndex(index) }}
                         </td>
 
                         <!-- Mã hóa đơn (click to open detail) -->
                         <td class="data-cell text-center" style="font-size: 13px">
-                            <a href="#" class="invoice-link font-weight-bold text-primary" @click.prevent="openInvoiceDetail(item)">
+                            <a href="#" class="invoice-link text-primary" @click.prevent="openInvoiceDetail(item)">
                                 {{ item.maHoaDon || item.ma || '-' }}
                             </a>
                         </td>
@@ -1215,7 +1215,7 @@ const updateInvoicePaginationSize = (size) => {
                         </td>
 
                         <!-- Giá trị đơn hàng -->
-                        <td class="data-cell text-center font-weight-bold order-value" style="font-size: 13px">
+                        <td class="data-cell text-center order-value" style="font-size: 13px">
                             {{ formatCurrency(item.tongTienSauGiam || item.tongTien || 0) }}
                         </td>
 

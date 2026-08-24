@@ -301,24 +301,24 @@ onMounted(() => loadCampaigns());
                         {{ getIndex(index) }}
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-truncate font-weight-bold" :title="item.ma">{{ item.ma }}</div>
+                        <div class="text-truncate" :title="item.ma">{{ item.ma }}</div>
                     </td>
                     <td class="data-cell text-balanced">
                         <div class="d-flex align-center">
-                            <div class="text-truncate font-weight-medium" :title="item.ten">{{ item.ten || '--' }}</div>
-                            <v-chip v-if="item.isFlashSale" size="x-small" color="amber-darken-3" class="ml-2 font-weight-bold" variant="flat">
-                                ⚡ Flash Sale
+                            <div class="text-truncate" :title="item.ten">{{ item.ten || '--' }}</div>
+                            <v-chip v-if="item.isFlashSale" size="x-small" color="amber-darken-3" class="ml-2" variant="flat">
+                                <v-icon start size="12">mdi-flash</v-icon>Flash Sale
                             </v-chip>
                         </div>
-                        <div v-if="item.khungGio" class="text-caption text-amber-darken-4 font-weight-bold mt-0.5">
-                            ⏰ {{ item.khungGio }}
+                        <div v-if="item.khungGio" class="text-caption text-amber-darken-4 mt-0.5 d-flex align-center">
+                            <v-icon size="13" class="mr-1" color="amber-darken-4">mdi-clock-outline</v-icon>{{ item.khungGio }}
                         </div>
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-primary font-weight-bold">Giảm {{ getDiscountValueDisplay(item) }}</div>
+                        <div class="text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
                     </td>
                     <td class="data-cell text-center">
-                        <div v-if="item.giamToiDa" class="text-slate-700 font-weight-medium">
+                        <div v-if="item.giamToiDa" class="text-slate-700">
                             {{ formatCurrency(item.giamToiDa) }}
                         </div>
                         <span v-else class="text-slate-400">--</span>
