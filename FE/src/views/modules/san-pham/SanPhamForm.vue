@@ -72,6 +72,7 @@ const DUPLICATE_ATTRIBUTE_CHECK_ENABLED = false;
 
 const saving = ref(false);
 const attributeCreateState = ref({});
+const quickAddedAttributeIds = ref(new Set());
 
 const confirmDialog = ref({
     show: false,
@@ -164,6 +165,8 @@ const handleAddCustomColor = async () => {
 
     try {
         const newColor = await dichVuMauSac.taoMauSac({ ten: rawName, maMauHex: rawHex });
+        newColor.isQuickAdded = true;
+        quickAddedAttributeIds.value.add(newColor.id);
         colors.value = [newColor, ...colors.value];
         selectedColors.value.push(newColor.id);
         customColorName.value = '';
@@ -245,6 +248,8 @@ const handleAddCustomSize = async () => {
     try {
         const finalSizeName = `Size ${finalNumericSize}`;
         const newSize = await dichVuKichThuoc.taoKichThuoc({ ten: finalSizeName });
+        newSize.isQuickAdded = true;
+        quickAddedAttributeIds.value.add(newSize.id);
         sizes.value = [newSize, ...sizes.value];
         selectedSizes.value.push(newSize.id);
         customSizeName.value = '';
@@ -266,16 +271,40 @@ const addAllFilteredSizes = () => {
 
 const filteredColors = computed(() => {
     const query = normalizeSearchText(colorSearch.value);
-    if (!query) return colors.value;
-    return colors.value.filter((c) => normalizeSearchText(c.ten).includes(query));
+    let list = colors.value;
+    if (query) {
+        list = colors.value.filter((c) => normalizeSearchText(c.ten).includes(query));
+    }
+    const quickAdded = [];
+    const regular = [];
+    for (const c of list) {
+        if (c.isQuickAdded || quickAddedAttributeIds.value.has(c.id)) {
+            quickAdded.push(c);
+        } else {
+            regular.push(c);
+        }
+    }
+    return [...quickAdded, ...regular];
 });
 const sortedSizes = computed(() => {
-    return [...sizes.value].sort((a, b) => {
-        // Lấy ra phần số trong chuỗi (ví dụ: 'Size 40' -> 40, '39.5' -> 39.5)
+    const list = [...sizes.value];
+    const quickAdded = [];
+    const regular = [];
+    for (const s of list) {
+        if (s.isQuickAdded || quickAddedAttributeIds.value.has(s.id)) {
+            quickAdded.push(s);
+        } else {
+            regular.push(s);
+        }
+    }
+    const sortFn = (a, b) => {
         const numA = parseFloat(a.ten.replace(/[^0-9.]/g, '')) || 0;
         const numB = parseFloat(b.ten.replace(/[^0-9.]/g, '')) || 0;
         return numA - numB;
-    });
+    };
+    quickAdded.sort(sortFn);
+    regular.sort(sortFn);
+    return [...quickAdded, ...regular];
 });
 
 const filteredSizes = computed(() => {
@@ -294,13 +323,13 @@ const searchQueries = reactive({
     idMucDichChay: ''
 });
 
-const displayBrands = computed(() => getDisplayItems(brands.value, searchQueries.idThuongHieu, 'idThuongHieu'));
-const displayOrigins = computed(() => getDisplayItems(origins.value, searchQueries.idXuatXu, 'idXuatXu'));
+const displayBrands = computed(() => getDisplayItems(brands.value, searchQueries.idThuongHieu, quickAddedAttributeIds.value));
+const displayOrigins = computed(() => getDisplayItems(origins.value, searchQueries.idXuatXu, quickAddedAttributeIds.value));
 
-const displayMaterials = computed(() => getDisplayItems(materials.value, searchQueries.idChatLieu, 'idChatLieu'));
-const displaySoles = computed(() => getDisplayItems(soles.value, searchQueries.idDeGiay, 'idDeGiay'));
-const displayCollars = computed(() => getDisplayItems(collars.value, searchQueries.idCoGiay, 'idCoGiay'));
-const displayPurposes = computed(() => getDisplayItems(purposes.value, searchQueries.idMucDichChay, 'idMucDichChay'));
+const displayMaterials = computed(() => getDisplayItems(materials.value, searchQueries.idChatLieu, quickAddedAttributeIds.value));
+const displaySoles = computed(() => getDisplayItems(soles.value, searchQueries.idDeGiay, quickAddedAttributeIds.value));
+const displayCollars = computed(() => getDisplayItems(collars.value, searchQueries.idCoGiay, quickAddedAttributeIds.value));
+const displayPurposes = computed(() => getDisplayItems(purposes.value, searchQueries.idMucDichChay, quickAddedAttributeIds.value));
 
 // Mau/size duoc chon de sinh ma tran bien the san pham.
 const selectedColors = ref([]);
@@ -677,11 +706,18 @@ const upsertAttributeOption = (config, option) => {
     }
 
     const options = config.options.value || [];
-    if (options.some((item) => item.id === option.id)) {
+    const enrichedOption = { ...option, isQuickAdded: true };
+    quickAddedAttributeIds.value.add(option.id);
+
+    const existingIndex = options.findIndex((item) => item.id === option.id);
+    if (existingIndex > -1) {
+        const nextOptions = [...options];
+        nextOptions.splice(existingIndex, 1);
+        config.options.value = [enrichedOption, ...nextOptions];
         return;
     }
 
-    config.options.value = [option, ...options];
+    config.options.value = [enrichedOption, ...options];
 };
 
 const refreshAttributeOptions = async (config) => {
@@ -738,6 +774,10 @@ const resolveAttributeField = async (config, { notifyOnCreate = false } = {}) =>
                 ten: normalizedText,
                 moTa: 'Tự động thêm từ sản phẩm'
             });
+            if (createdOption) {
+                createdOption.isQuickAdded = true;
+                quickAddedAttributeIds.value.add(createdOption.id);
+            }
             upsertAttributeOption(config, createdOption);
             return createdOption.id;
         } catch (error) {
@@ -2162,8 +2202,21 @@ const handleSave = async () => {
                                 >
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
-                                            <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
+                                            <template #title>
+                                                <div class="d-flex align-center justify-space-between w-100">
+                                                    <span :class="{ 'font-weight-medium text-primary': item.raw.isNew }">
+                                                        {{ item.raw.isNew ? `+ Thêm nhanh "${item.raw.ten}"` : item.raw.ten }}
+                                                    </span>
+                                                    <v-chip
+                                                        v-if="item.raw.isNew || item.raw.isQuickAdded || quickAddedAttributeIds.has(item.raw.id)"
+                                                        size="x-small"
+                                                        color="primary"
+                                                        variant="tonal"
+                                                        class="ml-2 font-weight-bold"
+                                                    >
+                                                        Thêm nhanh
+                                                    </v-chip>
+                                                </div>
                                             </template>
                                         </v-list-item>
                                     </template>
@@ -2194,8 +2247,21 @@ const handleSave = async () => {
                                 >
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
-                                            <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
+                                            <template #title>
+                                                <div class="d-flex align-center justify-space-between w-100">
+                                                    <span :class="{ 'font-weight-medium text-primary': item.raw.isNew }">
+                                                        {{ item.raw.isNew ? `+ Thêm nhanh "${item.raw.ten}"` : item.raw.ten }}
+                                                    </span>
+                                                    <v-chip
+                                                        v-if="item.raw.isNew || item.raw.isQuickAdded || quickAddedAttributeIds.has(item.raw.id)"
+                                                        size="x-small"
+                                                        color="primary"
+                                                        variant="tonal"
+                                                        class="ml-2 font-weight-bold"
+                                                    >
+                                                        Thêm nhanh
+                                                    </v-chip>
+                                                </div>
                                             </template>
                                         </v-list-item>
                                     </template>
@@ -2224,8 +2290,21 @@ const handleSave = async () => {
                                 >
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
-                                            <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
+                                            <template #title>
+                                                <div class="d-flex align-center justify-space-between w-100">
+                                                    <span :class="{ 'font-weight-medium text-primary': item.raw.isNew }">
+                                                        {{ item.raw.isNew ? `+ Thêm nhanh "${item.raw.ten}"` : item.raw.ten }}
+                                                    </span>
+                                                    <v-chip
+                                                        v-if="item.raw.isNew || item.raw.isQuickAdded || quickAddedAttributeIds.has(item.raw.id)"
+                                                        size="x-small"
+                                                        color="primary"
+                                                        variant="tonal"
+                                                        class="ml-2 font-weight-bold"
+                                                    >
+                                                        Thêm nhanh
+                                                    </v-chip>
+                                                </div>
                                             </template>
                                         </v-list-item>
                                     </template>
@@ -2271,8 +2350,21 @@ const handleSave = async () => {
                                 >
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
-                                            <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
+                                            <template #title>
+                                                <div class="d-flex align-center justify-space-between w-100">
+                                                    <span :class="{ 'font-weight-medium text-primary': item.raw.isNew }">
+                                                        {{ item.raw.isNew ? `+ Thêm nhanh "${item.raw.ten}"` : item.raw.ten }}
+                                                    </span>
+                                                    <v-chip
+                                                        v-if="item.raw.isNew || item.raw.isQuickAdded || quickAddedAttributeIds.has(item.raw.id)"
+                                                        size="x-small"
+                                                        color="primary"
+                                                        variant="tonal"
+                                                        class="ml-2 font-weight-bold"
+                                                    >
+                                                        Thêm nhanh
+                                                    </v-chip>
+                                                </div>
                                             </template>
                                         </v-list-item>
                                     </template>
@@ -2303,8 +2395,21 @@ const handleSave = async () => {
                                 >
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
-                                            <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
+                                            <template #title>
+                                                <div class="d-flex align-center justify-space-between w-100">
+                                                    <span :class="{ 'font-weight-medium text-primary': item.raw.isNew }">
+                                                        {{ item.raw.isNew ? `+ Thêm nhanh "${item.raw.ten}"` : item.raw.ten }}
+                                                    </span>
+                                                    <v-chip
+                                                        v-if="item.raw.isNew || item.raw.isQuickAdded || quickAddedAttributeIds.has(item.raw.id)"
+                                                        size="x-small"
+                                                        color="primary"
+                                                        variant="tonal"
+                                                        class="ml-2 font-weight-bold"
+                                                    >
+                                                        Thêm nhanh
+                                                    </v-chip>
+                                                </div>
                                             </template>
                                         </v-list-item>
                                     </template>
@@ -2333,8 +2438,21 @@ const handleSave = async () => {
                                 >
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
-                                            <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
+                                            <template #title>
+                                                <div class="d-flex align-center justify-space-between w-100">
+                                                    <span :class="{ 'font-weight-medium text-primary': item.raw.isNew }">
+                                                        {{ item.raw.isNew ? `+ Thêm nhanh "${item.raw.ten}"` : item.raw.ten }}
+                                                    </span>
+                                                    <v-chip
+                                                        v-if="item.raw.isNew || item.raw.isQuickAdded || quickAddedAttributeIds.has(item.raw.id)"
+                                                        size="x-small"
+                                                        color="primary"
+                                                        variant="tonal"
+                                                        class="ml-2 font-weight-bold"
+                                                    >
+                                                        Thêm nhanh
+                                                    </v-chip>
+                                                </div>
                                             </template>
                                         </v-list-item>
                                     </template>
@@ -2391,7 +2509,14 @@ const handleSave = async () => {
                                             >mdi-check</v-icon
                                         >
                                     </div>
-                                    <div class="text-caption mt-1 text-truncate" style="max-width: 48px">{{ c.ten }}</div>
+                                    <div class="text-caption mt-1 text-truncate" style="max-width: 60px">{{ c.ten }}</div>
+                                    <div
+                                        v-if="c.isQuickAdded || quickAddedAttributeIds.has(c.id)"
+                                        class="text-primary font-weight-bold"
+                                        style="font-size: 9px; line-height: 1"
+                                    >
+                                        (Thêm nhanh)
+                                    </div>
                                 </div>
                                 <v-menu v-model="showColorMenu" :close-on-content-click="false" location="bottom center" max-width="320">
                                     <template v-slot:activator="{ props }">
@@ -2439,13 +2564,20 @@ const handleSave = async () => {
                                                     class="text-caption"
                                                     style="
                                                         font-size: 10px !important;
-                                                        max-width: 40px;
+                                                        max-width: 55px;
                                                         overflow: hidden;
                                                         text-overflow: ellipsis;
                                                         white-space: nowrap;
                                                     "
                                                 >
                                                     {{ c.ten }}
+                                                </div>
+                                                <div
+                                                    v-if="c.isQuickAdded || quickAddedAttributeIds.has(c.id)"
+                                                    class="text-primary font-weight-bold"
+                                                    style="font-size: 9px; line-height: 1"
+                                                >
+                                                    (Thêm nhanh)
                                                 </div>
                                             </div>
                                         </div>
@@ -2513,6 +2645,13 @@ const handleSave = async () => {
                                     @click="toggleSize(s.id)"
                                 >
                                     {{ formatSizeDisplay(s.ten) }}
+                                    <span
+                                        v-if="s.isQuickAdded || quickAddedAttributeIds.has(s.id)"
+                                        class="ml-2 bg-white text-primary rounded px-1 font-weight-bold"
+                                        style="font-size: 10px"
+                                    >
+                                        Thêm nhanh
+                                    </span>
                                 </v-chip>
 
                                 <v-menu v-model="showSizeMenu" :close-on-content-click="false" location="bottom center" max-width="320">
@@ -2570,6 +2709,13 @@ const handleSave = async () => {
                                                 :class="{ 'bg-slate-50': !selectedSizes.includes(s.id) }"
                                             >
                                                 {{ formatSizeDisplay(s.ten) }}
+                                                <span
+                                                    v-if="s.isQuickAdded || quickAddedAttributeIds.has(s.id)"
+                                                    class="ml-1 text-primary font-weight-bold"
+                                                    style="font-size: 10px"
+                                                >
+                                                    (Thêm nhanh)
+                                                </span>
                                             </v-chip>
                                         </div>
                                         <v-btn

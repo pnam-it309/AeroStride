@@ -44,6 +44,9 @@ public interface AdminHoaDonRepository extends HoaDonRepository, JpaSpecificatio
     @EntityGraph(attributePaths = {
         "khachHang",
         "nhanVien",
+        "phieuGiamGia",
+        "phieuGiamGiaCaNhan",
+        "phieuGiamGiaCaNhan.phieuGiamGia",
         "listsHoaDonChiTiet",
         "listsHoaDonChiTiet.chiTietSanPham",
         "listsHoaDonChiTiet.chiTietSanPham.sanPham",

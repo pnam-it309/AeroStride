@@ -599,6 +599,13 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         BigDecimal payableProductTotal = payableTotal.subtract(shippingFee).max(BigDecimal.ZERO);
         BigDecimal discountAmount = subtotal.subtract(payableProductTotal).max(BigDecimal.ZERO);
         
+        com.example.be.entity.PhieuGiamGia pgg = hd.getPhieuGiamGia();
+        if (pgg == null && hd.getPhieuGiamGiaCaNhan() != null) {
+            pgg = hd.getPhieuGiamGiaCaNhan().getPhieuGiamGia();
+        }
+        String voucherCode = pgg != null ? pgg.getMa() : null;
+        String voucherName = pgg != null ? pgg.getTen() : null;
+
         Context context = new Context();
         context.setVariable("hd", hd);
         context.setVariable("details", hd.getListsHoaDonChiTiet());
@@ -606,6 +613,8 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         context.setVariable("shippingFee", shippingFee);
         context.setVariable("payableTotal", payableTotal);
         context.setVariable("discountAmount", discountAmount);
+        context.setVariable("voucherCode", voucherCode);
+        context.setVariable("voucherName", voucherName);
         context.setVariable("paymentMethodLabel", resolvePaymentMethodLabel(hd));
         context.setVariable("ngayIn", new Date());
 

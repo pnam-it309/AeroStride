@@ -48,22 +48,48 @@ export const blockNonNumericSizeInput = (event) => {
     }
 };
 
-// Tạo danh sách hiển thị cho combobox, chèn mục "thêm nhanh" ở đầu nếu từ khóa chưa trùng item nào
-export const getDisplayItems = (originalItems, query) => {
+// Tạo danh sách hiển thị cho combobox, chèn mục "thêm nhanh" ở đầu và luôn ưu tiên thuộc tính vừa thêm nhanh lên trên đầu
+export const getDisplayItems = (originalItems, query, quickAddedIds) => {
     const trimmedQuery = query?.trim();
     const normalizedQuery = normalizeSearchText(trimmedQuery);
 
-    let filtered = originalItems;
+    let filtered = originalItems || [];
     if (normalizedQuery) {
         filtered = originalItems.filter((item) => normalizeSearchText(item.ten).includes(normalizedQuery));
     }
 
-    if (!trimmedQuery) return filtered;
+    const isItemQuickAdded = (item) => {
+        if (!item) return false;
+        if (item.isQuickAdded) return true;
+        if (quickAddedIds) {
+            if (typeof quickAddedIds.has === 'function') {
+                return quickAddedIds.has(item.id);
+            }
+            if (Array.isArray(quickAddedIds)) {
+                return quickAddedIds.includes(item.id);
+            }
+        }
+        return false;
+    };
+
+    // Tách các mục đã được thêm nhanh lên trên đầu
+    const quickAdded = [];
+    const regular = [];
+    for (const item of filtered) {
+        if (isItemQuickAdded(item)) {
+            quickAdded.push(item);
+        } else {
+            regular.push(item);
+        }
+    }
+    const sortedFiltered = [...quickAdded, ...regular];
+
+    if (!trimmedQuery) return sortedFiltered;
 
     const existsExact = originalItems.some((item) => normalizeSearchText(item.ten) === normalizedQuery);
-    if (existsExact) return filtered;
+    if (existsExact) return sortedFiltered;
 
-    return [{ id: `__new__${trimmedQuery}`, ten: trimmedQuery, isNew: true }, ...filtered];
+    return [{ id: `__new__${trimmedQuery}`, ten: trimmedQuery, isNew: true }, ...sortedFiltered];
 };
 
 // Lấy giá trị đầu tiên khác rỗng theo danh sách key ưu tiên

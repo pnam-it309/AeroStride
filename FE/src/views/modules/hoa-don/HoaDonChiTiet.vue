@@ -483,14 +483,26 @@ const orderDiscountAmount = computed(() => {
 
 const orderTotalAmount = computed(() => order.value.tongTienSauGiam || order.value.tongTien || 0);
 
-// Tổng tiền theo GIÁ GỐC (trước đợt giảm giá) — giaHienTai đóng vai trò giá gốc như POS.
+// Tổng tiền theo GIÁ GỐC (trước đợt giảm giá) — giaGoc hoặc giaHienTai đóng vai trò giá gốc
 const originalTotalAmount = computed(() => {
     const items = order.value?.listsHoaDonChiTiet || [];
-    return items.reduce((sum, it) => sum + Number(it.giaHienTai || it.donGia || 0) * Number(it.soLuong || 0), 0);
+    return items.reduce((sum, it) => sum + Number(it.giaGoc || it.giaHienTai || it.donGia || 0) * Number(it.soLuong || 0), 0);
 });
 
 // Số tiền đã giảm từ ĐỢT GIẢM GIÁ = chênh lệch giá gốc và giá đã chốt (donGia đã là giá sau đợt).
-const campaignDiscountAmount = computed(() => Math.max(0, originalTotalAmount.value - Number(order.value?.tongTien || 0)));
+const campaignDiscountAmount = computed(() => {
+    const items = order.value?.listsHoaDonChiTiet || [];
+    const directDiscountSum = items.reduce((sum, it) => {
+        const orig = Number(it.giaGoc || it.giaHienTai || 0);
+        const actual = Number(it.donGia || 0);
+        if (orig > actual) {
+            return sum + (orig - actual) * Number(it.soLuong || 0);
+        }
+        return sum;
+    }, 0);
+    if (directDiscountSum > 0) return directDiscountSum;
+    return Math.max(0, originalTotalAmount.value - Number(order.value?.tongTien || 0));
+});
 
 const campaignDiscountPercent = computed(() => {
     if (originalTotalAmount.value === 0) return 0;
@@ -1162,15 +1174,19 @@ onMounted(() => {
                             </div>
                             <div v-if="campaignDiscountAmount > 0" class="summary-row mb-3">
                                 <span class="text-slate-500">Đợt giảm giá:</span>
-                                <span class="text-body-2 font-weight-bold" style="color: #dc2626 !important"
-                                    >-{{ campaignDiscountPercent }}%</span
-                                >
+                                <div class="text-right d-flex align-center justify-end ga-1.5">
+                                    <v-chip size="x-small" color="error" variant="flat" class="font-weight-bold">-{{ campaignDiscountPercent }}%</v-chip>
+                                    <span class="text-body-2 font-weight-bold text-error">-{{ formatCurrency(campaignDiscountAmount) }}</span>
+                                </div>
                             </div>
                             <div class="summary-row mb-3">
                                 <span class="text-slate-500">Phiếu giảm giá:</span>
                                 <div class="text-right d-flex align-center justify-end">
-                                    <template v-if="order.maPhieuGiamGia">
-                                        <span class="text-body-2 font-weight-bold text-slate-800">{{ order.maPhieuGiamGia }}</span>
+                                    <template v-if="order.maPhieuGiamGia || order.phieuGiamGia?.ma || order.phieuGiamGiaCaNhan?.phieuGiamGia?.ma">
+                                        <span class="text-body-2 font-weight-bold text-slate-800">{{ order.maPhieuGiamGia || order.phieuGiamGia?.ma || order.phieuGiamGiaCaNhan?.phieuGiamGia?.ma }}</span>
+                                        <span v-if="order.tenPhieuGiamGia || order.phieuGiamGia?.ten || order.phieuGiamGiaCaNhan?.phieuGiamGia?.ten" class="text-caption text-slate-500 ms-1 font-weight-normal">
+                                            ({{ order.tenPhieuGiamGia || order.phieuGiamGia?.ten || order.phieuGiamGiaCaNhan?.phieuGiamGia?.ten }})
+                                        </span>
                                     </template>
                                     <template v-else-if="orderDiscountAmount > 0">
                                         <v-chip size="x-small" color="error" variant="flat">Đợt giảm giá</v-chip>
