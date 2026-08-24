@@ -27,12 +27,9 @@ jobs:
           # Move rendered images to gen folder
           find docs -name "*.mmd.png" -exec mv {} docs/gen/ \;
 
-      - name: Commit and Push Diagrams
-        if: github.event_name == 'push'
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          # Add gen folder if it contains files, ignore if empty
-          git add docs/gen/*.png || echo "No new diagrams to add"
-          git commit -m "docs: automated architecture diagram update [skip ci]" || echo "No changes to commit"
-          git push || echo "Nothing to push"
+      - name: Upload Diagrams Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-diagrams
+          path: docs/gen/*.png
+          if-no-files-found: ignore
