@@ -369,6 +369,7 @@ const handleSave = () => {
                 if (isEditMode.value) {
                     await dichVuNhanVien.capNhatNhanVien(route.params.id, payload);
                     addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật thông tin nhân viên', color: 'success' });
+                    window.dispatchEvent(new CustomEvent('profile-updated'));
                 } else {
                     await dichVuNhanVien.taoNhanVien(payload);
                     addNotification({ title: 'Thành công', subtitle: 'Đã thêm nhân viên mới', color: 'success' });

@@ -1,16 +1,15 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { PATH } from '@/router/routePaths';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import defaultAvatar from '@/assets/images/profile/user-1.jpg';
+import { APP_ROLES } from '@/constants/appConstants';
 
 const router = useRouter();
 const profile = ref(null);
 const avatarError = ref(false);
-
-import { APP_ROLES } from '@/constants/appConstants';
 
 const roleLabels = {
     [APP_ROLES.ADMIN]: 'Quản lý',
@@ -25,10 +24,14 @@ const chucVu = computed(() => {
 });
 
 const avatarUrl = computed(() => {
-    const v = profile.value?.hinhAnh;
+    const v = profile.value?.hinhAnh || profile.value?.avatar;
     if (!v) return defaultAvatar;
     if (/^(https?:)?\/\//i.test(v) || v.startsWith('data:') || v.startsWith('blob:')) return v;
     return dichVuFile.layUrlFile(v.replace(/^\/+/, ''));
+});
+
+watch(avatarUrl, () => {
+    avatarError.value = false;
 });
 
 const profileDD = [
@@ -53,13 +56,32 @@ const handleLogout = async () => {
     window.location.href = PATH.ADMIN_LOGIN;
 };
 
-onMounted(async () => {
+const fetchProfile = async () => {
     try {
-        profile.value = await dichVuXacThuc.layThongTinCaNhan();
+        const data = await dichVuXacThuc.layThongTinCaNhan();
+        if (data) {
+            profile.value = data;
+            avatarError.value = false;
+        }
     } catch (e) {
-        // Nếu không lấy được (vd token hết hạn) thì fallback dữ liệu session
         profile.value = dichVuXacThuc.layUserHienTai();
     }
+};
+
+watch(
+    () => router.currentRoute.value.path,
+    () => {
+        fetchProfile();
+    }
+);
+
+onMounted(() => {
+    fetchProfile();
+    window.addEventListener('profile-updated', fetchProfile);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('profile-updated', fetchProfile);
 });
 </script>
 
@@ -72,38 +94,44 @@ onMounted(async () => {
                         <div class="text-body-2 font-weight-bold text-slate-800" style="line-height: 1.2">{{ displayName }}</div>
                         <div class="text-caption" style="color: #1e257c; line-height: 1.2">{{ chucVu }}</div>
                     </div>
-                    <v-avatar size="38" color="grey-lighten-3">
-                        <img
-                            v-if="!avatarError"
-                            :src="avatarUrl"
-                            height="38"
-                            width="38"
-                            alt="user"
-                            style="object-fit: cover"
-                            @error="avatarError = true"
-                        />
-                        <v-icon v-else size="38" color="grey-darken-1">mdi-account-circle</v-icon>
+                    <v-avatar size="38" color="grey-lighten-3" class="border">
+                        <v-img v-if="avatarUrl" :src="avatarUrl" cover alt="user">
+                            <template #placeholder>
+                                <div class="d-flex align-center justify-center fill-height">
+                                    <v-icon size="22" color="grey-darken-1">mdi-account</v-icon>
+                                </div>
+                            </template>
+                            <template #error>
+                                <div class="d-flex align-center justify-center fill-height bg-grey-lighten-3">
+                                    <v-icon size="22" color="grey-darken-1">mdi-account</v-icon>
+                                </div>
+                            </template>
+                        </v-img>
+                        <v-icon v-else size="22" color="grey-darken-1">mdi-account</v-icon>
                     </v-avatar>
                 </div>
             </v-btn>
         </template>
-        <v-sheet rounded="md" width="230" elevation="10" class="mt-2">
-            <div class="pa-4 d-flex align-center border-b">
-                <v-avatar size="40" class="mr-3" color="grey-lighten-3">
-                    <img
-                        v-if="!avatarError"
-                        :src="avatarUrl"
-                        height="40"
-                        width="40"
-                        alt="user"
-                        style="object-fit: cover"
-                        @error="avatarError = true"
-                    />
-                    <v-icon v-else size="40" color="grey-darken-1">mdi-account-circle</v-icon>
+        <v-sheet rounded="lg" width="240" elevation="10" class="mt-2 border">
+            <div class="pa-4 d-flex align-center border-b bg-slate-50">
+                <v-avatar size="42" class="mr-3 border" color="grey-lighten-3">
+                    <v-img v-if="avatarUrl" :src="avatarUrl" cover alt="user">
+                        <template #placeholder>
+                            <div class="d-flex align-center justify-center fill-height">
+                                <v-icon size="24" color="grey-darken-1">mdi-account</v-icon>
+                            </div>
+                        </template>
+                        <template #error>
+                            <div class="d-flex align-center justify-center fill-height bg-grey-lighten-3">
+                                <v-icon size="24" color="grey-darken-1">mdi-account</v-icon>
+                            </div>
+                        </template>
+                    </v-img>
+                    <v-icon v-else size="24" color="grey-darken-1">mdi-account</v-icon>
                 </v-avatar>
                 <div style="min-width: 0">
-                    <div class="text-subtitle-2 font-weight-bold text-truncate">{{ displayName }}</div>
-                    <div class="text-caption text-truncate" style="color: #1e257c">{{ chucVu }}</div>
+                    <div class="text-subtitle-2 font-weight-bold text-truncate text-slate-800">{{ displayName }}</div>
+                    <div class="text-caption text-truncate font-weight-medium" style="color: #1e257c">{{ chucVu }}</div>
                 </div>
             </div>
             <v-list class="py-0" lines="one" density="compact">
