@@ -1372,6 +1372,40 @@ const salesChannelCards = [
     }
 ];
 
+const exporting = ref(false);
+
+const exportExcelStatistics = async () => {
+    try {
+        exporting.value = true;
+        const blob = await dichVuThongKe.xuatBaoCaoExcel(startDate.value, endDate.value);
+        const url = window.URL.createObjectURL(
+            new Blob([blob], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        );
+        const link = document.createElement('a');
+        link.href = url;
+        const startStr = startDate.value || 'toan_bo';
+        const endStr = endDate.value || 'hien_tai';
+        link.setAttribute('download', `bao_cao_thong_ke_AeroStride_${startStr}_${endStr}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        import('@/stores/toastStore').then(({ useToastStore }) => {
+            const toastStore = useToastStore();
+            toastStore.showToast('Xuất báo cáo thống kê Excel thành công!', 'success');
+        });
+    } catch (error) {
+        console.error('Lỗi khi xuất báo cáo thống kê Excel:', error);
+        import('@/stores/toastStore').then(({ useToastStore }) => {
+            const toastStore = useToastStore();
+            toastStore.showToast('Có lỗi xảy ra khi xuất file Excel báo cáo thống kê!', 'error');
+        });
+    } finally {
+        exporting.value = false;
+    }
+};
+
 onMounted(() => {
     loadStatistics();
 });
@@ -1416,6 +1450,18 @@ onMounted(() => {
                     >
                         <v-icon start size="18">mdi-refresh</v-icon>
                         Cập nhật dữ liệu
+                    </v-btn>
+                    <v-btn
+                        color="success"
+                        variant="flat"
+                        class="stats-export-btn px-5 ml-2 text-white font-weight-medium"
+                        height="40"
+                        style="background-color: #107c41 !important"
+                        :loading="exporting"
+                        @click="exportExcelStatistics"
+                    >
+                        <v-icon start size="18">mdi-microsoft-excel</v-icon>
+                        Xuất báo cáo Excel
                     </v-btn>
                 </div>
             </div>

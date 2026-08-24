@@ -29,5 +29,18 @@ export const dichVuThongKe = {
             silent: options.silent !== undefined ? options.silent : true
         });
         return response.data.data;
+    },
+
+    // Xuất báo cáo thống kê Excel đa sheet
+    async xuatBaoCaoExcel(tuNgay, denNgay) {
+        const params = {};
+        if (tuNgay) params.tuNgay = tuNgay;
+        if (denNgay) params.denNgay = denNgay;
+
+        const response = await api.get(`${API_ADMIN.THONG_KE}/export-excel`, {
+            params,
+            responseType: 'blob'
+        });
+        return response.data;
     }
 };

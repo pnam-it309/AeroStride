@@ -58,4 +58,19 @@ public class AdminThongKeController {
         log.info("Fetching product statistics from {} to {}, keyword: {}, page: {}, size: {}, sortBy: {}", tuNgay, denNgay, keyword, page, size, sortBy);
         return ResponseEntity.ok(ApiResponse.success(adminThongKeService.getProductStatistics(tuNgay, denNgay, keyword, page, size, sortBy)));
     }
+
+    @GetMapping(RoutesConstant.EXPORT_EXCEL)
+    public ResponseEntity<byte[]> exportExcel(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay) {
+        log.info("Exporting statistics report from {} to {}", tuNgay, denNgay);
+        byte[] excelContent = adminThongKeService.exportExcelBaoCao(tuNgay, denNgay);
+        String fileName = String.format("bao_cao_thong_ke_AeroStride_%s_%s.xlsx",
+                tuNgay != null ? tuNgay.toString() : "toan_bo",
+                denNgay != null ? denNgay.toString() : "hien_tai");
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName)
+                .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
+                .body(excelContent);
+    }
 }
