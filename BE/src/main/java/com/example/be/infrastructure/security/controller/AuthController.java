@@ -8,6 +8,7 @@ import com.example.be.infrastructure.security.JwtTokenProvider;
 import com.example.be.infrastructure.security.dto.AuthResponse;
 import com.example.be.infrastructure.security.dto.ChangePasswordRequest;
 import com.example.be.infrastructure.security.dto.CurrentUserResponse;
+import com.example.be.infrastructure.security.dto.UpdateProfileRequest;
 import com.example.be.infrastructure.security.dto.LoginRequest;
 import com.example.be.infrastructure.security.dto.RegisterRequest;
 import com.example.be.infrastructure.security.dto.TokenRefreshRequest;
@@ -206,6 +207,78 @@ public class AuthController {
         nv.setMatKhau(passwordEncoder.encode(request.getMatKhauMoi()));
         nhanVienRepository.save(nv);
         return ResponseEntity.ok(ApiResponse.success("Đổi mật khẩu thành công"));
+    }
+
+    /** Cập nhật thông tin cá nhân của nhân viên đang đăng nhập. */
+    @PutMapping("/profile")
+    public ResponseEntity<ApiResponse<CurrentUserResponse>> updateProfile(
+            @RequestBody UpdateProfileRequest request, Authentication authentication) {
+        NhanVien nv = requireCurrentNhanVien(authentication);
+
+        if (request.getTen() != null && !request.getTen().isBlank()) {
+            nv.setTen(request.getTen().trim());
+        }
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            String email = request.getEmail().trim();
+            if (nhanVienRepository.existsByEmailAndIdNot(email, nv.getId())) {
+                throw new BusinessException("Email đã được sử dụng bởi tài khoản khác");
+            }
+            nv.setEmail(email);
+        }
+        if (request.getSdt() != null && !request.getSdt().isBlank()) {
+            String sdt = request.getSdt().trim();
+            if (nhanVienRepository.existsBySdtAndIdNot(sdt, nv.getId())) {
+                throw new BusinessException("Số điện thoại đã được sử dụng bởi tài khoản khác");
+            }
+            nv.setSdt(sdt);
+        }
+        if (request.getGioiTinh() != null) {
+            nv.setGioiTinh(request.getGioiTinh());
+        }
+        if (request.getNgaySinh() != null) {
+            nv.setNgaySinh(request.getNgaySinh());
+        }
+        if (request.getDiaChiChiTiet() != null) {
+            nv.setDiaChiChiTiet(request.getDiaChiChiTiet().trim());
+        }
+        if (request.getPhuongXa() != null) {
+            nv.setPhuongXa(request.getPhuongXa().trim());
+        }
+        if (request.getThanhPho() != null) {
+            nv.setThanhPho(request.getThanhPho().trim());
+        }
+        if (request.getTinh() != null) {
+            nv.setTinh(request.getTinh().trim());
+        }
+        if (request.getHinhAnh() != null) {
+            nv.setHinhAnh(request.getHinhAnh());
+        }
+
+        NhanVien updated = nhanVienRepository.save(nv);
+
+        String role = authentication.getAuthorities().isEmpty()
+                ? null
+                : authentication.getAuthorities().iterator().next().getAuthority();
+
+        CurrentUserResponse response = CurrentUserResponse.builder()
+                .id(updated.getId())
+                .tenTaiKhoan(updated.getTenTaiKhoan())
+                .ten(updated.getTen())
+                .chucVu(updated.getPhanQuyen() != null ? updated.getPhanQuyen().getTen() : null)
+                .role(role)
+                .ma(updated.getMa())
+                .email(updated.getEmail())
+                .sdt(updated.getSdt())
+                .hinhAnh(updated.getHinhAnh())
+                .gioiTinh(updated.getGioiTinh())
+                .ngaySinh(updated.getNgaySinh() != null ? updated.getNgaySinh().toString() : null)
+                .diaChiChiTiet(updated.getDiaChiChiTiet())
+                .phuongXa(updated.getPhuongXa())
+                .thanhPho(updated.getThanhPho())
+                .tinh(updated.getTinh())
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(response, "Cập nhật thông tin thành công"));
     }
 
     /** Lấy nhân viên hiện tại từ SecurityContext hoặc ném lỗi nếu chưa đăng nhập / không phải nhân viên. */

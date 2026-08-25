@@ -96,17 +96,31 @@ const getImageUrlFromCollection = (collection) => {
 const getVariantImageUrl = (variant) => {
     if (!variant) return '';
 
-    return (
-        normalizeUploadedFileUrl(variant.urlAnh) ||
-        getImageUrlFromCollection(variant.images) ||
-        getImageUrlFromCollection(variant.hinhAnhs) ||
-        getImageUrlFromCollection(variant.anhChiTietSanPhams) ||
-        getImageUrlFromCollection(variant.hinhAnh) ||
-        normalizeUploadedFileUrl(variant.anh) ||
-        normalizeUploadedFileUrl(variant.duongDanAnh) ||
-        normalizeUploadedFileUrl(variant.imageUrl) ||
-        ''
-    );
+    if (typeof variant.urlAnh === 'string' && variant.urlAnh.trim()) return variant.urlAnh.trim();
+    if (Array.isArray(variant.images) && variant.images.length) {
+        const mainImage = variant.images.find((image) => image?.hinhAnhDaiDien || image?.anhDaiDien || image?.laAnhChinh);
+        const url = normalizeUploadedFileUrl(mainImage) || normalizeUploadedFileUrl(variant.images[0]);
+        if (url) return url;
+    }
+    if (Array.isArray(variant.hinhAnhs) && variant.hinhAnhs.length) {
+        const mainImage = variant.hinhAnhs.find((image) => image?.hinhAnhDaiDien || image?.anhDaiDien || image?.laAnhChinh);
+        const url = normalizeUploadedFileUrl(mainImage) || normalizeUploadedFileUrl(variant.hinhAnhs[0]);
+        if (url) return url;
+    }
+    if (Array.isArray(variant.anhChiTietSanPhams) && variant.anhChiTietSanPhams.length) {
+        const mainImage = variant.anhChiTietSanPhams.find((image) => image?.hinhAnhDaiDien || image?.anhDaiDien || image?.laAnhChinh);
+        const url = normalizeUploadedFileUrl(mainImage) || normalizeUploadedFileUrl(variant.anhChiTietSanPhams[0]);
+        if (url) return url;
+    }
+    if (typeof variant.hinhAnh === 'string' && variant.hinhAnh.trim()) return variant.hinhAnh.trim();
+    if (Array.isArray(variant.hinhAnh) && variant.hinhAnh.length) {
+        const url = normalizeUploadedFileUrl(variant.hinhAnh[0]);
+        if (url) return url;
+    }
+    if (typeof variant.duongDanAnh === 'string' && variant.duongDanAnh.trim()) return variant.duongDanAnh.trim();
+    if (typeof variant.imageUrl === 'string' && variant.imageUrl.trim()) return variant.imageUrl.trim();
+    if (typeof variant.anh === 'string' && variant.anh.trim()) return variant.anh.trim();
+    return '';
 };
 
 // Tiện ích lấy giá trị của thuộc tính nằm sâu (nested object)
@@ -373,6 +387,8 @@ const populateEditFormData = () => {
         return;
     }
 
+    const img = getVariantImageUrl(props.variant);
+
     formData.value = {
         maChiTietSanPham: getVariantSku(props.variant),
         idMauSac: resolveOptionId(props.options.mauSacs, getVariantColorId(props.variant), getVariantColorLabel(props.variant)),
@@ -380,7 +396,7 @@ const populateEditFormData = () => {
         soLuong: Number(props.variant.soLuong ?? 0),
         giaBan: Number(props.variant.giaGoc ?? props.variant.giaBan ?? 0),
         trangThai: props.variant.trangThai || 'DANG_HOAT_DONG',
-        urlAnh: getVariantImageUrl(props.variant)
+        urlAnh: img
     };
 };
 
@@ -396,10 +412,11 @@ watch(
 
         formData.value = {
             ...createDefaultFormData(),
-            ...(variant || {})
+            ...(variant || {}),
+            urlAnh: getVariantImageUrl(variant)
         };
     },
-    { immediate: true }
+    { immediate: true, deep: true }
 );
 
 const isEditing = computed(() => props.mode === 'edit' || !!(props.variant && (props.variant.id || props.variant.maChiTietSanPham)));

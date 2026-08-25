@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/authStore';
 import { PATH } from '@/router/routePaths';
@@ -8,15 +8,23 @@ import SocialAuthButtons from './SocialAuthButtons.vue';
 import { getBackendErrorMessage } from '@/utils/errorUtils';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const uiStore = useUIStore();
 const checkbox = ref(false);
 const loading = ref(false);
 const errorMessage = ref('');
+const registeredNotice = ref(route.query.registered === 'true');
 
 const loginForm = ref({
-    username: '',
+    username: route.query.username ? String(route.query.username) : '',
     password: ''
+});
+
+onMounted(() => {
+    if (route.query.username) {
+        loginForm.value.username = String(route.query.username);
+    }
 });
 
 const handleLogin = async () => {
@@ -36,7 +44,6 @@ const handleLogin = async () => {
         });
 
         uiStore.hideLoading();
-        // Redirect to home/client dashboard instead of main, but since client dashboard isn't built yet, we can push to a client route or just root
         router.push('/');
     } catch (error) {
         errorMessage.value = getBackendErrorMessage(error, 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.', 'ClientLoginForm');
@@ -49,6 +56,17 @@ const handleLogin = async () => {
 
 <template>
     <v-form @submit.prevent="handleLogin" class="mt-4 w-100">
+        <v-alert
+            v-if="registeredNotice"
+            type="success"
+            variant="tonal"
+            class="mb-6 rounded-lg animate-fade-in"
+            closable
+            @click:close="registeredNotice = false"
+        >
+            Đăng ký tài khoản thành công! Vui lòng nhập mật khẩu để đăng nhập.
+        </v-alert>
+
         <v-alert
             v-if="errorMessage"
             type="error"

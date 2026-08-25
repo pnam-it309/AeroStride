@@ -6,12 +6,14 @@ import { useAuthStore } from '@/stores/authStore';
 import { PATH } from '@/router/routePaths';
 import api from '@/services/apiService';
 import { API_AUTH } from '@/constants/apiPaths';
+import { useNotifications } from '@/services/notificationService';
 import SocialAuthButtons from './SocialAuthButtons.vue';
 import { getBackendErrorMessage } from '@/utils/errorUtils';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const uiStore = useUIStore();
+const { addNotification } = useNotifications();
 
 const loading = ref(false);
 const errorMessage = ref('');
@@ -62,7 +64,7 @@ const handleRegister = async () => {
     try {
         uiStore.showLoading('Đang tạo tài khoản...');
 
-        const response = await api.post(API_AUTH.REGISTER, {
+        await api.post(API_AUTH.REGISTER, {
             ten: form.value.ten,
             tenTaiKhoan: form.value.tenTaiKhoan,
             email: form.value.email,
@@ -70,17 +72,17 @@ const handleRegister = async () => {
             matKhau: form.value.matKhau
         });
 
-        // Auto-login after register: store tokens from response
-        if (response.data?.data) {
-            const { accessToken, refreshToken, username, role } = response.data.data;
-            sessionStorage.setItem('accessToken', accessToken);
-            sessionStorage.setItem('refreshToken', refreshToken);
-            sessionStorage.setItem('user', JSON.stringify({ username, role }));
-            await authStore.fetchCurrentUser?.();
-        }
-
         uiStore.hideLoading();
-        router.push('/');
+        addNotification({
+            title: 'Đăng ký thành công',
+            subtitle: 'Tài khoản đã tạo thành công! Vui lòng đăng nhập để tiếp tục.',
+            color: 'success'
+        });
+
+        router.push({
+            path: PATH.LOGIN,
+            query: { username: form.value.tenTaiKhoan, registered: 'true' }
+        });
     } catch (error) {
         errorMessage.value = getBackendErrorMessage(error, 'Đăng ký thất bại. Vui lòng thử lại.', 'ClientRegisterForm');
     } finally {

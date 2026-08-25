@@ -126,7 +126,7 @@ const loadProductsToSelect = async (page = 1) => {
     try {
         selectionPage.value = page;
         const res = await dichVuSanPham.layDanhSachSanPham({
-            page: page,
+            page: Math.max(0, page - 1),
             size: selectionPageSize.value,
             keyword: searchQuery.value?.trim() || undefined,
             trangThai: SYSTEM_STATUS.ACTIVE
@@ -481,6 +481,8 @@ const form = ref({
 const init = async () => {
     uiStore.startProgress();
     try {
+        const productLoadPromise = loadProductsToSelect(1);
+
         const [maxPrice, brandData, colorData, sizeData, materialData] = await Promise.all([
             dichVuSanPham.layGiaLonNhat().catch(() => 6500000),
             dichVuThuongHieu.layThuongHieu({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => []),
@@ -507,6 +509,7 @@ const init = async () => {
 
             form.value = {
                 ...data,
+                giamToiDa: data?.giamToiDa !== undefined && data?.giamToiDa !== null ? data.giamToiDa : null,
                 ngayBatDau: data.ngayBatDau ? toLocalDatetimeString(data.ngayBatDau) : '',
                 ngayKetThuc: data.ngayKetThuc ? toLocalDatetimeString(data.ngayKetThuc) : ''
             };
@@ -525,8 +528,7 @@ const init = async () => {
             }
         }
 
-        // Nạp trang đầu tiên của bảng sản phẩm chọn sau khi đã có dữ liệu biến thể đã chọn
-        await loadProductsToSelect(1);
+        await productLoadPromise;
     } catch (e) {
         console.error('Error during init:', e);
         addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.LOAD_DATA, color: 'error' });
@@ -603,8 +605,18 @@ const handleSave = () => {
             confirmDialog.value.loading = true;
             saving.value = true;
             try {
+                const rawGiamToiDa = form.value.giamToiDa;
+                let giamToiDaValue = null;
+                if (rawGiamToiDa !== null && rawGiamToiDa !== undefined && rawGiamToiDa !== '') {
+                    const parsed = Number(String(rawGiamToiDa).replace(/[^\d.]/g, ''));
+                    if (!isNaN(parsed) && parsed > 0) {
+                        giamToiDaValue = parsed;
+                    }
+                }
+
                 const payload = {
                     ...form.value,
+                    giamToiDa: giamToiDaValue,
                     ngayBatDau: new Date(form.value.ngayBatDau).getTime(),
                     ngayKetThuc: new Date(form.value.ngayKetThuc).getTime(),
                     listIdChiTietSanPham: selectedVariantsIds.value

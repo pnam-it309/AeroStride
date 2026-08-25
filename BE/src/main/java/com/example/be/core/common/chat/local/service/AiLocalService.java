@@ -350,21 +350,45 @@ public class AiLocalService {
         boolean isUnder1M = queryLower.contains("dưới 1 triệu") || queryLower.contains("dưới 1tr") || queryLower.contains("< 1tr") || queryLower.contains("giá rẻ") || queryLower.contains("bình dân");
         boolean isOver2M = queryLower.contains("trên 2 triệu") || queryLower.contains("cao cấp") || queryLower.contains("sang chảnh");
 
-        // 5. Tách từ khóa
+        String queryUnaccent = removeDiacritics(queryLower);
         String[] words = queryLower.split("\\s+");
+        String[] unaccentWords = queryUnaccent.split("\\s+");
 
         Map<ProductVariantResponse, Integer> scoreMap = new HashMap<>();
         for (ProductVariantResponse v : allVariants) {
             int score = 0;
 
+            String tenSp = v.getTenSanPham() != null ? v.getTenSanPham().toLowerCase() : "";
+            String tenSpUnaccent = removeDiacritics(tenSp);
+            String maSp = v.getMaSanPham() != null ? v.getMaSanPham().toLowerCase() : "";
+            String maCtsp = v.getMaChiTietSanPham() != null ? v.getMaChiTietSanPham().toLowerCase() : "";
+            String vBrand = v.getTenThuongHieu() != null ? v.getTenThuongHieu().toLowerCase() : "";
+            String vBrandUnaccent = removeDiacritics(vBrand);
+            String vColor = v.getTenMauSac() != null ? v.getTenMauSac().toLowerCase() : "";
+            String vColorUnaccent = removeDiacritics(vColor);
+
+            // Khớp mã SP hoặc mã biến thể
+            if (!maSp.isEmpty() && (queryLower.contains(maSp) || queryUnaccent.contains(maSp))) score += 250;
+            if (!maCtsp.isEmpty() && (queryLower.contains(maCtsp) || queryUnaccent.contains(maCtsp))) score += 250;
+
+            // Khớp nguyên cụm tên sản phẩm
+            if (!tenSp.isEmpty()) {
+                if (queryLower.contains(tenSp) || tenSp.contains(queryLower)) score += 180;
+                else if (queryUnaccent.contains(tenSpUnaccent) || tenSpUnaccent.contains(queryUnaccent)) score += 150;
+            }
+
             // Khớp thương hiệu
-            if (targetBrand != null && v.getTenThuongHieu() != null && v.getTenThuongHieu().toLowerCase().contains(targetBrand)) {
+            if (targetBrand != null && vBrand.contains(targetBrand)) {
                 score += 80;
+            } else if (!vBrand.isEmpty() && (queryLower.contains(vBrand) || queryUnaccent.contains(vBrandUnaccent))) {
+                score += 70;
             }
 
             // Khớp màu sắc
-            if (targetColor != null && v.getTenMauSac() != null && v.getTenMauSac().toLowerCase().contains(targetColor)) {
+            if (targetColor != null && vColor.contains(targetColor)) {
                 score += 70;
+            } else if (!vColor.isEmpty() && (queryLower.contains(vColor) || queryUnaccent.contains(vColorUnaccent))) {
+                score += 50;
             }
 
             // Khớp size
@@ -372,13 +396,8 @@ public class AiLocalService {
                 score += 90;
             }
 
-            // Khớp tên sản phẩm
-            if (v.getTenSanPham() != null && queryLower.contains(v.getTenSanPham().toLowerCase())) {
-                score += 60;
-            }
-
             // Khớp chất liệu
-            if (v.getTenChatLieu() != null && queryLower.contains(v.getTenChatLieu().toLowerCase())) {
+            if (v.getTenChatLieu() != null && (queryLower.contains(v.getTenChatLieu().toLowerCase()) || queryUnaccent.contains(removeDiacritics(v.getTenChatLieu())))) {
                 score += 30;
             }
 
@@ -399,11 +418,13 @@ public class AiLocalService {
             }
 
             // Khớp từ khóa từng từ
-            for (String w : words) {
+            for (int i = 0; i < words.length; i++) {
+                String w = words[i];
+                String uw = unaccentWords.length > i ? unaccentWords[i] : removeDiacritics(w);
                 if (w.length() >= 2) {
-                    if (v.getTenSanPham() != null && v.getTenSanPham().toLowerCase().contains(w)) score += 15;
-                    if (v.getTenThuongHieu() != null && v.getTenThuongHieu().toLowerCase().contains(w)) score += 10;
-                    if (v.getTenMauSac() != null && v.getTenMauSac().toLowerCase().contains(w)) score += 10;
+                    if (tenSp.contains(w) || tenSpUnaccent.contains(uw)) score += 20;
+                    if (vBrand.contains(w) || vBrandUnaccent.contains(uw)) score += 15;
+                    if (vColor.contains(w) || vColorUnaccent.contains(uw)) score += 12;
                 }
             }
 
@@ -459,6 +480,16 @@ public class AiLocalService {
                 .sorted((a, b) -> b.getPhanTramGiam().compareTo(a.getPhanTramGiam()))
                 .limit(4)
                 .collect(Collectors.toList());
+    }
+
+    private String removeDiacritics(String str) {
+        if (str == null) return "";
+        String nfd = java.text.Normalizer.normalize(str, java.text.Normalizer.Form.NFD);
+        return nfd.replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .toLowerCase()
+                .replace("đ", "d")
+                .replace("Đ", "d")
+                .trim();
     }
 
     private BigDecimal extractPrice(String text) {

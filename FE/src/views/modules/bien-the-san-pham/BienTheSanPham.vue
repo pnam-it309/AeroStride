@@ -992,11 +992,11 @@ onBeforeUnmount(() => {
                         <div v-if="item.phanTramGiam && Number(item.phanTramGiam) > 0" class="d-flex flex-column align-center">
                             <span class="text-caption text-slate-400 text-decoration-line-through" style="font-size: 11px; line-height: 1.1">{{ formatCurrency(item.giaGoc || item.giaBan / (1 - Number(item.phanTramGiam) / 100)) }}</span>
                             <div class="d-flex align-center justify-center ga-1 mt-0.5">
-                                <span class="text-deep-orange text-truncate" style="font-size: 13px">{{ formatCurrency(item.giaBan) }}</span>
-                                <v-chip size="x-small" color="deep-orange" variant="flat" class="px-1" style="height: 16px; font-size: 10px">-{{ item.phanTramGiam }}%</v-chip>
+                                <span class="text-primary font-weight-bold text-truncate" style="font-size: 13px; color: #1e40af !important;">{{ formatCurrency(item.giaBan) }}</span>
+                                <v-chip size="x-small" color="error" variant="flat" class="px-1 font-weight-bold" style="height: 16px; font-size: 10px; background-color: #ef4444 !important; color: #ffffff !important">-{{ item.phanTramGiam }}%</v-chip>
                             </div>
                         </div>
-                        <div v-else class="text-primary text-truncate" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>
+                        <div v-else class="text-primary font-weight-bold text-truncate" style="color: #1e40af !important;" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>
                     </td>
                     <td class="data-cell">
                         <v-chip

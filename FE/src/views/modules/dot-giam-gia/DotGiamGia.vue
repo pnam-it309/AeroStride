@@ -318,7 +318,7 @@ onMounted(() => loadCampaigns());
                         <div class="text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
                     </td>
                     <td class="data-cell text-center">
-                        <div v-if="item.giamToiDa" class="text-slate-700">
+                        <div v-if="item.giamToiDa && Number(item.giamToiDa) > 0" class="text-slate-700 font-weight-medium">
                             {{ formatCurrency(item.giamToiDa) }}
                         </div>
                         <span v-else class="text-slate-400">--</span>

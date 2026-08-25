@@ -75,6 +75,12 @@ export const dichVuXacThuc = {
         return response.data.data;
     },
 
+    // Cập nhật thông tin cá nhân nhân viên đang đăng nhập
+    async capNhatThongTin(payload) {
+        const response = await api.put(`${API_AUTH.BASE}/profile`, payload);
+        return response.data;
+    },
+
     // Đổi mật khẩu nhân viên đang đăng nhập
     async doiMatKhau(payload) {
         const response = await api.put(API_AUTH.CHANGE_PASSWORD, payload);

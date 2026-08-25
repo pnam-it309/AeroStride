@@ -303,122 +303,120 @@ public class AiChatServiceImpl implements AiChatService {
         return score;
     }
 
-    private int calculateMatchScore(ProductVariantResponse v, String queryLower, String[] queryWords, BigDecimal targetPrice) {
+    private String removeDiacritics(String str) {
+        if (str == null) return "";
+        String nfd = java.text.Normalizer.normalize(str, java.text.Normalizer.Form.NFD);
+        return nfd.replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .toLowerCase()
+                .replace("đ", "d")
+                .replace("Đ", "d")
+                .trim();
+    }
+
+    private int calculateMatchScore(ProductVariantResponse v, String queryLower, String queryUnaccent, String[] queryWords, String[] unaccentWords, BigDecimal targetPrice) {
         int score = 0;
 
-        // 1. Khớp nguyên cụm từ (Exact phrase matching)
-        if (v.getTenSanPham() != null && queryLower.contains(v.getTenSanPham().toLowerCase())) score += 50;
-        if (v.getTenSanPhamDayDu() != null && queryLower.contains(v.getTenSanPhamDayDu().toLowerCase())) score += 60;
-        if (v.getTenThuongHieu() != null && queryLower.contains(v.getTenThuongHieu().toLowerCase())) score += 30;
-        if (v.getTenMauSac() != null && queryLower.contains(v.getTenMauSac().toLowerCase())) score += 30;
-        if (v.getGiaTriKichThuoc() != null && queryLower.contains(v.getGiaTriKichThuoc().toLowerCase())) score += 40;
-        if (v.getTenChatLieu() != null && queryLower.contains(v.getTenChatLieu().toLowerCase())) score += 15;
+        String tenSp = v.getTenSanPham() != null ? v.getTenSanPham().toLowerCase() : "";
+        String tenSpUnaccent = removeDiacritics(tenSp);
+        String maSp = v.getMaSanPham() != null ? v.getMaSanPham().toLowerCase() : "";
+        String maCtsp = v.getMaChiTietSanPham() != null ? v.getMaChiTietSanPham().toLowerCase() : "";
+        String brand = v.getTenThuongHieu() != null ? v.getTenThuongHieu().toLowerCase() : "";
+        String brandUnaccent = removeDiacritics(brand);
+        String color = v.getTenMauSac() != null ? v.getTenMauSac().toLowerCase() : "";
+        String colorUnaccent = removeDiacritics(color);
+        String size = v.getGiaTriKichThuoc() != null ? v.getGiaTriKichThuoc().toLowerCase() : "";
+        String material = v.getTenChatLieu() != null ? v.getTenChatLieu().toLowerCase() : "";
 
-        // 2. Khớp theo giá (Price matching)
+        // 1. Khớp mã sản phẩm hoặc mã biến thể (ví dụ: SP0001, G001)
+        if (!maSp.isEmpty() && (queryLower.contains(maSp) || queryUnaccent.contains(maSp))) score += 300;
+        if (!maCtsp.isEmpty() && (queryLower.contains(maCtsp) || queryUnaccent.contains(maCtsp))) score += 300;
+
+        // 2. Khớp cụm từ tên sản phẩm đầy đủ (có dấu & không dấu)
+        if (!tenSp.isEmpty()) {
+            if (queryLower.contains(tenSp) || tenSp.contains(queryLower)) score += 200;
+            else if (queryUnaccent.contains(tenSpUnaccent) || tenSpUnaccent.contains(queryUnaccent)) score += 180;
+        }
+
+        // 3. Khớp thương hiệu
+        if (!brand.isEmpty() && (queryLower.contains(brand) || queryUnaccent.contains(brandUnaccent))) {
+            score += 80;
+        }
+
+        // 4. Khớp màu sắc
+        if (!color.isEmpty() && (queryLower.contains(color) || queryUnaccent.contains(colorUnaccent))) {
+            score += 50;
+        }
+
+        // 5. Khớp size
+        if (!size.isEmpty() && (queryLower.contains(size) || queryLower.matches(".*\\b" + size + "\\b.*"))) {
+            score += 60;
+        }
+
+        // 6. Khớp chất liệu
+        if (!material.isEmpty() && (queryLower.contains(material) || queryUnaccent.contains(removeDiacritics(material)))) {
+            score += 30;
+        }
+
+        // 7. Khớp từng từ đơn lẻ (Token matching)
+        for (int i = 0; i < queryWords.length; i++) {
+            String w = queryWords[i];
+            String uw = unaccentWords.length > i ? unaccentWords[i] : removeDiacritics(w);
+            if (w.length() < 2) continue;
+
+            if (tenSp.contains(w) || tenSpUnaccent.contains(uw)) score += 25;
+            if (brand.contains(w) || brandUnaccent.contains(uw)) score += 20;
+            if (color.contains(w) || colorUnaccent.contains(uw)) score += 15;
+            if (material.contains(w)) score += 10;
+        }
+
+        // 8. Khớp giá
         if (targetPrice != null && v.getGiaBan() != null) {
             BigDecimal diff = v.getGiaBan().subtract(targetPrice).abs();
-            // Nếu giá khớp chính xác hoặc lệch dưới 100k, cộng điểm cực cao
             if (diff.compareTo(new BigDecimal("100000")) <= 0) {
-                score += 100;
-            } else if (diff.compareTo(new BigDecimal("500000")) <= 0) {
-                score += 30;
+                score += 80;
+            } else if (diff.compareTo(new BigDecimal("300000")) <= 0) {
+                score += 40;
             }
-        }
-
-        // 3. Khớp từng từ đơn lẻ (Iterative word-by-word token matching)
-        if (v.getTenSanPham() != null) {
-            score += iterativeWordMatch(queryWords, v.getTenSanPham()) * 10;
-        }
-        if (v.getTenThuongHieu() != null) {
-            score += iterativeWordMatch(queryWords, v.getTenThuongHieu()) * 8;
-        }
-        if (v.getTenMauSac() != null) {
-            score += iterativeWordMatch(queryWords, v.getTenMauSac()) * 8;
-        }
-        if (v.getGiaTriKichThuoc() != null) {
-            score += iterativeWordMatch(queryWords, v.getGiaTriKichThuoc()) * 10;
-        }
-        if (v.getTenChatLieu() != null) {
-            score += iterativeWordMatch(queryWords, v.getTenChatLieu()) * 5;
         }
 
         return score;
     }
 
     /**
-     * Lấy danh sách sản phẩm thông minh bằng cách kết hợp trích xuất thông tin từ tin nhắn
-     * và truy vấn trực tiếp vào Database thông qua Index.
+     * Lấy danh sách sản phẩm thông minh bằng cách chấm điểm toàn bộ kho hàng (In-Memory Full Search).
      */
     private List<ProductVariantResponse> getActiveVariantsIntelligent(String text) {
-        if (text == null || text.isBlank()) {
-            return getActiveVariantsCached(null);
-        }
-
-        String queryLower = text.toLowerCase().trim();
-        
-        // 1. Trích xuất giá (ví dụ: 130k, 1.2tr, 500000)
-        BigDecimal minPrice = null;
-        BigDecimal maxPrice = null;
-        
-        try {
-            // Regex phát hiện giá (đơn giản hóa cho AI Context)
-            if (queryLower.matches(".*\\d+[kK].*")) {
-                String val = queryLower.replaceAll("[^0-9]", "");
-                maxPrice = new BigDecimal(val).multiply(new BigDecimal("1000"));
-                // Thêm biên độ cho linh hoạt
-                minPrice = maxPrice.subtract(new BigDecimal("200000")).max(BigDecimal.ZERO);
-                maxPrice = maxPrice.add(new BigDecimal("200000"));
-            } else if (queryLower.matches(".*\\d{5,}.*")) {
-                String val = queryLower.replaceAll("[^0-9]", "");
-                BigDecimal target = new BigDecimal(val);
-                minPrice = target.subtract(new BigDecimal("200000")).max(BigDecimal.ZERO);
-                maxPrice = target.add(new BigDecimal("200000"));
-            }
-        } catch (Exception e) {
-            log.warn("Lỗi trích xuất giá: {}", e.getMessage());
-        }
-
-        // 2. Trích xuất từ khóa thương hiệu hoặc tên
-        String keyword = null;
-        List<String> commonBrands = List.of("nike", "adidas", "puma", "vans", "converse", "jordan");
-        for (String brand : commonBrands) {
-            if (queryLower.contains(brand)) {
-                keyword = brand;
-                break;
-            }
-        }
-
-        // 3. Truy vấn Database thông qua Index (Surgical retrieval)
-        log.info("Đang truy vấn Database AI Search (Keyword: {}, Price: {} - {})", keyword, minPrice, maxPrice);
-        List<ProductVariantResponse> results = sanPhamService.searchVariantsForAi(keyword, minPrice, maxPrice, MAX_CONTEXT_PRODUCTS);
-
-        if (results.isEmpty()) {
-            // Nếu không tìm thấy bằng surgical search, quay lại dùng cache top sản phẩm hot
-            log.info("Surgical search không có kết quả, quay lại dùng cache top sản phẩm.");
-            return getActiveVariantsCached(text);
-        }
-
-        return results;
+        return getActiveVariantsCached(text);
     }
 
     private List<ProductVariantResponse> getActiveVariantsCached(String text) {
-        if (text == null || text.isBlank()) {
-            return sanPhamService.searchVariantsForAi(null, null, null, MAX_CONTEXT_PRODUCTS);
-        }
-
         long now = System.currentTimeMillis();
         if (cachedVariants == null || (now - cacheTimestamp) > CACHE_TTL_MS) {
-            log.info("Cache sản phẩm hết hạn hoặc chưa có → Truy vấn DB top sản phẩm...");
-            List<ProductVariantResponse> allVariants = sanPhamService.searchVariantsForAi(null, null, null, 100);
-            cachedVariants = allVariants.stream()
-                    .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                    .collect(Collectors.toList());
+            log.info("Nạp toàn bộ biến thể sản phẩm đang hoạt động vào bộ nhớ AI...");
+            List<ProductVariantResponse> allVariants = sanPhamService.getAllVariants();
+            if (allVariants != null) {
+                cachedVariants = allVariants.stream()
+                        .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+                        .collect(Collectors.toList());
+            } else {
+                cachedVariants = new ArrayList<>();
+            }
             cacheTimestamp = now;
-            log.info("Đã cache {} biến thể đang hoạt động cho AI.", cachedVariants.size());
+            log.info("Đã cache {} biến thể sản phẩm cho AI.", cachedVariants.size());
+        }
+
+        if (cachedVariants.isEmpty()) {
+            return List.of();
+        }
+
+        if (text == null || text.isBlank()) {
+            return cachedVariants.stream().limit(MAX_CONTEXT_PRODUCTS).collect(Collectors.toList());
         }
 
         String queryLower = text.toLowerCase().trim();
+        String queryUnaccent = removeDiacritics(queryLower);
         String[] queryWords = queryLower.split("\\s+");
+        String[] unaccentWords = queryUnaccent.split("\\s+");
 
         // Phát hiện giá mục tiêu (ví dụ: 130k, 130000, 1tr2)
         BigDecimal targetPrice = null;
@@ -445,7 +443,6 @@ public class AiChatServiceImpl implements AiChatService {
                                   queryLower.contains("đắt tiền") || queryLower.contains("sang chảnh") ||
                                   queryLower.contains("cao cấp");
 
-        // Sử dụng đệ quy và tính điểm trùng khớp để lấy chính xác sản phẩm mong muốn
         class ScoredVariant {
             final ProductVariantResponse variant;
             int score;
@@ -458,9 +455,7 @@ public class AiChatServiceImpl implements AiChatService {
         List<ScoredVariant> scoredList = new ArrayList<>();
         BigDecimal finalTargetPrice = targetPrice;
         for (ProductVariantResponse v : cachedVariants) {
-            int score = calculateMatchScore(v, queryLower, queryWords, finalTargetPrice);
-            // Nếu khách hỏi giá tăng/giảm dần chung chung, hoặc hỏi giá mà không khớp từ khóa đặc thù nào khác,
-            // ta vẫn cho điểm cơ bản = 1 để đưa vào danh sách sắp xếp giá
+            int score = calculateMatchScore(v, queryLower, queryUnaccent, queryWords, unaccentWords, finalTargetPrice);
             if (score == 0 && (sortByPriceAsc || sortByPriceDesc)) {
                 score = 1;
             }
@@ -469,41 +464,33 @@ public class AiChatServiceImpl implements AiChatService {
             }
         }
 
-        // Thực hiện sắp xếp theo yêu cầu của khách hàng
+        // Sắp xếp theo yêu cầu
         if (sortByPriceAsc) {
-            // Giá tăng dần (thấp đến cao). Nếu giá bằng nhau thì xếp theo điểm trùng khớp giảm dần
             scoredList.sort((a, b) -> {
                 java.math.BigDecimal priceA = a.variant.getGiaBan() != null ? a.variant.getGiaBan() : java.math.BigDecimal.ZERO;
                 java.math.BigDecimal priceB = b.variant.getGiaBan() != null ? b.variant.getGiaBan() : java.math.BigDecimal.ZERO;
                 int priceCompare = priceA.compareTo(priceB);
-                if (priceCompare != 0) {
-                    return priceCompare;
-                }
+                if (priceCompare != 0) return priceCompare;
                 return Integer.compare(b.score, a.score);
             });
         } else if (sortByPriceDesc) {
-            // Giá giảm dần (cao xuống thấp). Nếu giá bằng nhau thì xếp theo điểm trùng khớp giảm dần
             scoredList.sort((a, b) -> {
                 java.math.BigDecimal priceA = a.variant.getGiaBan() != null ? a.variant.getGiaBan() : java.math.BigDecimal.ZERO;
                 java.math.BigDecimal priceB = b.variant.getGiaBan() != null ? b.variant.getGiaBan() : java.math.BigDecimal.ZERO;
                 int priceCompare = priceB.compareTo(priceA);
-                if (priceCompare != 0) {
-                    return priceCompare;
-                }
+                if (priceCompare != 0) return priceCompare;
                 return Integer.compare(b.score, a.score);
             });
         } else {
-            // Sắp xếp mặc định theo điểm phù hợp giảm dần
             scoredList.sort((a, b) -> Integer.compare(b.score, a.score));
         }
 
         List<ProductVariantResponse> filtered = scoredList.stream()
                 .map(sv -> sv.variant)
-                .limit(MAX_CONTEXT_PRODUCTS) // [GIỚI HẠN] Chỉ lấy tối đa 20 sản phẩm phù hợp nhất
+                .limit(MAX_CONTEXT_PRODUCTS)
                 .collect(Collectors.toList());
 
         if (filtered.isEmpty()) {
-            // Lấy top 15 sản phẩm mới nhất làm dữ liệu dự phòng thay vì trả về toàn bộ danh mục (gây treo AI)
             return cachedVariants.stream().limit(15).collect(Collectors.toList());
         }
 
@@ -518,13 +505,18 @@ public class AiChatServiceImpl implements AiChatService {
                 .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
 
         StringBuilder sb = new StringBuilder();
-        sb.append("DANH SÁCH GIÀY GỢI Ý (AeroStride):\n");
+        sb.append("DANH SÁCH GIÀY CÓ TRONG KHO (AeroStride):\n");
 
         groupedProducts.forEach((tenSp, vars) -> {
             if (sb.length() > 15000) return;
 
+            String pId = vars.get(0).getIdSanPham() != null ? vars.get(0).getIdSanPham() : vars.get(0).getId();
             String brand = vars.get(0).getTenThuongHieu() != null ? vars.get(0).getTenThuongHieu() : "AeroStride";
-            sb.append(String.format("- %s (Thương hiệu: %s)\n", tenSp, brand));
+            String code = vars.get(0).getMaSanPham() != null ? vars.get(0).getMaSanPham() : "";
+            String img = (vars.get(0).getImages() != null && !vars.get(0).getImages().isEmpty()) 
+                    ? vars.get(0).getImages().get(0).getDuongDanAnh() : "";
+
+            sb.append(String.format("- Tên: %s (Mã SP: %s, ID: %s, Hãng: %s)\n", tenSp, code, pId, brand));
             String sizes = vars.stream()
                     .map(v -> v.getGiaTriKichThuoc() != null ? String.valueOf(v.getGiaTriKichThuoc()) : "N/A")
                     .distinct().sorted().collect(Collectors.joining(", "));
@@ -535,7 +527,7 @@ public class AiChatServiceImpl implements AiChatService {
                     .map(v -> v.getGiaBan() != null ? v.getGiaBan() : java.math.BigDecimal.ZERO)
                     .min(java.math.BigDecimal::compareTo).orElse(java.math.BigDecimal.ZERO);
 
-            sb.append(String.format("  + Size: %s | Màu: %s | Giá từ: %s VNĐ\n", sizes, colors, minPrice));
+            sb.append(String.format("  + Size: %s | Màu: %s | Giá: %,.0f VNĐ | Ảnh: %s\n", sizes, colors, minPrice, img));
 
             vars.stream().filter(v -> v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(java.math.BigDecimal.ZERO) > 0)
                 .map(ProductVariantResponse::getPhanTramGiam).findFirst()

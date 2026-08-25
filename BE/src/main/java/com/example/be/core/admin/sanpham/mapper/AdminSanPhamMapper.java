@@ -85,6 +85,15 @@ public class AdminSanPhamMapper {
         BigDecimal discountedPrice = DiscountPriceUtils.calculateDiscountedPrice(originalPrice, variant.getChiTietDotGiamGias());
         BigDecimal activeDiscountPercent = DiscountPriceUtils.getActiveDiscountPercent(variant.getChiTietDotGiamGias());
 
+        String variantImg = null;
+        if (images != null && !images.isEmpty()) {
+            variantImg = images.stream()
+                    .filter(img -> Boolean.TRUE.equals(img.getHinhAnhDaiDien()))
+                    .map(ProductVariantImageResponse::getDuongDanAnh)
+                    .findFirst()
+                    .orElse(images.get(0).getDuongDanAnh());
+        }
+
         return ProductVariantResponse.builder()
                 .id(variant.getId())
                 .idSanPham(variant.getSanPham() != null ? variant.getSanPham().getId() : null)
@@ -98,7 +107,7 @@ public class AdminSanPhamMapper {
                     : null)
                 .tenThuongHieu(variant.getSanPham() != null && variant.getSanPham().getThuongHieu() != null ? variant.getSanPham().getThuongHieu().getTen() : null)
                 .tenChatLieu(variant.getSanPham() != null && variant.getSanPham().getChatLieu() != null ? variant.getSanPham().getChatLieu().getTen() : null)
-                .hinhAnh(variant.getSanPham() != null ? variant.getSanPham().getHinhAnh() : null)
+                .hinhAnh(variantImg)
                 .maChiTietSanPham(variant.getMaChiTietSanPham())
                 .idMauSac(variant.getMauSac() != null ? variant.getMauSac().getId() : null)
                 .tenMauSac(variant.getMauSac() != null ? variant.getMauSac().getTen() : null)

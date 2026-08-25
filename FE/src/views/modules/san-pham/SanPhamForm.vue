@@ -1861,7 +1861,10 @@ const openEditVariantModal = (variant) => {
         open: true,
         mode: 'edit',
         submitting: false,
-        variant: { ...variant }
+        variant: {
+            ...variant,
+            urlAnh: variant.urlAnh || (getVariantThumbnail(variant) !== logoPlaceholder ? getVariantThumbnail(variant) : '')
+        }
     };
 };
 
@@ -3267,14 +3270,17 @@ const handleSave = async () => {
                                     <td class="data-cell">
                                         <span class="text-primary">{{ formatNumber(variant.soLuong) }}</span>
                                     </td>
-                                    <td class="data-cell">
-                                        <div
-                                            v-if="variant.giaGoc && variant.giaGoc > variant.giaBan"
-                                            class="text-caption text-decoration-line-through text-slate-400"
-                                        >
-                                            {{ formatCurrency(variant.giaGoc) }}
+                                    <td class="data-cell text-center">
+                                        <div v-if="variant.phanTramGiam && Number(variant.phanTramGiam) > 0" class="d-flex flex-column align-center">
+                                            <span class="text-caption text-slate-400 text-decoration-line-through" style="font-size: 11px; line-height: 1.1">
+                                                {{ formatCurrency(variant.giaGoc || variant.giaBan / (1 - Number(variant.phanTramGiam) / 100)) }}
+                                            </span>
+                                            <div class="d-flex align-center justify-center ga-1 mt-0.5">
+                                                <span class="text-primary font-weight-bold text-truncate" style="font-size: 13px; color: #1e40af !important;">{{ formatCurrency(variant.giaBan) }}</span>
+                                                <v-chip size="x-small" color="error" variant="flat" class="px-1 font-weight-bold" style="height: 16px; font-size: 10px; background-color: #ef4444 !important; color: #ffffff !important">-{{ Math.round(variant.phanTramGiam) }}%</v-chip>
+                                            </div>
                                         </div>
-                                        <div class="text-primary text-truncate font-weight-bold" :title="formatCurrency(variant.giaBan)">
+                                        <div v-else class="text-primary font-weight-bold text-truncate" style="color: #1e40af !important;" :title="formatCurrency(variant.giaBan)">
                                             {{ formatCurrency(variant.giaBan) }}
                                         </div>
                                     </td>

@@ -1,9 +1,18 @@
 import { dichVuXacThuc } from './dichVuXacThuc';
 
+const DEFAULT_GOOGLE_CLIENT_ID = '165274553322-qnrdfe6veno65rhsimgrupor69rm9sg.apps.googleusercontent.com';
+
 /**
  * SocialAuthService - Handles Google and Facebook OAuth client workflows
  */
 export const socialAuthService = {
+    /**
+     * Lấy Google Client ID từ biến môi trường hoặc fallback mặc định
+     */
+    getGoogleClientId(overrideId = null) {
+        return overrideId || import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
+    },
+
     /**
      * Đảm bảo Google Identity Services (GIS) SDK đã được tải vào DOM
      */
@@ -42,7 +51,7 @@ export const socialAuthService = {
     initGoogle(clientId, callback) {
         if (typeof window === 'undefined') return;
 
-        const googleClientId = clientId || import.meta.env.VITE_GOOGLE_CLIENT_ID;
+        const googleClientId = this.getGoogleClientId(clientId);
         if (!googleClientId) return;
 
         this.ensureGoogleSdkLoaded().then(() => {
@@ -68,7 +77,7 @@ export const socialAuthService = {
             });
         }
 
-        const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+        const googleClientId = this.getGoogleClientId();
         if (!googleClientId) {
             throw new Error('Chưa cấu hình Google Client ID (VITE_GOOGLE_CLIENT_ID).');
         }

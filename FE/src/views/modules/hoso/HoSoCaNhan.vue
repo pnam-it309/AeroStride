@@ -5,6 +5,7 @@ import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import { APP_ROLES } from '@/constants/appConstants';
 import { AdminBreadcrumbs } from '@/components/common';
+import { useLocation } from '@/composables/useLocation';
 
 const route = useRoute();
 const router = useRouter();
@@ -13,6 +14,36 @@ const loading = ref(true);
 const profile = ref(null);
 const activeTab = ref('profile');
 
+// Location composable for address selection
+const {
+    provinces,
+    districts,
+    wards,
+    fetchProvinces,
+    fetchDistricts,
+    fetchWards
+} = useLocation({ allowFallback: true });
+
+// Edit Profile State
+const isEditing = ref(false);
+const saveLoading = ref(false);
+const saveMessage = ref({ type: '', text: '' });
+const editForm = ref({
+    ten: '',
+    email: '',
+    sdt: '',
+    gioiTinh: true,
+    ngaySinh: '',
+    tinh: '',
+    thanhPho: '',
+    phuongXa: '',
+    diaChiChiTiet: '',
+    hinhAnh: ''
+});
+const avatarPreview = ref('');
+const avatarFileInput = ref(null);
+
+// Password Form State
 const pwForm = ref({ matKhauCu: '', matKhauMoi: '', xacNhanMatKhau: '' });
 const pwLoading = ref(false);
 const pwMessage = ref({ type: '', text: '' });
@@ -32,6 +63,7 @@ const chucVu = computed(() => {
 });
 
 const avatarUrl = computed(() => {
+    if (avatarPreview.value) return avatarPreview.value;
     const v = profile.value?.hinhAnh || profile.value?.avatar;
     if (!v) return '';
     if (/^(https?:)?\/\//i.test(v) || v.startsWith('data:') || v.startsWith('blob:')) return v;
@@ -54,11 +86,113 @@ const gioiTinhLabel = computed(() => {
 const fetchProfile = async () => {
     loading.value = true;
     try {
-        profile.value = await dichVuXacThuc.layThongTinCaNhan();
+        const data = await dichVuXacThuc.layThongTinCaNhan();
+        profile.value = data;
+        initEditForm(data);
     } catch (e) {
         console.error('Lỗi tải hồ sơ:', e);
     } finally {
         loading.value = false;
+    }
+};
+
+const initEditForm = (data) => {
+    if (!data) return;
+    editForm.value = {
+        ten: data.ten || '',
+        email: data.email || '',
+        sdt: data.sdt || '',
+        gioiTinh: data.gioiTinh !== undefined ? data.gioiTinh : true,
+        ngaySinh: data.ngaySinh || '',
+        tinh: data.tinh || '',
+        thanhPho: data.thanhPho || '',
+        phuongXa: data.phuongXa || '',
+        diaChiChiTiet: data.diaChiChiTiet || '',
+        hinhAnh: data.hinhAnh || ''
+    };
+    avatarPreview.value = '';
+};
+
+const startEditing = () => {
+    saveMessage.value = { type: '', text: '' };
+    initEditForm(profile.value);
+    isEditing.value = true;
+    if (provinces.value.length === 0) {
+        fetchProvinces();
+    }
+};
+
+const cancelEditing = () => {
+    isEditing.value = false;
+    saveMessage.value = { type: '', text: '' };
+    avatarPreview.value = '';
+    initEditForm(profile.value);
+};
+
+const triggerAvatarPick = () => {
+    if (avatarFileInput.value) {
+        avatarFileInput.value.click();
+    }
+};
+
+const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        saveMessage.value = { type: 'error', text: 'Vui lòng chọn file hình ảnh hợp lệ.' };
+        return;
+    }
+    try {
+        const compressed = await dichVuFile.nenAnh(file, 800, 800, 0.85);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            avatarPreview.value = e.target.result;
+            editForm.value.hinhAnh = e.target.result;
+        };
+        reader.readAsDataURL(compressed);
+    } catch (e) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            avatarPreview.value = e.target.result;
+            editForm.value.hinhAnh = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+const handleSaveProfile = async () => {
+    saveMessage.value = { type: '', text: '' };
+    if (!editForm.value.ten || !editForm.value.ten.trim()) {
+        saveMessage.value = { type: 'error', text: 'Họ và tên không được để trống.' };
+        return;
+    }
+    if (editForm.value.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.value.email.trim())) {
+        saveMessage.value = { type: 'error', text: 'Email không đúng định dạng.' };
+        return;
+    }
+    if (editForm.value.sdt && !/^[0-9]{10,11}$/.test(editForm.value.sdt.trim().replace(/\D/g, ''))) {
+        saveMessage.value = { type: 'error', text: 'Số điện thoại không hợp lệ (10-11 số).' };
+        return;
+    }
+
+    saveLoading.value = true;
+    try {
+        const res = await dichVuXacThuc.capNhatThongTin(editForm.value);
+        if (res?.data) {
+            profile.value = res.data;
+            initEditForm(res.data);
+        } else {
+            await fetchProfile();
+        }
+        saveMessage.value = { type: 'success', text: 'Cập nhật thông tin cá nhân thành công!' };
+        isEditing.value = false;
+    } catch (e) {
+        saveMessage.value = {
+            type: 'error',
+            text: e.response?.data?.message || 'Cập nhật thông tin thất bại. Vui lòng thử lại.'
+        };
+    } finally {
+        saveLoading.value = false;
     }
 };
 
@@ -126,214 +260,537 @@ onMounted(() => {
         </div>
 
         <div v-else-if="profile" class="mt-3">
-            <!-- Header Profile Summary Banner -->
-            <div class="profile-header-banner mb-4">
-                <div class="d-flex align-center flex-wrap ga-4 pa-5">
-                    <v-avatar size="84" class="profile-avatar border">
-                        <v-img v-if="avatarUrl" :src="avatarUrl" cover alt="avatar">
-                            <template #placeholder>
-                                <div class="d-flex align-center justify-center fill-height">
-                                    <v-icon size="44" color="white">mdi-account</v-icon>
-                                </div>
-                            </template>
-                        </v-img>
-                        <v-icon v-else size="44" color="white">mdi-account</v-icon>
-                    </v-avatar>
+            <!-- UNIFIED SEAMLESS CARD LAYOUT -->
+            <v-card elevation="0" class="profile-unified-card border">
+                <!-- 1. Header Banner with Navy Gradient -->
+                <div class="profile-header-banner">
+                    <div class="d-flex align-center justify-space-between flex-wrap ga-4 pa-6">
+                        <div class="d-flex align-center ga-5 flex-wrap">
+                            <!-- Avatar with Upload Button -->
+                            <div class="avatar-wrapper">
+                                <v-avatar size="88" class="profile-avatar">
+                                    <v-img v-if="avatarUrl" :src="avatarUrl" cover alt="avatar">
+                                        <template #placeholder>
+                                            <div class="d-flex align-center justify-center fill-height bg-primary">
+                                                <v-icon size="48" color="white">mdi-account</v-icon>
+                                            </div>
+                                        </template>
+                                    </v-img>
+                                    <div v-else class="d-flex align-center justify-center fill-height bg-primary-dark">
+                                        <v-icon size="48" color="white">mdi-account</v-icon>
+                                    </div>
+                                </v-avatar>
 
-                    <div>
-                        <h2 class="text-h6 font-weight-bold text-white mb-1">
-                            {{ profile.ten || profile.tenTaiKhoan }}
-                        </h2>
-                        <div class="d-flex align-center ga-2 flex-wrap">
-                            <span class="role-badge">
-                                <v-icon size="14" class="mr-1" color="#1e257c">mdi-shield-check</v-icon>
-                                {{ chucVu }}
-                            </span>
-                            <span class="text-caption text-white opacity-80" v-if="profile.ma">
-                                Mã: {{ profile.ma }}
-                            </span>
+                                <v-btn
+                                    icon="mdi-camera"
+                                    size="small"
+                                    color="white"
+                                    class="avatar-edit-btn"
+                                    title="Thay đổi ảnh đại diện"
+                                    @click="triggerAvatarPick"
+                                />
+                                <input
+                                    ref="avatarFileInput"
+                                    type="file"
+                                    accept="image/*"
+                                    style="display: none"
+                                    @change="handleAvatarChange"
+                                />
+                            </div>
+
+                            <!-- Staff Name & Info -->
+                            <div class="profile-info-text">
+                                <h2 class="text-h5 font-weight-bold text-white mb-2 profile-name">
+                                    {{ profile.ten || profile.tenTaiKhoan }}
+                                </h2>
+                                <div class="d-flex align-center ga-2 flex-wrap">
+                                    <span class="role-badge">
+                                        <v-icon size="14" class="mr-1" color="#1e257c">mdi-shield-check</v-icon>
+                                        {{ chucVu }}
+                                    </span>
+                                    <span class="code-badge" v-if="profile.ma">
+                                        Mã: {{ profile.ma }}
+                                    </span>
+                                    <span class="code-badge" v-if="profile.tenTaiKhoan">
+                                        @{{ profile.tenTaiKhoan }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Button on Header -->
+                        <div class="d-flex align-center ga-2">
+                            <v-btn
+                                v-if="activeTab === 'profile' && !isEditing"
+                                color="white"
+                                variant="flat"
+                                class="text-none font-weight-bold px-4 rounded-lg edit-header-btn"
+                                prepend-icon="mdi-account-edit-outline"
+                                @click="startEditing"
+                            >
+                                Chỉnh sửa thông tin
+                            </v-btn>
+                            <v-btn
+                                v-if="activeTab === 'profile' && isEditing"
+                                color="white"
+                                variant="outlined"
+                                class="text-none font-weight-medium px-4 rounded-lg cancel-header-btn"
+                                prepend-icon="mdi-close"
+                                @click="cancelEditing"
+                            >
+                                Hủy sửa
+                            </v-btn>
                         </div>
                     </div>
-                </div>
 
-                <!-- Modern Tabs Navigation -->
-                <div class="profile-nav-tabs px-3">
-                    <v-btn
-                        variant="text"
-                        :class="['profile-tab-btn', { 'profile-tab-active': activeTab === 'profile' }]"
-                        @click="onTabChange('profile')"
-                    >
-                        <v-icon start size="18">mdi-account-circle-outline</v-icon>
-                        Hồ sơ của tôi
-                    </v-btn>
-                    <v-btn
-                        variant="text"
-                        :class="['profile-tab-btn', { 'profile-tab-active': activeTab === 'account' }]"
-                        @click="onTabChange('account')"
-                    >
-                        <v-icon start size="18">mdi-shield-lock-outline</v-icon>
-                        Tài khoản & Đổi mật khẩu
-                    </v-btn>
-                </div>
-            </div>
-
-            <!-- TAB 1: THÔNG TIN HỒ SƠ CÁ NHÂN -->
-            <v-card v-if="activeTab === 'profile'" elevation="0" class="profile-content-card border">
-                <div class="pa-5">
-                    <div class="d-flex align-center mb-4">
-                        <v-icon color="#1e257c" size="20" class="mr-2">mdi-card-account-details-outline</v-icon>
-                        <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-0">Thông tin cá nhân chi tiết</h3>
+                    <!-- Modern Seamless Integrated Tab Bar -->
+                    <div class="profile-nav-tabs">
+                        <button
+                            type="button"
+                            :class="['profile-tab-item', { 'active': activeTab === 'profile' }]"
+                            @click="onTabChange('profile')"
+                        >
+                            <v-icon start size="18">mdi-account-circle-outline</v-icon>
+                            Hồ sơ của tôi
+                        </button>
+                        <button
+                            type="button"
+                            :class="['profile-tab-item', { 'active': activeTab === 'account' }]"
+                            @click="onTabChange('account')"
+                        >
+                            <v-icon start size="18">mdi-shield-lock-outline</v-icon>
+                            Tài khoản & Đổi mật khẩu
+                        </button>
                     </div>
-
-                    <v-row dense>
-                        <v-col cols="12" md="6">
-                            <div class="info-field-box">
-                                <div class="field-label">Mã nhân viên</div>
-                                <div class="field-value">
-                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-identifier</v-icon>
-                                    {{ profile.ma || '—' }}
-                                </div>
-                            </div>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                            <div class="info-field-box">
-                                <div class="field-label">Tên tài khoản</div>
-                                <div class="field-value">
-                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-account-outline</v-icon>
-                                    {{ profile.tenTaiKhoan || '—' }}
-                                </div>
-                            </div>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                            <div class="info-field-box">
-                                <div class="field-label">Email</div>
-                                <div class="field-value">
-                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-email-outline</v-icon>
-                                    {{ profile.email || '—' }}
-                                </div>
-                            </div>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                            <div class="info-field-box">
-                                <div class="field-label">Số điện thoại</div>
-                                <div class="field-value">
-                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-phone-outline</v-icon>
-                                    {{ profile.sdt || '—' }}
-                                </div>
-                            </div>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                            <div class="info-field-box">
-                                <div class="field-label">Giới tính</div>
-                                <div class="field-value">
-                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-gender-male-female</v-icon>
-                                    {{ gioiTinhLabel }}
-                                </div>
-                            </div>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                            <div class="info-field-box">
-                                <div class="field-label">Ngày sinh</div>
-                                <div class="field-value">
-                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-calendar-outline</v-icon>
-                                    {{ profile.ngaySinh || '—' }}
-                                </div>
-                            </div>
-                        </v-col>
-                        <v-col cols="12">
-                            <div class="info-field-box">
-                                <div class="field-label">Địa chỉ liên hệ</div>
-                                <div class="field-value">
-                                    <v-icon size="16" class="mr-2" color="#1e257c">mdi-map-marker-outline</v-icon>
-                                    {{ diaChiDayDu || '—' }}
-                                </div>
-                            </div>
-                        </v-col>
-                    </v-row>
                 </div>
-            </v-card>
 
-            <!-- TAB 2: TÀI KHOẢN & ĐỔI MẬT KHẨU -->
-            <v-card v-else-if="activeTab === 'account'" elevation="0" class="profile-content-card border">
-                <div class="pa-5" style="max-width: 580px">
-                    <div class="d-flex align-center mb-1">
-                        <v-icon color="#1e257c" size="20" class="mr-2">mdi-lock-reset</v-icon>
-                        <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-0">Đổi mật khẩu tài khoản</h3>
-                    </div>
-                    <p class="text-caption text-slate-500 mb-4">
-                        Để đảm bảo an toàn cho tài khoản, vui lòng sử dụng mật khẩu có ít nhất 6 ký tự.
-                    </p>
-
+                <!-- 2. Content Body -->
+                <div class="profile-body-content pa-6">
+                    <!-- Global Save Message Alert -->
                     <v-alert
-                        v-if="pwMessage.text"
-                        :type="pwMessage.type === 'success' ? 'success' : 'error'"
+                        v-if="saveMessage.text"
+                        :type="saveMessage.type === 'success' ? 'success' : 'error'"
                         variant="tonal"
                         density="compact"
-                        class="mb-4 rounded-lg"
+                        closable
+                        class="mb-5 rounded-lg"
+                        @click:close="saveMessage.text = ''"
                     >
-                        {{ pwMessage.text }}
+                        {{ saveMessage.text }}
                     </v-alert>
 
-                    <div class="mb-3">
-                        <label class="form-input-label">Mật khẩu hiện tại</label>
-                        <v-text-field
-                            v-model="pwForm.matKhauCu"
-                            :type="showOldPassword ? 'text' : 'password'"
-                            placeholder="Nhập mật khẩu đang dùng"
-                            variant="outlined"
-                            density="compact"
-                            hide-details="auto"
-                            rounded="lg"
-                            prepend-inner-icon="mdi-lock-outline"
-                            :append-inner-icon="showOldPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-                            @click:append-inner="showOldPassword = !showOldPassword"
-                        />
+                    <!-- TAB 1: THÔNG TIN HỒ SƠ -->
+                    <div v-if="activeTab === 'profile'">
+                        <!-- 1.1 Chế độ XEM (Read-only View) -->
+                        <div v-if="!isEditing">
+                            <div class="d-flex align-center justify-space-between mb-4">
+                                <div class="d-flex align-center">
+                                    <div class="section-icon-box mr-3">
+                                        <v-icon color="#1e257c" size="20">mdi-card-account-details-outline</v-icon>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-0">Thông tin cá nhân chi tiết</h3>
+                                        <p class="text-caption text-slate-500 mb-0">Xem và quản lý thông tin tài khoản của bạn</p>
+                                    </div>
+                                </div>
+                                <v-btn
+                                    color="#1e257c"
+                                    variant="tonal"
+                                    size="small"
+                                    class="text-none font-weight-bold rounded-lg"
+                                    prepend-icon="mdi-pencil-outline"
+                                    @click="startEditing"
+                                >
+                                    Chỉnh sửa
+                                </v-btn>
+                            </div>
+
+                            <v-row dense class="mt-1">
+                                <v-col cols="12" md="6">
+                                    <div class="info-field-box">
+                                        <div class="field-label">Mã nhân viên</div>
+                                        <div class="field-value">
+                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-identifier</v-icon>
+                                            {{ profile.ma || '—' }}
+                                        </div>
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="info-field-box">
+                                        <div class="field-label">Tên tài khoản</div>
+                                        <div class="field-value">
+                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-account-outline</v-icon>
+                                            {{ profile.tenTaiKhoan || '—' }}
+                                        </div>
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="info-field-box">
+                                        <div class="field-label">Họ và tên</div>
+                                        <div class="field-value font-weight-bold text-slate-800">
+                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-badge-account-outline</v-icon>
+                                            {{ profile.ten || '—' }}
+                                        </div>
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="info-field-box">
+                                        <div class="field-label">Email</div>
+                                        <div class="field-value">
+                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-email-outline</v-icon>
+                                            {{ profile.email || '—' }}
+                                        </div>
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="info-field-box">
+                                        <div class="field-label">Số điện thoại</div>
+                                        <div class="field-value">
+                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-phone-outline</v-icon>
+                                            {{ profile.sdt || '—' }}
+                                        </div>
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="info-field-box">
+                                        <div class="field-label">Giới tính</div>
+                                        <div class="field-value">
+                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-gender-male-female</v-icon>
+                                            {{ gioiTinhLabel }}
+                                        </div>
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="info-field-box">
+                                        <div class="field-label">Ngày sinh</div>
+                                        <div class="field-value">
+                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-calendar-outline</v-icon>
+                                            {{ profile.ngaySinh || '—' }}
+                                        </div>
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="info-field-box">
+                                        <div class="field-label">Chức vụ / Quyền hạn</div>
+                                        <div class="field-value text-primary font-weight-medium">
+                                            <v-icon size="16" class="mr-2" color="primary">mdi-shield-account-outline</v-icon>
+                                            {{ chucVu }}
+                                        </div>
+                                    </div>
+                                </v-col>
+                                <v-col cols="12">
+                                    <div class="info-field-box">
+                                        <div class="field-label">Địa chỉ liên hệ</div>
+                                        <div class="field-value">
+                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-map-marker-outline</v-icon>
+                                            {{ diaChiDayDu || 'Chưa cập nhật địa chỉ' }}
+                                        </div>
+                                    </div>
+                                </v-col>
+                            </v-row>
+                        </div>
+
+                        <!-- 1.2 Chế độ CHỈNH SỬA (Editable Form) -->
+                        <div v-else class="edit-profile-section">
+                            <div class="d-flex align-center justify-space-between mb-4 pb-3 border-b">
+                                <div class="d-flex align-center">
+                                    <div class="section-icon-box mr-3">
+                                        <v-icon color="#1e257c" size="20">mdi-account-edit-outline</v-icon>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-0">Cập nhật thông tin cá nhân</h3>
+                                        <p class="text-caption text-slate-500 mb-0">Chỉnh sửa các trường thông tin cần thiết và bấm Lưu</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <v-form @submit.prevent="handleSaveProfile">
+                                <v-row dense>
+                                    <v-col cols="12" md="6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-input-label">Mã nhân viên (Cố định)</label>
+                                            <v-text-field
+                                                :model-value="profile.ma"
+                                                disabled
+                                                variant="outlined"
+                                                density="compact"
+                                                rounded="lg"
+                                                bg-color="#f8fafc"
+                                                prepend-inner-icon="mdi-identifier"
+                                                hide-details
+                                            />
+                                        </div>
+                                    </v-col>
+
+                                    <v-col cols="12" md="6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-input-label">Tên tài khoản (Cố định)</label>
+                                            <v-text-field
+                                                :model-value="profile.tenTaiKhoan"
+                                                disabled
+                                                variant="outlined"
+                                                density="compact"
+                                                rounded="lg"
+                                                bg-color="#f8fafc"
+                                                prepend-inner-icon="mdi-account-outline"
+                                                hide-details
+                                            />
+                                        </div>
+                                    </v-col>
+
+                                    <v-col cols="12" md="6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-input-label">Họ và tên <span class="text-error">*</span></label>
+                                            <v-text-field
+                                                v-model="editForm.ten"
+                                                placeholder="Nhập họ và tên"
+                                                variant="outlined"
+                                                density="compact"
+                                                rounded="lg"
+                                                prepend-inner-icon="mdi-badge-account-outline"
+                                                hide-details="auto"
+                                                required
+                                            />
+                                        </div>
+                                    </v-col>
+
+                                    <v-col cols="12" md="6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-input-label">Email</label>
+                                            <v-text-field
+                                                v-model="editForm.email"
+                                                placeholder="Nhập địa chỉ email"
+                                                variant="outlined"
+                                                density="compact"
+                                                rounded="lg"
+                                                prepend-inner-icon="mdi-email-outline"
+                                                hide-details="auto"
+                                            />
+                                        </div>
+                                    </v-col>
+
+                                    <v-col cols="12" md="6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-input-label">Số điện thoại</label>
+                                            <v-text-field
+                                                v-model="editForm.sdt"
+                                                placeholder="Nhập số điện thoại"
+                                                variant="outlined"
+                                                density="compact"
+                                                rounded="lg"
+                                                prepend-inner-icon="mdi-phone-outline"
+                                                hide-details="auto"
+                                            />
+                                        </div>
+                                    </v-col>
+
+                                    <v-col cols="12" md="6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-input-label">Giới tính</label>
+                                            <v-radio-group
+                                                v-model="editForm.gioiTinh"
+                                                inline
+                                                density="compact"
+                                                hide-details
+                                                class="gender-radio-group"
+                                            >
+                                                <v-radio label="Nam" :value="true" color="primary"></v-radio>
+                                                <v-radio label="Nữ" :value="false" color="primary"></v-radio>
+                                            </v-radio-group>
+                                        </div>
+                                    </v-col>
+
+                                    <v-col cols="12" md="6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-input-label">Ngày sinh</label>
+                                            <v-text-field
+                                                v-model="editForm.ngaySinh"
+                                                type="date"
+                                                variant="outlined"
+                                                density="compact"
+                                                rounded="lg"
+                                                prepend-inner-icon="mdi-calendar-outline"
+                                                hide-details="auto"
+                                            />
+                                        </div>
+                                    </v-col>
+
+                                    <v-col cols="12" md="6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-input-label">Tỉnh / Thành phố</label>
+                                            <v-text-field
+                                                v-model="editForm.tinh"
+                                                placeholder="Tỉnh/Thành phố"
+                                                variant="outlined"
+                                                density="compact"
+                                                rounded="lg"
+                                                prepend-inner-icon="mdi-city-variant-outline"
+                                                hide-details="auto"
+                                            />
+                                        </div>
+                                    </v-col>
+
+                                    <v-col cols="12" md="6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-input-label">Quận / Huyện / TP</label>
+                                            <v-text-field
+                                                v-model="editForm.thanhPho"
+                                                placeholder="Quận/Huyện"
+                                                variant="outlined"
+                                                density="compact"
+                                                rounded="lg"
+                                                prepend-inner-icon="mdi-home-city-outline"
+                                                hide-details="auto"
+                                            />
+                                        </div>
+                                    </v-col>
+
+                                    <v-col cols="12" md="6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-input-label">Phường / Xã</label>
+                                            <v-text-field
+                                                v-model="editForm.phuongXa"
+                                                placeholder="Phường/Xã"
+                                                variant="outlined"
+                                                density="compact"
+                                                rounded="lg"
+                                                prepend-inner-icon="mdi-sign-direction"
+                                                hide-details="auto"
+                                            />
+                                        </div>
+                                    </v-col>
+
+                                    <v-col cols="12">
+                                        <div class="form-group mb-4">
+                                            <label class="form-input-label">Địa chỉ chi tiết (Số nhà, tên đường...)</label>
+                                            <v-text-field
+                                                v-model="editForm.diaChiChiTiet"
+                                                placeholder="Ví dụ: Số 12 Ngõ 23 Hàng Bạc"
+                                                variant="outlined"
+                                                density="compact"
+                                                rounded="lg"
+                                                prepend-inner-icon="mdi-map-marker-outline"
+                                                hide-details="auto"
+                                            />
+                                        </div>
+                                    </v-col>
+                                </v-row>
+
+                                <div class="d-flex align-center ga-3 mt-2">
+                                    <v-btn
+                                        :loading="saveLoading"
+                                        type="submit"
+                                        color="primary"
+                                        variant="flat"
+                                        class="text-none font-weight-bold px-6 rounded-lg save-btn"
+                                        height="42"
+                                        style="background-color: #1e257c !important"
+                                    >
+                                        <v-icon start size="18">mdi-content-save-check-outline</v-icon>
+                                        Lưu thay đổi
+                                    </v-btn>
+                                    <v-btn
+                                        variant="tonal"
+                                        class="text-none font-weight-medium px-5 rounded-lg"
+                                        height="42"
+                                        @click="cancelEditing"
+                                    >
+                                        Hủy
+                                    </v-btn>
+                                </div>
+                            </v-form>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-input-label">Mật khẩu mới</label>
-                        <v-text-field
-                            v-model="pwForm.matKhauMoi"
-                            :type="showNewPassword ? 'text' : 'password'"
-                            placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
-                            variant="outlined"
-                            density="compact"
-                            hide-details="auto"
-                            rounded="lg"
-                            prepend-inner-icon="mdi-lock-plus-outline"
-                            :append-inner-icon="showNewPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-                            @click:append-inner="showNewPassword = !showNewPassword"
-                        />
-                    </div>
+                    <!-- TAB 2: TÀI KHOẢN & ĐỔI MẬT KHẨU -->
+                    <div v-else-if="activeTab === 'account'">
+                        <div class="d-flex align-center mb-1">
+                            <div class="section-icon-box mr-3">
+                                <v-icon color="#1e257c" size="20">mdi-lock-reset</v-icon>
+                            </div>
+                            <div>
+                                <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-0">Đổi mật khẩu tài khoản</h3>
+                                <p class="text-caption text-slate-500 mb-0">
+                                    Để bảo mật tài khoản, vui lòng sử dụng mật khẩu có ít nhất 6 ký tự.
+                                </p>
+                            </div>
+                        </div>
 
-                    <div class="mb-4">
-                        <label class="form-input-label">Xác nhận mật khẩu mới</label>
-                        <v-text-field
-                            v-model="pwForm.xacNhanMatKhau"
-                            :type="showConfirmPassword ? 'text' : 'password'"
-                            placeholder="Nhập lại mật khẩu mới"
-                            variant="outlined"
-                            density="compact"
-                            hide-details="auto"
-                            rounded="lg"
-                            prepend-inner-icon="mdi-lock-check-outline"
-                            :append-inner-icon="showConfirmPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-                            @click:append-inner="showConfirmPassword = !showConfirmPassword"
-                        />
-                    </div>
+                        <v-divider class="my-4"></v-divider>
 
-                    <v-btn
-                        :loading="pwLoading"
-                        color="primary"
-                        variant="flat"
-                        class="text-none font-weight-medium px-6 rounded-lg"
-                        height="40"
-                        style="background-color: #1e257c !important"
-                        @click="handleChangePassword"
-                    >
-                        <v-icon start size="18">mdi-content-save-outline</v-icon>
-                        Cập nhật mật khẩu
-                    </v-btn>
+                        <div style="max-width: 540px">
+                            <v-alert
+                                v-if="pwMessage.text"
+                                :type="pwMessage.type === 'success' ? 'success' : 'error'"
+                                variant="tonal"
+                                density="compact"
+                                class="mb-4 rounded-lg"
+                            >
+                                {{ pwMessage.text }}
+                            </v-alert>
+
+                            <div class="mb-3">
+                                <label class="form-input-label">Mật khẩu hiện tại <span class="text-error">*</span></label>
+                                <v-text-field
+                                    v-model="pwForm.matKhauCu"
+                                    :type="showOldPassword ? 'text' : 'password'"
+                                    placeholder="Nhập mật khẩu đang dùng"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details="auto"
+                                    rounded="lg"
+                                    prepend-inner-icon="mdi-lock-outline"
+                                    :append-inner-icon="showOldPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                                    @click:append-inner="showOldPassword = !showOldPassword"
+                                />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-input-label">Mật khẩu mới <span class="text-error">*</span></label>
+                                <v-text-field
+                                    v-model="pwForm.matKhauMoi"
+                                    :type="showNewPassword ? 'text' : 'password'"
+                                    placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details="auto"
+                                    rounded="lg"
+                                    prepend-inner-icon="mdi-lock-plus-outline"
+                                    :append-inner-icon="showNewPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                                    @click:append-inner="showNewPassword = !showNewPassword"
+                                />
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-input-label">Xác nhận mật khẩu mới <span class="text-error">*</span></label>
+                                <v-text-field
+                                    v-model="pwForm.xacNhanMatKhau"
+                                    :type="showConfirmPassword ? 'text' : 'password'"
+                                    placeholder="Nhập lại mật khẩu mới"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details="auto"
+                                    rounded="lg"
+                                    prepend-inner-icon="mdi-lock-check-outline"
+                                    :append-inner-icon="showConfirmPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                                    @click:append-inner="showConfirmPassword = !showConfirmPassword"
+                                />
+                            </div>
+
+                            <v-btn
+                                :loading="pwLoading"
+                                color="primary"
+                                variant="flat"
+                                class="text-none font-weight-bold px-6 rounded-lg save-btn"
+                                height="42"
+                                style="background-color: #1e257c !important"
+                                @click="handleChangePassword"
+                            >
+                                <v-icon start size="18">mdi-content-save-check-outline</v-icon>
+                                Cập nhật mật khẩu
+                            </v-btn>
+                        </div>
+                    </div>
                 </div>
             </v-card>
         </div>
@@ -347,20 +804,50 @@ onMounted(() => {
 
 <style scoped>
 .hoso-container {
-    max-width: 960px;
+    max-width: 980px;
     margin: 0 auto;
 }
 
-.profile-header-banner {
-    background: linear-gradient(135deg, #1e257c 0%, #2a358c 100%);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(30, 37, 124, 0.12);
+/* UNIFIED PROFILE CARD */
+.profile-unified-card {
+    background-color: #ffffff;
+    border-radius: 16px;
     overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+}
+
+/* HEADER BANNER */
+.profile-header-banner {
+    background: linear-gradient(135deg, #1e257c 0%, #151b5c 100%);
+    position: relative;
+}
+
+.avatar-wrapper {
+    position: relative;
+    display: inline-block;
 }
 
 .profile-avatar {
-    border: 3px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    background-color: #2a358c;
+}
+
+.avatar-edit-btn {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    background-color: #ffffff !important;
+    color: #1e257c !important;
+    width: 30px !important;
+    height: 30px !important;
+}
+
+.profile-name {
+    color: #ffffff !important;
+    letter-spacing: -0.3px;
 }
 
 .role-badge {
@@ -368,55 +855,101 @@ onMounted(() => {
     align-items: center;
     background-color: #ffffff;
     color: #1e257c;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 12px;
     padding: 3px 10px;
     border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.code-badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.edit-header-btn {
+    color: #1e257c !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cancel-header-btn {
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* SEAMLESS TAB BAR */
 .profile-nav-tabs {
     display: flex;
-    gap: 8px;
-    background-color: rgba(0, 0, 0, 0.15);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 4px;
+    padding: 0 20px;
+    background-color: rgba(0, 0, 0, 0.18);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.profile-tab-btn {
-    color: rgba(255, 255, 255, 0.8) !important;
-    font-weight: 500;
+.profile-tab-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 20px;
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 600;
     font-size: 13px;
-    border-radius: 0;
-    border-bottom: 2px solid transparent;
-    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
     transition: all 0.2s ease;
+    outline: none;
 }
 
-.profile-tab-btn:hover {
-    color: #ffffff !important;
+.profile-tab-item:hover {
+    color: #ffffff;
     background-color: rgba(255, 255, 255, 0.08);
 }
 
-.profile-tab-active {
-    color: #ffffff !important;
-    font-weight: 600 !important;
-    border-bottom: 2px solid #ffffff !important;
-    background-color: rgba(255, 255, 255, 0.12);
+.profile-tab-item.active {
+    color: #ffffff;
+    font-weight: 700;
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
-.profile-content-card {
-    background-color: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
+.profile-tab-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: #60a5fa;
+    border-radius: 3px 3px 0 0;
 }
 
+/* SECTION ICONS */
+.section-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background-color: #eef2ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* READ-ONLY INFO BOXES */
 .info-field-box {
     background-color: #f8fafc;
-    border: 1px solid #edf2f7;
-    border-radius: 8px;
-    padding: 10px 14px;
-    margin-bottom: 6px;
-    transition: all 0.2s;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
 }
 
 .info-field-box:hover {
@@ -426,11 +959,11 @@ onMounted(() => {
 
 .field-label {
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 }
 
 .field-value {
@@ -441,12 +974,23 @@ onMounted(() => {
     align-items: center;
 }
 
+/* FORM LABELS & INPUTS */
 .form-input-label {
     display: block;
     font-size: 12px;
     font-weight: 600;
-    color: #475569;
-    margin-bottom: 4px;
+    color: #334155;
+    margin-bottom: 6px;
+}
+
+.gender-radio-group {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 2px 12px;
+}
+
+.save-btn {
+    box-shadow: 0 4px 12px rgba(30, 37, 124, 0.25) !important;
 }
 </style>
-

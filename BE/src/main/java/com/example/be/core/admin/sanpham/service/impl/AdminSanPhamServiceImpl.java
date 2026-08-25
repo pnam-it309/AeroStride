@@ -384,15 +384,15 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             return;
         }
 
-        // 1. Ảnh đầu tiên (index 0) sẽ được lưu làm ảnh đại diện cho Sản Phẩm gốc
+        // 1. Chỉ gán ảnh đại diện cho Sản Phẩm gốc nếu sản phẩm gốc chưa có ảnh
         SanPham sanPham = variant.getSanPham();
         ProductVariantImageRequest firstImage = imageRequests.get(0);
-        if (sanPham != null && firstImage != null) {
+        if (sanPham != null && firstImage != null && (!StringUtils.hasText(sanPham.getHinhAnh()))) {
             sanPham.setHinhAnh(firstImage.getDuongDanAnh());
             adminSanPhamRepository.save(sanPham);
         }
 
-        // 2. Tất cả ảnh của biến thể (bao gồm ảnh 0) sẽ được lưu vào danh sách ảnh Biến thể (Chi Tiết Sản Phẩm)
+        // 2. Tất cả ảnh của biến thể (bao gồm ảnh 0) sẽ được lưu riêng cho Chi Tiết Sản Phẩm này
         List<ProductVariantImageRequest> variantImageRequests = new ArrayList<>(imageRequests);
         if (!variantImageRequests.isEmpty() && variantImageRequests.stream().noneMatch(img -> Boolean.TRUE.equals(img.getHinhAnhDaiDien()))) {
             variantImageRequests.get(0).setHinhAnhDaiDien(true);
@@ -401,8 +401,22 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         List<AnhChiTietSanPham> existingImages = adminAnhChiTietSanPhamRepository
                 .findByChiTietSanPhamIdAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(variant.getId());
 
+        Set<String> incomingUrls = variantImageRequests.stream()
+                .map(ProductVariantImageRequest::getDuongDanAnh)
+                .filter(StringUtils::hasText)
+                .collect(Collectors.toSet());
+
+        // Xóa mềm các ảnh cũ của biến thể không còn nằm trong danh sách cập nhật mới
+        existingImages.forEach(image -> {
+            if (!incomingUrls.contains(image.getDuongDanAnh())) {
+                image.setXoaMem(true);
+                image.setTrangThai(TrangThai.DA_XOA);
+            }
+        });
+        adminAnhChiTietSanPhamRepository.saveAll(existingImages);
+
         Map<String, AnhChiTietSanPham> existingImagesByUrl = existingImages.stream()
-                .filter(image -> StringUtils.hasText(image.getDuongDanAnh()))
+                .filter(image -> !Boolean.TRUE.equals(image.getXoaMem()) && StringUtils.hasText(image.getDuongDanAnh()))
                 .collect(Collectors.toMap(
                         AnhChiTietSanPham::getDuongDanAnh,
                         image -> image,
@@ -414,11 +428,15 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
                 .anyMatch(imageRequest -> Boolean.TRUE.equals(imageRequest.getHinhAnhDaiDien()));
 
         if (hasIncomingMainImage) {
-            existingImages.forEach(image -> image.setHinhAnhDaiDien(false));
+            existingImages.forEach(image -> {
+                if (!Boolean.TRUE.equals(image.getXoaMem())) {
+                    image.setHinhAnhDaiDien(false);
+                }
+            });
             adminAnhChiTietSanPhamRepository.saveAll(existingImages);
         }
 
-        // Lưu các ảnh của biến thể
+        // Lưu hoặc cập nhật các ảnh của biến thể
         variantImageRequests.forEach(imageRequest -> {
             AnhChiTietSanPham image = existingImagesByUrl.getOrDefault(imageRequest.getDuongDanAnh(), new AnhChiTietSanPham());
             image.setChiTietSanPham(variant);

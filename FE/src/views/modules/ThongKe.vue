@@ -1454,14 +1454,14 @@ onMounted(() => {
                     <v-btn
                         color="success"
                         variant="flat"
-                        class="stats-export-btn px-5 ml-2 text-white font-weight-medium"
+                        class="stats-export-btn px-5 ml-2 font-weight-medium"
                         height="40"
-                        style="background-color: #107c41 !important"
+                        style="background-color: #107c41 !important; color: #ffffff !important;"
                         :loading="exporting"
                         @click="exportExcelStatistics"
                     >
-                        <v-icon start size="18">mdi-microsoft-excel</v-icon>
-                        Xuất báo cáo Excel
+                        <v-icon start size="18" color="white" style="color: #ffffff !important;">mdi-microsoft-excel</v-icon>
+                        <span style="color: #ffffff !important; font-weight: 600;">Xuất báo cáo Excel</span>
                     </v-btn>
                 </div>
             </div>
@@ -1904,3 +1904,12 @@ onMounted(() => {
         </section>
     </div>
 </template>
+
+<style scoped>
+.stats-export-btn,
+.stats-export-btn :deep(.v-btn__content),
+.stats-export-btn :deep(.v-icon) {
+    color: #ffffff !important;
+}
+</style>
+
