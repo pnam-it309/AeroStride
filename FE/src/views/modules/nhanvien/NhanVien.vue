@@ -62,16 +62,16 @@ const { isRefreshing, handleRefresh: refreshData } = useRefreshHandler();
 const { addNotification } = useNotifications();
 
 const tableHeaders = [
-    { text: 'STT', width: '60px', align: 'center', class: 'text-no-wrap' },
-    { text: 'Mã nhân viên', width: '130px', align: 'center', class: 'text-no-wrap' },
-    { text: 'Tên nhân viên', width: '160px', align: 'center', class: 'text-no-wrap' },
-    { text: 'Tên tài khoản', width: '180px', align: 'center', class: 'text-no-wrap' },
-    { text: 'Giới tính', width: '100px', align: 'center', class: 'text-no-wrap' },
+    { text: 'STT', width: '50px', align: 'center', class: 'text-no-wrap' },
+    { text: 'Mã NV', width: '100px', align: 'center', class: 'text-no-wrap' },
+    { text: 'Tên nhân viên', width: '190px', align: 'start', class: 'text-no-wrap' },
+    { text: 'Tài khoản / Email', width: '230px', align: 'start', class: 'text-no-wrap' },
+    { text: 'Giới tính', width: '90px', align: 'center', class: 'text-no-wrap' },
     { text: 'Số điện thoại', width: '130px', align: 'center', class: 'text-no-wrap' },
-    { text: 'Địa chỉ', width: '250px', align: 'start', class: 'text-no-wrap' },
-    { text: 'Chức vụ', width: '130px', align: 'center', class: 'text-no-wrap' },
-    { text: 'Trạng thái', width: '140px', align: 'center', class: 'text-no-wrap' },
-    { text: 'Hành động', width: '120px', align: 'center', class: 'text-no-wrap' }
+    { text: 'Địa chỉ', width: '240px', align: 'start', class: 'text-no-wrap' },
+    { text: 'Chức vụ', width: '110px', align: 'center', class: 'text-no-wrap' },
+    { text: 'Trạng thái', width: '130px', align: 'center', class: 'text-no-wrap' },
+    { text: 'Hành động', width: '110px', align: 'center', class: 'text-no-wrap' }
 ];
 
 const handleRefresh = async () => {
@@ -125,15 +125,17 @@ const isAdminEmployee = (item) => {
 };
 
 const canChangeStatus = (item) => {
-    if (isSelf(item)) return false;
-    if (isAdminEmployee(item)) return false;
-    return true;
+    return !isSelf(item) && !isAdminEmployee(item);
 };
 
 const getStatusTooltipText = (item) => {
-    if (isSelf(item)) return NHAN_VIEN_MESSAGES.CANNOT_CHANGE_OWN_STATUS;
-    if (isAdminEmployee(item)) return NHAN_VIEN_MESSAGES.CANNOT_CHANGE_OTHER_ADMIN_STATUS;
-    return 'Chuyển đổi trạng thái';
+    if (isSelf(item)) {
+        return NHAN_VIEN_MESSAGES.CANNOT_CHANGE_OWN_STATUS;
+    }
+    if (isAdminEmployee(item)) {
+        return NHAN_VIEN_MESSAGES.CANNOT_CHANGE_OTHER_ADMIN_STATUS;
+    }
+    return isActiveStatus(item.trangThai) ? 'Chuyển sang ngừng hoạt động' : 'Chuyển sang đang hoạt động';
 };
 
 const confirmChangeStatus = (item) => {
@@ -248,12 +250,13 @@ onMounted(() => {
                         bg-color="white"
                         density="compact"
                         hide-details
+                        clearable
+                        class="compact-input"
                         prepend-inner-icon="mdi-magnify"
-                        @input="handleFilter"
-                        @keyup.enter="handleFilter"
+                        @update:model-value="handleFilter"
                     ></v-text-field>
                 </v-col>
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Giới tính</div>
                     <v-select
                         v-model="filters.gioiTinh"
@@ -266,7 +269,7 @@ onMounted(() => {
                         @update:model-value="handleFilter"
                     ></v-select>
                 </v-col>
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select
                         v-model="filters.trangThai"
@@ -296,28 +299,28 @@ onMounted(() => {
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell text-center">{{ getIndex(index) }}</td>
+                    <td class="data-cell text-center font-weight-medium">
+                        <div class="text-no-wrap" :title="item.ma">{{ item.ma || '-' }}</div>
+                    </td>
+                    <td class="data-cell text-left px-4">
+                        <div class="text-slate-800 font-weight-medium text-no-wrap" :title="item.ten">{{ item.ten || '-' }}</div>
+                    </td>
+                    <td class="data-cell text-left px-4">
+                        <div class="text-slate-800 font-weight-medium text-no-wrap" :title="item.tenTaiKhoan">{{ item.tenTaiKhoan || '-' }}</div>
+                        <div class="text-caption text-slate-500 text-no-wrap" :title="item.email">{{ item.email || '-' }}</div>
+                    </td>
                     <td class="data-cell text-center">
-                        <div class="text-truncate" :title="item.ma">{{ item.ma || '-' }}</div>
-                    </td>
-                    <td class="data-cell text-left px-4">
-                        <div class="text-slate-800 text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
-                    </td>
-                    <td class="data-cell text-left px-4">
-                        <div class="text-slate-800 text-truncate" :title="item.tenTaiKhoan">{{ item.tenTaiKhoan || '-' }}</div>
-                        <div class="text-caption text-slate-500 text-truncate" :title="item.email">{{ item.email || '-' }}</div>
-                    </td>
-                    <td class="data-cell">
                         <v-chip variant="flat" class="justify-center" :class="getGenderChipClass(item.gioiTinh)">
                             {{ getGenderLabel(item.gioiTinh) }}
                         </v-chip>
                     </td>
-                    <td class="data-cell px-4">
-                        <div class="d-flex align-center justify-center text-truncate text-slate-700" :title="item.sdt">
+                    <td class="data-cell px-4 text-center">
+                        <div class="d-flex align-center justify-center text-no-wrap text-slate-700" :title="item.sdt">
                             <v-icon size="14" class="mr-2 text-slate-400">mdi-phone</v-icon>
                             <span>{{ item.sdt || '-' }}</span>
                         </div>
                     </td>
-                    <td class="data-cell text-left px-4" style="min-width: 200px">
+                    <td class="data-cell text-left px-4" style="min-width: 220px">
                         <div class="text-slate-700" style="font-size: 13px; line-height: 1.4">
                             <span :class="{ 'text-slate-400': getAddressSummary(item) === 'Chưa cập nhật' }">
                                 {{ getAddressSummary(item) }}
@@ -326,7 +329,7 @@ onMounted(() => {
                     </td>
 
                     <td class="data-cell text-center">
-                        <div class="text-truncate" :title="item.tenPhanQuyen || 'Nhân viên'">
+                        <div class="text-no-wrap" :title="item.tenPhanQuyen || 'Nhân viên'">
                             {{ item.tenPhanQuyen || 'Nhân viên' }}
                         </div>
                     </td>
@@ -336,7 +339,7 @@ onMounted(() => {
                         </v-chip>
                     </td>
 
-                    <td class="data-cell action-cell">
+                    <td class="data-cell action-cell text-center">
                         <div class="d-flex align-center justify-center action-controls">
                             <v-btn variant="text" class="action-icon-btn" color="primary" @click.stop="goToEdit(item.id)">
                                 <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
