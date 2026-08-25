@@ -73,9 +73,29 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         NhanVien nv = getCurrentNhanVien().orElse(null);
         String idNhanVien = nv != null ? nv.getId() : null;
         String idGiaoCa = (nv != null) ? giaoCaRepository.findGiaoCaHienTai(nv.getId()).map(com.example.be.entity.GiaoCa::getId).orElse(null) : null;
-        return hoaDonRepository.findAllPendingPOSOrders(OrderStatus.CHO_XAC_NHAN, OrderType.IN_STORE, idNhanVien, idGiaoCa)
-                .stream().map(this::mapToHoaDonResponse).collect(Collectors.toList());
+        List<HoaDon> pendingOrders = hoaDonRepository.findAllPendingPOSOrders(OrderStatus.CHO_XAC_NHAN, OrderType.IN_STORE, idNhanVien, idGiaoCa);
+        if (pendingOrders.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        List<String> orderIds = pendingOrders.stream().map(HoaDon::getId).toList();
+        List<HoaDonChiTiet> allDetails = hoaDonChiTietRepository.findAllByHoaDonIdInWithDetails(orderIds);
+        Map<String, List<HoaDonChiTiet>> detailsByOrderId = allDetails.stream()
+                .filter(d -> d.getHoaDon() != null)
+                .collect(Collectors.groupingBy(d -> d.getHoaDon().getId()));
+
+        List<ChiTietSanPham> allVariants = allDetails.stream()
+                .map(HoaDonChiTiet::getChiTietSanPham)
+                .filter(Objects::nonNull)
+                .toList();
+        Map<String, List<ChiTietDotGiamGia>> discountMap = getDiscountRelationMap(allVariants);
+        List<PhieuGiamGia> activeVouchers = phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG);
+
+        return pendingOrders.stream()
+                .map(hd -> mapToHoaDonResponse(hd, detailsByOrderId.getOrDefault(hd.getId(), java.util.Collections.emptyList()), discountMap, activeVouchers))
+                .collect(Collectors.toList());
     }
+
 
     @Override
     @Transactional
@@ -689,11 +709,13 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Override
     public PhieuGiamGia getBestVoucher(String idHoaDon) {
         HoaDon hd = getHoaDonOrThrow(idHoaDon);
-        BigDecimal total = hd.getTongTien();
-        if (total == null || total.compareTo(BigDecimal.ZERO) <= 0) return null;
-
-        // Lấy tất cả voucher đang hoạt động
         List<PhieuGiamGia> allVouchers = phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG);
+        return getBestVoucher(hd, allVouchers);
+    }
+
+    private PhieuGiamGia getBestVoucher(HoaDon hd, List<PhieuGiamGia> allVouchers) {
+        BigDecimal total = hd.getTongTien();
+        if (total == null || total.compareTo(BigDecimal.ZERO) <= 0 || allVouchers == null || allVouchers.isEmpty()) return null;
 
         PhieuGiamGia bestVoucher = null;
         BigDecimal maxDiscount = BigDecimal.ZERO;
@@ -763,12 +785,16 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     }
 
     private PhieuGiamGia getNextBetterVoucher(HoaDon hd, PhieuGiamGia bestVoucher) {
+        List<PhieuGiamGia> allVouchers = phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG);
+        return getNextBetterVoucher(hd, bestVoucher, allVouchers);
+    }
+
+    private PhieuGiamGia getNextBetterVoucher(HoaDon hd, PhieuGiamGia bestVoucher, List<PhieuGiamGia> allVouchers) {
         BigDecimal total = hd.getTongTien();
         if (total == null) total = BigDecimal.ZERO;
 
         BigDecimal eligibleDiscount = bestVoucher != null ? getPotentialDiscount(bestVoucher, total) : BigDecimal.ZERO;
-
-        List<PhieuGiamGia> allVouchers = phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG);
+        if (allVouchers == null || allVouchers.isEmpty()) return null;
 
         PhieuGiamGia nextBest = null;
         BigDecimal maxPotentialDiscount = eligibleDiscount;
@@ -871,7 +897,6 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     /** Cap nhat tong tien hoa don moi khi gio hang/voucher thay doi. */
     private void updateHoaDonTotals(HoaDon hd, boolean autoSelectBestVoucher) {
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
-
         BigDecimal total = details.stream()
                 .map(d -> d.getDonGia().multiply(BigDecimal.valueOf(d.getSoLuong())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -971,7 +996,11 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .filter(Objects::nonNull)
                 .toList();
         Map<String, List<ChiTietDotGiamGia>> discountMap = getDiscountRelationMap(variants);
+        List<PhieuGiamGia> activeVouchers = phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG);
+        return mapToHoaDonResponse(hd, chiTietList, discountMap, activeVouchers);
+    }
 
+    private AdminBanHangHoaDonResponse mapToHoaDonResponse(HoaDon hd, List<HoaDonChiTiet> chiTietList, Map<String, List<ChiTietDotGiamGia>> discountMap, List<PhieuGiamGia> activeVouchers) {
         List<AdminBanHangHoaDonChiTietResponse> detailDTOs = chiTietList.stream()
                 .map(d -> {
                     ChiTietSanPham ct = d.getChiTietSanPham();
@@ -1069,7 +1098,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         }
 
         if (!chiTietList.isEmpty()) {
-            PhieuGiamGia bestVoucher = getBestVoucher(hd.getId());
+            PhieuGiamGia bestVoucher = getBestVoucher(hd, activeVouchers);
 
             if (bestVoucher != null) {
                 BigDecimal bestDisc = calculateVoucherDiscount(tongTien, bestVoucher);
@@ -1093,13 +1122,13 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                     }
                 }
             } else {
-                PhieuGiamGia nextBetterVoucher = getNextBetterVoucher(hd, null);
+                PhieuGiamGia nextBetterVoucher = getNextBetterVoucher(hd, null, activeVouchers);
                 if (nextBetterVoucher == null && !Boolean.TRUE.equals(voucherIneligible)) {
                     voucherSuggestionText = "Chưa có phiếu giảm giá phù hợp cho đơn hiện tại.";
                 }
             }
 
-            PhieuGiamGia nextBetterVoucher = getNextBetterVoucher(hd, bestVoucher);
+            PhieuGiamGia nextBetterVoucher = getNextBetterVoucher(hd, bestVoucher, activeVouchers);
             if (nextBetterVoucher != null) {
                 BigDecimal minVal = nextBetterVoucher.getDonHangToiThieu() != null ? nextBetterVoucher.getDonHangToiThieu() : BigDecimal.ZERO;
                 BigDecimal remaining = minVal.subtract(tongTien).max(BigDecimal.ZERO);

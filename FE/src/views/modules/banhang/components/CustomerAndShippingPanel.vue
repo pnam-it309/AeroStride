@@ -367,16 +367,16 @@ const {
     matchLocation
 } = useLocation({ allowFallback: true });
 
-onMounted(async () => {
-    await fetchProvincesShip();
+onMounted(() => {
+    fetchProvincesShip();
     if (recipientProvince.value) {
-        await fetchDistrictsShip(recipientProvince.value);
+        fetchDistrictsShip(recipientProvince.value);
     }
     if (recipientDistrict.value) {
-        await fetchWardsShip(recipientDistrict.value);
+        fetchWardsShip(recipientDistrict.value);
     }
     if (props.order?.idKhachHang) {
-        await fetchCustomerAddresses();
+        fetchCustomerAddresses();
     }
 });
 

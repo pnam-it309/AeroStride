@@ -850,11 +850,16 @@ const handleGlobalKeyDown = (e) => {
 };
 
 const loadCurrentEmployeeDetails = async () => {
+    if (banHangStore.employeeDetail) {
+        currentEmployeeDetail.value = banHangStore.employeeDetail;
+        return;
+    }
     try {
         if (authStore.user?.username) {
             const res = await dichVuNhanVien.layThongTinCaNhan();
             if (res) {
                 currentEmployeeDetail.value = res;
+                banHangStore.employeeDetail = res;
             }
         }
     } catch (e) {

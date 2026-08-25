@@ -10,12 +10,23 @@ import {
     getFallbackWards
 } from '@/constants/localLocations';
 
+// Singleton in-memory cache to prevent repeated 3-second network timeouts on every component mount
+let globalProvincesCache = null;
+const globalDistrictsCache = new Map();
+const globalWardsCache = new Map();
+
 export function useLocation(options = {}) {
     const allowFallback = options.allowFallback !== false;
-    const provinces = ref([]);
+    const initialProvinces = globalProvincesCache || LOCAL_PROVINCES.map((p) => ({
+        code: p.code,
+        name: p.name,
+        source: 'LOCAL'
+    }));
+    const provinces = ref(initialProvinces);
     const districts = ref([]);
     const wards = ref([]);
     const loadingLocations = ref({ provinces: false, districts: false, wards: false });
+
 
     // Hàm chuẩn hóa địa danh cực mạnh để khớp lệnh
     const cleanName = (s) => {
@@ -148,8 +159,9 @@ export function useLocation(options = {}) {
     };
 
     const fetchProvinces = async (forceRefresh = false) => {
-        // Neu da co du lieu live tu GHN va khong force thi khong can goi lai
-        if (provinces.value.length && !forceRefresh && provinces.value[0]?.source === 'GHN') {
+        // Neu da co du lieu cache va khong force thi lay tu cache ngay lap tuc
+        if (globalProvincesCache && globalProvincesCache.length && !forceRefresh) {
+            provinces.value = globalProvincesCache;
             return;
         }
 
@@ -166,10 +178,12 @@ export function useLocation(options = {}) {
                     source: 'GHN'
                 }))
                 .filter((p) => p.code && p.name);
+            globalProvincesCache = provinces.value;
         } catch (e) {
             logLocationFallback('GHN provinces unavailable, fallback to open-api / local.', e);
             if (!allowFallback) {
                 loadLocalProvinces();
+                globalProvincesCache = provinces.value;
                 return;
             }
             try {
@@ -177,9 +191,11 @@ export function useLocation(options = {}) {
             } catch (fallbackError) {
                 loadLocalProvinces();
             }
+            globalProvincesCache = provinces.value;
         } finally {
             if (!provinces.value.length) {
                 loadLocalProvinces();
+                globalProvincesCache = provinces.value;
             }
             loadingLocations.value.provinces = false;
         }
@@ -187,10 +203,16 @@ export function useLocation(options = {}) {
 
     const fetchDistricts = async (provinceCode) => {
         if (!provinceCode) return;
+        const pKey = String(provinceCode);
+        if (globalDistrictsCache.has(pKey)) {
+            districts.value = globalDistrictsCache.get(pKey);
+            return;
+        }
+
         loadingLocations.value.districts = true;
         districts.value = [];
         wards.value = [];
-        const selectedProvince = provinces.value.find((p) => String(p.code) === String(provinceCode));
+        const selectedProvince = provinces.value.find((p) => String(p.code) === pKey);
         try {
             // Neu tinh duoc chon dang la fallback OPEN_API hoac LOCAL thi thu goi GHN truoc neu co mang
             const res = await api.get(`${API_ADMIN.GHN}/districts`, { params: { provinceId: provinceCode }, silent: true, timeout: 3000 });
@@ -203,6 +225,7 @@ export function useLocation(options = {}) {
                     source: 'GHN'
                 }))
                 .filter((d) => d.code && d.name);
+            globalDistrictsCache.set(pKey, districts.value);
         } catch (e) {
             logLocationFallback('GHN districts unavailable, fallback to open-api / local.', e);
             if (selectedProvince?.source === 'LOCAL') {
@@ -210,9 +233,11 @@ export function useLocation(options = {}) {
             } else {
                 await loadFallbackDistricts(provinceCode, selectedProvince?.name);
             }
+            globalDistrictsCache.set(pKey, districts.value);
         } finally {
             if (!districts.value.length) {
                 loadLocalDistricts(provinceCode, selectedProvince?.name);
+                globalDistrictsCache.set(pKey, districts.value);
             }
             loadingLocations.value.districts = false;
         }
@@ -220,9 +245,15 @@ export function useLocation(options = {}) {
 
     const fetchWards = async (districtCode) => {
         if (!districtCode) return;
+        const dKey = String(districtCode);
+        if (globalWardsCache.has(dKey)) {
+            wards.value = globalWardsCache.get(dKey);
+            return;
+        }
+
         loadingLocations.value.wards = true;
         wards.value = [];
-        const selectedDistrict = districts.value.find((d) => String(d.code) === String(districtCode));
+        const selectedDistrict = districts.value.find((d) => String(d.code) === dKey);
         try {
             const res = await api.get(`${API_ADMIN.GHN}/wards`, { params: { districtId: districtCode }, silent: true, timeout: 3000 });
             const list = extractList(res);
@@ -234,6 +265,7 @@ export function useLocation(options = {}) {
                     source: 'GHN'
                 }))
                 .filter((w) => w.code && w.name);
+            globalWardsCache.set(dKey, wards.value);
         } catch (e) {
             logLocationFallback('GHN wards unavailable, fallback to open-api / local.', e);
             if (selectedDistrict?.source === 'LOCAL') {
@@ -241,9 +273,11 @@ export function useLocation(options = {}) {
             } else {
                 await loadFallbackWards(districtCode, selectedDistrict?.name);
             }
+            globalWardsCache.set(dKey, wards.value);
         } finally {
             if (!wards.value.length) {
                 loadLocalWards(districtCode, selectedDistrict?.name);
+                globalWardsCache.set(dKey, wards.value);
             }
             loadingLocations.value.wards = false;
         }
