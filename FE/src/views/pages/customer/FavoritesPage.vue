@@ -3,6 +3,8 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToastStore } from '@/stores/toastStore';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
+import { dichVuFile } from '@/services/core/dichVuFile';
+import defaultShoeImg from '@/assets/images/products/cat_speed.jpg';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 
@@ -11,28 +13,63 @@ const toastStore = useToastStore();
 const favoriteProducts = ref([]);
 const loading = ref(true);
 
-const fetchFavorites = async () => {
-    loading.value = true;
+const isAbsoluteUrl = (v) =>
+    typeof v !== 'string' ||
+    /^(https?:)?\/\//i.test(v) ||
+    v.startsWith('data:') ||
+    v.startsWith('blob:') ||
+    (v.startsWith('/') && !v.startsWith('/uploads/'));
+
+const getProductImage = (p) => {
+    const raw = p.hinhAnh || p.duongDanAnh || p.images?.[0]?.duongDanAnh;
+    if (!raw) return defaultShoeImg;
+    if (isAbsoluteUrl(raw)) return raw;
+    return dichVuFile.layUrlFile(raw.replace(/^\/+/, ''));
+};
+
+const getProductPrice = (p) => {
+    return p.minPrice ?? p.giaBanThapNhat ?? p.giaBan ?? 0;
+};
+
+const formatPrice = (price) => {
+    if (!price || isNaN(price)) return '0 ₫';
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+};
+
+const handleImageError = (e) => {
+    e.target.src = defaultShoeImg;
+};
+
+const fetchFavorites = async (silent = false) => {
+    if (!silent) loading.value = true;
     try {
         const favoriteIds = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
-        const promises = favoriteIds.map((id) => dichVuSanPhamPublic.layChiTietSanPham(id).catch(() => null));
+        if (favoriteIds.length === 0) {
+            favoriteProducts.value = [];
+            loading.value = false;
+            return;
+        }
+
+        const promises = favoriteIds.map((id) =>
+            dichVuSanPhamPublic.layChiTietSanPham(id).catch(() => null)
+        );
         const results = await Promise.all(promises);
 
         const validProducts = [];
         const validIds = [];
 
         results.forEach((p, index) => {
-            if (p !== null) {
+            if (p && p.id && (p.tenSanPham || p.ten)) {
                 validProducts.push(p);
-                validIds.push(favoriteIds[index]);
+                validIds.push(p.id);
             }
         });
 
         favoriteProducts.value = validProducts;
 
-        if (validIds.length !== favoriteIds.length) {
+        // Chỉ cập nhật lại localStorage nếu có sản phẩm bị xóa khỏi database, không bắn event lặp
+        if (validIds.length > 0 && validIds.length !== favoriteIds.length) {
             localStorage.setItem('aerostride_favorites', JSON.stringify(validIds));
-            window.dispatchEvent(new Event('favorites-updated'));
         }
     } catch (error) {
         console.error('Error fetching favorites:', error);
@@ -41,32 +78,31 @@ const fetchFavorites = async () => {
     }
 };
 
+const onFavoritesUpdated = () => {
+    fetchFavorites(true);
+};
+
 onMounted(() => {
     fetchFavorites();
-    window.addEventListener('favorites-updated', fetchFavorites);
+    window.addEventListener('favorites-updated', onFavoritesUpdated);
 });
 
 onUnmounted(() => {
-    window.removeEventListener('favorites-updated', fetchFavorites);
+    window.removeEventListener('favorites-updated', onFavoritesUpdated);
 });
-
-const formatPrice = (price) => {
-    if (!price) return '0 ₫';
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-};
 
 const goToDetail = (id) => {
     router.push(`/product/${id}`);
 };
 
 const removeFavorite = (id, event) => {
-    event.stopPropagation();
+    if (event) event.stopPropagation();
     let favorites = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
     favorites = favorites.filter((favId) => favId !== id);
     localStorage.setItem('aerostride_favorites', JSON.stringify(favorites));
     window.dispatchEvent(new Event('favorites-updated'));
     toastStore.showToast('Đã xoá khỏi danh sách yêu thích', 'info');
-    fetchFavorites();
+    fetchFavorites(true);
 };
 </script>
 
@@ -75,55 +111,96 @@ const removeFavorite = (id, event) => {
         <MainHeader />
         <div class="header-spacing" style="height: 104px"></div>
 
-        <v-container class="py-12 flex-grow-1">
-            <h1 class="text-h4 font-weight-black mb-2">Danh Sách Yêu Thích</h1>
-            <p class="text-body-1 text-grey-darken-1 mb-8">Những mẫu giày bạn đã thả tim sẽ được lưu tại đây.</p>
+        <v-container class="py-10 flex-grow-1">
+            <div class="d-flex align-center justify-space-between mb-6">
+                <div>
+                    <h1 class="text-h4 font-weight-black text-grey-darken-4 mb-1">Danh Sách Yêu Thích</h1>
+                    <p class="text-body-1 text-grey-darken-1">
+                        Những mẫu giày bạn đã thả tim sẽ được lưu giữ tại đây ({{ favoriteProducts.length }} sản phẩm).
+                    </p>
+                </div>
+                <v-btn
+                    v-if="favoriteProducts.length > 0"
+                    variant="outlined"
+                    color="primary"
+                    prepend-icon="mdi-shopping-outline"
+                    rounded="pill"
+                    class="font-weight-bold"
+                    @click="router.push('/shoes')"
+                >
+                    Xem thêm mẫu khác
+                </v-btn>
+            </div>
 
+            <!-- Loading State -->
             <v-row v-if="loading">
                 <v-col v-for="i in 4" :key="i" cols="12" sm="6" md="4" lg="3">
-                    <v-skeleton-loader type="image, article"></v-skeleton-loader>
+                    <v-skeleton-loader type="image, article" class="rounded-xl"></v-skeleton-loader>
                 </v-col>
             </v-row>
 
+            <!-- Product Grid -->
             <v-row v-else-if="favoriteProducts.length > 0">
                 <v-col v-for="p in favoriteProducts" :key="p.id" cols="12" sm="6" md="4" lg="3">
-                    <div class="cursor-pointer position-relative product-card" @click="goToDetail(p.id)">
+                    <div class="product-fav-card bg-white rounded-xl pa-3 position-relative elevation-1" @click="goToDetail(p.id)">
                         <!-- Nút Xoá Yêu Thích -->
-                        <v-btn
-                            icon="mdi-heart"
-                            color="red"
-                            variant="flat"
-                            size="small"
-                            class="favorite-btn"
+                        <button
+                            type="button"
+                            class="fav-remove-btn"
+                            title="Bỏ yêu thích"
                             @click="(e) => removeFavorite(p.id, e)"
-                        ></v-btn>
-
-                        <div
-                            class="rounded-xl bg-grey-lighten-4 mb-4 overflow-hidden d-flex align-center justify-center"
-                            style="aspect-ratio: 1"
                         >
-                            <v-img :src="p.images?.[0]?.duongDanAnh || p.hinhAnh || ''" cover class="fill-height"></v-img>
+                            <v-icon color="red" size="20">mdi-heart</v-icon>
+                        </button>
+
+                        <!-- Box Ảnh Sản Phẩm -->
+                        <div class="product-img-box rounded-lg bg-grey-lighten-4 mb-3 overflow-hidden d-flex align-center justify-center">
+                            <img
+                                :src="getProductImage(p)"
+                                :alt="p.tenSanPham"
+                                class="fav-shoe-img"
+                                referrerpolicy="no-referrer"
+                                @error="handleImageError"
+                            />
                         </div>
 
+                        <!-- Thông tin sản phẩm -->
                         <div class="px-1 text-left">
-                            <div class="text-caption font-weight-bold text-uppercase text-grey-darken-2 mb-1">
-                                {{ p.tenThuongHieu || 'NIKE' }}
+                            <div class="text-caption font-weight-bold text-uppercase text-primary mb-1">
+                                {{ p.tenThuongHieu || 'AEROSTRIDE' }}
                             </div>
-                            <h3 class="text-subtitle-1 font-weight-black text-black mb-1 text-truncate">{{ p.tenSanPham }}</h3>
-                            <div class="text-subtitle-1 font-weight-black text-black">{{ formatPrice(p.giaBanThapNhat) }}</div>
+                            <h3 class="text-subtitle-1 font-weight-bold text-grey-darken-4 mb-2 text-truncate" :title="p.tenSanPham">
+                                {{ p.tenSanPham }}
+                            </h3>
+                            <div class="d-flex align-center justify-space-between">
+                                <span class="text-h6 font-weight-black text-black">
+                                    {{ formatPrice(getProductPrice(p)) }}
+                                </span>
+                                <v-btn
+                                    size="small"
+                                    color="#1e257c"
+                                    variant="tonal"
+                                    rounded="pill"
+                                    class="px-3 text-caption font-weight-bold"
+                                    @click.stop="goToDetail(p.id)"
+                                >
+                                    Xem ngay
+                                </v-btn>
+                            </div>
                         </div>
                     </div>
                 </v-col>
             </v-row>
 
-            <div v-else class="text-center py-16 bg-white rounded-xl elevation-1">
-                <v-icon size="80" color="grey-lighten-2" class="mb-4">mdi-heart-broken-outline</v-icon>
-                <h2 class="text-h5 font-weight-bold mb-2">Chưa có sản phẩm nào</h2>
-                <p class="text-body-1 text-grey-darken-1 mb-6">
-                    Bạn chưa thả tim mẫu giày nào. Hãy khám phá và thêm vào danh sách yêu thích nhé!
+            <!-- Empty State -->
+            <div v-else class="text-center py-16 bg-white rounded-xl elevation-1 mt-4">
+                <v-icon size="88" color="grey-lighten-2" class="mb-4">mdi-heart-broken-outline</v-icon>
+                <h2 class="text-h5 font-weight-black text-grey-darken-3 mb-2">Chưa có sản phẩm yêu thích nào</h2>
+                <p class="text-body-1 text-grey-darken-1 mb-6 max-w-500 mx-auto">
+                    Bạn chưa thả tim mẫu giày nào. Hãy khám phá ngay bộ sưu tập giày thể thao AeroStride để chọn cho mình đôi giày ưng ý nhất!
                 </p>
-                <v-btn color="black" size="large" rounded="pill" class="px-8 font-weight-bold" @click="router.push('/shoes')">
-                    Khám phá ngay
+                <v-btn color="#1e257c" size="large" rounded="pill" class="px-8 font-weight-bold text-white elevation-2" @click="router.push('/shoes')">
+                    Khám phá sản phẩm ngay
                 </v-btn>
             </div>
         </v-container>
@@ -133,22 +210,57 @@ const removeFavorite = (id, event) => {
 </template>
 
 <style scoped>
-.favorite-btn {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 2;
-}
-
-.product-card {
+.product-fav-card {
     cursor: pointer;
-    transition:
-        transform 0.3s ease,
-        box-shadow 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+.product-fav-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+.fav-remove-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.fav-remove-btn:hover {
+    transform: scale(1.15);
+    background-color: #fff0f0;
+}
+
+.product-img-box {
+    aspect-ratio: 1;
+    width: 100%;
+}
+
+.fav-shoe-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.product-fav-card:hover .fav-shoe-img {
+    transform: scale(1.06);
+}
+
+.max-w-500 {
+    max-width: 500px;
 }
 </style>
