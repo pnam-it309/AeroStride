@@ -3,8 +3,9 @@
  */
 
 import React from 'react';
-import { StyleSheet, View, Text, useColorScheme } from 'react-native';
+import { StyleSheet, View, Text, useColorScheme, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { BlurView } from 'expo-blur';
 import { Colors, Brand, FontSizes, FontWeights } from '@/constants/theme';
@@ -14,7 +15,11 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = isDark ? Colors.dark : Colors.light;
+  const insets = useSafeAreaInsets();
   const { cartCount } = useCart();
+
+  const bottomInset = Math.max(insets.bottom, Platform.OS === 'android' ? 12 : 8);
+  const tabHeight = 52 + bottomInset;
 
   return (
     <Tabs
@@ -25,8 +30,8 @@ export default function TabLayout() {
           backgroundColor: 'transparent',
           borderTopColor: 'rgba(255, 255, 255, 0.1)',
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 6,
+          height: tabHeight,
+          paddingBottom: bottomInset,
           paddingTop: 6,
           elevation: 0,
         },

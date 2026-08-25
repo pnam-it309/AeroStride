@@ -406,7 +406,7 @@ export default function CheckoutScreen() {
           {
             backgroundColor: theme.surface,
             borderTopColor: theme.border,
-            paddingBottom: insets.bottom + Spacing.two,
+            paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 14 : 8) + Spacing.two,
           },
         ]}
       >

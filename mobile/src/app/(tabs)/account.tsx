@@ -12,6 +12,7 @@ import { Brand, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constant
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/context/AuthContext';
 import { useFeedback } from '@/context/FeedbackContext';
+import { triggerAppUpdateCheck } from '@/components/UpdateModal';
 
 interface MenuItemProps {
   icon: React.ComponentProps<typeof Ionicons>['name'];
@@ -167,6 +168,13 @@ export default function AccountScreen() {
           subtitle="Trung tâm hỗ trợ"
           onPress={() => router.push('/help' as any)}
           color={Brand.success}
+        />
+        <MenuItem
+          icon="sync-outline"
+          label="Kiểm tra bản cập nhật"
+          subtitle="Cập nhật tính năng & sửa lỗi"
+          onPress={() => triggerAppUpdateCheck(true)}
+          color={Brand.primary}
         />
         <MenuItem
           icon="information-circle-outline"

@@ -88,7 +88,10 @@ export default function LoginScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: insets.top + Spacing.four, paddingBottom: insets.bottom + Spacing.four },
+            {
+              paddingTop: insets.top + Spacing.four,
+              paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 14 : 8) + Spacing.four,
+            },
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}

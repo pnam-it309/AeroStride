@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { StyleSheet, View, Text, FlatList, Pressable } from 'react-native';
+import { StyleSheet, View, Text, FlatList, Pressable, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -37,14 +37,16 @@ export default function CartScreen() {
           <Text style={[styles.title, { color: theme.text }]}>Giỏ hàng</Text>
         </View>
         <View style={styles.emptyContainer}>
-          <Ionicons name="cart-outline" size={64} color={theme.textTertiary} />
-          <Text style={[styles.emptyTitle, { color: theme.text }]}>Giỏ hàng trống</Text>
+          <Ionicons name="bag-outline" size={64} color={theme.textTertiary} />
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>
+            Giỏ hàng trống
+          </Text>
           <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
-            Hãy thêm sản phẩm yêu thích vào giỏ hàng
+            Hãy khám phá các mẫu giày thể thao mới nhất
           </Text>
           <Pressable
-            style={({ pressed }) => [styles.shopButton, { opacity: pressed ? 0.8 : 1 }]}
-            onPress={() => router.push('/shop' as any)}
+            style={styles.shopButton}
+            onPress={() => router.push('/(tabs)/shop' as any)}
           >
             <Text style={styles.shopButtonText}>Mua sắm ngay</Text>
           </Pressable>
@@ -52,6 +54,8 @@ export default function CartScreen() {
       </View>
     );
   }
+
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 12 : 8) + 68;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
@@ -85,7 +89,7 @@ export default function CartScreen() {
           {
             backgroundColor: theme.surface,
             borderTopColor: theme.border,
-            paddingBottom: insets.bottom + Spacing.two,
+            paddingBottom: bottomPadding,
           },
         ]}
       >

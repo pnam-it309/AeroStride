@@ -1,7 +1,4 @@
-/**
- * Root Layout - wraps entire app with providers
- */
-
+import { useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
@@ -9,12 +6,14 @@ import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { FeedbackProvider } from '@/context/FeedbackContext';
 import { UpdateModal } from '@/components/UpdateModal';
+import { AppSplashScreen } from '@/components/AppSplashScreen';
 import { Colors } from '@/constants/theme';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const theme = isDark ? Colors.dark : Colors.light;
+  const [splashFinished, setSplashFinished] = useState(false);
 
   return (
     <FeedbackProvider>
@@ -62,6 +61,9 @@ export default function RootLayout() {
               }}
             />
           </Stack>
+          {!splashFinished && (
+            <AppSplashScreen onFinish={() => setSplashFinished(true)} />
+          )}
         </CartProvider>
       </AuthProvider>
     </FeedbackProvider>

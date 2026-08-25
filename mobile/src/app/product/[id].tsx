@@ -10,6 +10,7 @@ import {
   ScrollView,
   Pressable,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -486,7 +487,7 @@ export default function ProductDetailScreen() {
           {
             backgroundColor: theme.surface,
             borderTopColor: theme.border,
-            paddingBottom: insets.bottom + Spacing.two,
+            paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 14 : 8) + Spacing.two,
           },
         ]}
       >
