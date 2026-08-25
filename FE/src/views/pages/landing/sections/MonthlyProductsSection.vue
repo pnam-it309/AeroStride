@@ -42,10 +42,24 @@ const formatPrice = (v) => {
     return new Intl.NumberFormat('vi-VN').format(v) + ' đ';
 };
 
-// Hiển thị từng biến thể riêng lẻ (mỗi card = 1 biến thể cụ thể)
+// Hiển thị từng sản phẩm tiêu biểu (tránh trùng lặp biến thể của cùng một sản phẩm cha)
 const displayProducts = computed(() => {
     if (!props.variants || props.variants.length === 0) return [];
-    return props.variants.slice(0, 4).map((v) => ({
+
+    const seen = new Set();
+    const uniqueList = [];
+    for (const v of props.variants) {
+        if (!v) continue;
+        const prodId = v.idSanPham || v.sanPhamId || v.id;
+        const prodName = (v.tenSanPham || '').trim().toLowerCase();
+        const key = prodId ? `id_${prodId}` : `name_${prodName}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            uniqueList.push(v);
+        }
+    }
+
+    return uniqueList.slice(0, 4).map((v) => ({
         id: v.id,
         idSanPham: v.idSanPham,
         maSanPham: v.maSanPham,

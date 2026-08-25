@@ -209,19 +209,23 @@ const isAbsoluteUrl = (v) =>
 
 const isInvalidImage = (v) => {
     if (!v || typeof v !== 'string') return true;
-    const lower = v.toLowerCase();
+    const lower = v.toLowerCase().trim();
+    if (!lower || lower === 'null' || lower === 'undefined' || lower === '[object object]' || lower === 'string') return true;
     return lower.includes('via.placeholder.com') || lower.includes('placeholder.com') || lower.includes('dummyimage.com');
 };
 
 const resolveImg = (v) => {
     if (!v || isInvalidImage(v)) return '';
-    if (typeof v !== 'string') return v;
-    if (isAbsoluteUrl(v)) return v;
-    return dichVuFile.layUrlFile(v);
+    if (typeof v !== 'string') return '';
+    const clean = v.trim();
+    if (isAbsoluteUrl(clean)) return clean;
+    return dichVuFile.layUrlFile(clean.replace(/^\/+/, ''));
 };
 
 const getValidImgUrl = (raw) => {
-    const resolved = resolveImg(raw);
+    if (!raw) return null;
+    let url = typeof raw === 'object' ? (raw.duongDanAnh || raw.hinhAnh || raw.url || '') : raw;
+    const resolved = resolveImg(url);
     return resolved && !isInvalidImage(resolved) ? resolved : null;
 };
 
@@ -385,31 +389,61 @@ const placeholderAngles = ['Ảnh chính', 'Mặt bên', 'Đế giày', 'Góc sa
 
 const allImages = computed(() => {
     const images = [];
+    const addedUrls = new Set();
 
-    // Thêm ảnh đại diện của sản phẩm
-    const mainImg = getValidImgUrl(product.value?.hinhAnh);
-    if (mainImg) {
-        images.push({ duongDanAnh: mainImg, label: 'Ảnh chính' });
-    }
+    const addImg = (url, label) => {
+        const resolved = getValidImgUrl(url);
+        if (resolved && !addedUrls.has(resolved)) {
+            addedUrls.add(resolved);
+            images.push({ duongDanAnh: resolved, label: label || 'Hình ảnh' });
+        }
+    };
 
-    // Thêm ảnh của các biến thể
-    if (product.value?.variants) {
-        product.value.variants.forEach((v) => {
+    if (selectedColor.value && product.value?.variants) {
+        // Khi đã chọn màu sắc: CHỈ hiển thị hình ảnh thuộc biến thể / màu sắc đang chọn
+        const colorVariants = product.value.variants.filter((v) => v.tenMauSac === selectedColor.value);
+
+        // 1. Ưu tiên ảnh của biến thể đang chọn nếu có
+        if (selectedVariant.value) {
+            const v = selectedVariant.value;
+            if (v.hinhAnh) addImg(v.hinhAnh, `Màu ${v.tenMauSac}`);
             if (v.images && v.images.length > 0) {
-                v.images.forEach((img) => {
-                    const url = getValidImgUrl(img.duongDanAnh || img.hinhAnh || img.url);
-                    if (url && !images.find((i) => i.duongDanAnh === url)) {
-                        images.push({ duongDanAnh: url, label: v.tenMauSac ? `Màu ${v.tenMauSac}` : 'Ảnh biến thể' });
-                    }
-                });
+                v.images.forEach((img) => addImg(img.duongDanAnh || img.hinhAnh || img.url, `Màu ${v.tenMauSac}`));
             }
-            if (v.hinhAnh) {
-                const url = getValidImgUrl(v.hinhAnh);
-                if (url && !images.find((i) => i.duongDanAnh === url)) {
-                    images.push({ duongDanAnh: url, label: v.tenMauSac ? `Màu ${v.tenMauSac}` : 'Ảnh biến thể' });
-                }
+        }
+
+        // 2. Thêm tất cả ảnh của màu sắc này
+        colorVariants.forEach((v) => {
+            if (v.hinhAnh) addImg(v.hinhAnh, `Màu ${v.tenMauSac}`);
+            if (v.images && v.images.length > 0) {
+                v.images.forEach((img) => addImg(img.duongDanAnh || img.hinhAnh || img.url, `Màu ${v.tenMauSac}`));
             }
         });
+
+        // 3. Fallback ảnh sản phẩm chính nếu biến thể chưa có ảnh riêng
+        if (images.length === 0 && product.value?.hinhAnh) {
+            addImg(product.value.hinhAnh, 'Ảnh chính');
+        }
+    } else {
+        // Khi chưa chọn màu sắc:
+        // 1. Ảnh chính của sản phẩm
+        if (product.value?.hinhAnh) {
+            addImg(product.value.hinhAnh, 'Ảnh chính');
+        }
+
+        // 2. Mỗi màu sắc chỉ lấy 1 ảnh đại diện (tránh gom hết tất cả ảnh của mọi màu)
+        if (product.value?.variants) {
+            const seenColors = new Set();
+            product.value.variants.forEach((v) => {
+                if (v.tenMauSac && !seenColors.has(v.tenMauSac)) {
+                    seenColors.add(v.tenMauSac);
+                    const raw = v.hinhAnh || (v.images && v.images.length > 0 ? v.images[0].duongDanAnh || v.images[0].hinhAnh : null);
+                    if (raw) {
+                        addImg(raw, `Màu ${v.tenMauSac}`);
+                    }
+                }
+            });
+        }
     }
 
     if (images.length === 0) {

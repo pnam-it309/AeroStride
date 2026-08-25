@@ -253,6 +253,21 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                        .collect(java.util.stream.Collectors.toList());
         });
 
+        String productMainImg = sp.getHinhAnh();
+        if (productMainImg == null || productMainImg.trim().isEmpty() || productMainImg.equalsIgnoreCase("null") || productMainImg.equalsIgnoreCase("undefined")) {
+            for (CustomerProductVariantResponse v : variantResponses) {
+                if (v.getImages() != null && !v.getImages().isEmpty()) {
+                    for (var img : v.getImages()) {
+                        if (img != null && img.getDuongDanAnh() != null && !img.getDuongDanAnh().trim().isEmpty() && !img.getDuongDanAnh().equalsIgnoreCase("null")) {
+                            productMainImg = img.getDuongDanAnh();
+                            break;
+                        }
+                    }
+                    if (productMainImg != null) break;
+                }
+            }
+        }
+
         return CustomerProductDetailResponse.builder()
                 .id(sp.getId())
                 .maSanPham(sp.getMa())
@@ -272,7 +287,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 .gioiTinhKhachHang(sp.getGioiTinhKhachHang())
                 .moTaNgan(sp.getMoTaChiTiet())
                 .moTaChiTiet(sp.getMoTaChiTiet())
-                .hinhAnh(sp.getHinhAnh())
+                .hinhAnh(productMainImg)
                 .trangThai(sp.getTrangThai())
                 .ngayTao(sp.getNgayTao())
                 .nguoiTao(sp.getNguoiTao())

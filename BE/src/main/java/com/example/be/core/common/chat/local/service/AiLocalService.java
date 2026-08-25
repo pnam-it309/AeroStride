@@ -540,15 +540,17 @@ public class AiLocalService {
         for (ProductVariantResponse v : variants) {
             String name = v.getTenSanPham() != null ? v.getTenSanPham() : v.getTenSanPhamDayDu();
             String brand = v.getTenThuongHieu() != null ? v.getTenThuongHieu() : "AeroStride";
-            BigDecimal price = v.getGiaBan() != null ? v.getGiaBan() : v.getGiaGoc();
-            String priceStr = price != null ? currencyFormat.format(price) : "Liên hệ";
+            BigDecimal finalPrice = v.getGiaBan() != null ? v.getGiaBan() : v.getGiaGoc();
+            String priceStr = finalPrice != null ? currencyFormat.format(finalPrice) : "Liên hệ";
 
             sb.append("• **").append(name).append("** (Hãng: ").append(brand).append(")\n");
-            sb.append("   - Giá ưu đãi: **").append(priceStr).append("**");
             if (v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(BigDecimal.ZERO) > 0) {
-                sb.append(" (Giảm ").append(v.getPhanTramGiam().stripTrailingZeros().toPlainString()).append("%)");
+                BigDecimal origPrice = v.getGiaGoc() != null ? v.getGiaGoc() : finalPrice;
+                sb.append("   - Giá đang giảm: **").append(priceStr).append("**");
+                sb.append(" (Giá gốc: ~~").append(currencyFormat.format(origPrice)).append("~~, Giảm **-").append(v.getPhanTramGiam().stripTrailingZeros().toPlainString()).append("%** trong Đợt giảm giá)\n");
+            } else {
+                sb.append("   - Giá bán: **").append(priceStr).append("**\n");
             }
-            sb.append("\n");
             if (v.getTenChatLieu() != null) {
                 sb.append("   - Chất liệu: ").append(v.getTenChatLieu()).append("\n");
             }
@@ -580,6 +582,7 @@ public class AiLocalService {
                     map.put("idSanPham", pId);
                     map.put("tenSanPham", v.getTenSanPham() != null ? v.getTenSanPham() : v.getTenSanPhamDayDu());
                     map.put("giaBan", v.getGiaBan() != null ? v.getGiaBan() : v.getGiaGoc());
+                    map.put("giaGoc", v.getGiaGoc());
                     map.put("tenThuongHieu", v.getTenThuongHieu() != null ? v.getTenThuongHieu() : "AeroStride");
 
                     String imgUrl = v.getHinhAnh();

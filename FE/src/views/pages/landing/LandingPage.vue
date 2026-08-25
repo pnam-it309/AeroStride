@@ -158,36 +158,74 @@ const categoryCardImages = computed(() => {
     };
 });
 
-const mapToCard = (item) => {
+const mapToCard = (item, type = 'NEW') => {
     let raw = item.hinhAnh ?? item.imageUrl ?? item.hinhAnhDaiDien ?? item.urlHinhAnh ?? item.sanPham?.hinhAnh;
+    if (!raw && item.images && item.images.length > 0) {
+        raw = item.images[0]?.duongDanAnh || item.images[0]?.hinhAnh || item.images[0];
+    }
+    if (!raw && item.variants && item.variants.length > 0) {
+        const v = item.variants[0];
+        raw = v.hinhAnh || (v.images && v.images.length > 0 ? v.images[0].duongDanAnh || v.images[0].hinhAnh : null);
+    }
+    if (!raw && item.raw) {
+        raw = item.raw.hinhAnh || (item.raw.images && item.raw.images.length > 0 ? item.raw.images[0] : null);
+    }
     let resolved = resolveImg(raw);
     if (!resolved) {
         resolved = DEFAULT_SHOE_IMAGE;
     }
+    const phanTram = Number(item.phanTramGiam ?? item.giamGia ?? 0);
+    const giaBan = Number(item.giaBanThapNhat ?? item.giaBan ?? item.gia ?? 0);
+    const giaGoc = item.giaGoc ? Number(item.giaGoc) : (phanTram > 0 ? giaBan / (1 - phanTram / 100) : null);
+
     return {
         id: item.idSanPham ?? item.sanPhamId ?? item.id,
         tenSanPham: item.tenSanPham ?? item.title ?? item.sanPham?.tenSanPham ?? item.tenBienThe ?? 'Sản phẩm',
         tenThuongHieu: item.tenThuongHieu ?? item.subtitle ?? item.sanPham?.tenThuongHieu ?? item.thuongHieu?.ten ?? 'AeroStride',
         hinhAnh: resolved,
-        giaBanThapNhat: item.giaBanThapNhat ?? item.giaBan ?? item.gia ?? 0,
-        phanTramGiam: Number(item.phanTramGiam ?? item.giamGia ?? 0)
+        giaBanThapNhat: giaBan,
+        giaGoc: giaGoc,
+        phanTramGiam: phanTram,
+        badgeType: type
     };
+};
+
+const deduplicateProducts = (items) => {
+    if (!Array.isArray(items)) return [];
+    const seen = new Set();
+    const result = [];
+    for (const item of items) {
+        if (!item) continue;
+        const prodId = item.idSanPham || item.sanPhamId || item.raw?.id || item.id;
+        const prodName = (item.tenSanPham || item.title || '').trim().toLowerCase();
+        const key = prodId ? `id_${prodId}` : `name_${prodName}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            result.push(item);
+        }
+    }
+    return result;
 };
 
 const displayedProducts = computed(() => {
     let source = [];
+    let badgeType = 'NEW';
 
     if (activeTab.value === 'MỚI NHẤT') {
         source = newestProducts.value;
+        badgeType = 'NEW';
     } else if (activeTab.value === 'BÁN CHẠY') {
         source = topVariantsByQty.value || [];
+        badgeType = 'HOT';
     } else if (activeTab.value === 'ĐANG GIẢM GIÁ') {
         source = discountedVariants.value?.length
             ? discountedVariants.value
             : (featuredVariants.value || []).filter((item) => Number(item.phanTramGiam ?? item.giamGia ?? 0) > 0);
+        badgeType = 'DISCOUNT';
     }
 
-    return source.slice(0, 4).map(mapToCard);
+    const uniqueProducts = deduplicateProducts(source);
+    return uniqueProducts.slice(0, 8).map((item) => mapToCard(item, badgeType));
 });
 
 const noProductsMessage = computed(() => {
@@ -389,14 +427,27 @@ const scrollToCategories = () => {
                                 @error="handleImageError"
                             />
 
-                            <!-- Sale percent badge -->
-                            <div v-if="product.phanTramGiam > 0" class="sale-tag-badge">-{{ product.phanTramGiam }}%</div>
+                            <!-- Dynamic Badge per Tab / Discount Status -->
+                            <div v-if="product.phanTramGiam > 0" class="sale-tag-badge badge-discount">
+                                -{{ Math.round(product.phanTramGiam) }}%
+                            </div>
+                            <div v-else-if="product.badgeType === 'NEW'" class="sale-tag-badge badge-new">
+                                ✨ MỚI
+                            </div>
+                            <div v-else-if="product.badgeType === 'HOT'" class="sale-tag-badge badge-hot">
+                                🔥 BÁN CHẠY
+                            </div>
                         </div>
 
                         <!-- Info Section -->
                         <div class="card-details-box">
                             <div class="brand-favorite-row">
-                                <span class="product-brand-tag">{{ product.tenThuongHieu }}</span>
+                                <div class="d-flex align-center" style="gap: 6px">
+                                    <span class="product-brand-tag">{{ product.tenThuongHieu }}</span>
+                                    <span v-if="product.phanTramGiam > 0" class="category-sub-chip chip-discount">Giảm giá</span>
+                                    <span v-else-if="product.badgeType === 'NEW'" class="category-sub-chip chip-new">Mới về</span>
+                                    <span v-else-if="product.badgeType === 'HOT'" class="category-sub-chip chip-hot">Bán chạy</span>
+                                </div>
                                 <div class="favorite-heart-btn" @click.stop="(e) => toggleFavorite(product.id, e)">
                                     <v-icon :color="isFavorite(product.id) ? 'red' : 'grey-darken-1'" size="22">
                                         {{ isFavorite(product.id) ? 'mdi-heart' : 'mdi-heart-outline' }}
@@ -405,9 +456,11 @@ const scrollToCategories = () => {
                             </div>
                             <h3 class="product-name-title">{{ product.tenSanPham }}</h3>
                             <div class="price-section-row">
-                                <span class="current-price-text">{{ formatPrice(product.giaBanThapNhat) }}</span>
-                                <span v-if="product.phanTramGiam > 0" class="old-price-text">
-                                    {{ formatPrice(product.giaBanThapNhat / (1 - product.phanTramGiam / 100)) }}
+                                <span class="current-price-text" :class="{ 'text-discount-red': product.phanTramGiam > 0 }">
+                                    {{ formatPrice(product.giaBanThapNhat) }}
+                                </span>
+                                <span v-if="product.phanTramGiam > 0 && product.giaGoc" class="old-price-text">
+                                    {{ formatPrice(product.giaGoc) }}
                                 </span>
                             </div>
                         </div>
@@ -891,13 +944,55 @@ const scrollToCategories = () => {
     position: absolute;
     top: 12px;
     left: 12px;
-    background: #ff3d00;
     color: #ffffff;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 800;
     padding: 3px 8px;
     border-radius: 8px;
-    box-shadow: 0 3px 6px rgba(255, 61, 0, 0.2);
+    letter-spacing: 0.3px;
+
+    &.badge-discount {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
+    }
+
+    &.badge-new {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.35);
+    }
+
+    &.badge-hot {
+        background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+        box-shadow: 0 4px 10px rgba(249, 115, 22, 0.35);
+    }
+}
+
+.category-sub-chip {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+
+    &.chip-discount {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    &.chip-new {
+        background: #d1fae5;
+        color: #059669;
+    }
+
+    &.chip-hot {
+        background: #ffedd5;
+        color: #ea580c;
+    }
+}
+
+.text-discount-red {
+    color: #dc2626 !important;
 }
 
 .card-details-box {

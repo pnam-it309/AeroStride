@@ -82,11 +82,25 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
 
     @Override
     public List<CustomerLandingVariantResponse> getFeaturedVariants(Integer size) {
-        Pageable pageable = PageRequest.of(0, size, Sort.by("ngayTao").descending());
-        List<ChiTietSanPham> variants = chiTietSanPhamRepository
+        Pageable pageable = PageRequest.of(0, 100, Sort.by("ngayTao").descending());
+        List<ChiTietSanPham> allVariants = chiTietSanPhamRepository
                 .findByXoaMemFalseAndTrangThai(TrangThai.DANG_HOAT_DONG, pageable);
 
-        if (variants.isEmpty()) return Collections.emptyList();
+        if (allVariants.isEmpty()) return Collections.emptyList();
+
+        // Gom nhóm theo Sản Phẩm cha để tránh trùng lặp nhiều biến thể của 1 sản phẩm
+        Map<String, ChiTietSanPham> distinctByProduct = allVariants.stream()
+                .filter(v -> v.getSanPham() != null)
+                .collect(Collectors.toMap(
+                        v -> v.getSanPham().getId(),
+                        v -> v,
+                        (existing, replacement) -> existing,
+                        java.util.LinkedHashMap::new
+                ));
+
+        List<ChiTietSanPham> variants = distinctByProduct.values().stream()
+                .limit(size != null ? size : 12)
+                .toList();
 
         List<String> ids = variants.stream().map(ChiTietSanPham::getId).toList();
 
@@ -165,12 +179,18 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
             return Collections.emptyList();
         }
 
-        List<ChiTietSanPham> variants = activeDiscounts.stream()
+        // Gom nhóm theo Sản Phẩm cha để mỗi sản phẩm chỉ hiển thị 1 biến thể giảm giá tiêu biểu
+        Map<String, ChiTietSanPham> distinctByProduct = activeDiscounts.stream()
                 .map(ChiTietDotGiamGia::getChiTietSanPham)
-                .filter(v -> v != null && !Boolean.TRUE.equals(v.getXoaMem()) && v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                .collect(Collectors.toMap(ChiTietSanPham::getId, v -> v, (existing, replacement) -> existing, java.util.LinkedHashMap::new))
-                .values()
-                .stream()
+                .filter(v -> v != null && !Boolean.TRUE.equals(v.getXoaMem()) && v.getTrangThai() == TrangThai.DANG_HOAT_DONG && v.getSanPham() != null)
+                .collect(Collectors.toMap(
+                        v -> v.getSanPham().getId(),
+                        v -> v,
+                        (existing, replacement) -> existing,
+                        java.util.LinkedHashMap::new
+                ));
+
+        List<ChiTietSanPham> variants = distinctByProduct.values().stream()
                 .limit(size != null ? size : 12)
                 .toList();
 
@@ -247,11 +267,25 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
 
     @Override
     public List<CustomerLandingVariantResponse> getTopVariantsByQuantity(Integer size) {
-        Pageable pageable = PageRequest.of(0, size, Sort.by("soLuong").descending());
-        List<ChiTietSanPham> variants = chiTietSanPhamRepository
+        Pageable pageable = PageRequest.of(0, 100, Sort.by("soLuong").descending());
+        List<ChiTietSanPham> allTopVariants = chiTietSanPhamRepository
                 .findByXoaMemFalseAndTrangThai(TrangThai.DANG_HOAT_DONG, pageable);
 
-        if (variants.isEmpty()) return Collections.emptyList();
+        if (allTopVariants.isEmpty()) return Collections.emptyList();
+
+        // Gom nhóm theo Sản Phẩm cha để mỗi sản phẩm chỉ hiển thị 1 biến thể bán chạy/nhiều số lượng nhất
+        Map<String, ChiTietSanPham> distinctByProduct = allTopVariants.stream()
+                .filter(v -> v.getSanPham() != null)
+                .collect(Collectors.toMap(
+                        v -> v.getSanPham().getId(),
+                        v -> v,
+                        (existing, replacement) -> existing,
+                        java.util.LinkedHashMap::new
+                ));
+
+        List<ChiTietSanPham> variants = distinctByProduct.values().stream()
+                .limit(size != null ? size : 12)
+                .toList();
 
         List<String> ids = variants.stream().map(ChiTietSanPham::getId).toList();
 

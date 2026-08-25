@@ -16,9 +16,12 @@ const formatPrice = (price) => {
 };
 
 const originalPrice = computed(() => {
+    if (props.product.giaGoc && Number(props.product.giaGoc) > Number(props.product.giaBan)) {
+        return props.product.giaGoc;
+    }
     if (!props.product.giaBan) return null;
-    if (props.product.phanTramGiam && props.product.phanTramGiam > 0) {
-        return props.product.giaBan / (1 - props.product.phanTramGiam / 100);
+    if (props.product.phanTramGiam && Number(props.product.phanTramGiam) > 0) {
+        return props.product.giaBan / (1 - Number(props.product.phanTramGiam) / 100);
     }
     return null;
 });
@@ -45,8 +48,8 @@ const originalPrice = computed(() => {
                     {{ product.tenThuongHieu || 'AeroStride' }}
                 </div>
 
-                <div v-if="product.phanTramGiam > 0" class="discount-badge">
-                    -{{ product.phanTramGiam }}%
+                <div v-if="product.phanTramGiam && Number(product.phanTramGiam) > 0" class="discount-badge">
+                    -{{ Math.round(product.phanTramGiam) }}%
                 </div>
             </div>
 
@@ -65,6 +68,9 @@ const originalPrice = computed(() => {
 
                 <!-- Attributes Info -->
                 <div class="d-flex ga-1 mb-3 flex-wrap">
+                    <span v-if="product.phanTramGiam && Number(product.phanTramGiam) > 0" class="attr-chip discount-chip">
+                        Sale -{{ Math.round(product.phanTramGiam) }}%
+                    </span>
                     <span v-if="product.kichThuoc" class="attr-chip">Size {{ product.kichThuoc }}</span>
                     <span v-if="product.chatLieu" class="attr-chip">{{ product.chatLieu }}</span>
                     <span v-if="product.soLuong > 0" class="attr-chip in-stock">Còn hàng</span>
@@ -193,6 +199,13 @@ const originalPrice = computed(() => {
     padding: 1px 6px;
     border-radius: 4px;
     font-weight: 600;
+
+    &.discount-chip {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        font-weight: 700;
+    }
 
     &.in-stock {
         background: #ecfdf5;
