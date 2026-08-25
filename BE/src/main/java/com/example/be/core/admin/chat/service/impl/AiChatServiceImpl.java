@@ -257,9 +257,10 @@ public class AiChatServiceImpl implements AiChatService {
                 log.info("Khởi động gọi OpenAI API (có ảnh: {})...", StringUtils.hasText(imageBase64));
                 String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
                 
-                // Giới hạn thời gian tối đa 8 giây cho Cloud AI, nếu quá thời gian lập tức chuyển sang Local AI
+                // Giới hạn thời gian 15s cho Vision AI (có ảnh) và 8s cho text
+                long timeoutMs = StringUtils.hasText(imageBase64) ? 15000 : 8000;
                 String botResponseText = CompletableFuture.supplyAsync(() -> callOpenAiApi(apiUrl, prompt, imageBase64))
-                        .get(8000, TimeUnit.MILLISECONDS);
+                        .get(timeoutMs, TimeUnit.MILLISECONDS);
                         
                 saveAndBroadcast(conversation, botResponseText);
                 log.info("OpenAI phản hồi thành công.");
@@ -696,7 +697,13 @@ public class AiChatServiceImpl implements AiChatService {
         }
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", openAiModel);
+        String modelToUse = openAiModel;
+        if (StringUtils.hasText(imageBase64)) {
+            if (modelToUse == null || modelToUse.startsWith("gpt-3") || "qwen2.5:3b".equals(modelToUse)) {
+                modelToUse = "gpt-4o-mini";
+            }
+        }
+        requestBody.put("model", modelToUse != null ? modelToUse : "gpt-4o-mini");
 
         Map<String, Object> message = new HashMap<>();
         message.put("role", "user");

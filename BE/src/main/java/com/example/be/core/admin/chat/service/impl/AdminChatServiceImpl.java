@@ -250,11 +250,26 @@ public class AdminChatServiceImpl implements AdminChatService {
                         }
                     }
                     int unreadCount = 0;
-                    if (c.getDanhSachTinNhan() != null && !c.getDanhSachTinNhan().isEmpty()) {
-                        TinNhan last = c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1);
-                        String lastSender = last.getLoaiNguoiGui();
-                        if (lastSender != null && !lastSender.equalsIgnoreCase(currentUsername) && !"staff".equalsIgnoreCase(lastSender)) {
-                            unreadCount = 1;
+                    if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
+                        // Nếu đã có nhân viên khác tiếp nhận cuộc trò chuyện -> không hiển thị số chưa đọc cho nhân viên hiện tại
+                        boolean isAssignedToOther = Boolean.TRUE.equals(c.getDaChapNhan())
+                                && c.getNhanVien() != null
+                                && !c.getNhanVien().getTenTaiKhoan().equalsIgnoreCase(currentUsername);
+
+                        if (!isAssignedToOther && c.getDanhSachTinNhan() != null && !c.getDanhSachTinNhan().isEmpty()) {
+                            TinNhan last = c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1);
+                            String lastSender = last.getLoaiNguoiGui();
+                            if (lastSender != null && !lastSender.equalsIgnoreCase(currentUsername) && !"staff".equalsIgnoreCase(lastSender)) {
+                                unreadCount = 1;
+                            }
+                        }
+                    } else {
+                        if (c.getDanhSachTinNhan() != null && !c.getDanhSachTinNhan().isEmpty()) {
+                            TinNhan last = c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1);
+                            String lastSender = last.getLoaiNguoiGui();
+                            if (lastSender != null && !lastSender.equalsIgnoreCase(currentUsername)) {
+                                unreadCount = 1;
+                            }
                         }
                     }
                     Long lastMsgTimestamp = c.getNgayCapNhat() != null ? c.getNgayCapNhat() : 0L;

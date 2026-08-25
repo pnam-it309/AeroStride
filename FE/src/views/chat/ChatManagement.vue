@@ -111,11 +111,24 @@ const escapeHtml = (unsafe) => {
 
 const isUnread = (c) => {
     if (!c) return false;
+    const currentUsername = authStore.user?.username;
+    const isCustomerChat = (c.type === CHAT_TYPES.CUSTOMER || c.loaiHoiThoai === CHAT_TYPES.CUSTOMER || !c.type);
+
+    // Nếu cuộc trò chuyện khách hàng đã có nhân viên khác tiếp nhận -> người khác không hiển thị số chưa đọc
+    if (isCustomerChat && (c.isAccepted || c.daChapNhan) && c.staffUsername && c.staffUsername !== currentUsername) {
+        return false;
+    }
     return (c.chuaDoc > 0) || notificationStore.unreadChatConvIds.includes(c.id);
 };
 
 const getUnreadCount = (c) => {
     if (!c) return 0;
+    const currentUsername = authStore.user?.username;
+    const isCustomerChat = (c.type === CHAT_TYPES.CUSTOMER || c.loaiHoiThoai === CHAT_TYPES.CUSTOMER || !c.type);
+
+    if (isCustomerChat && (c.isAccepted || c.daChapNhan) && c.staffUsername && c.staffUsername !== currentUsername) {
+        return 0;
+    }
     if (c.chuaDoc > 0) return c.chuaDoc;
     return notificationStore.unreadChatConvIds.includes(c.id) ? 1 : 0;
 };
@@ -328,23 +341,29 @@ const triggerImageUpload = () => {
     if (fileInput.value) fileInput.value.click();
 };
 
-const handleImageUpload = (event) => {
-    const file = event.target.files[0];
+const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
         alert('Vui lòng chọn file hình ảnh.');
         return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-        alert('Kích thước ảnh không được vượt quá 5MB.');
-        return;
+    try {
+        const compressed = await dichVuFile.nenAnh(file, 1024, 1024, 0.8);
+        imageFile.value = compressed;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagePreview.value = e.target.result;
+        };
+        reader.readAsDataURL(compressed);
+    } catch (e) {
+        imageFile.value = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagePreview.value = e.target.result;
+        };
+        reader.readAsDataURL(file);
     }
-    imageFile.value = file;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        imagePreview.value = e.target.result;
-    };
-    reader.readAsDataURL(file);
 };
 
 const clearImage = () => {
@@ -398,9 +417,15 @@ watch(
 const allConversations = ref([]);
 
 const totalCustomerUnread = computed(() => {
-    return allConversations.value.filter(
-        (c) => (c.type === CHAT_TYPES.CUSTOMER || c.loaiHoiThoai === CHAT_TYPES.CUSTOMER || !c.type) && (c.unread > 0 || c.chuaDoc > 0 || notificationStore.unreadChatConvIds.includes(c.id))
-    ).length;
+    const currentUsername = authStore.user?.username;
+    return allConversations.value.filter((c) => {
+        const isCustomerChat = (c.type === CHAT_TYPES.CUSTOMER || c.loaiHoiThoai === CHAT_TYPES.CUSTOMER || !c.type);
+        if (!isCustomerChat) return false;
+        if ((c.isAccepted || c.daChapNhan) && c.staffUsername && c.staffUsername !== currentUsername) {
+            return false;
+        }
+        return (c.unread > 0 || c.chuaDoc > 0 || notificationStore.unreadChatConvIds.includes(c.id));
+    }).length;
 });
 
 const totalInternalUnread = computed(() => {
@@ -827,14 +852,20 @@ onMounted(() => {
                         imageUrl: data.imageUrl || data.image || data.hinhAnh || chatMessages.value[tempIndex].imageUrl
                     };
                 } else if (!chatMessages.value.find((m) => m.id === data.id)) {
-                    chatMessages.value.push(data);
+                    chatMessages.value.push({
+                        ...data,
+                        imageUrl: data.imageUrl || data.image || data.hinhAnh || null
+                    });
                 }
                 scrollToBottom();
                 notificationStore.markChatRead(data.conversationId);
                 const conv = allConversations.value.find(c => c.id === data.conversationId);
                 if (conv) conv.timestamp = Date.now();
             } else if (data.sender !== currentUsername) {
-                notificationStore.incrementUnreadChat(data.conversationId);
+                const isAssignedToOther = data.staffUsername && data.staffUsername !== currentUsername;
+                if (!isAssignedToOther) {
+                    notificationStore.incrementUnreadChat(data.conversationId);
+                }
                 const conv = allConversations.value.find(c => c.id === data.conversationId);
                 if (conv) conv.timestamp = Date.now();
             }

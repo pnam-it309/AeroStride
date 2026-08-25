@@ -418,23 +418,30 @@ const triggerImageUpload = () => {
     }
 };
 
-const handleImageUpload = (event) => {
-    const file = event.target.files[0];
+const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
     if (file) {
         if (!file.type.startsWith('image/')) {
             alert('Vui lòng chọn file hình ảnh.');
             return;
         }
-        if (file.size > 5 * 1024 * 1024) {
-            alert('Kích thước ảnh không được vượt quá 5MB.');
-            return;
+        try {
+            // Tự động nén ảnh tối ưu (<100KB) để upload nhanh và AI đọc mượt mà
+            const compressed = await dichVuFile.nenAnh(file, 1024, 1024, 0.8);
+            imageFile.value = compressed;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.value = e.target.result;
+            };
+            reader.readAsDataURL(compressed);
+        } catch (e) {
+            imageFile.value = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.value = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
-        imageFile.value = file;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            imagePreview.value = e.target.result;
-        };
-        reader.readAsDataURL(file);
     }
 };
 
@@ -675,7 +682,7 @@ onMounted(() => {
             if (data.secondStaffId || !targetSession || targetSession !== sessionId.value) return;
 
             const text = data.text || data.noiDung || '';
-            const image = data.image || data.hinhAnh || null;
+            const image = data.imageUrl || data.image || data.hinhAnh || null;
             const rawSender = data.sender || data.nguoiGui || 'bot';
             const isFromCustomer = (rawSender === CHAT_SENDER_TYPE.CUSTOMER || rawSender === 'customer' || rawSender === 'CUSTOMER');
             const sender = isFromCustomer ? 'user' : rawSender;

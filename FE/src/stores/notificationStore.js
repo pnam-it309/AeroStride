@@ -78,26 +78,31 @@ export const useNotificationStore = defineStore('notification', {
                 const userStr = sessionStorage.getItem('user');
                 const user = userStr ? JSON.parse(userStr) : null;
                 const currentUsername = user?.username;
-                const isAdmin = user?.role === APP_ROLES.ADMIN;
 
                 // Không bao giờ thông báo tin nhắn do chính mình gửi đi
                 if (message.sender === currentUsername) {
                     return;
                 }
 
+                // Nếu cuộc trò chuyện khách hàng đã có nhân viên khác tiếp nhận -> người khác không nhận số chưa đọc
+                const isAssignedToOther = message.staffUsername && message.staffUsername !== currentUsername;
+                if (isAssignedToOther) {
+                    return;
+                }
+
                 const isMyChat =
-                    isAdmin ||
                     !message.staffId ||
+                    !message.staffUsername ||
+                    message.staffUsername === currentUsername ||
                     message.staffId === currentUsername ||
+                    message.secondStaffUsername === currentUsername ||
                     message.secondStaffId === currentUsername;
 
                 if (!isMyChat) {
                     return;
                 }
 
-                // Chỉ đánh số khi khách hàng đang ở trạng thái PENDING (chờ nhân viên hỗ trợ)
-                const isPendingHandoff = message.trangThaiHoiThoai === 'PENDING' || message.isHandoff;
-                if (isPendingHandoff && !window.location.pathname.includes('/quan-ly-chat')) {
+                if (!window.location.pathname.includes('/quan-ly-chat')) {
                     this.markChatUnread(message.conversationId);
                 }
                 return;
@@ -176,15 +181,36 @@ export const useNotificationStore = defineStore('notification', {
             this.markChatUnread(conversationId);
         },
 
-        // Đồng bộ danh sách chưa đọc với danh sách hội thoại thực tế từ server (chỉ đánh số các cuộc hội thoại PENDING chờ nhân viên)
+        // Đồng bộ danh sách chưa đọc với danh sách hội thoại thực tế từ server
         syncUnreadConversations(conversations) {
             if (!Array.isArray(conversations)) return;
-            const validPendingIds = new Set(
+            const userStr = sessionStorage.getItem('user');
+            const user = userStr ? JSON.parse(userStr) : null;
+            const currentUsername = user?.username;
+
+            const validUnreadIds = new Set(
                 conversations
-                    .filter((c) => (c.status || c.trangThaiHoiThoai) === 'PENDING')
+                    .filter((c) => {
+                        const status = c.status || c.trangThaiHoiThoai;
+                        const type = c.type || c.loaiHoiThoai || 'CUSTOMER';
+                        if (type === 'CUSTOMER') {
+                            // 1. Nếu chưa ai tiếp nhận (PENDING) -> tất cả nhân viên đều thấy số
+                            if (status === 'PENDING' || !c.isAccepted || !c.daChapNhan) {
+                                return (c.unread > 0 || c.chuaDoc > 0);
+                            }
+                            // 2. Nếu ĐÃ TIẾP NHẬN -> CHỈ nhân viên đang tiếp nhận mới thấy số
+                            if (currentUsername && (c.staffUsername === currentUsername || c.staffId === currentUsername || c.staffId === user?.id)) {
+                                return (c.unread > 0 || c.chuaDoc > 0);
+                            }
+                            return false;
+                        } else {
+                            // INTERNAL
+                            return (c.unread > 0 || c.chuaDoc > 0);
+                        }
+                    })
                     .map((c) => c.id)
             );
-            this.unreadChatConvIds = this.unreadChatConvIds.filter((id) => validPendingIds.has(id));
+            this.unreadChatConvIds = this.unreadChatConvIds.filter((id) => validUnreadIds.has(id));
             localStorage.setItem('unread_chat_conv_ids', JSON.stringify(this.unreadChatConvIds));
         },
 
