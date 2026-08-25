@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { PATH } from '@/router/routePaths';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 import { dichVuFile } from '@/services/core/dichVuFile';
-import defaultAvatar from '@/assets/images/profile/user-1.jpg';
+import defaultAvatar from '@/assets/images/profile/default-avatar.svg';
 import { APP_ROLES } from '@/constants/appConstants';
 
 const router = useRouter();

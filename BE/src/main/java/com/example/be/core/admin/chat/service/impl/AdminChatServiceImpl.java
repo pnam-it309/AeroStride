@@ -61,7 +61,7 @@ public class AdminChatServiceImpl implements AdminChatService {
     @Value("${app.base_url}")
     private String appBaseUrl;
 
-    private static final String DEFAULT_AVATAR = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+    private static final String DEFAULT_AVATAR = "";
 
     private String formatTime(Long timestamp) {
         if (timestamp == null) return "Vừa xong";
@@ -426,7 +426,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                         .thoiGian(formatTime(savedMessage.getNgayTao()))
                         .build();
                 
-                messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
+                publishMessage(response);
             } else {
                 conversationRepository.save(conversation);
             }
@@ -469,7 +469,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                     .thoiGian(formatTime(savedMessage.getNgayTao()))
                     .build();
             
-            messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
+            publishMessage(response);
             
             Map<String, String> notification = new HashMap<>();
             notification.put("content", "CLOSED_CONVERSATION_" + id);
@@ -616,7 +616,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                 .thoiGian(formatTime(savedMessage.getNgayTao()))
                 .build();
 
-        messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
+        publishMessage(response);
 
         // Phát thông báo cho tất cả client để đồng bộ danh sách hội thoại và tin nhắn mới
         Map<String, String> notification = new HashMap<>();
@@ -651,6 +651,19 @@ public class AdminChatServiceImpl implements AdminChatService {
         publishNotification(notification);
 
         return true;
+    }
+
+    private void publishMessage(TinNhanResponse response) {
+        try {
+            redisTemplate.convertAndSend(ChatConstants.REDIS_CHANNEL_MESSAGES, response);
+        } catch (DataAccessException ex) {
+            log.warn("Redis chat message publish failed; sending locally. Error: {}", ex.getMessage());
+        }
+        try {
+            messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
+        } catch (Exception ex) {
+            log.warn("Local STOMP message broadcast failed: {}", ex.getMessage());
+        }
     }
 
     private void publishNotification(Map<String, String> notification) {

@@ -29,6 +29,8 @@ public class RedisWebSocketListener implements MessageListener {
         // Chuyển tiếp tin nhắn từ Redis sang WebSocket cho tất cả user
         if (channel.equals("notifications")) {
             messagingTemplate.convertAndSend("/topic/notifications", body);
+        } else if (channel.equals("chat_messages")) {
+            messagingTemplate.convertAndSend("/topic/messages", body);
         }
     }
 }

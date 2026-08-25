@@ -34,6 +34,11 @@ class ChatSocketService {
             let cleanUrl = envWs.replace(/^wss:/i, 'https:').replace(/^ws:/i, 'http:');
             return cleanUrl;
         }
+        if (typeof window !== 'undefined' && window.location) {
+            const proto = window.location.protocol;
+            const host = window.location.host;
+            return `${proto}//${host}/ws-chat`;
+        }
         return '/ws-chat';
     }
 
@@ -54,10 +59,10 @@ class ChatSocketService {
                 new SockJS(endpoint, null, {
                     transports: ['websocket', 'xhr-streaming', 'xhr-polling']
                 }),
-            reconnectDelay: 10000, // 10s backoff to avoid rate-limiting (429)
-            heartbeatIncoming: 10000,
-            heartbeatOutgoing: 10000,
-            connectionTimeout: 10000,
+            reconnectDelay: 2500, // Reconnect quickly (2.5s) instead of 10s to prevent missing messages on latency drops
+            heartbeatIncoming: 15000,
+            heartbeatOutgoing: 15000,
+            connectionTimeout: 15000,
             onConnect: () => {
                 this.connected = true;
                 this.connecting = false;
@@ -68,6 +73,11 @@ class ChatSocketService {
 
                 if (onConnectedCallback) {
                     onConnectedCallback();
+                }
+
+                // Notify components to sync/fetch any messages missed during disconnected state
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('chat-socket-reconnected'));
                 }
             },
             onDisconnect: () => {
@@ -83,7 +93,7 @@ class ChatSocketService {
                 this.connecting = false;
                 this.retryCount++;
                 if (this.retryCount > this.maxRetries && this.client) {
-                    this.client.reconnectDelay = 30000; // back off to 30s
+                    this.client.reconnectDelay = 5000; // max 5s backoff
                 }
             }
         });

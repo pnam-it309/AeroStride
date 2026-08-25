@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, computed, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
 import api from '@/services/apiService';
 import { API_CHAT } from '@/constants/apiPaths';
 import { chatSocket } from '@/services/chatSocket';
@@ -10,6 +10,17 @@ import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useRefreshHandler } from '@/composables/useRefreshHandler';
 import { AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import { dichVuFile } from '@/services/core/dichVuFile';
+import defaultAvatar from '@/assets/images/profile/default-avatar.svg';
+
+const resolveAvatar = (avatar) => {
+    if (!avatar || avatar.length <= 2 || avatar.includes('blank-profile-picture') || avatar.includes('pixabay.com')) {
+        return defaultAvatar;
+    }
+    if (/^(https?:)?\/\//i.test(avatar) || avatar.startsWith('data:') || avatar.startsWith('blob:')) {
+        return avatar;
+    }
+    return dichVuFile.layUrlFile(avatar.replace(/^\/+/, ''));
+};
 
 const notificationStore = useNotificationStore();
 const authStore = useAuthStore();
@@ -553,9 +564,7 @@ const fetchMessages = async (conversationId) => {
     }
 };
 
-const isSendingMessage = ref(false);
 const sendMessage = async () => {
-    if (isSendingMessage.value) return;
     if (!newMessage.value.trim() && !imagePreview.value) return;
     if (!activeChat.value) return;
 
@@ -582,7 +591,7 @@ const sendMessage = async () => {
     }
 
     // Đẩy tin nhắn optimistic lên UI ngay lập tức để hiển thị tức thì cả ảnh và chữ
-    const tempId = 'temp_' + Date.now();
+    const tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
     const optimisticMessage = {
         id: tempId,
         conversationId: activeChat.value.id,
@@ -615,7 +624,6 @@ const sendMessage = async () => {
         chatMessages.value = chatMessages.value.filter((m) => m.id !== tempId);
     } finally {
         isSendingImage.value = false;
-        isSendingMessage.value = false;
     }
 };
 
@@ -735,6 +743,25 @@ onMounted(() => {
 
     fetchConversations();
 
+    const handleSocketReconnected = () => {
+        fetchConversations(true);
+        if (activeChat.value && !activeChat.value.id.startsWith('NEW_INTERNAL_')) {
+            fetchMessages(activeChat.value.id);
+        }
+    };
+
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+            fetchConversations(true);
+            if (activeChat.value && !activeChat.value.id.startsWith('NEW_INTERNAL_')) {
+                fetchMessages(activeChat.value.id);
+            }
+        }
+    };
+
+    window.addEventListener('chat-socket-reconnected', handleSocketReconnected);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     chatSocket.connect(() => {
         chatSocket.subscribe(CHAT_TOPICS.NOTIFICATIONS, (msg) => {
             const raw = typeof msg === 'string' ? msg : JSON.stringify(msg);
@@ -786,9 +813,13 @@ onMounted(() => {
                     activeChat.value.id = data.conversationId;
                 }
 
-                // Cập nhật lại tin nhắn tạm thời hoặc thêm mới nếu chưa có
+                // Cập nhật lại tin nhắn tạm thời hoặc thêm mới nếu chưa có (khớp theo tempId hoặc text)
+                const text = data.text || data.noiDung || '';
                 const tempIndex = chatMessages.value.findIndex(
-                    (m) => typeof m.id === 'string' && m.id.startsWith('temp_') && m.sender === data.sender
+                    (m) => typeof m.id === 'string' && m.id.startsWith('temp_') && m.sender === data.sender && (
+                        (data.clientTempId && m.id === data.clientTempId) ||
+                        m.text === text
+                    )
                 );
                 if (tempIndex !== -1) {
                     chatMessages.value[tempIndex] = {
@@ -811,6 +842,11 @@ onMounted(() => {
             fetchConversations(true);
         });
     });
+});
+
+onUnmounted(() => {
+    window.removeEventListener('chat-socket-reconnected', handleSocketReconnected);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 
 const handleRefresh = async () => {
@@ -954,14 +990,16 @@ const handleRefresh = async () => {
                         <template v-slot:prepend>
                             <div class="position-relative mr-3 d-flex align-center">
                                 <v-avatar size="44" class="conv-avatar">
-                                    <v-img
-                                        :src="
-                                            !c.avatar || c.avatar.length <= 2
-                                                ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'
-                                                : c.avatar
-                                        "
-                                        alt="avatar"
-                                    ></v-img>
+                                    <v-img :src="resolveAvatar(c.avatar)" cover alt="avatar">
+                                        <template #placeholder>
+                                            <div class="d-flex align-center justify-center fill-height">
+                                                <v-icon size="24" color="grey-darken-1">mdi-account</v-icon>
+                                            </div>
+                                        </template>
+                                        <template #error>
+                                            <v-img :src="defaultAvatar" cover alt="avatar" />
+                                        </template>
+                                    </v-img>
                                 </v-avatar>
                                 <span class="status-dot-badge" :class="c.type === CHAT_TYPES.INTERNAL ? (c.status === 'ACTIVE' ? 'active' : 'offline') : c.status?.toLowerCase()"></span>
                             </div>
@@ -997,14 +1035,16 @@ const handleRefresh = async () => {
                         <div class="d-flex align-center">
                             <div class="position-relative mr-3 d-flex align-center">
                                 <v-avatar size="42" class="main-avatar">
-                                    <v-img
-                                        :src="
-                                            !activeChat.avatar || activeChat.avatar.length <= 2
-                                                ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'
-                                                : activeChat.avatar
-                                        "
-                                        alt="avatar"
-                                    ></v-img>
+                                    <v-img :src="resolveAvatar(activeChat.avatar)" cover alt="avatar">
+                                        <template #placeholder>
+                                            <div class="d-flex align-center justify-center fill-height">
+                                                <v-icon size="22" color="grey-darken-1">mdi-account</v-icon>
+                                            </div>
+                                        </template>
+                                        <template #error>
+                                            <v-img :src="defaultAvatar" cover alt="avatar" />
+                                        </template>
+                                    </v-img>
                                 </v-avatar>
                                 <span class="status-dot-badge header-badge" :class="activeChat.type === CHAT_TYPES.INTERNAL ? (activeChat.status === 'ACTIVE' ? 'active' : 'offline') : activeChat.status?.toLowerCase()"></span>
                             </div>
@@ -1142,13 +1182,16 @@ const handleRefresh = async () => {
                                     class="msg-avatar mr-2 align-self-end flex-shrink-0"
                                     style="border: 1px solid #e2e8f0; margin-bottom: 4px;"
                                 >
-                                    <v-img
-                                        :src="
-                                            !activeChat.avatar || activeChat.avatar.length <= 2
-                                                ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'
-                                                : activeChat.avatar
-                                        "
-                                    ></v-img>
+                                    <v-img :src="resolveAvatar(activeChat.avatar)" cover alt="avatar">
+                                        <template #placeholder>
+                                            <div class="d-flex align-center justify-center fill-height">
+                                                <v-icon size="18" color="grey-darken-1">mdi-account</v-icon>
+                                            </div>
+                                        </template>
+                                        <template #error>
+                                            <v-img :src="defaultAvatar" cover alt="avatar" />
+                                        </template>
+                                    </v-img>
                                 </v-avatar>
 
                                 <div
@@ -1316,7 +1359,16 @@ const handleRefresh = async () => {
                     <div class="profile-card d-flex flex-column align-center text-center pa-4 rounded-xl border bg-white shadow-sm">
                         <div class="position-relative mb-3">
                             <v-avatar size="80" class="border">
-                                <v-img :src="!activeChat.avatar || activeChat.avatar.length <= 2 ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : activeChat.avatar" alt="avatar"></v-img>
+                                <v-img :src="resolveAvatar(activeChat.avatar)" cover alt="avatar">
+                                    <template #placeholder>
+                                        <div class="d-flex align-center justify-center fill-height">
+                                            <v-icon size="40" color="grey-darken-1">mdi-account</v-icon>
+                                        </div>
+                                    </template>
+                                    <template #error>
+                                        <v-img :src="defaultAvatar" cover alt="avatar" />
+                                    </template>
+                                </v-img>
                             </v-avatar>
                             <span class="status-dot-badge" :class="activeChat.type === CHAT_TYPES.INTERNAL ? (activeChat.status === 'ACTIVE' ? 'active' : 'offline') : activeChat.status?.toLowerCase()" style="width: 16px; height: 16px; border-width: 3px;"></span>
                         </div>

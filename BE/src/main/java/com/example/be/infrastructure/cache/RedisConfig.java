@@ -66,6 +66,7 @@ public class RedisConfig implements CachingConfigurer {
         };
         container.setConnectionFactory(connectionFactory);
         container.addMessageListener(listener, new PatternTopic("notifications"));
+        container.addMessageListener(listener, new PatternTopic("chat_messages"));
         return container;
     }
 

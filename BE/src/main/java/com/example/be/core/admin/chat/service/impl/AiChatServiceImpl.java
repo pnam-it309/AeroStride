@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.data.redis.core.RedisTemplate;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -64,6 +65,7 @@ public class AiChatServiceImpl implements AiChatService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final AiLocalService aiLocalService;
     private final ChatClient chatClient;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Value("${openai.api-key:}")
     private String openAiApiKeyString;
@@ -141,6 +143,7 @@ public class AiChatServiceImpl implements AiChatService {
             RestTemplateBuilder restTemplateBuilder,
             AiLocalService aiLocalService,
             ObjectProvider<ChatClient.Builder> chatClientBuilderProvider,
+            ObjectProvider<RedisTemplate<String, Object>> redisTemplateProvider,
             @Value("${google.gemini.timeout-ms:8000}") int timeoutMs
     ) {
         this.sanPhamService = sanPhamService;
@@ -148,6 +151,7 @@ public class AiChatServiceImpl implements AiChatService {
         this.cuocHoiThoaiRepository = cuocHoiThoaiRepository;
         this.messagingTemplate = messagingTemplate;
         this.aiLocalService = aiLocalService;
+        this.redisTemplate = redisTemplateProvider.getIfAvailable();
 
         ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
         this.chatClient = (builder != null) ? builder.build() : null;
@@ -622,7 +626,22 @@ public class AiChatServiceImpl implements AiChatService {
                 .thoiGian(formatTime(savedMessage.getNgayTao()))
                 .build();
 
-        messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, responseDto);
+        publishMessage(responseDto);
+    }
+
+    private void publishMessage(TinNhanResponse response) {
+        if (redisTemplate != null) {
+            try {
+                redisTemplate.convertAndSend(ChatConstants.REDIS_CHANNEL_MESSAGES, response);
+            } catch (Exception ex) {
+                log.warn("Redis chat message publish failed from AI service; fallback to local STOMP. Error: {}", ex.getMessage());
+            }
+        }
+        try {
+            messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
+        } catch (Exception ex) {
+            log.warn("Local STOMP message broadcast failed: {}", ex.getMessage());
+        }
     }
 
     @Override

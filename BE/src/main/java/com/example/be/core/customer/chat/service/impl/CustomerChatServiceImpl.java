@@ -183,7 +183,7 @@ public class CustomerChatServiceImpl implements CustomerChatService {
                 .thoiGian(formatTime(savedMessage.getNgayTao()))
                 .build();
 
-        messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
+        publishMessage(response);
 
         Map<String, String> notification = new HashMap<>();
         notification.put("content", "NEW_MESSAGE_" + conversation.getId());
@@ -199,6 +199,19 @@ public class CustomerChatServiceImpl implements CustomerChatService {
             (conversation.getLoaiHoiThoai() == null || conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER)) {
             log.info("Triggering AI response for conversation: {}", conversation.getId());
             aiChatService.generateAndSendResponse(conversation, text, imageBase64);
+        }
+    }
+
+    private void publishMessage(CustomerTinNhanResponse response) {
+        try {
+            redisTemplate.convertAndSend(ChatConstants.REDIS_CHANNEL_MESSAGES, response);
+        } catch (DataAccessException ex) {
+            log.warn("Redis chat message publish failed; sending locally. Error: {}", ex.getMessage());
+        }
+        try {
+            messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
+        } catch (Exception ex) {
+            log.warn("Local STOMP message broadcast failed: {}", ex.getMessage());
         }
     }
 

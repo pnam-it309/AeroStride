@@ -13,6 +13,7 @@ public final class ChatConstants {
     
     // Redis Channels
     public static final String REDIS_CHANNEL_NOTIFICATIONS = "notifications";
+    public static final String REDIS_CHANNEL_MESSAGES = "chat_messages";
 
     // Sender Types
     public static final String SENDER_TYPE_STAFF = "staff";

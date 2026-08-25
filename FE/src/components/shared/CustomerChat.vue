@@ -375,6 +375,17 @@ const chatWindowStyle = computed(() => {
     };
 });
 
+const handleSocketReconnected = () => {
+    fetchHistory();
+    fetchWelcomeSuggestions();
+};
+
+const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible' && isOpen.value) {
+        fetchHistory();
+    }
+};
+
 onUnmounted(() => {
     clearGuestTimer();
     if (lockTimer) clearInterval(lockTimer);
@@ -382,6 +393,8 @@ onUnmounted(() => {
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointerup', onPointerUp);
     window.removeEventListener('pointercancel', onPointerUp);
+    window.removeEventListener('chat-socket-reconnected', handleSocketReconnected);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 
 const scrollToBottom = async () => {
@@ -434,7 +447,7 @@ const clearImage = () => {
 };
 
 const sendMessage = () => {
-    if (isChatLocked.value || isSending.value) return;
+    if (isChatLocked.value) return;
 
     const userMsg = (message.value || '').trim();
     const currentImagePreview = imagePreview.value;
@@ -442,9 +455,8 @@ const sendMessage = () => {
     if (!userMsg && !currentImagePreview) return;
 
     const now = Date.now();
-    if (now - lastSendTime.value < 400) return;
+    if (now - lastSendTime.value < 100) return;
     lastSendTime.value = now;
-    isSending.value = true;
 
     // 1. KIỂM DUYỆT NỘI DUNG TIN NHẮN (Nếu có nhập text)
     if (userMsg) {
@@ -452,7 +464,6 @@ const sendMessage = () => {
         if (!modResult.isValid) {
             violationCount.value++;
             message.value = '';
-            isSending.value = false;
 
             // Thêm tin nhắn cảnh báo hệ thống vào khung chat
             chatHistory.value.push({
@@ -508,12 +519,12 @@ const sendMessage = () => {
         finalUserMsg = 'Tôi muốn nói chuyện với nhân viên hỗ trợ.';
     }
 
-    // Clear input ngay lập tức để người dùng không spam được
+    // Clear input ngay lập tức để người dùng có thể gõ tiếp tin nhắn khác
     message.value = '';
     clearImage();
 
-    // Tạm thời hiển thị tin nhắn user để UI phản hồi nhanh
-    const tempId = 'temp_' + now;
+    // Tạm thời hiển thị tin nhắn user để UI phản hồi tức thì
+    const tempId = 'temp_' + now + '_' + Math.random().toString(36).substr(2, 5);
     chatHistory.value.push({
         id: tempId,
         sender: 'user',
@@ -554,9 +565,6 @@ const sendMessage = () => {
             console.error('Lỗi gửi tin nhắn:', err);
             isTyping.value = false;
             if (typingTimeout.value) clearTimeout(typingTimeout.value);
-        })
-        .finally(() => {
-            isSending.value = false;
         });
 };
 
@@ -655,6 +663,8 @@ const fetchHistory = async () => {
 onMounted(() => {
     initPosition();
     window.addEventListener('resize', handleWindowResize);
+    window.addEventListener('chat-socket-reconnected', handleSocketReconnected);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     fetchHistory();
     fetchWelcomeSuggestions();
 
@@ -691,10 +701,14 @@ onMounted(() => {
                 time: data.thoiGian || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
 
-            // 1. Nếu là tin nhắn từ user: Thay thế tin nhắn tạm thời trên UI (nếu có)
+            // 1. Nếu là tin nhắn từ user: Khớp chính xác tin nhắn tạm thời theo nội dung/tempId để thay thế
             if (sender === 'user') {
                 const tempIndex = chatHistory.value.findIndex(
-                    (m) => m.sender === 'user' && (typeof m.id === 'string' && m.id.startsWith('temp_'))
+                    (m) => m.sender === 'user' && typeof m.id === 'string' && m.id.startsWith('temp_') && (
+                        (data.clientTempId && m.id === data.clientTempId) ||
+                        m.text === text ||
+                        (m.image && m.image === image)
+                    )
                 );
                 if (tempIndex !== -1) {
                     chatHistory.value[tempIndex] = {

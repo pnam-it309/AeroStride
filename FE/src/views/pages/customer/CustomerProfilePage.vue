@@ -30,7 +30,7 @@ const passwordData = ref({
     xacNhanMatKhau: ''
 });
 
-const defaultAvatarUrl = 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg';
+import defaultAvatarUrl from '@/assets/images/profile/default-avatar.svg';
 const phoneRegex = /^0[3|5|7|8|9][0-9]{8}$/;
 const profileFormRef = ref(null);
 
