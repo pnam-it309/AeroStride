@@ -273,10 +273,28 @@ public class AdminChatServiceImpl implements AdminChatService {
                         }
                     }
                     Long lastMsgTimestamp = c.getNgayCapNhat() != null ? c.getNgayCapNhat() : 0L;
+                    String lastMessageText = "";
                     if (c.getDanhSachTinNhan() != null && !c.getDanhSachTinNhan().isEmpty()) {
-                        TinNhan last = c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1);
-                        if (last.getNgayTao() != null) {
-                            lastMsgTimestamp = last.getNgayTao();
+                        if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
+                            List<TinNhan> realMsgs = c.getDanhSachTinNhan().stream()
+                                    .filter(m -> !ChatConstants.SENDER_TYPE_SYSTEM.equalsIgnoreCase(m.getLoaiNguoiGui())
+                                            && m.getNoiDung() != null
+                                            && !m.getNoiDung().contains("tự động kết thúc")
+                                            && !m.getNoiDung().contains("đã được đóng"))
+                                    .toList();
+                            if (!realMsgs.isEmpty()) {
+                                TinNhan lastReal = realMsgs.get(realMsgs.size() - 1);
+                                lastMessageText = lastReal.getNoiDung();
+                                if (lastReal.getNgayTao() != null) {
+                                    lastMsgTimestamp = lastReal.getNgayTao();
+                                }
+                            }
+                        } else {
+                            TinNhan last = c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1);
+                            lastMessageText = last.getNoiDung();
+                            if (last.getNgayTao() != null) {
+                                lastMsgTimestamp = last.getNgayTao();
+                            }
                         }
                     }
                     boolean isPartnerOnline = partnerUsername != null && userPresenceService.isOnline(partnerUsername);
@@ -285,9 +303,9 @@ public class AdminChatServiceImpl implements AdminChatService {
                     return AdminChatResponse.builder()
                             .id(c.getId())
                             .ten(getConversationName(c, currentUsername))
-                            .tinNhanCuoi((c.getDanhSachTinNhan() == null || c.getDanhSachTinNhan().isEmpty()) ? "" : c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1).getNoiDung())
+                            .tinNhanCuoi(lastMessageText)
                             .anhDaiDien(getAvatarUrl(c, currentUsername))
-                            .thoiGian(formatTime(c.getNgayCapNhat()))
+                            .thoiGian(formatTime(lastMsgTimestamp > 0 ? lastMsgTimestamp : c.getNgayCapNhat()))
                             .chuaDoc(0)
                             .daChapNhan(c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL ? true : c.getDaChapNhan())
                             .loaiHoiThoai(c.getLoaiHoiThoai() != null ? c.getLoaiHoiThoai().name() : CuocHoiThoai.LoaiHoiThoai.CUSTOMER.name())
@@ -371,7 +389,20 @@ public class AdminChatServiceImpl implements AdminChatService {
             return List.of(); 
         }
         messageRepository.markAllAsReadByConversationId(id);
-        return messageRepository.findByCuocHoiThoai_IdOrderByNgayTaoAsc(id).stream()
+        List<TinNhan> rawMessages = messageRepository.findByCuocHoiThoai_IdOrderByNgayTaoAsc(id);
+        CuocHoiThoai conv = conversationRepository.findById(id).orElse(null);
+
+        // Đối với hội thoại nội bộ, loại bỏ hoàn toàn các tin nhắn hệ thống đóng phiên tự động cũ
+        if (conv != null && conv.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
+            rawMessages = rawMessages.stream()
+                    .filter(m -> !ChatConstants.SENDER_TYPE_SYSTEM.equalsIgnoreCase(m.getLoaiNguoiGui())
+                            && m.getNoiDung() != null
+                            && !m.getNoiDung().contains("tự động kết thúc")
+                            && !m.getNoiDung().contains("đã được đóng"))
+                    .toList();
+        }
+
+        return rawMessages.stream()
                 .map(m -> TinNhanResponse.builder()
                         .id(m.getId())
                         .idCuocHoiThoai(m.getCuocHoiThoai().getId())
@@ -455,6 +486,10 @@ public class AdminChatServiceImpl implements AdminChatService {
     public boolean closeConversation(String id) {
         CuocHoiThoai conversation = conversationRepository.findById(id).orElse(null);
         if (conversation != null) {
+            // Không đóng phiên đối với hội thoại nội bộ
+            if (conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
+                return false;
+            }
             conversation.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.CLOSED);
             conversation.setNgayCapNhat(System.currentTimeMillis());
             

@@ -90,8 +90,16 @@ public class AdminSanPhamMapper {
             variantImg = images.stream()
                     .filter(img -> Boolean.TRUE.equals(img.getHinhAnhDaiDien()))
                     .map(ProductVariantImageResponse::getDuongDanAnh)
+                    .filter(url -> url != null && !url.isBlank())
                     .findFirst()
-                    .orElse(images.get(0).getDuongDanAnh());
+                    .orElseGet(() -> images.stream()
+                            .map(ProductVariantImageResponse::getDuongDanAnh)
+                            .filter(url -> url != null && !url.isBlank())
+                            .findFirst()
+                            .orElse(null));
+        }
+        if ((variantImg == null || variantImg.isBlank()) && variant.getSanPham() != null) {
+            variantImg = variant.getSanPham().getHinhAnh();
         }
 
         return ProductVariantResponse.builder()

@@ -41,6 +41,12 @@ public class ScheduledChatTasks {
         long now = System.currentTimeMillis();
 
         for (CuocHoiThoai chat : activeChats) {
+            // CHỈ áp dụng đóng phiên tự động cho khách hàng (CUSTOMER)
+            // Tuyệt đối KHÔNG áp dụng cho nhân viên nội bộ (INTERNAL)
+            if (chat.getLoaiHoiThoai() != CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
+                continue;
+            }
+
             // Find the last message time
             Optional<TinNhan> lastMsg = tinNhanRepository.findTopByCuocHoiThoaiOrderByNgayTaoDesc(chat);
             

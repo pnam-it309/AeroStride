@@ -586,11 +586,16 @@ public class AiLocalService {
                     map.put("tenThuongHieu", v.getTenThuongHieu() != null ? v.getTenThuongHieu() : "AeroStride");
 
                     String imgUrl = v.getHinhAnh();
-                    if ((imgUrl == null || imgUrl.isBlank()) && v.getImages() != null && !v.getImages().isEmpty()) {
-                        imgUrl = v.getImages().get(0).getDuongDanAnh();
+                    if ((imgUrl == null || imgUrl.isBlank() || "null".equalsIgnoreCase(imgUrl)) && v.getImages() != null && !v.getImages().isEmpty()) {
+                        for (var img : v.getImages()) {
+                            if (img != null && img.getDuongDanAnh() != null && !img.getDuongDanAnh().isBlank() && !"null".equalsIgnoreCase(img.getDuongDanAnh())) {
+                                imgUrl = img.getDuongDanAnh();
+                                break;
+                            }
+                        }
                     }
-                    if (imgUrl == null || imgUrl.isBlank()) {
-                        imgUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600";
+                    if (imgUrl == null || "null".equalsIgnoreCase(imgUrl)) {
+                        imgUrl = "";
                     }
                     map.put("hinhAnh", imgUrl);
                     map.put("phanTramGiam", v.getPhanTramGiam() != null ? v.getPhanTramGiam() : 0);

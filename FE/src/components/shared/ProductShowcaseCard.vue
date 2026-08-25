@@ -1,5 +1,7 @@
 <script setup>
 import { computed } from 'vue';
+import { dichVuFile } from '@/services/core/dichVuFile';
+import defaultShoeImg from '@/assets/images/products/cat_running.jpg';
 
 const props = defineProps({
     product: {
@@ -9,6 +11,44 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['view-detail']);
+
+const DEFAULT_IMAGE = defaultShoeImg || new URL('/src/assets/images/products/cat_running.jpg', import.meta.url).href;
+
+const isAbsoluteUrl = (v) =>
+    typeof v !== 'string' ||
+    /^(https?:)?\/\//i.test(v) ||
+    v.startsWith('data:') ||
+    v.startsWith('blob:') ||
+    (v.startsWith('/') && !v.startsWith('/uploads/'));
+
+const isInvalidImage = (v) => {
+    if (!v || typeof v !== 'string') return true;
+    const lower = v.toLowerCase().trim();
+    if (!lower || lower === 'null' || lower === 'undefined' || lower === '[object object]' || lower === 'string') return true;
+    return lower.includes('via.placeholder.com') || lower.includes('placeholder.com') || lower.includes('dummyimage.com');
+};
+
+const resolveImg = (v) => {
+    if (!v || isInvalidImage(v)) return '';
+    if (typeof v !== 'string') return '';
+    const clean = v.trim();
+    if (isAbsoluteUrl(clean)) return clean;
+    return dichVuFile.layUrlFile(clean.replace(/^\/+/, ''));
+};
+
+const displayImage = computed(() => {
+    const p = props.product;
+    let raw = p.hinhAnh || p.imageUrl || p.hinhAnhDaiDien;
+    const resolved = resolveImg(raw);
+    return resolved || DEFAULT_IMAGE;
+});
+
+const handleImgError = (e) => {
+    if (!e || !e.target) return;
+    if (e.target.getAttribute('data-fallback') === 'true') return;
+    e.target.setAttribute('data-fallback', 'true');
+    e.target.src = DEFAULT_IMAGE;
+};
 
 const formatPrice = (price) => {
     if (!price && price !== 0) return 'Liên hệ';
@@ -33,9 +73,10 @@ const originalPrice = computed(() => {
             <!-- Visual Section -->
             <div class="visual-section">
                 <v-img
-                    :src="product.hinhAnh || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600'"
+                    :src="displayImage"
                     cover
                     class="product-image"
+                    @error="handleImgError"
                 >
                     <template v-slot:placeholder>
                         <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
