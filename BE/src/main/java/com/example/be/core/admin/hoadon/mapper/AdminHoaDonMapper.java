@@ -45,10 +45,37 @@ public interface AdminHoaDonMapper {
 
     AdminLichSuHoaDonResponse toLichSuResponse(LichSuTrangThaiHoaDon history);
 
-    @Mapping(target = "tenPhuongThuc", source = "phuongThucThanhToan.ten")
+    @Mapping(target = "tenPhuongThuc", expression = "java(getTenPhuongThuc(payment))")
     @Mapping(target = "trangThai", source = "trangThai", qualifiedByName = "mapTrangThai")
     @Mapping(target = "nguoiXacNhan", source = "nguoiTao")
     AdminGiaoDichThanhToanResponse toGiaoDichResponse(GiaoDichThanhToan payment);
+
+    default String getTenPhuongThuc(GiaoDichThanhToan payment) {
+        if (payment == null) return "Chưa xác định";
+        if (payment.getPhuongThucThanhToan() != null && payment.getPhuongThucThanhToan().getTen() != null && !payment.getPhuongThucThanhToan().getTen().isBlank()) {
+            return payment.getPhuongThucThanhToan().getTen();
+        }
+        String loai = payment.getLoaiGiaoDich();
+        if (loai != null && !loai.isBlank()) {
+            if ("TIEN_MAT".equalsIgnoreCase(loai)) return "Tiền mặt";
+            if ("COD".equalsIgnoreCase(loai)) return "Thanh toán khi nhận hàng (COD)";
+            if ("VNPAY".equalsIgnoreCase(loai)) return "VNPay";
+            if ("CHUYEN_KHOAN".equalsIgnoreCase(loai) || "ONLINE".equalsIgnoreCase(loai)) {
+                if (payment.getGhiChu() != null && payment.getGhiChu().toUpperCase().contains("VNPAY")) {
+                    return "VNPay";
+                }
+                return "Chuyển khoản";
+            }
+            return loai;
+        }
+        if (payment.getGhiChu() != null) {
+            String noteUpper = payment.getGhiChu().toUpperCase();
+            if (noteUpper.contains("VNPAY")) return "VNPay";
+            if (noteUpper.contains("TIỀN MẶT") || noteUpper.contains("TIEN_MAT") || noteUpper.contains("COD")) return "Tiền mặt";
+            if (noteUpper.contains("CHUYỂN KHOẢN") || noteUpper.contains("CHUYEN_KHOAN")) return "Chuyển khoản";
+        }
+        return "Chuyển khoản";
+    }
 
     @Named("getThumbnail")
     default String getThumbnail(ChiTietSanPham ctsp) {

@@ -1,6 +1,7 @@
 package com.example.be.utils;
 
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.ByteArrayOutputStream;
@@ -11,8 +12,13 @@ import java.util.function.Function;
 public class ExcelUtils {
 
     public static <T> byte[] exportToExcel(String sheetName, String[] headers, List<T> data, Function<T, Object[]> rowMapper) throws IOException {
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        // Use SXSSFWorkbook (Streaming POI) for high throughput and low memory footprint
+        try (SXSSFWorkbook workbook = new SXSSFWorkbook(100); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            workbook.setCompressTempFiles(true);
             Sheet sheet = workbook.createSheet(sheetName);
+
+            // Track max column lengths for instant column sizing without slow AWT font measuring
+            int[] maxColLengths = new int[headers.length];
 
             // Create header row
             Row headerRow = sheet.createRow(0);
@@ -28,6 +34,7 @@ public class ExcelUtils {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
                 cell.setCellStyle(headerStyle);
+                maxColLengths[i] = headers[i] != null ? headers[i].length() : 10;
             }
 
             // Create data rows
@@ -35,32 +42,40 @@ public class ExcelUtils {
             for (T item : data) {
                 Row row = sheet.createRow(rowIdx++);
                 Object[] values = rowMapper.apply(item);
-                for (int i = 0; i < values.length; i++) {
+                for (int i = 0; i < values.length && i < headers.length; i++) {
                     Cell cell = row.createCell(i);
                     if (values[i] == null) {
                         cell.setCellValue("");
                     } else if (values[i] instanceof Number) {
-                        cell.setCellValue(((Number) values[i]).doubleValue());
+                        double numVal = ((Number) values[i]).doubleValue();
+                        cell.setCellValue(numVal);
+                        maxColLengths[i] = Math.max(maxColLengths[i], String.valueOf((long) numVal).length());
                     } else if (values[i] instanceof Boolean) {
-                        cell.setCellValue((Boolean) values[i] ? "Nam" : "Nữ");
+                        String boolText = (Boolean) values[i] ? "Nam" : "Nữ";
+                        cell.setCellValue(boolText);
+                        maxColLengths[i] = Math.max(maxColLengths[i], boolText.length());
                     } else {
-                        cell.setCellValue(values[i].toString());
+                        String text = values[i].toString();
+                        cell.setCellValue(text);
+                        maxColLengths[i] = Math.max(maxColLengths[i], Math.min(text.length(), 50));
                     }
                 }
             }
 
-            // Auto-size columns
+            // Set column widths in O(1) arithmetic instead of heavy Java AWT font rendering
             for (int i = 0; i < headers.length; i++) {
-                sheet.autoSizeColumn(i);
+                int charWidth = Math.min(50, Math.max(maxColLengths[i] + 4, 12));
+                sheet.setColumnWidth(i, charWidth * 256);
             }
 
             workbook.write(out);
+            workbook.dispose(); // clean up temporary files
             return out.toByteArray();
         }
     }
 
     public static byte[] createTemplate(String sheetName, String[] headers, Object[] sampleData) throws IOException {
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (SXSSFWorkbook workbook = new SXSSFWorkbook(50); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet(sheetName);
 
             // Create header row
@@ -77,12 +92,14 @@ public class ExcelUtils {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
                 cell.setCellStyle(headerStyle);
+                int defaultWidth = Math.min(40, Math.max(headers[i].length() + 6, 15));
+                sheet.setColumnWidth(i, defaultWidth * 256);
             }
 
             // Create sample data row
             if (sampleData != null && sampleData.length > 0) {
                 Row sampleRow = sheet.createRow(1);
-                for (int i = 0; i < sampleData.length; i++) {
+                for (int i = 0; i < sampleData.length && i < headers.length; i++) {
                     Cell cell = sampleRow.createCell(i);
                     if (sampleData[i] != null) {
                         if (sampleData[i] instanceof Number) {
@@ -94,12 +111,8 @@ public class ExcelUtils {
                 }
             }
 
-            // Auto-size columns
-            for (int i = 0; i < headers.length; i++) {
-                sheet.autoSizeColumn(i);
-            }
-
             workbook.write(out);
+            workbook.dispose();
             return out.toByteArray();
         }
     }
@@ -128,3 +141,4 @@ public class ExcelUtils {
         }
     }
 }
+

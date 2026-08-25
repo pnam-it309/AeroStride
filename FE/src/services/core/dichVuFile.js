@@ -110,3 +110,5 @@ export const dichVuFile = {
         return `/uploads/${cleanPath}`;
     }
 };
+
+export default dichVuFile;

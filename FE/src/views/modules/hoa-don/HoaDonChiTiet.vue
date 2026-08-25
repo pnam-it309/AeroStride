@@ -419,18 +419,43 @@ const isCounterOrder = computed(() => {
 /**
  * Dịch tên người thực hiện sang tiếng Việt thân thiện:
  * - "GUEST"  → "Khách vãng lai"
- * - "SYSTEM" → nếu đặt ONLINE → "Người hệ thống", ngược lại → "Hệ thống"
+ * - "SYSTEM" → "Hệ thống"
+ * - "ADMIN"  → "Quản trị viên"
  * - email (chứa @) → lấy phần trước @ để hiển thị gọn hơn
  */
 const formatNguoi = (value, isOnline = false) => {
-    if (!value) return isOnline ? 'Người hệ thống' : 'Hệ thống';
+    if (!value || value === 'SYSTEM' || value === 'anonymousUser') {
+        return 'Hệ thống';
+    }
     const v = value.trim().toUpperCase();
     if (v === 'GUEST') return 'Khách vãng lai';
-    if (v === 'SYSTEM') return isOnline ? 'Người hệ thống' : 'Hệ thống';
     if (v === 'ADMIN') return 'Quản trị viên';
-    // Nếu là email, giữ nguyên để hiển thị (backend mới đã lưu tên rồi, trường hợp cũ vẫn xử lý)
     if (value.includes('@')) return value.split('@')[0];
     return value;
+};
+
+const formatNguoiXacNhanThanhToan = (pay, ord = {}) => {
+    if (!pay) return 'Hệ thống';
+    const isOnline = ord.orderType === 'ONLINE' || String(ord.loaiDon || '').toUpperCase() === 'ONLINE';
+    const rawPerson = pay.nguoiXacNhan || (!isOnline ? ord.tenNhanVien : '');
+
+    if (rawPerson && rawPerson !== 'SYSTEM' && rawPerson !== 'anonymousUser' && rawPerson !== 'GUEST' && rawPerson !== 'Người hệ thống') {
+        if (rawPerson.includes('@')) return rawPerson.split('@')[0];
+        return rawPerson;
+    }
+
+    const methodUpper = String(pay.tenPhuongThuc || pay.ghiChu || '').toUpperCase();
+    if (isOnline) {
+        if (methodUpper.includes('VNPAY')) {
+            return 'Cổng VNPay (Tự động)';
+        }
+        if (methodUpper.includes('COD') || methodUpper.includes('TIEN_MAT') || methodUpper.includes('TIỀN MẶT')) {
+            return 'Đơn vị vận chuyển (Thu hộ)';
+        }
+        return 'Hệ thống (Tự động)';
+    }
+
+    return ord.tenNhanVien || 'Thu ngân tại quầy';
 };
 
 const displayAddress = computed(() => {
@@ -630,6 +655,9 @@ const getPaymentMethodIcon = (tenPhuongThuc) => {
     if (name.includes('tiền mặt') || name.includes('tien mat') || name.includes('cash')) {
         return 'mdi-cash-multiple';
     }
+    if (name.includes('vnpay') || name.includes('qr')) {
+        return 'mdi-qrcode-scan';
+    }
     if (name.includes('momo') || name.includes('zalopay') || name.includes('vi') || name.includes('ví')) {
         return 'mdi-wallet-outline';
     }
@@ -641,10 +669,40 @@ const getPaymentMethodColor = (tenPhuongThuc) => {
     if (name.includes('tiền mặt') || name.includes('tien mat') || name.includes('cash')) {
         return 'success';
     }
+    if (name.includes('vnpay')) {
+        return 'primary';
+    }
     if (name.includes('momo') || name.includes('zalopay') || name.includes('vi') || name.includes('ví')) {
         return 'purple';
     }
-    return 'primary';
+    return 'info';
+};
+
+const formatPaymentMethodName = (pay) => {
+    if (!pay) return 'Chưa xác định';
+    const name = typeof pay === 'string' ? pay : (pay.tenPhuongThuc || '');
+    const note = typeof pay === 'object' ? (pay.ghiChu || '') : '';
+    const upperName = String(name || '').toUpperCase().trim();
+    const upperNote = String(note || '').toUpperCase().trim();
+
+    if (upperName === 'TIEN_MAT' || upperName.includes('TIỀN MẶT') || upperName.includes('TIEN MAT') || upperName === 'CASH') {
+        return 'Tiền mặt';
+    }
+    if (upperName === 'COD' || upperName.includes('COD') || upperNote.includes('COD')) {
+        return 'Thanh toán khi nhận hàng (COD)';
+    }
+    if (upperName === 'VNPAY' || upperName.includes('VNPAY') || upperNote.includes('VNPAY')) {
+        return 'VNPay';
+    }
+    if (upperName === 'CHUYEN_KHOAN' || upperName.includes('CHUYỂN KHOẢN') || upperName.includes('CHUYEN KHOAN') || upperName === 'ONLINE') {
+        return 'Chuyển khoản';
+    }
+    if (name && name.trim()) {
+        return name.trim();
+    }
+    if (upperNote.includes('VNPAY')) return 'VNPay';
+    if (upperNote.includes('TIỀN MẶT') || upperNote.includes('TIEN MAT')) return 'Tiền mặt';
+    return 'Chuyển khoản';
 };
 
 const getPaymentStatusColor = (pay) => {
@@ -1295,20 +1353,11 @@ onMounted(() => {
                                             <div class="text-body-2 text-slate-500 mb-2">Phương thức thanh toán</div>
                                             <v-chip
                                                 variant="tonal"
-                                                :color="getPaymentMethodColor(pay.tenPhuongThuc)"
+                                                :color="getPaymentMethodColor(pay.tenPhuongThuc || pay.ghiChu)"
                                                 class="px-3 py-1 font-weight-bold"
                                             >
-                                                <v-icon start size="16">{{ getPaymentMethodIcon(pay.tenPhuongThuc) }}</v-icon>
-                                                {{
-                                                    pay.tenPhuongThuc === 'TIEN_MAT'
-                                                        ? 'Tiền mặt'
-                                                        : pay.tenPhuongThuc === 'CHUYEN_KHOAN'
-                                                          ? 'Chuyển khoản'
-                                                          : pay.tenPhuongThuc
-                                                }}
-                                                <span v-if="pay.tenPhuongThuc !== 'TIEN_MAT' && pay.ghiChu" class="ml-1">
-                                                    - {{ pay.ghiChu.length > 30 ? pay.ghiChu.substring(0, 30) + '...' : pay.ghiChu }}
-                                                </span>
+                                                <v-icon start size="16">{{ getPaymentMethodIcon(pay.tenPhuongThuc || pay.ghiChu) }}</v-icon>
+                                                {{ formatPaymentMethodName(pay) }}
                                             </v-chip>
                                         </div>
                                         <div class="text-right">
@@ -1332,12 +1381,8 @@ onMounted(() => {
                                             </div>
                                             <div class="text-body-2 text-slate-700 d-flex align-center">
                                                 <v-icon color="primary" class="mr-2" size="18">mdi-account-check-outline</v-icon>
-                                                <span
-                                                    ><span class="font-weight-medium">Người xác nhận:</span>
-                                                    {{
-                                                        formatNguoi(pay.nguoiXacNhan || order.tenNhanVien, order.orderType === 'ONLINE')
-                                                    }}</span
-                                                >
+                                                <span><span class="font-weight-medium">Người xác nhận:</span>
+                                                    {{ formatNguoiXacNhanThanhToan(pay, order) }}</span>
                                             </div>
                                         </div>
                                         <div class="text-right d-flex flex-column align-end">

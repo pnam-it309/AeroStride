@@ -123,8 +123,21 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             response.getListsGiaoDichThanhToan().forEach(gd -> {
                 if (gd.getNguoiXacNhan() != null) {
                     String creator = gd.getNguoiXacNhan();
-                    nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(creator, creator, creator, creator)
-                            .ifPresent(nv -> gd.setNguoiXacNhan(nv.getTen() != null ? nv.getTen() : creator));
+                    if ("SYSTEM".equalsIgnoreCase(creator) || "anonymousUser".equalsIgnoreCase(creator)) {
+                        String method = gd.getTenPhuongThuc() != null ? gd.getTenPhuongThuc().toUpperCase() : "";
+                        if (method.contains("VNPAY")) {
+                            gd.setNguoiXacNhan("Cổng VNPay (Tự động)");
+                        } else {
+                            gd.setNguoiXacNhan("Hệ thống");
+                        }
+                    } else {
+                        nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(creator, creator, creator, creator)
+                                .ifPresentOrElse(
+                                        nv -> gd.setNguoiXacNhan(nv.getMa() != null ? nv.getMa() + (nv.getTen() != null ? " - " + nv.getTen() : "") : (nv.getTen() != null ? nv.getTen() : creator)),
+                                        () -> khachHangRepository.findByTenTaiKhoan(creator)
+                                                .ifPresent(kh -> gd.setNguoiXacNhan(kh.getTen() != null ? kh.getTen() + " (Khách hàng)" : creator))
+                                );
+                    }
                 }
             });
         }
@@ -132,11 +145,21 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             response.getListsLichSuHoaDon().forEach(log -> {
                 if (log.getNguoiThucHien() != null) {
                     String performer = log.getNguoiThucHien();
-                    nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(performer, performer, performer, performer)
-                            .ifPresent(nv -> {
-                                String display = nv.getMa() != null ? nv.getMa() + (nv.getTen() != null ? " - " + nv.getTen() : "") : (nv.getTen() != null ? nv.getTen() : performer);
-                                log.setNguoiThucHien(display);
-                            });
+                    if ("SYSTEM".equalsIgnoreCase(performer) || "anonymousUser".equalsIgnoreCase(performer)) {
+                        log.setNguoiThucHien("Hệ thống");
+                    } else if ("GUEST".equalsIgnoreCase(performer)) {
+                        log.setNguoiThucHien("Khách vãng lai");
+                    } else {
+                        nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(performer, performer, performer, performer)
+                                .ifPresentOrElse(
+                                        nv -> {
+                                            String display = nv.getMa() != null ? nv.getMa() + (nv.getTen() != null ? " - " + nv.getTen() : "") : (nv.getTen() != null ? nv.getTen() : performer);
+                                            log.setNguoiThucHien(display);
+                                        },
+                                        () -> khachHangRepository.findByTenTaiKhoan(performer)
+                                                .ifPresent(kh -> log.setNguoiThucHien(kh.getTen() != null ? kh.getTen() + " (Khách hàng)" : performer))
+                                );
+                    }
                 }
             });
         }
@@ -653,7 +676,11 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         }
 
         BigDecimal amount = hoaDon.getTongTienSauGiam() != null ? hoaDon.getTongTienSauGiam() : hoaDon.getTongTien();
-        String effectiveReturnUrl = (returnUrl != null && !returnUrl.isBlank()) ? returnUrl : frontendUrl + "/my-orders/" + hoaDon.getId();
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("Số tiền thanh toán không hợp lệ.");
+        }
+        String defaultBase = (frontendUrl != null && !frontendUrl.isBlank()) ? frontendUrl : "https://aerostride.me";
+        String effectiveReturnUrl = (returnUrl != null && !returnUrl.isBlank()) ? returnUrl : defaultBase + "/my-orders/" + hoaDon.getId();
         com.example.be.core.payment.dto.PaymentRequest payReq = com.example.be.core.payment.dto.PaymentRequest.builder()
                 .amount(amount)
                 .orderId(hoaDon.getId())
@@ -665,14 +692,6 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     }
 
     private boolean isCashOrder(HoaDon hoaDon) {
-        if (hoaDon.getListsGiaoDichThanhToan() == null || hoaDon.getListsGiaoDichThanhToan().isEmpty()) {
-            return true;
-        }
-        return hoaDon.getListsGiaoDichThanhToan().stream().anyMatch(gd -> {
-            String loai = gd.getLoaiGiaoDich();
-            String tenPt = gd.getPhuongThucThanhToan() != null ? gd.getPhuongThucThanhToan().getTen() : null;
-            return "TIEN_MAT".equalsIgnoreCase(loai) || "COD".equalsIgnoreCase(loai)
-                    || (tenPt != null && (tenPt.toUpperCase().contains("TIỀN MẶT") || tenPt.toUpperCase().contains("TIEN MAT") || tenPt.toUpperCase().contains("COD")));
-        });
+        return com.example.be.infrastructure.constants.PaymentConstants.isCashOrder(hoaDon);
     }
 }
