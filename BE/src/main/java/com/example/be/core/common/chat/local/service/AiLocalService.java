@@ -182,6 +182,18 @@ public class AiLocalService {
         // NHÓM 2: TÌM KIẾM VÀ TƯ VẤN SẢN PHẨM (CÓ ĐÍNH KÈM DANH SÁCH SẢN PHẨM)
         // =========================================================================
 
+        // 2.0. Tìm kiếm bằng hình ảnh (khi khách gửi ảnh hoặc yêu cầu tìm mẫu giống ảnh)
+        boolean isImageSearch = lower.contains("hình ảnh") || lower.contains("mẫu giày này") || lower.contains("tìm theo ảnh") || lower.contains("giống ảnh") || lower.contains("mẫu trong ảnh") || lower.contains("giống đôi này") || lower.contains("như trong ảnh") || lower.contains("ảnh này");
+        if (isImageSearch) {
+            List<ProductVariantResponse> imageMatches = searchSmartVariants(lower, state);
+            if (imageMatches.isEmpty()) {
+                imageMatches = getTopSellingVariants(4);
+            }
+            trackSuggested(state, imageMatches);
+            String imageReply = "Dạ, em đã nhận được hình ảnh mẫu giày của anh/chị rồi ạ! Dựa trên kiểu dáng và thiết kế trong ảnh, AeroStride xin gợi ý cho bạn những mẫu giày cực đẹp và thời trang có phong cách tương đồng đang sẵn hàng tại shop dưới đây ạ:";
+            return enrichResponse(imageReply, imageMatches, List.of("Mẫu này có sẵn size của mình không shop?", "Chính sách đổi trả nếu không vừa?", "Có những màu sắc nào khác không?"));
+        }
+
         // 2.1. Yêu cầu xem mẫu khác / Còn mẫu nào nữa không ("toi muon tim giay khac", "ko con giay nao ak", "mẫu khác", "xem thêm")
         boolean isLookingForOtherShoes = lower.contains("khác") || lower.contains("không còn") || lower.contains("ko còn") || lower.contains("hết rồi") || lower.contains("xem thêm") || lower.contains("mẫu nữa") || lower.contains("nữa không") || lower.contains("mẫu mới");
         if (isLookingForOtherShoes) {
@@ -231,14 +243,28 @@ public class AiLocalService {
     }
 
     private boolean isProductSearchComplaint(String lowerInput) {
-        return lowerInput.contains("không có đôi nào") || lowerInput.contains("ko có đôi nào") ||
-                lowerInput.contains("không tìm thấy") || lowerInput.contains("ko tìm thấy") ||
+        if (containsSearchKeywords(lowerInput)) {
+            return false;
+        }
+        return lowerInput.contains("không tìm thấy") || lowerInput.contains("ko tìm thấy") ||
                 lowerInput.contains("tìm không ra") || lowerInput.contains("tìm ko ra") ||
                 lowerInput.contains("tìm mãi không") || lowerInput.contains("tìm mãi ko") ||
-                lowerInput.contains("sao không có") || lowerInput.contains("sao ko có") ||
-                lowerInput.contains("ít mẫu") || lowerInput.contains("ít giày") ||
+                lowerInput.contains("sao không có đôi nào") || lowerInput.contains("sao ko có đôi nào") ||
+                lowerInput.contains("ít mẫu quá") || lowerInput.contains("ít giày quá") ||
                 lowerInput.contains("xấu thế") || lowerInput.contains("đắt thế") || lowerInput.contains("đắt quá") ||
                 lowerInput.contains("không ưng") || lowerInput.contains("không thích");
+    }
+
+    private boolean containsSearchKeywords(String text) {
+        if (text == null) return false;
+        String t = text.toLowerCase();
+        List<String> brands = List.of("nike", "adidas", "puma", "vans", "converse", "jordan", "mlb", "asics", "new balance", "bitis", "bita");
+        for (String b : brands) {
+            if (t.contains(b)) return true;
+        }
+        if (extractPrice(t) != null) return true;
+        if (t.contains("size") || t.contains("màu") || t.contains("trắng") || t.contains("đen") || t.contains("đỏ") || t.contains("xanh") || t.contains("vàng") || t.contains("hồng") || t.contains("chạy") || t.contains("sneaker") || t.contains("thể thao")) return true;
+        return false;
     }
 
     private String handleComplaint(ChatState state, String lowerInput) {

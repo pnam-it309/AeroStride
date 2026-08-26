@@ -70,7 +70,9 @@ export function useLandingPage() {
     const warmedSections = ref(new Set([0, 1, 2]));
 
     const handleLogout = async () => {
-        await dichVuXacThuc.dangXuat();
+        const { useAuthStore } = await import('@/stores/authStore');
+        const authStore = useAuthStore();
+        await authStore.logout();
         isLoggedIn.value = false;
     };
 

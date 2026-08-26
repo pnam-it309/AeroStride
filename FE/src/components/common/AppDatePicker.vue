@@ -64,7 +64,7 @@
                                 <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}</option>
                             </select>
                         </div>
-                        <v-btn icon variant="text" size="small" @click="nextMonth">
+                        <v-btn icon variant="text" size="small" :disabled="isNextMonthDisabled" @click="nextMonth">
                             <v-icon>mdi-chevron-right</v-icon>
                         </v-btn>
                     </div>
@@ -176,12 +176,48 @@ const singleTimeStr = ref('12:00');
 
 const dayHeaders = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
-const toDateStart = (value) => {
+const parseToLocalDate = (value) => {
     if (!value) return null;
-    const date = value instanceof Date ? new Date(value) : new Date(value);
-    if (Number.isNaN(date.getTime())) return null;
-    date.setHours(0, 0, 0, 0);
-    return date;
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : new Date(value.getTime());
+    }
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        // Check YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss
+        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+            const [datePart, timePart] = trimmed.split(/[T ]/);
+            const [y, m, d] = datePart.split('-').map(Number);
+            let hour = 0, min = 0, sec = 0;
+            if (timePart) {
+                const tParts = timePart.split(':').map(Number);
+                hour = tParts[0] || 0;
+                min = tParts[1] || 0;
+                sec = tParts[2] || 0;
+            }
+            return new Date(y, m - 1, d, hour, min, sec);
+        }
+        // Check DD/MM/YYYY or DD/MM/YYYY HH:mm
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(trimmed)) {
+            const [datePart, timePart] = trimmed.split(' ');
+            const [d, m, y] = datePart.split('/').map(Number);
+            let hour = 0, min = 0;
+            if (timePart) {
+                const tParts = timePart.split(':').map(Number);
+                hour = tParts[0] || 0;
+                min = tParts[1] || 0;
+            }
+            return new Date(y, m - 1, d, hour, min);
+        }
+    }
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+};
+
+const toDateStart = (value) => {
+    const d = parseToLocalDate(value);
+    if (!d) return null;
+    d.setHours(0, 0, 0, 0);
+    return d;
 };
 
 const getEffectiveMinDate = () => {
@@ -214,25 +250,29 @@ const isPrevMonthDisabled = computed(() => {
     return currentViewMonthStart <= minMonthStart;
 });
 
-const monthOptions = computed(() => {
-    const min = getEffectiveMinDate();
-    const selectedYear = viewDate.value.getFullYear();
-    const minYear = min ? min.getFullYear() : null;
-    const minMonth = min ? min.getMonth() : 0;
+const isNextMonthDisabled = computed(() => {
+    const max = toDateStart(props.maxDate);
+    if (!max) return false;
+    const currentViewMonthStart = new Date(viewDate.value.getFullYear(), viewDate.value.getMonth(), 1);
+    const maxMonthStart = new Date(max.getFullYear(), max.getMonth(), 1);
+    return currentViewMonthStart >= maxMonthStart;
+});
 
+const monthOptions = computed(() => {
     return Array.from({ length: 12 }, (_, i) => ({
         title: `Tháng ${i + 1}`,
-        value: i,
-        disabled: minYear !== null && selectedYear === minYear && i < minMonth
-    })).filter((m) => !m.disabled);
+        value: i
+    }));
 });
 
 const yearOptions = computed(() => {
     const currentYear = new Date().getFullYear();
     const min = getEffectiveMinDate();
-    const startYear = min ? min.getFullYear() : currentYear - 100;
+    const max = toDateStart(props.maxDate);
+    const startYear = props.disablePast ? currentYear : (min ? Math.min(min.getFullYear(), currentYear - 20) : currentYear - 50);
+    const endYear = max ? Math.max(max.getFullYear(), currentYear + 10) : currentYear + 10;
     const years = [];
-    for (let y = startYear; y <= Math.max(currentYear + 10, startYear + 10); y++) {
+    for (let y = startYear; y <= endYear; y++) {
         years.push(y);
     }
     return years;
@@ -273,15 +313,18 @@ const calendarDays = computed(() => {
 
 const isSameDay = (a, b) => {
     if (!a || !b) return false;
-    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    const d1 = parseToLocalDate(a);
+    const d2 = parseToLocalDate(b);
+    if (!d1 || !d2) return false;
+    return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
 };
 
 const isInRange = (day) => {
     if (!day || !tempStart.value) return false;
     if (!tempEnd.value) return isSameDay(day.date, tempStart.value);
-    const d = day.date;
-    const s = tempStart.value;
-    const e = tempEnd.value;
+    const d = toDateStart(day.date);
+    const s = toDateStart(tempStart.value);
+    const e = toDateStart(tempEnd.value);
     return d >= s && d <= e;
 };
 
@@ -306,22 +349,28 @@ const dayClass = (day) => {
 };
 
 const formatDateDisplay = (date) => {
-    if (!date) return '';
-    const d = date.getDate().toString().padStart(2, '0');
-    const m = (date.getMonth() + 1).toString().padStart(2, '0');
-    const y = date.getFullYear();
+    const dObj = parseToLocalDate(date);
+    if (!dObj) return '';
+    const d = dObj.getDate().toString().padStart(2, '0');
+    const m = (dObj.getMonth() + 1).toString().padStart(2, '0');
+    const y = dObj.getFullYear();
     if (props.enableTimePicker) {
-        const h = date.getHours().toString().padStart(2, '0');
-        const min = date.getMinutes().toString().padStart(2, '0');
+        const h = dObj.getHours().toString().padStart(2, '0');
+        const min = dObj.getMinutes().toString().padStart(2, '0');
         return `${d}/${m}/${y} ${h}:${min}`;
     }
     return `${d}/${m}/${y}`;
 };
 
 const applyTimeToDate = (date, timeStr) => {
-    if (!date || !timeStr) return date;
+    const dObj = parseToLocalDate(date);
+    if (!dObj) return date;
+    const d = new Date(dObj);
+    if (!timeStr) {
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
     const [h, m] = timeStr.split(':').map(Number);
-    const d = new Date(date);
     d.setHours(h || 0, m || 0, 0, 0);
     return d;
 };
@@ -330,18 +379,16 @@ const displayText = computed(() => {
     if (!props.modelValue) return '';
     if (props.range && Array.isArray(props.modelValue)) {
         const [s, e] = props.modelValue;
-        if (!s) return '';
-        const startStr = formatDateDisplay(s);
-        if (!e) return startStr;
-        return `${startStr} - ${formatDateDisplay(e)}`;
+        const d1 = parseToLocalDate(s);
+        const d2 = parseToLocalDate(e);
+        if (!d1) return '';
+        const startStr = formatDateDisplay(d1);
+        if (!d2) return startStr;
+        return `${startStr} - ${formatDateDisplay(d2)}`;
     }
-    const val = props.modelValue;
-    if (val instanceof Date) {
-        return formatDateDisplay(val);
-    }
-    if (typeof val === 'string' || typeof val === 'number') {
-        const d = new Date(val);
-        if (!isNaN(d.getTime())) return formatDateDisplay(d);
+    const d = parseToLocalDate(props.modelValue);
+    if (d) {
+        return formatDateDisplay(d);
     }
     return '';
 });
@@ -356,29 +403,6 @@ watch(
     { immediate: true }
 );
 
-const parseDateString = (str) => {
-    if (!str) return null;
-    const parts = str.trim().split(' ');
-    const datePart = parts[0];
-    const timePart = parts[1] || '00:00';
-
-    if (!datePart) return null;
-    const dateParts = datePart.split('/');
-    if (dateParts.length !== 3) return null;
-
-    const d = parseInt(dateParts[0], 10);
-    const m = parseInt(dateParts[1], 10) - 1;
-    const y = parseInt(dateParts[2], 10);
-
-    if (isNaN(d) || isNaN(m) || isNaN(y)) return null;
-
-    const [h, min] = timePart.split(':').map(Number);
-
-    const date = new Date(y, m, d, h || 0, min || 0, 0, 0);
-    if (isNaN(date.getTime())) return null;
-    return date;
-};
-
 const onInputBlur = () => {
     const val = internalText.value;
     if (!val || !val.trim()) {
@@ -389,15 +413,15 @@ const onInputBlur = () => {
     if (props.range) {
         const parts = val.split('-');
         if (parts.length === 2) {
-            const start = parseDateString(parts[0]);
-            const end = parseDateString(parts[1]);
+            const start = parseToLocalDate(parts[0]);
+            const end = parseToLocalDate(parts[1]);
             if (start && end) {
                 emit('update:modelValue', [start, end]);
                 return;
             }
         }
     } else {
-        const d = parseDateString(val);
+        const d = parseToLocalDate(val);
         if (d && !isDateDisabled(d)) {
             emit('update:modelValue', d);
             return;
@@ -447,7 +471,7 @@ const onApply = () => {
         const end = tempEnd.value ? applyTimeToDate(tempEnd.value, endTimeStr.value) : null;
         emit('update:modelValue', [start, end]);
     } else {
-        const d = tempSingle.value ? applyTimeToDate(tempSingle.value, singleTimeStr.value) : null;
+        const d = tempSingle.value ? applyTimeToDate(tempSingle.value, props.enableTimePicker ? singleTimeStr.value : '00:00') : null;
         emit('update:modelValue', d);
     }
     open.value = false;
@@ -462,22 +486,28 @@ watch(
     () => props.modelValue,
     (val) => {
         if (props.range && Array.isArray(val)) {
-            tempStart.value = val[0] || null;
-            tempEnd.value = val[1] || null;
-            if (val[0]) {
-                startTimeStr.value = `${val[0].getHours().toString().padStart(2, '0')}:${val[0].getMinutes().toString().padStart(2, '0')}`;
-                viewDate.value = new Date(val[0]);
+            const s = parseToLocalDate(val[0]);
+            const e = parseToLocalDate(val[1]);
+            tempStart.value = s;
+            tempEnd.value = e;
+            if (s) {
+                startTimeStr.value = `${s.getHours().toString().padStart(2, '0')}:${s.getMinutes().toString().padStart(2, '0')}`;
+                viewDate.value = new Date(s);
             }
-            if (val[1]) {
-                endTimeStr.value = `${val[1].getHours().toString().padStart(2, '0')}:${val[1].getMinutes().toString().padStart(2, '0')}`;
+            if (e) {
+                endTimeStr.value = `${e.getHours().toString().padStart(2, '0')}:${e.getMinutes().toString().padStart(2, '0')}`;
             }
         } else if (!props.range && val) {
-            const d = val instanceof Date ? val : new Date(val);
-            if (!isNaN(d.getTime())) {
+            const d = parseToLocalDate(val);
+            if (d) {
                 tempSingle.value = d;
                 singleTimeStr.value = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
                 viewDate.value = new Date(d);
             }
+        } else {
+            tempSingle.value = null;
+            tempStart.value = null;
+            tempEnd.value = null;
         }
     },
     { immediate: true }
@@ -488,17 +518,30 @@ watch(open, (val) => {
         // Reset to current model value when opening
         const v = props.modelValue;
         if (props.range && Array.isArray(v)) {
-            tempStart.value = v[0] || null;
-            tempEnd.value = v[1] || null;
-            if (v[0])
-                startTimeStr.value = `${v[0].getHours().toString().padStart(2, '0')}:${v[0].getMinutes().toString().padStart(2, '0')}`;
-            if (v[1]) endTimeStr.value = `${v[1].getHours().toString().padStart(2, '0')}:${v[1].getMinutes().toString().padStart(2, '0')}`;
+            const s = parseToLocalDate(v[0]);
+            const e = parseToLocalDate(v[1]);
+            tempStart.value = s;
+            tempEnd.value = e;
+            if (s) {
+                startTimeStr.value = `${s.getHours().toString().padStart(2, '0')}:${s.getMinutes().toString().padStart(2, '0')}`;
+                viewDate.value = new Date(s);
+            } else {
+                viewDate.value = new Date();
+            }
+            if (e) {
+                endTimeStr.value = `${e.getHours().toString().padStart(2, '0')}:${e.getMinutes().toString().padStart(2, '0')}`;
+            }
         } else if (!props.range && v) {
-            const d = v instanceof Date ? v : new Date(v);
-            if (!isNaN(d.getTime())) {
+            const d = parseToLocalDate(v);
+            if (d) {
                 tempSingle.value = d;
                 singleTimeStr.value = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+                viewDate.value = new Date(d);
+            } else {
+                viewDate.value = new Date();
             }
+        } else {
+            viewDate.value = new Date();
         }
     }
 });

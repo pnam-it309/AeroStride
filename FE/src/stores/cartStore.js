@@ -1,6 +1,18 @@
 import { defineStore } from 'pinia';
 
-const CART_STORAGE_KEY = 'aerostride_cart';
+function getCartStorageKey() {
+    try {
+        const userStr = sessionStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            if (user?.username) {
+                return `aerostride_cart_${user.username}`;
+            }
+        }
+    } catch (e) {}
+    return 'aerostride_cart_guest';
+}
+
 const CART_VERSION = 2; // Tăng version khi thay đổi cấu trúc cart
 const CART_VERSION_KEY = 'aerostride_cart_version';
 
@@ -10,14 +22,15 @@ const CART_VERSION_KEY = 'aerostride_cart_version';
  * Version 2: lưu đầy đủ metadata {tenSanPham, hinhAnh, tenMauSac, ...}
  */
 function loadCartFromStorage() {
+    const key = getCartStorageKey();
     const savedVersion = parseInt(localStorage.getItem(CART_VERSION_KEY) || '1', 10);
     if (savedVersion < CART_VERSION) {
         // Clear stale cart data khi đổi cấu trúc
-        localStorage.removeItem(CART_STORAGE_KEY);
+        localStorage.removeItem(key);
         localStorage.setItem(CART_VERSION_KEY, String(CART_VERSION));
         return [];
     }
-    return JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [];
+    return JSON.parse(localStorage.getItem(key)) || [];
 }
 
 export const useCartStore = defineStore('cart', {
@@ -48,8 +61,9 @@ export const useCartStore = defineStore('cart', {
          * để drawer có thể hiển thị ngay khi tải lại trang, trước khi sync hoàn tất.
          */
         _persist() {
+            const key = getCartStorageKey();
             localStorage.setItem(
-                CART_STORAGE_KEY,
+                key,
                 JSON.stringify(
                     this.items.map((i) => ({
                         idChiTietSanPham: i.idChiTietSanPham,
@@ -201,6 +215,12 @@ export const useCartStore = defineStore('cart', {
             this.items = [];
             this.serverTotal = 0;
             this._persist();
+        },
+
+        async reloadCart() {
+            this.items = loadCartFromStorage();
+            this.serverTotal = 0;
+            await this.syncWithBackend();
         },
 
         openDrawer() {

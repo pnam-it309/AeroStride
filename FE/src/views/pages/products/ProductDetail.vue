@@ -186,12 +186,13 @@ watch(
     }
 );
 
+import { isFavorite as checkIsFavorite, toggleFavorite as toggleFavUtil } from '@/utils/favoritesUtil';
+
 // Cập nhật SEO và trạng thái Yêu thích khi product data load xong
 watch(product, (newProduct) => {
     if (newProduct) {
         setProductSeo(newProduct);
-        let favorites = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
-        isFavorite.value = favorites.includes(newProduct.id);
+        isFavorite.value = checkIsFavorite(newProduct.id);
     }
 });
 
@@ -222,11 +223,14 @@ const resolveImg = (v) => {
     return dichVuFile.layUrlFile(clean.replace(/^\/+/, ''));
 };
 
-const getValidImgUrl = (raw) => {
+import { optimizeImageUrl } from '@/utils/imageDisplay';
+
+const getValidImgUrl = (raw, width = 800, quality = 75) => {
     if (!raw) return null;
     let url = typeof raw === 'object' ? (raw.duongDanAnh || raw.hinhAnh || raw.url || '') : raw;
     const resolved = resolveImg(url);
-    return resolved && !isInvalidImage(resolved) ? resolved : null;
+    if (!resolved || isInvalidImage(resolved)) return null;
+    return optimizeImageUrl(resolved, width, quality);
 };
 
 const handleImgError = (e) => {
@@ -392,10 +396,15 @@ const allImages = computed(() => {
     const addedUrls = new Set();
 
     const addImg = (url, label) => {
-        const resolved = getValidImgUrl(url);
+        const resolved = getValidImgUrl(url, 800, 75);
+        const thumb = getValidImgUrl(url, 160, 60);
         if (resolved && !addedUrls.has(resolved)) {
             addedUrls.add(resolved);
-            images.push({ duongDanAnh: resolved, label: label || 'Hình ảnh' });
+            images.push({
+                duongDanAnh: resolved,
+                thumbnailUrl: thumb || resolved,
+                label: label || 'Hình ảnh'
+            });
         }
     };
 
@@ -447,10 +456,34 @@ const allImages = computed(() => {
     }
 
     if (images.length === 0) {
-        images.push({ duongDanAnh: DEFAULT_SHOE_IMAGE, label: 'Ảnh chính' });
+        images.push({
+            duongDanAnh: DEFAULT_SHOE_IMAGE,
+            thumbnailUrl: DEFAULT_SHOE_IMAGE,
+            label: 'Ảnh chính'
+        });
     }
     return images;
 });
+
+// Tự động preload các ảnh của sản phẩm để chuyển slide và hiển thị tức thì
+watch(
+    allImages,
+    (imgs) => {
+        if (imgs && imgs.length > 0) {
+            imgs.forEach((img) => {
+                if (img.duongDanAnh) {
+                    const imgObj = new Image();
+                    imgObj.src = img.duongDanAnh;
+                }
+                if (img.thumbnailUrl && img.thumbnailUrl !== img.duongDanAnh) {
+                    const thumbObj = new Image();
+                    thumbObj.src = img.thumbnailUrl;
+                }
+            });
+        }
+    },
+    { immediate: true }
+);
 
 const colorVariantPreviews = computed(() => {
     if (!product.value?.variants) return [];
@@ -458,7 +491,7 @@ const colorVariantPreviews = computed(() => {
     product.value.variants.forEach((v) => {
         if (v.tenMauSac && !map.has(v.tenMauSac)) {
             const rawImg = v.hinhAnh || (v.images && v.images.length > 0 ? v.images[0].duongDanAnh || v.images[0].hinhAnh : null);
-            const img = getValidImgUrl(rawImg) || DEFAULT_SHOE_IMAGE;
+            const img = getValidImgUrl(rawImg, 160, 60) || DEFAULT_SHOE_IMAGE;
             map.set(v.tenMauSac, { color: v.tenMauSac, img: img });
         }
     });
@@ -671,19 +704,14 @@ const toggleFavorite = () => {
         router.push(PATH.LOGIN);
         return;
     }
-    isFavorite.value = !isFavorite.value;
-    let favorites = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
+    const wasFavorite = checkIsFavorite(product.value.id);
+    toggleFavUtil(product.value.id);
+    isFavorite.value = !wasFavorite;
     if (isFavorite.value) {
-        if (!favorites.includes(product.value.id)) {
-            favorites.push(product.value.id);
-        }
         toastStore.showToast('Đã thêm vào danh sách yêu thích', 'success');
     } else {
-        favorites = favorites.filter((id) => id !== product.value.id);
         toastStore.showToast('Đã huỷ yêu thích', 'info');
     }
-    localStorage.setItem('aerostride_favorites', JSON.stringify(favorites));
-    window.dispatchEvent(new Event('favorites-updated'));
 };
 </script>
 
@@ -761,7 +789,13 @@ const toggleFavorite = () => {
                                             "
                                             @click="activeSlide = i"
                                         >
-                                            <v-img :src="img.duongDanAnh" cover class="aspect-square">
+                                            <v-img
+                                                :src="img.thumbnailUrl || img.duongDanAnh"
+                                                cover
+                                                class="aspect-square"
+                                                loading="eager"
+                                                decoding="async"
+                                            >
                                                 <template #placeholder>
                                                     <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
                                                         <v-icon size="18" color="grey">mdi-image-outline</v-icon>

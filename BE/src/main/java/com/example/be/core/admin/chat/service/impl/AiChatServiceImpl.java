@@ -250,7 +250,11 @@ public class AiChatServiceImpl implements AiChatService {
 
         // --- Cố gắng gọi OpenAI / Vision API (Primary Model) ---
         String activeOpenAiKey = getOpenAiApiKey();
-        boolean hasOpenAiKey = activeOpenAiKey != null && !activeOpenAiKey.isBlank() && !"your_openai_api_key_here".equals(activeOpenAiKey);
+        boolean hasOpenAiKey = activeOpenAiKey != null && !activeOpenAiKey.isBlank()
+                && !"your_openai_api_key_here".equalsIgnoreCase(activeOpenAiKey)
+                && !"ollama".equalsIgnoreCase(activeOpenAiKey)
+                && !"dummy-key".equalsIgnoreCase(activeOpenAiKey)
+                && (activeOpenAiKey.startsWith("sk-") || activeOpenAiKey.startsWith("gsk_") || activeOpenAiKey.length() >= 20);
 
         if (hasOpenAiKey && isModelHealthy("OPENAI")) {
             try {

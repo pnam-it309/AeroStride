@@ -5,7 +5,7 @@ INSERT INTO thuong_hieu (id, ma_thuong_hieu, ten_thuong_hieu, trang_thai, xoa_me
 ('th6', 'TH006', 'Bitis', 0, 0, 1711814500000),
 ('th7', 'TH007', 'Vans', 0, 0, 1711814500000),
 ('th8', 'TH008', 'Asics', 0, 0, 1711814500000),
-('th9', 'TH009', 'Puma', 0, 0, 1711814500000),
+('th9', 'TH009', 'Vascara', 0, 0, 1711814500000),
 ('th10', 'TH010', 'Reebok', 0, 0, 1711814500000)
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 

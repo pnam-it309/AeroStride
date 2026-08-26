@@ -624,19 +624,13 @@ public class AdminChatServiceImpl implements AdminChatService {
             conversation = conversationRepository.save(conversation);
         }
 
-        // Nếu là nhân viên gửi, tự động tiếp nhận cuộc trò chuyện (nếu đang chờ), chặn nếu đã đóng
+        // Nếu là nhân viên gửi: yêu cầu phải tiếp nhận trước, chặn nếu chưa tiếp nhận hoặc đã đóng
         if (ChatConstants.SENDER_TYPE_STAFF.equals(senderType) && conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
             if (conversation.getTrangThaiHoiThoai() == CuocHoiThoai.TrangThaiHoiThoai.CLOSED) {
                 throw new RuntimeException("Phiên trò chuyện đã đóng, không thể gửi thêm tin nhắn.");
             }
-            if (Boolean.FALSE.equals(conversation.getDaChapNhan()) || conversation.getTrangThaiHoiThoai() != CuocHoiThoai.TrangThaiHoiThoai.ACTIVE) {
-                conversation.setDaChapNhan(true);
-                conversation.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.ACTIVE);
-                String staffUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-                if (staffUsername != null && !staffUsername.isBlank()) {
-                    nhanVienRepository.findByTenTaiKhoan(staffUsername).ifPresent(conversation::setNhanVien);
-                }
-                conversation = conversationRepository.save(conversation);
+            if (Boolean.FALSE.equals(conversation.getDaChapNhan()) || conversation.getTrangThaiHoiThoai() == CuocHoiThoai.TrangThaiHoiThoai.PENDING) {
+                throw new RuntimeException("Vui lòng bấm 'Tiếp nhận' cuộc trò chuyện trước khi gửi tin nhắn cho khách hàng.");
             }
         }
 

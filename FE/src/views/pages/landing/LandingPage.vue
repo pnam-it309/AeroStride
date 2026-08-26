@@ -71,25 +71,23 @@ onUnmounted(() => {
     window.removeEventListener('favorites-updated', updateFavoriteIds);
 });
 
+import { getFavoriteIds, toggleFavorite as toggleFavUtil } from '@/utils/favoritesUtil';
+
 // ─── Favorites state tracking ────────────────────────────────────────────────
 const favoriteIds = ref([]);
 const updateFavoriteIds = () => {
-    favoriteIds.value = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
+    favoriteIds.value = getFavoriteIds();
 };
 
 const toggleFavorite = (productId, event) => {
     if (event) event.stopPropagation();
-    let favorites = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
-    if (favorites.includes(productId)) {
-        favorites = favorites.filter((id) => id !== productId);
-        localStorage.setItem('aerostride_favorites', JSON.stringify(favorites));
+    const wasFavorite = favoriteIds.value.includes(productId);
+    toggleFavUtil(productId);
+    if (wasFavorite) {
         toastStore.showToast('Đã xoá khỏi danh sách yêu thích', 'info');
     } else {
-        favorites.push(productId);
-        localStorage.setItem('aerostride_favorites', JSON.stringify(favorites));
         toastStore.showToast('Đã thêm vào danh sách yêu thích', 'success');
     }
-    window.dispatchEvent(new Event('favorites-updated'));
     updateFavoriteIds();
 };
 

@@ -72,6 +72,11 @@ public class ScheduledChatTasks {
                     
                     tinNhanRepository.save(systemMsg);
                     cuocHoiThoaiRepository.save(chat);
+
+                    Map<String, String> notification = new HashMap<>();
+                    notification.put("content", "CLOSED_CONVERSATION_" + chat.getId());
+                    notification.put("timestamp", String.valueOf(now));
+                    messagingTemplate.convertAndSend(ChatConstants.TOPIC_NOTIFICATIONS, notification);
                 }
             }
         }

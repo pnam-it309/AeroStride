@@ -28,6 +28,9 @@ const endDate = ref(formatDateInput(defaultEndDate));
 
 const onStartDateChange = (val) => {
     startDate.value = val ? formatDateInput(new Date(val)) : null;
+    if (startDate.value && endDate.value && startDate.value > endDate.value) {
+        endDate.value = startDate.value;
+    }
     if (startDate.value && endDate.value) {
         loadStatistics(true);
     }
@@ -35,6 +38,9 @@ const onStartDateChange = (val) => {
 
 const onEndDateChange = (val) => {
     endDate.value = val ? formatDateInput(new Date(val)) : null;
+    if (startDate.value && endDate.value && endDate.value < startDate.value) {
+        startDate.value = endDate.value;
+    }
     if (startDate.value && endDate.value) {
         loadStatistics(true);
     }

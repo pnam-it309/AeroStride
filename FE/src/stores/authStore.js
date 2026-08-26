@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
-import { useRouter } from 'vue-router';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 import { APP_ROLES } from '@/constants/appConstants';
+import { useUIStore } from '@/stores/ui';
+import { notifyFavoritesUpdated } from '@/utils/favoritesUtil';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
@@ -27,6 +28,18 @@ export const useAuthStore = defineStore('auth', {
                     const { accessToken, refreshToken, username, role } = response.data;
                     this.user = { username, role };
                     this.accessToken = accessToken;
+
+                    // Xóa cache trang cũ và chuyển giỏ hàng/yêu thích sang tài khoản mới
+                    const uiStore = useUIStore();
+                    uiStore.clearCache();
+                    sessionStorage.removeItem('page-cache');
+                    sessionStorage.removeItem('page-preferences');
+
+                    const { useCartStore } = await import('@/stores/cartStore');
+                    const cartStore = useCartStore();
+                    await cartStore.reloadCart();
+
+                    notifyFavoritesUpdated();
                 }
                 return response;
             } catch (err) {
@@ -46,6 +59,18 @@ export const useAuthStore = defineStore('auth', {
                     const { accessToken, refreshToken, username, role } = response.data;
                     this.user = { username, role };
                     this.accessToken = accessToken;
+
+                    // Xóa cache trang cũ và chuyển giỏ hàng/yêu thích sang tài khoản mới
+                    const uiStore = useUIStore();
+                    uiStore.clearCache();
+                    sessionStorage.removeItem('page-cache');
+                    sessionStorage.removeItem('page-preferences');
+
+                    const { useCartStore } = await import('@/stores/cartStore');
+                    const cartStore = useCartStore();
+                    await cartStore.reloadCart();
+
+                    notifyFavoritesUpdated();
                 }
                 return response;
             } catch (err) {
@@ -61,10 +86,19 @@ export const useAuthStore = defineStore('auth', {
             this.user = null;
             this.accessToken = null;
 
-            // Xóa giỏ hàng khi đăng xuất
+            // Xóa cache dữ liệu trang & preferences khi đăng xuất
+            const uiStore = useUIStore();
+            uiStore.clearCache();
+            sessionStorage.removeItem('page-cache');
+            sessionStorage.removeItem('page-preferences');
+
+            // Cập nhật lại giỏ hàng cho tài khoản khách (guest)
             const { useCartStore } = await import('@/stores/cartStore');
             const cartStore = useCartStore();
-            cartStore.clearCart();
+            await cartStore.reloadCart();
+
+            // Cập nhật lại danh sách yêu thích cho khách
+            notifyFavoritesUpdated();
         }
     }
 });

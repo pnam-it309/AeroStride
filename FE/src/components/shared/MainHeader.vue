@@ -15,11 +15,12 @@ const cartStore = useCartStore();
 const toastStore = useToastStore();
 const router = useRouter();
 
+import { getFavoriteIds } from '@/utils/favoritesUtil';
+
 // ─── Favorites ───────────────────────────────────────────────────────────────
 const favoriteCount = ref(0);
 const updateFavoriteCount = () => {
-    const favorites = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
-    favoriteCount.value = favorites.length;
+    favoriteCount.value = getFavoriteIds().length;
 };
 const handleFavoriteClick = () => {
     router.push(PATH.FAVORITES);

@@ -118,7 +118,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
     @CacheEvict(value = "productOptions", allEntries = true)
     public AdminAttributeResponse update(String id, AdminAttributeRequest request) {
         E entity = findActiveEntity(id);
-        validateDuplicate(request, id);
+        validateDuplicate(request, entity);
 
         applyData(entity, request);
         return toResponse(repository.save(entity));
@@ -152,33 +152,39 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
         deletedSetter.accept(entity, false);
     }
 
-    private void validateDuplicate(AdminAttributeRequest request, String excludeId) {
-        if (StringUtils.hasText(request.getMa()) && repository.exists((root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(criteriaBuilder.or(
-                    criteriaBuilder.isNull(root.get("xoaMem")),
-                    criteriaBuilder.isFalse(root.get("xoaMem"))
-            ));
-            predicates.add(criteriaBuilder.notEqual(root.get("trangThai"), TrangThai.DA_XOA));
-            predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("ma")), request.getMa().trim().toLowerCase()));
-            if (StringUtils.hasText(excludeId)) {
-                predicates.add(criteriaBuilder.notEqual(root.get("id"), excludeId));
+    private void validateDuplicate(AdminAttributeRequest request, E existingEntity) {
+        String newMa = normalize(request.getMa());
+        if (StringUtils.hasText(newMa)) {
+            boolean maChanged = existingEntity == null || !newMa.equalsIgnoreCase(existingEntity.getMa());
+            if (maChanged && repository.exists((root, query, criteriaBuilder) -> {
+                List<Predicate> predicates = new ArrayList<>();
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.isNull(root.get("xoaMem")),
+                        criteriaBuilder.isFalse(root.get("xoaMem"))
+                ));
+                predicates.add(criteriaBuilder.notEqual(root.get("trangThai"), TrangThai.DA_XOA));
+                predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("ma")), newMa.toLowerCase()));
+                if (existingEntity != null) {
+                    predicates.add(criteriaBuilder.notEqual(root.get("id"), existingEntity.getId()));
+                }
+                return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            })) {
+                throw new BusinessException("Ma " + entityDisplayName + " da ton tai");
             }
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        })) {
-            throw new BusinessException("Ma " + entityDisplayName + " da ton tai");
         }
 
-        if (repository.exists((root, query, criteriaBuilder) -> {
+        String newTen = request.getTen() != null ? request.getTen().trim() : "";
+        boolean tenChanged = existingEntity == null || !newTen.equalsIgnoreCase(existingEntity.getTen() != null ? existingEntity.getTen().trim() : "");
+        if (tenChanged && repository.exists((root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(criteriaBuilder.or(
                     criteriaBuilder.isNull(root.get("xoaMem")),
                     criteriaBuilder.isFalse(root.get("xoaMem"))
-            ));
+                ));
             predicates.add(criteriaBuilder.notEqual(root.get("trangThai"), TrangThai.DA_XOA));
-            predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("ten")), request.getTen().trim().toLowerCase()));
-            if (StringUtils.hasText(excludeId)) {
-                predicates.add(criteriaBuilder.notEqual(root.get("id"), excludeId));
+            predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("ten")), newTen.toLowerCase()));
+            if (existingEntity != null) {
+                predicates.add(criteriaBuilder.notEqual(root.get("id"), existingEntity.getId()));
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         })) {

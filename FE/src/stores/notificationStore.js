@@ -35,6 +35,13 @@ export const useNotificationStore = defineStore('notification', {
         },
 
         addNotification(message) {
+            // 0. Xử lý sự kiện đóng phiên trò chuyện -> xóa ngay khỏi danh sách chưa đọc
+            if (message.content && typeof message.content === 'string' && message.content.startsWith('CLOSED_CONVERSATION_')) {
+                const convId = message.content.replace('CLOSED_CONVERSATION_', '');
+                this.markChatRead(convId);
+                return;
+            }
+
             // 1. Kiểm tra nếu là thông báo yêu cầu gặp nhân viên (Handoff Request)
             if (message.type === 'CUSTOMER_HANDOFF_REQUEST') {
                 const userStr = sessionStorage.getItem('user');
@@ -192,6 +199,9 @@ export const useNotificationStore = defineStore('notification', {
                 conversations
                     .filter((c) => {
                         const status = c.status || c.trangThaiHoiThoai;
+                        if (status === 'CLOSED' || status === 'ENDED' || status === 'DONG' || status === 'DA_DONG') {
+                            return false;
+                        }
                         const type = c.type || c.loaiHoiThoai || 'CUSTOMER';
                         if (type === 'CUSTOMER') {
                             // 1. Nếu chưa ai tiếp nhận (PENDING) -> tất cả nhân viên đều thấy số

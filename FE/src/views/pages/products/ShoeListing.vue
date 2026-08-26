@@ -328,23 +328,17 @@ const translateGender = (gender) => {
     return map[gender] || gender;
 };
 
+import { getFavoriteIds, toggleFavorite as toggleFavUtil } from '@/utils/favoritesUtil';
+
 // Real-time synchronization of favorites count with the header
 const favoriteIds = ref([]);
 const updateFavoriteIds = () => {
-    favoriteIds.value = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
+    favoriteIds.value = getFavoriteIds();
 };
 
 const toggleFavorite = (productId, event) => {
     if (event) event.stopPropagation();
-    let favorites = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
-    if (favorites.includes(productId)) {
-        favorites = favorites.filter((id) => id !== productId);
-        localStorage.setItem('aerostride_favorites', JSON.stringify(favorites));
-    } else {
-        favorites.push(productId);
-        localStorage.setItem('aerostride_favorites', JSON.stringify(favorites));
-    }
-    window.dispatchEvent(new Event('favorites-updated'));
+    toggleFavUtil(productId);
     updateFavoriteIds();
 };
 

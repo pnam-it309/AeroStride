@@ -5,6 +5,7 @@ import { API_CHAT } from '@/constants/apiPaths';
 import { chatSocket } from '@/services/chatSocket';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useToastStore } from '@/stores/toastStore';
 import { CHAT_TYPES, CHAT_SENDER_TYPE, CHAT_STATUS, CHAT_TOPICS } from '@/constants/appConstants';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useRefreshHandler } from '@/composables/useRefreshHandler';
@@ -24,6 +25,7 @@ const resolveAvatar = (avatar) => {
 
 const notificationStore = useNotificationStore();
 const authStore = useAuthStore();
+const toastStore = useToastStore();
 const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 const { isRefreshing, handleRefresh: executeRefresh } = useRefreshHandler();
 const customers = ref([]);
@@ -111,6 +113,10 @@ const escapeHtml = (unsafe) => {
 
 const isUnread = (c) => {
     if (!c) return false;
+    const status = c.status || c.trangThaiHoiThoai || '';
+    if (status === 'CLOSED' || status === 'ENDED' || status === 'DONG' || status === 'DA_DONG') {
+        return false;
+    }
     const currentUsername = authStore.user?.username;
     const isCustomerChat = (c.type === CHAT_TYPES.CUSTOMER || c.loaiHoiThoai === CHAT_TYPES.CUSTOMER || !c.type);
 
@@ -123,6 +129,10 @@ const isUnread = (c) => {
 
 const getUnreadCount = (c) => {
     if (!c) return 0;
+    const status = c.status || c.trangThaiHoiThoai || '';
+    if (status === 'CLOSED' || status === 'ENDED' || status === 'DONG' || status === 'DA_DONG') {
+        return 0;
+    }
     const currentUsername = authStore.user?.username;
     const isCustomerChat = (c.type === CHAT_TYPES.CUSTOMER || c.loaiHoiThoai === CHAT_TYPES.CUSTOMER || !c.type);
 
@@ -593,6 +603,18 @@ const sendMessage = async () => {
     if (!newMessage.value.trim() && !imagePreview.value) return;
     if (!activeChat.value) return;
 
+    // Chặn gửi tin nhắn nếu là chat khách hàng và chưa tiếp nhận hoặc đã đóng
+    if (activeChat.value.type !== CHAT_TYPES.INTERNAL) {
+        if (activeChat.value.status === 'CLOSED') {
+            toastStore.showToast('Phiên trò chuyện đã đóng, không thể gửi thêm tin nhắn.', 'warning');
+            return;
+        }
+        if (activeChat.value.status === 'PENDING' || !activeChat.value.isAccepted || !isAccepted.value) {
+            toastStore.showToast('Vui lòng bấm "Tiếp nhận" cuộc trò chuyện trước khi nhắn tin cho khách hàng.', 'warning');
+            return;
+        }
+    }
+
     // Chuẩn bị payload: base64 thuần (bỏ header "data:image/...;base64," nếu có)
     let base64Image = null;
     const localPreview = imagePreview.value;
@@ -602,18 +624,6 @@ const sendMessage = async () => {
 
     const textToSend = newMessage.value ? newMessage.value.trim() : null;
     const currentUsername = authStore.user?.username || 'STAFF';
-
-    // Chặn gửi tin nhắn vào cuộc hội thoại đã đóng
-    if (activeChat.value.type !== CHAT_TYPES.INTERNAL && activeChat.value.status === 'CLOSED') {
-        return;
-    }
-
-    // Tự động chuyển trạng thái cuộc hội thoại sang ACTIVE khi nhân viên gửi tin (nếu đang chờ)
-    if (activeChat.value.type !== CHAT_TYPES.INTERNAL && activeChat.value.status === 'PENDING') {
-        activeChat.value.status = 'ACTIVE';
-        activeChat.value.isAccepted = true;
-        isAccepted.value = true;
-    }
 
     // Đẩy tin nhắn optimistic lên UI ngay lập tức để hiển thị tức thì cả ảnh và chữ
     const tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
@@ -1265,27 +1275,37 @@ const handleRefresh = async () => {
                     <!-- Input Area -->
                     <div class="input-area position-relative">
                         <!-- Banner tiếp nhận khi cuộc trò chuyện đang chờ (chỉ hiện với khách hàng) -->
-                        <div
-                            v-if="activeChat.status === 'PENDING' && activeChat.type !== CHAT_TYPES.INTERNAL"
-                            class="status-action-banner d-flex align-center justify-space-between px-4 py-2 mb-2 rounded-xl"
-                            style="background: #eef2ff; border: 1px solid #c7d2fe;"
-                        >
-                            <div class="d-flex align-center">
-                                <v-icon color="#1e257c" size="20" class="mr-2">mdi-account-clock-outline</v-icon>
-                                <span style="font-size: 0.85rem; font-weight: 600; color: #1e257c;">
-                                    Cuộc trò chuyện đang chờ tiếp nhận
+                        <template v-if="activeChat.type !== CHAT_TYPES.INTERNAL && (activeChat.status === 'PENDING' || (!activeChat.isAccepted && !isAccepted))">
+                            <div
+                                class="status-action-banner d-flex align-center justify-space-between px-4 py-2 mb-2 rounded-xl"
+                                style="background: #eef2ff; border: 1px solid #c7d2fe;"
+                            >
+                                <div class="d-flex align-center">
+                                    <v-icon color="#1e257c" size="20" class="mr-2">mdi-account-clock-outline</v-icon>
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: #1e257c;">
+                                        Cuộc trò chuyện đang chờ tiếp nhận
+                                    </span>
+                                </div>
+                                <v-btn
+                                    color="#1e257c"
+                                    size="small"
+                                    class="text-white text-none font-weight-bold rounded-pill px-3"
+                                    elevation="0"
+                                    @click="acceptChat"
+                                >
+                                    <v-icon size="16" class="mr-1">mdi-check</v-icon> Tiếp nhận ngay
+                                </v-btn>
+                            </div>
+                            <div
+                                class="d-flex align-center justify-center py-3 px-4 rounded-xl text-center"
+                                style="background: #f8fafc; border: 1.5px dashed #cbd5e1;"
+                            >
+                                <v-icon color="#64748b" size="18" class="mr-2">mdi-lock-outline</v-icon>
+                                <span style="font-size: 0.85rem; font-weight: 500; color: #64748b;">
+                                    Vui lòng bấm <strong>"Tiếp nhận ngay"</strong> ở trên để bắt đầu nhắn tin hỗ trợ khách hàng.
                                 </span>
                             </div>
-                            <v-btn
-                                color="#1e257c"
-                                size="small"
-                                class="text-white text-none font-weight-bold rounded-pill px-3"
-                                elevation="0"
-                                @click="acceptChat"
-                            >
-                                <v-icon size="16" class="mr-1">mdi-check</v-icon> Tiếp nhận ngay
-                            </v-btn>
-                        </div>
+                        </template>
 
                         <!-- Banner khi phiên trò chuyện đã đóng (chỉ hiện với khách hàng) -->
                         <div
@@ -1299,9 +1319,9 @@ const handleRefresh = async () => {
                             </span>
                         </div>
 
-                        <!-- Cụm soạn tin nhắn (chỉ hiện khi chưa đóng hoặc là chat nội bộ) -->
+                        <!-- Cụm soạn tin nhắn (chỉ hiện khi đã tiếp nhận / ACTIVE hoặc là chat nội bộ) -->
                         <v-row
-                            v-if="activeChat.status !== 'CLOSED' || activeChat.type === CHAT_TYPES.INTERNAL"
+                            v-else
                             no-gutters
                             align="center"
                         >
@@ -1328,7 +1348,7 @@ const handleRefresh = async () => {
                                 </div>
                                 <v-textarea
                                     v-model="newMessage"
-                                    :placeholder="activeChat.status === 'PENDING' && activeChat.type !== CHAT_TYPES.INTERNAL ? 'Nhập tin nhắn để tự động tiếp nhận...' : 'Nhập tin nhắn...'"
+                                    placeholder="Nhập tin nhắn..."
                                     rows="1"
                                     auto-grow
                                     variant="solo"

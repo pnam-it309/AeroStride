@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { BoxIcon, XIcon } from 'vue-tabler-icons';
 import { Html5Qrcode } from 'html5-qrcode';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
+import { SYSTEM_STATUS } from '@/constants/statusConstants';
 import { dichVuThuongHieu, dichVuMucDichChay, dichVuMauSac, dichVuKichThuoc } from '@/services/product/dichVuThuocTinh';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
@@ -75,19 +76,22 @@ const loadFilterOptions = async (force = false) => {
     }
     try {
         const [th, md, ms, kt, maxPriceRes] = await Promise.allSettled([
-            dichVuThuongHieu.layThuongHieu({ size: 1000 }),
-            dichVuMucDichChay.layMucDichChay({ size: 1000 }),
-            dichVuMauSac.layMauSac({ size: 1000 }),
-            dichVuKichThuoc.layKichThuoc({ size: 1000 }),
+            dichVuThuongHieu.layThuongHieu({ trangThai: SYSTEM_STATUS.ACTIVE, size: 1000 }),
+            dichVuMucDichChay.layMucDichChay({ trangThai: SYSTEM_STATUS.ACTIVE, size: 1000 }),
+            dichVuMauSac.layMauSac({ trangThai: SYSTEM_STATUS.ACTIVE, size: 1000 }),
+            dichVuKichThuoc.layKichThuoc({ trangThai: SYSTEM_STATUS.ACTIVE, size: 1000 }),
             dichVuSanPham.layGiaLonNhat()
         ]);
 
         const pick = (res) => {
             if (res.status === 'fulfilled') {
                 const val = res.value;
-                if (Array.isArray(val)) return val;
-                if (val && Array.isArray(val.content)) return val.content;
-                if (val && Array.isArray(val.data)) return val.data;
+                let list = [];
+                if (Array.isArray(val)) list = val;
+                else if (val && Array.isArray(val.content)) list = val.content;
+                else if (val && Array.isArray(val.data)) list = val.data;
+
+                return list.filter((item) => !item.trangThai || item.trangThai === SYSTEM_STATUS.ACTIVE || item.trangThai === 'DANG_HOAT_DONG');
             }
             return [];
         };

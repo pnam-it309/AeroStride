@@ -19,6 +19,7 @@ import { PATH } from '@/router/routePaths';
 import { useNotifications } from '@/services/notificationService';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { dichVuBienThe } from '@/services/product/dichVuBienThe';
+import { SYSTEM_STATUS } from '@/constants/statusConstants';
 import { dichVuMauSac, dichVuKichThuoc } from '@/services/product/dichVuThuocTinh';
 import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
 import VariantFormModal from './components/VariantFormModal.vue';
@@ -164,8 +165,8 @@ const fetchFormOptions = async () => {
         }
 
         const [mauSacResponse, kichThuocResponse] = await Promise.all([
-            dichVuMauSac.layMauSac({ size: 1000 }),
-            dichVuKichThuoc.layKichThuoc({ size: 1000 })
+            dichVuMauSac.layMauSac({ trangThai: SYSTEM_STATUS.ACTIVE, size: 1000 }),
+            dichVuKichThuoc.layKichThuoc({ trangThai: SYSTEM_STATUS.ACTIVE, size: 1000 })
         ]);
 
         // layMauSac/layKichThuoc luôn trả PageResponse ({ content: [...] })

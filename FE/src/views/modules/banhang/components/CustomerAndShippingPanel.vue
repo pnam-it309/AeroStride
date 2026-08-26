@@ -1,7 +1,7 @@
 <template>
     <div class="d-flex flex-column">
         <!-- Khách hàng Card -->
-        <v-card class="pos-navy-card pa-4 mb-3">
+        <v-card class="pos-navy-card customer-card-wrapper pa-4 mb-3">
             <!-- Header Row: Title & Action Buttons -->
             <div class="d-flex justify-space-between align-center border-b pb-2 mb-3 ga-2 flex-wrap">
                 <div class="d-flex align-center ga-2 flex-shrink-0">
@@ -42,7 +42,7 @@
             </div>
 
             <!-- Search Row: Full width input with absolute dropdown spanning 100% width -->
-            <div class="position-relative w-100 mb-3">
+            <div class="position-relative w-100 mb-3 search-input-container">
                 <v-text-field
                     v-model="customerSearch"
                     placeholder="Tìm theo SĐT, Tên khách hàng..."
@@ -569,9 +569,7 @@ const performCustomerSearch = async (kw = '') => {
 
 const onFocusCustomerSearch = async () => {
     showCustomerSuggestions.value = true;
-    if (customerResults.value.length === 0) {
-        await performCustomerSearch(customerSearch.value);
-    }
+    await performCustomerSearch(customerSearch.value);
 };
 
 let searchTimeout = null;
@@ -678,6 +676,17 @@ watch(
     border: 1px solid #e2e8f0 !important;
     border-radius: 16px !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+    overflow: visible !important;
+    position: relative;
+}
+
+.customer-card-wrapper {
+    position: relative;
+    z-index: 30;
+}
+
+.search-input-container {
+    z-index: 100;
 }
 
 /* Badge Số lần mua */
@@ -752,44 +761,50 @@ watch(
     background-color: #e2e8f0 !important;
 }
 
-/* Popover Danh sách Tìm kiếm Khách hàng Mềm mại, Thoáng đãng, Không bao giờ tràn mép */
+/* Popover Danh sách Tìm kiếm Khách hàng Mềm mại, Thoáng đãng, Hiển thị 3 khách rõ ràng và cuộn mượt */
 .suggestion-popover {
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + 6px);
     left: 0;
     right: 0;
     width: 100%;
-    max-height: 320px;
+    max-height: 380px;
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     border-radius: 12px !important;
-    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(15, 23, 42, 0.08) !important;
-    z-index: 1000 !important;
+    box-shadow: 0 20px 40px -6px rgba(15, 23, 42, 0.25), 0 8px 16px -2px rgba(15, 23, 42, 0.12) !important;
+    z-index: 9999 !important;
     overflow: hidden !important;
     padding: 0;
 }
 
 .suggestion-list-scroll {
     max-height: 200px;
+    min-height: 120px;
     overflow-y: auto !important;
+    padding-bottom: 4px;
 }
 
 .suggestion-list-scroll::-webkit-scrollbar {
-    width: 5px;
+    width: 6px;
 }
 .suggestion-list-scroll::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 10px;
 }
+.suggestion-list-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
 .suggestion-list-scroll::-webkit-scrollbar-track {
-    background: transparent;
+    background: #f8fafc;
 }
 
 .suggestion-item {
     border-bottom: 1px solid #f1f5f9;
     transition: all 0.15s ease;
-    padding: 8px 12px !important;
-    min-height: 48px;
+    padding: 9px 12px !important;
+    min-height: 52px;
+    box-sizing: border-box;
 }
 
 .suggestion-item:last-child {

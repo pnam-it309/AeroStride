@@ -40,10 +40,12 @@ const handleImageError = (e) => {
     e.target.src = defaultShoeImg;
 };
 
+import { getFavoriteIds, setFavoriteIds, removeFavorite as removeFavUtil } from '@/utils/favoritesUtil';
+
 const fetchFavorites = async (silent = false) => {
     if (!silent) loading.value = true;
     try {
-        const favoriteIds = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
+        const favoriteIds = getFavoriteIds();
         if (favoriteIds.length === 0) {
             favoriteProducts.value = [];
             loading.value = false;
@@ -67,9 +69,9 @@ const fetchFavorites = async (silent = false) => {
 
         favoriteProducts.value = validProducts;
 
-        // Chỉ cập nhật lại localStorage nếu có sản phẩm bị xóa khỏi database, không bắn event lặp
+        // Chỉ cập nhật lại nếu có sản phẩm bị xóa khỏi database
         if (validIds.length > 0 && validIds.length !== favoriteIds.length) {
-            localStorage.setItem('aerostride_favorites', JSON.stringify(validIds));
+            setFavoriteIds(validIds);
         }
     } catch (error) {
         console.error('Error fetching favorites:', error);
@@ -97,10 +99,7 @@ const goToDetail = (id) => {
 
 const removeFavorite = (id, event) => {
     if (event) event.stopPropagation();
-    let favorites = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
-    favorites = favorites.filter((favId) => favId !== id);
-    localStorage.setItem('aerostride_favorites', JSON.stringify(favorites));
-    window.dispatchEvent(new Event('favorites-updated'));
+    removeFavUtil(id);
     toastStore.showToast('Đã xoá khỏi danh sách yêu thích', 'info');
     fetchFavorites(true);
 };
