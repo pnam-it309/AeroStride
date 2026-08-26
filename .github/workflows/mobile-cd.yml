@@ -63,3 +63,23 @@ jobs:
           name: eas-build-result
           path: mobile/eas-build-result.json
           if-no-files-found: ignore
+
+      - name: Update release info & commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898026+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git checkout -B main origin/main
+            node mobile/scripts/update-release-info.js mobile/eas-build-result.json
+            git add README.md mobile/app-version.json
+            if git diff --cached --quiet; then
+              echo "No release info changes to commit."
+              break
+            fi
+            git commit -m "chore(mobile): update APK download link to latest build [skip ci]"
+            if git push origin main; then
+              break
+            fi
+            echo "Push rejected (attempt $attempt), retrying against latest main..."
+          done
