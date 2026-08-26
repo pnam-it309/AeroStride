@@ -369,17 +369,75 @@ public class AiChatServiceImpl implements AiChatService {
             if (material.contains(w)) score += 10;
         }
 
-        // 8. Khớp giá
+        // 8. Khớp giá thông minh
         if (targetPrice != null && v.getGiaBan() != null) {
             BigDecimal diff = v.getGiaBan().subtract(targetPrice).abs();
             if (diff.compareTo(new BigDecimal("100000")) <= 0) {
-                score += 80;
+                score += 150;
             } else if (diff.compareTo(new BigDecimal("300000")) <= 0) {
-                score += 40;
+                score += 100;
+            } else if (diff.compareTo(new BigDecimal("500000")) <= 0) {
+                score += 60;
+            } else if (diff.compareTo(new BigDecimal("1000000")) <= 0) {
+                score += 30;
             }
         }
 
         return score;
+    }
+
+    private BigDecimal extractTargetPrice(String text) {
+        if (text == null || text.isBlank()) return null;
+        String t = text.toLowerCase().trim();
+
+        try {
+            // 1. Dạng số thập phân triệu (ví dụ: 2.5tr, 2,5tr, 2.5 triệu, 2,5 triệu, 1.2m, 2.5 củ)
+            java.util.regex.Matcher decimalMillion = java.util.regex.Pattern.compile("(\\d+)[.,](\\d+)\\s*(?:tr|trieu|triệu|m|cu|củ)").matcher(t);
+            if (decimalMillion.find()) {
+                String whole = decimalMillion.group(1);
+                String fraction = decimalMillion.group(2);
+                double val = Double.parseDouble(whole + "." + fraction);
+                return BigDecimal.valueOf((long) (val * 1000000));
+            }
+
+            // 2. Dạng "2tr5", "1tr2", "2 củ 5", "2 triệu 5", "2 triệu rưỡi", "2 củ rưỡi"
+            java.util.regex.Matcher shortMillionAndSub = java.util.regex.Pattern.compile("(\\d+)\\s*(?:tr|trieu|triệu|cu|củ)\\s*(?:(\\d+)|rưỡi|ruoi)").matcher(t);
+            if (shortMillionAndSub.find()) {
+                long whole = Long.parseLong(shortMillionAndSub.group(1));
+                String sub = shortMillionAndSub.group(2);
+                long subVal = 0;
+                if (t.contains("rưỡi") || t.contains("ruoi")) {
+                    subVal = 500000;
+                } else if (sub != null && !sub.isBlank()) {
+                    long s = Long.parseLong(sub);
+                    subVal = (s < 10) ? s * 100000 : s * 10000;
+                }
+                return BigDecimal.valueOf(whole * 1000000 + subVal);
+            }
+
+            // 3. Dạng số nguyên triệu / củ / tr / m (ví dụ: 2tr, 2 triệu, 2 củ, 2m)
+            java.util.regex.Matcher wholeMillion = java.util.regex.Pattern.compile("(\\d+)\\s*(?:tr|trieu|triệu|m|cu|củ)\\b").matcher(t);
+            if (wholeMillion.find()) {
+                long whole = Long.parseLong(wholeMillion.group(1));
+                return BigDecimal.valueOf(whole * 1000000);
+            }
+
+            // 4. Dạng nghìn / k (ví dụ: 500k, 500 nghìn, 500 ngàn)
+            java.util.regex.Matcher kMatcher = java.util.regex.Pattern.compile("(\\d+)\\s*(?:k|nghìn|ngàn)").matcher(t);
+            if (kMatcher.find()) {
+                long num = Long.parseLong(kMatcher.group(1));
+                return BigDecimal.valueOf(num * 1000);
+            }
+
+            // 5. Dạng số lớn viết liền hoặc có dấu chấm phân cách (ví dụ: 2000000, 2.000.000, 2,000,000, 500000)
+            String digitsOnly = t.replaceAll("[^0-9]", "");
+            if (digitsOnly.length() >= 5) {
+                return new BigDecimal(digitsOnly);
+            }
+        } catch (Exception e) {
+            log.warn("Lỗi trích xuất giá từ '{}': {}", text, e.getMessage());
+        }
+        return null;
     }
 
     /**
@@ -396,7 +454,7 @@ public class AiChatServiceImpl implements AiChatService {
             List<ProductVariantResponse> allVariants = sanPhamService.getAllVariants();
             if (allVariants != null) {
                 cachedVariants = allVariants.stream()
-                        .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+                        .filter(v -> v != null && v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
                         .collect(Collectors.toList());
             } else {
                 cachedVariants = new ArrayList<>();
@@ -418,19 +476,8 @@ public class AiChatServiceImpl implements AiChatService {
         String[] queryWords = queryLower.split("\\s+");
         String[] unaccentWords = queryUnaccent.split("\\s+");
 
-        // Phát hiện giá mục tiêu (ví dụ: 130k, 130000, 1tr2)
-        BigDecimal targetPrice = null;
-        try {
-            if (queryLower.matches(".*\\d+[kK].*")) {
-                String val = queryLower.replaceAll("[^0-9]", "");
-                targetPrice = new BigDecimal(val).multiply(new BigDecimal("1000"));
-            } else if (queryLower.matches(".*\\d{5,}.*")) {
-                String val = queryLower.replaceAll("[^0-9]", "");
-                targetPrice = new BigDecimal(val);
-            }
-        } catch (Exception e) {
-            log.warn("Lỗi trích xuất giá từ query: {}", e.getMessage());
-        }
+        // Phát hiện giá mục tiêu thông minh (ví dụ: 2tr, 2 triệu, 2 củ, 2000000, 500k)
+        BigDecimal targetPrice = extractTargetPrice(queryLower);
 
         // Nhận diện từ khóa yêu cầu sắp xếp theo giá
         boolean sortByPriceAsc = queryLower.contains("thấp đến cao") || queryLower.contains("rẻ nhất") || 
@@ -455,12 +502,24 @@ public class AiChatServiceImpl implements AiChatService {
         List<ScoredVariant> scoredList = new ArrayList<>();
         BigDecimal finalTargetPrice = targetPrice;
         for (ProductVariantResponse v : cachedVariants) {
+            if (v == null) continue;
             int score = calculateMatchScore(v, queryLower, queryUnaccent, queryWords, unaccentWords, finalTargetPrice);
             if (score == 0 && (sortByPriceAsc || sortByPriceDesc)) {
                 score = 1;
             }
             if (score > 0) {
                 scoredList.add(new ScoredVariant(v, score));
+            }
+        }
+
+        // Nếu khách tìm kiếm theo giá mà không có đôi nào có điểm khớp từ khóa -> chấm điểm toàn bộ theo khoảng cách giá
+        if (targetPrice != null && scoredList.isEmpty()) {
+            for (ProductVariantResponse v : cachedVariants) {
+                if (v != null && v.getGiaBan() != null) {
+                    BigDecimal diff = v.getGiaBan().subtract(targetPrice).abs();
+                    int priceScore = Math.max(1, 1000 - diff.intValue() / 1000);
+                    scoredList.add(new ScoredVariant(v, priceScore));
+                }
             }
         }
 
@@ -498,38 +557,46 @@ public class AiChatServiceImpl implements AiChatService {
     }
 
     private String buildProductContextFromVariants(List<ProductVariantResponse> variants) {
-        if (variants.isEmpty()) return "Hiện tại không có sản phẩm nào khả dụng.\n";
+        if (variants == null || variants.isEmpty()) return "Hiện tại không có sản phẩm nào khả dụng.\n";
 
         java.util.Map<String, List<ProductVariantResponse>> groupedProducts = variants.stream()
-                .filter(v -> v.getTenSanPham() != null)
+                .filter(v -> v != null && v.getTenSanPham() != null)
                 .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
 
         StringBuilder sb = new StringBuilder();
         sb.append("DANH SÁCH GIÀY CÓ TRONG KHO (AeroStride):\n");
 
         groupedProducts.forEach((tenSp, vars) -> {
-            if (sb.length() > 15000) return;
+            if (sb.length() > 15000 || vars == null || vars.isEmpty()) return;
 
-            String pId = vars.get(0).getIdSanPham() != null ? vars.get(0).getIdSanPham() : vars.get(0).getId();
-            String brand = vars.get(0).getTenThuongHieu() != null ? vars.get(0).getTenThuongHieu() : "AeroStride";
-            String code = vars.get(0).getMaSanPham() != null ? vars.get(0).getMaSanPham() : "";
-            String img = (vars.get(0).getImages() != null && !vars.get(0).getImages().isEmpty()) 
-                    ? vars.get(0).getImages().get(0).getDuongDanAnh() : "";
+            ProductVariantResponse first = vars.get(0);
+            if (first == null) return;
+
+            String pId = first.getIdSanPham() != null ? first.getIdSanPham() : (first.getId() != null ? first.getId() : "");
+            String brand = first.getTenThuongHieu() != null ? first.getTenThuongHieu() : "AeroStride";
+            String code = first.getMaSanPham() != null ? first.getMaSanPham() : "";
+            String img = (first.getImages() != null && !first.getImages().isEmpty() && first.getImages().get(0) != null) 
+                    ? (first.getImages().get(0).getDuongDanAnh() != null ? first.getImages().get(0).getDuongDanAnh() : "") : "";
 
             sb.append(String.format("- Tên: %s (Mã SP: %s, ID: %s, Hãng: %s)\n", tenSp, code, pId, brand));
             String sizes = vars.stream()
+                    .filter(Objects::nonNull)
                     .map(v -> v.getGiaTriKichThuoc() != null ? String.valueOf(v.getGiaTriKichThuoc()) : "N/A")
                     .distinct().sorted().collect(Collectors.joining(", "));
             String colors = vars.stream()
+                    .filter(Objects::nonNull)
                     .map(v -> v.getTenMauSac() != null ? v.getTenMauSac() : "N/A")
                     .distinct().collect(Collectors.joining(", "));
             java.math.BigDecimal minPrice = vars.stream()
+                    .filter(Objects::nonNull)
                     .map(v -> v.getGiaBan() != null ? v.getGiaBan() : java.math.BigDecimal.ZERO)
                     .min(java.math.BigDecimal::compareTo).orElse(java.math.BigDecimal.ZERO);
 
             sb.append(String.format("  + Size: %s | Màu: %s | Giá: %,.0f VNĐ | Ảnh: %s\n", sizes, colors, minPrice, img));
 
-            vars.stream().filter(v -> v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(java.math.BigDecimal.ZERO) > 0)
+            vars.stream()
+                .filter(Objects::nonNull)
+                .filter(v -> v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(java.math.BigDecimal.ZERO) > 0)
                 .map(ProductVariantResponse::getPhanTramGiam).findFirst()
                 .ifPresent(km -> sb.append(String.format("  + ĐANG GIẢM GIÁ: %s%%\n", km)));
         });

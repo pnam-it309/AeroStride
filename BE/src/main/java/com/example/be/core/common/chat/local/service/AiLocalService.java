@@ -106,8 +106,8 @@ public class AiLocalService {
         // NHÓM 1: CÂU HỎI FAQ, CHÍNH SÁCH & HỖ TRỢ (KHÔNG ĐÍNH KÈM SẢN PHẨM)
         // =========================================================================
 
-        // 1.1. Khiếu nại / Phàn nàn chất lượng / Dịch vụ
-        if (isComplaint(lower)) {
+        // 1.1. Khiếu nại / Phàn nàn chất lượng / Không tìm ra sản phẩm / Dịch vụ
+        if (isComplaint(lower) || isProductSearchComplaint(lower)) {
             return handleComplaint(state, lower);
         }
 
@@ -226,13 +226,36 @@ public class AiLocalService {
                 lowerInput.contains("chán") || lowerInput.contains("kém") || lowerInput.contains("thất vọng") ||
                 lowerInput.contains("bực mình") || lowerInput.contains("khiếu nại") || lowerInput.contains("giao chậm") ||
                 lowerInput.contains("chậm trễ") || lowerInput.contains("đợi lâu") || lowerInput.contains("thiếu hàng") ||
-                lowerInput.contains("nhầm size") || lowerInput.contains("nhầm màu") || lowerInput.contains("không hài lòng");
+                lowerInput.contains("nhầm size") || lowerInput.contains("nhầm màu") || lowerInput.contains("không hài lòng") ||
+                lowerInput.contains("shop làm ăn") || lowerInput.contains("lừa đảo") || lowerInput.contains("bán hàng kiểu");
+    }
+
+    private boolean isProductSearchComplaint(String lowerInput) {
+        return lowerInput.contains("không có đôi nào") || lowerInput.contains("ko có đôi nào") ||
+                lowerInput.contains("không tìm thấy") || lowerInput.contains("ko tìm thấy") ||
+                lowerInput.contains("tìm không ra") || lowerInput.contains("tìm ko ra") ||
+                lowerInput.contains("tìm mãi không") || lowerInput.contains("tìm mãi ko") ||
+                lowerInput.contains("sao không có") || lowerInput.contains("sao ko có") ||
+                lowerInput.contains("ít mẫu") || lowerInput.contains("ít giày") ||
+                lowerInput.contains("xấu thế") || lowerInput.contains("đắt thế") || lowerInput.contains("đắt quá") ||
+                lowerInput.contains("không ưng") || lowerInput.contains("không thích");
     }
 
     private String handleComplaint(ChatState state, String lowerInput) {
+        // Phàn nàn về tìm kiếm sản phẩm hoặc chưa tìm thấy mẫu ưng ý
+        if (isProductSearchComplaint(lowerInput)) {
+            String searchApology = "Dạ, AeroStride vô cùng xin lỗi bạn vì chưa giúp bạn tìm được đôi giày thật ưng ý ngay lúc này ạ! Cửa hàng luôn có rất nhiều mẫu giày đa dạng phong cách từ thể thao, chạy bộ đến lifestyle hàng ngày.\n\n" +
+                    "• Bạn có thể cho shop biết thêm gu thời trang, màu sắc hoặc size giày bạn thường đi để shop gợi ý chuẩn nhất nhé.\n" +
+                    "• Hoặc bạn có thể bấm **Gặp nhân viên** bên dưới để chuyên viên tư vấn trực tiếp 1-1 hỗ trợ bạn chọn mẫu phù hợp nhất ngay ạ!";
+            List<ProductVariantResponse> fresh = getTopSellingVariants(4);
+            trackSuggested(state, fresh);
+            return enrichResponse(searchApology, fresh, List.of("Tôi muốn gặp nhân viên hỗ trợ", "Xem mẫu giày thể thao bán chạy", "Tư vấn cách chọn size"));
+        }
+
+        // Phàn nàn về dịch vụ / đơn hàng / chất lượng
         String apology = "Dạ, AeroStride vô cùng xin lỗi anh/chị vì sự cố vừa rồi đã làm ảnh hưởng tới trải nghiệm của mình ạ! Cửa hàng luôn đặt quyền lợi của khách hàng lên hàng đầu.\n\n" +
                 "• Shop hỗ trợ đổi mới sản phẩm miễn phí 100% hoặc hoàn tiền nhanh chóng cho đơn hàng có vấn đề.\n" +
-                "• Quý khách vui lòng cung cấp Mã Đơn Hàng hoặc số điện thoại đặt hàng, hoặc bấm 'Gặp nhân viên' để chuyên viên xử lý khiếu nại hỗ trợ ngay lập tức nhé!";
+                "• Quý khách vui lòng cung cấp Mã Đơn Hàng hoặc số điện thoại đặt hàng, hoặc bấm **Gặp nhân viên** để chuyên viên xử lý khiếu nại hỗ trợ ngay lập tức nhé!";
 
         return enrichResponse(apology, null, List.of("Tôi muốn gặp nhân viên hỗ trợ", "Quy trình đổi trả sản phẩm lỗi", "Thời gian xử lý hoàn tiền"));
     }
@@ -271,8 +294,12 @@ public class AiLocalService {
      * Tìm kiếm các mẫu giày mới chưa được gợi ý trong phiên chat
      */
     private List<ProductVariantResponse> searchFreshVariants(ChatState state, String queryLower) {
-        List<ProductVariantResponse> all = sanPhamService.getAllVariants().stream()
-                .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+        List<ProductVariantResponse> rawAll = sanPhamService.getAllVariants();
+        if (rawAll == null) {
+            return List.of();
+        }
+        List<ProductVariantResponse> all = rawAll.stream()
+                .filter(v -> v != null && v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
                 .collect(Collectors.toList());
 
         List<ProductVariantResponse> fresh = new ArrayList<>();
@@ -281,7 +308,7 @@ public class AiLocalService {
         // Ưu tiên các sản phẩm chưa gợi ý
         for (ProductVariantResponse v : all) {
             String pId = v.getIdSanPham() != null ? v.getIdSanPham() : v.getId();
-            if (!state.suggestedProductIds.contains(pId) && !seenProductIds.contains(pId)) {
+            if (pId != null && !state.suggestedProductIds.contains(pId) && !seenProductIds.contains(pId)) {
                 seenProductIds.add(pId);
                 fresh.add(v);
             }
@@ -301,8 +328,12 @@ public class AiLocalService {
     private void trackSuggested(ChatState state, List<ProductVariantResponse> variants) {
         if (state == null || variants == null) return;
         for (ProductVariantResponse v : variants) {
-            String pId = v.getIdSanPham() != null ? v.getIdSanPham() : v.getId();
-            state.suggestedProductIds.add(pId);
+            if (v != null) {
+                String pId = v.getIdSanPham() != null ? v.getIdSanPham() : v.getId();
+                if (pId != null) {
+                    state.suggestedProductIds.add(pId);
+                }
+            }
         }
     }
 
@@ -310,8 +341,13 @@ public class AiLocalService {
      * Tìm kiếm và chấm điểm sản phẩm thông minh dựa trên toàn bộ thuộc tính
      */
     private List<ProductVariantResponse> searchSmartVariants(String queryLower, ChatState state) {
-        List<ProductVariantResponse> allVariants = sanPhamService.getAllVariants().stream()
-                .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+        List<ProductVariantResponse> rawVariants = sanPhamService.getAllVariants();
+        if (rawVariants == null || rawVariants.isEmpty()) {
+            return List.of();
+        }
+
+        List<ProductVariantResponse> allVariants = rawVariants.stream()
+                .filter(v -> v != null && v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
                 .collect(Collectors.toList());
 
         if (allVariants.isEmpty()) {
@@ -320,7 +356,7 @@ public class AiLocalService {
 
         // 1. Nhận diện thương hiệu
         String targetBrand = null;
-        List<String> brands = List.of("nike", "adidas", "puma", "vans", "converse", "jordan", "mlb", "asics", "new balance");
+        List<String> brands = List.of("nike", "adidas", "puma", "vans", "converse", "jordan", "mlb", "asics", "new balance", "bitis", "bita");
         for (String b : brands) {
             if (queryLower.contains(b)) {
                 targetBrand = b;
@@ -348,7 +384,7 @@ public class AiLocalService {
         // 4. Nhận diện mức giá
         BigDecimal targetPrice = extractPrice(queryLower);
         boolean isUnder1M = queryLower.contains("dưới 1 triệu") || queryLower.contains("dưới 1tr") || queryLower.contains("< 1tr") || queryLower.contains("giá rẻ") || queryLower.contains("bình dân");
-        boolean isOver2M = queryLower.contains("trên 2 triệu") || queryLower.contains("cao cấp") || queryLower.contains("sang chảnh");
+        boolean isOver2M = queryLower.contains("trên 2 triệu") || queryLower.contains("trên 2tr") || queryLower.contains("cao cấp") || queryLower.contains("sang chảnh");
 
         String queryUnaccent = removeDiacritics(queryLower);
         String[] words = queryLower.split("\\s+");
@@ -404,14 +440,18 @@ public class AiLocalService {
             // Khớp giá
             if (v.getGiaBan() != null) {
                 if (isUnder1M && v.getGiaBan().compareTo(new BigDecimal("1000000")) <= 0) {
-                    score += 50;
+                    score += 80;
                 } else if (isOver2M && v.getGiaBan().compareTo(new BigDecimal("2000000")) >= 0) {
-                    score += 50;
+                    score += 80;
                 } else if (targetPrice != null) {
                     BigDecimal diff = v.getGiaBan().subtract(targetPrice).abs();
-                    if (diff.compareTo(new BigDecimal("200000")) <= 0) {
-                        score += 60;
+                    if (diff.compareTo(new BigDecimal("100000")) <= 0) {
+                        score += 150;
+                    } else if (diff.compareTo(new BigDecimal("300000")) <= 0) {
+                        score += 100;
                     } else if (diff.compareTo(new BigDecimal("500000")) <= 0) {
+                        score += 60;
+                    } else if (diff.compareTo(new BigDecimal("1000000")) <= 0) {
                         score += 30;
                     }
                 }
@@ -433,6 +473,17 @@ public class AiLocalService {
             }
         }
 
+        // Nếu khách tìm kiếm theo giá mà không có đôi nào có điểm khớp từ khóa -> chấm điểm toàn bộ theo khoảng cách giá
+        if (targetPrice != null && scoreMap.isEmpty()) {
+            for (ProductVariantResponse v : allVariants) {
+                if (v.getGiaBan() != null) {
+                    BigDecimal diff = v.getGiaBan().subtract(targetPrice).abs();
+                    int priceScore = Math.max(1, 1000 - diff.intValue() / 1000);
+                    scoreMap.put(v, priceScore);
+                }
+            }
+        }
+
         List<ProductVariantResponse> result = new ArrayList<>(scoreMap.keySet());
         result.sort((a, b) -> Integer.compare(scoreMap.getOrDefault(b, 0), scoreMap.getOrDefault(a, 0)));
 
@@ -441,7 +492,7 @@ public class AiLocalService {
         Set<String> seenProductIds = new HashSet<>();
         for (ProductVariantResponse v : result) {
             String pId = v.getIdSanPham() != null ? v.getIdSanPham() : v.getId();
-            if (!seenProductIds.contains(pId)) {
+            if (pId != null && !seenProductIds.contains(pId)) {
                 seenProductIds.add(pId);
                 distinctList.add(v);
             }
@@ -456,15 +507,18 @@ public class AiLocalService {
     }
 
     private List<ProductVariantResponse> getTopSellingVariants(int limit) {
-        List<ProductVariantResponse> all = sanPhamService.getAllVariants().stream()
-                .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+        List<ProductVariantResponse> raw = sanPhamService.getAllVariants();
+        if (raw == null) return List.of();
+
+        List<ProductVariantResponse> all = raw.stream()
+                .filter(v -> v != null && v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
                 .collect(Collectors.toList());
 
         List<ProductVariantResponse> distinctList = new ArrayList<>();
         Set<String> seenProductIds = new HashSet<>();
         for (ProductVariantResponse v : all) {
             String pId = v.getIdSanPham() != null ? v.getIdSanPham() : v.getId();
-            if (!seenProductIds.contains(pId)) {
+            if (pId != null && !seenProductIds.contains(pId)) {
                 seenProductIds.add(pId);
                 distinctList.add(v);
             }
@@ -474,8 +528,11 @@ public class AiLocalService {
     }
 
     private List<ProductVariantResponse> searchPromoVariants() {
-        return sanPhamService.getAllVariants().stream()
-                .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+        List<ProductVariantResponse> raw = sanPhamService.getAllVariants();
+        if (raw == null) return List.of();
+
+        return raw.stream()
+                .filter(v -> v != null && v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
                 .filter(v -> v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(BigDecimal.ZERO) > 0)
                 .sorted((a, b) -> b.getPhanTramGiam().compareTo(a.getPhanTramGiam()))
                 .limit(4)
@@ -493,23 +550,61 @@ public class AiLocalService {
     }
 
     private BigDecimal extractPrice(String text) {
+        if (text == null || text.isBlank()) return null;
+        String t = text.toLowerCase().trim();
+
         try {
-            Matcher m = Pattern.compile("(\\d+)\\s*(?:k|nghìn|ngàn|000|tr|triệu)").matcher(text);
-            if (m.find()) {
-                String num = m.group(1);
-                if (text.contains("tr") || text.contains("triệu")) {
-                    return new BigDecimal(num).multiply(new BigDecimal("1000000"));
+            // 1. Dạng số thập phân triệu (ví dụ: 2.5tr, 2,5tr, 2.5 triệu, 2,5 triệu, 1.2m, 2.5 củ)
+            Matcher decimalMillion = Pattern.compile("(\\d+)[.,](\\d+)\\s*(?:tr|trieu|triệu|m|cu|củ)").matcher(t);
+            if (decimalMillion.find()) {
+                String whole = decimalMillion.group(1);
+                String fraction = decimalMillion.group(2);
+                double val = Double.parseDouble(whole + "." + fraction);
+                return BigDecimal.valueOf((long) (val * 1000000));
+            }
+
+            // 2. Dạng "2tr5", "1tr2", "2 củ 5", "2 triệu 5", "2 triệu rưỡi", "2 củ rưỡi"
+            Matcher shortMillionAndSub = Pattern.compile("(\\d+)\\s*(?:tr|trieu|triệu|cu|củ)\\s*(?:(\\d+)|rưỡi|ruoi)").matcher(t);
+            if (shortMillionAndSub.find()) {
+                long whole = Long.parseLong(shortMillionAndSub.group(1));
+                String sub = shortMillionAndSub.group(2);
+                long subVal = 0;
+                if (t.contains("rưỡi") || t.contains("ruoi")) {
+                    subVal = 500000;
+                } else if (sub != null && !sub.isBlank()) {
+                    long s = Long.parseLong(sub);
+                    subVal = (s < 10) ? s * 100000 : s * 10000;
                 }
-                return new BigDecimal(num).multiply(new BigDecimal("1000"));
+                return BigDecimal.valueOf(whole * 1000000 + subVal);
+            }
+
+            // 3. Dạng số nguyên triệu / củ / tr / m (ví dụ: 2tr, 2 triệu, 2 củ, 2m)
+            Matcher wholeMillion = Pattern.compile("(\\d+)\\s*(?:tr|trieu|triệu|m|cu|củ)\\b").matcher(t);
+            if (wholeMillion.find()) {
+                long whole = Long.parseLong(wholeMillion.group(1));
+                return BigDecimal.valueOf(whole * 1000000);
+            }
+
+            // 4. Dạng nghìn / k (ví dụ: 500k, 500 nghìn, 500 ngàn, 500000, 2.000.000, 2000000)
+            Matcher kMatcher = Pattern.compile("(\\d+)\\s*(?:k|nghìn|ngàn)").matcher(t);
+            if (kMatcher.find()) {
+                long num = Long.parseLong(kMatcher.group(1));
+                return BigDecimal.valueOf(num * 1000);
+            }
+
+            // 5. Dạng số lớn viết liền hoặc có dấu chấm phân cách (ví dụ: 2000000, 2.000.000, 2,000,000, 500000)
+            String digitsOnly = t.replaceAll("[^0-9]", "");
+            if (digitsOnly.length() >= 5) {
+                return new BigDecimal(digitsOnly);
             }
         } catch (Exception e) {
-            log.warn("Lỗi trích xuất giá: {}", e.getMessage());
+            log.warn("Lỗi trích xuất giá từ '{}': {}", text, e.getMessage());
         }
         return null;
     }
 
     /**
-     * Tạo văn bản phản hồi tự nhiên, chuẩn Markdown, không chứa emoji 4-byte lỗi font
+     * Tạo văn bản phản hồi tự nhiên, chuẩn Markdown, an toàn 100%
      */
     private String buildRecommendationText(String queryLower, List<ProductVariantResponse> variants) {
         StringBuilder sb = new StringBuilder();
@@ -518,9 +613,13 @@ public class AiLocalService {
         // Kiểm tra size
         Matcher sizeMatcher = Pattern.compile("\\b(3[6-9]|4[0-6])\\b").matcher(queryLower);
         String foundSize = sizeMatcher.find() ? sizeMatcher.group(1) : null;
+        BigDecimal targetPrice = extractPrice(queryLower);
 
         if (foundSize != null) {
             sb.append("Dạ, AeroStride xin gửi bạn các mẫu giày đang có sẵn **Size ").append(foundSize).append("** tại cửa hàng để bạn lựa chọn nhé:\n\n");
+        } else if (targetPrice != null) {
+            String formattedTarget = currencyFormat.format(targetPrice);
+            sb.append("Dạ, AeroStride xin gợi ý cho bạn những đôi giày cực đẹp và chất lượng trong tầm giá khoảng **").append(formattedTarget).append("** sẵn hàng tại shop ạ:\n\n");
         } else if (queryLower.contains("trắng")) {
             sb.append("Dạ, shop xin gửi bạn những mẫu giày tông **màu trắng** cực đẹp, thời trang và dễ phối đồ nhất ạ:\n\n");
         } else if (queryLower.contains("đen")) {
@@ -538,10 +637,11 @@ public class AiLocalService {
         }
 
         for (ProductVariantResponse v : variants) {
-            String name = v.getTenSanPham() != null ? v.getTenSanPham() : v.getTenSanPhamDayDu();
+            if (v == null) continue;
+            String name = v.getTenSanPham() != null ? v.getTenSanPham() : (v.getTenSanPhamDayDu() != null ? v.getTenSanPhamDayDu() : "Giày AeroStride");
             String brand = v.getTenThuongHieu() != null ? v.getTenThuongHieu() : "AeroStride";
-            BigDecimal finalPrice = v.getGiaBan() != null ? v.getGiaBan() : v.getGiaGoc();
-            String priceStr = finalPrice != null ? currencyFormat.format(finalPrice) : "Liên hệ";
+            BigDecimal finalPrice = v.getGiaBan() != null ? v.getGiaBan() : (v.getGiaGoc() != null ? v.getGiaGoc() : BigDecimal.ZERO);
+            String priceStr = currencyFormat.format(finalPrice);
 
             sb.append("• **").append(name).append("** (Hãng: ").append(brand).append(")\n");
             if (v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(BigDecimal.ZERO) > 0) {
@@ -565,7 +665,7 @@ public class AiLocalService {
      * Đính kèm dữ liệu JSON sản phẩm và Gợi ý câu hỏi vào phản hồi
      */
     private String enrichResponse(String messageText, List<ProductVariantResponse> variants, List<String> suggestions) {
-        StringBuilder sb = new StringBuilder(messageText);
+        StringBuilder sb = new StringBuilder(messageText != null ? messageText : "");
 
         // 1. Đính kèm PRODUCT_JSON nếu có sản phẩm
         if (variants != null && !variants.isEmpty()) {
@@ -574,15 +674,17 @@ public class AiLocalService {
                 Set<String> seenProductIds = new HashSet<>();
 
                 for (ProductVariantResponse v : variants) {
+                    if (v == null) continue;
                     String pId = v.getIdSanPham() != null ? v.getIdSanPham() : v.getId();
-                    if (seenProductIds.contains(pId)) continue;
+                    if (pId == null || seenProductIds.contains(pId)) continue;
                     seenProductIds.add(pId);
 
                     Map<String, Object> map = new HashMap<>();
                     map.put("idSanPham", pId);
-                    map.put("tenSanPham", v.getTenSanPham() != null ? v.getTenSanPham() : v.getTenSanPhamDayDu());
-                    map.put("giaBan", v.getGiaBan() != null ? v.getGiaBan() : v.getGiaGoc());
-                    map.put("giaGoc", v.getGiaGoc());
+                    map.put("tenSanPham", v.getTenSanPham() != null ? v.getTenSanPham() : (v.getTenSanPhamDayDu() != null ? v.getTenSanPhamDayDu() : "Giày"));
+                    BigDecimal gb = v.getGiaBan() != null ? v.getGiaBan() : (v.getGiaGoc() != null ? v.getGiaGoc() : BigDecimal.ZERO);
+                    map.put("giaBan", gb);
+                    map.put("giaGoc", v.getGiaGoc() != null ? v.getGiaGoc() : gb);
                     map.put("tenThuongHieu", v.getTenThuongHieu() != null ? v.getTenThuongHieu() : "AeroStride");
 
                     String imgUrl = v.getHinhAnh();
@@ -633,7 +735,7 @@ public class AiLocalService {
         if (queryLower.contains("adidas")) {
             return List.of("Mẫu Adidas nào đang giảm giá nhiều nhất?", "Bên mình có ship COD toàn quốc không?", "Cách đo chiều dài chân chọn size chuẩn?");
         }
-        if (queryLower.contains("giá") || queryLower.contains("tiền")) {
+        if (queryLower.contains("giá") || queryLower.contains("tiền") || queryLower.contains("tr") || queryLower.contains("triệu")) {
             return List.of("Đơn hàng từ bao nhiêu thì được miễn phí ship?", "Tư vấn mẫu giày sneaker dưới 1 triệu", "Có voucher giảm giá hôm nay không?");
         }
         if (queryLower.contains("size")) {

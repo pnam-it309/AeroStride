@@ -453,6 +453,10 @@ const clearImage = () => {
     }
 };
 
+// Theo dõi tần suất gửi để chỉ chặn khi spam dồn dập
+const recentSendTimestamps = ref([]);
+const recentSentTexts = ref([]);
+
 const sendMessage = () => {
     if (isChatLocked.value) return;
 
@@ -462,7 +466,40 @@ const sendMessage = () => {
     if (!userMsg && !currentImagePreview) return;
 
     const now = Date.now();
-    if (now - lastSendTime.value < 100) return;
+
+    // Kiểm tra Rate Limit: Gửi quá 4 tin nhắn trong vòng 2 giây
+    recentSendTimestamps.value = recentSendTimestamps.value.filter(t => now - t < 2000);
+    recentSendTimestamps.value.push(now);
+
+    if (recentSendTimestamps.value.length > 4) {
+        chatHistory.value.push({
+            id: Date.now(),
+            sender: 'system',
+            isWarning: true,
+            text: '⚠️ **Nhắc nhở:** Bạn đang gửi tin nhắn quá nhanh. Vui lòng chờ một chút để trợ lý AI kịp phản hồi nhé!'
+        });
+        scrollToBottom();
+        return;
+    }
+
+    // Kiểm tra Spam trùng lặp nội dung y hệt liên tục 4 lần
+    if (userMsg) {
+        recentSentTexts.value.push(userMsg);
+        if (recentSentTexts.value.length > 4) {
+            recentSentTexts.value.shift();
+        }
+        if (recentSentTexts.value.length === 4 && recentSentTexts.value.every(t => t === userMsg)) {
+            chatHistory.value.push({
+                id: Date.now(),
+                sender: 'system',
+                isWarning: true,
+                text: '⚠️ **Nhắc nhở:** Bạn vừa gửi nội dung này nhiều lần liên tiếp. Trợ lý AI đang xử lý yêu cầu của bạn, vui lòng đợi trong giây lát nhé!'
+            });
+            scrollToBottom();
+            return;
+        }
+    }
+
     lastSendTime.value = now;
 
     // 1. KIỂM DUYỆT NỘI DUNG TIN NHẮN (Nếu có nhập text)
@@ -488,7 +525,7 @@ const sendMessage = () => {
                     id: Date.now() + 1,
                     sender: 'system',
                     isWarning: true,
-                    text: '⛔ Bạn đã gửi nội dung không phù hợp quá 3 lần. Khung chat tạm khóa gửi tin nhắn trong 30 giây.'
+                    text: '⛔ Bạn đã gửi nội dung vi phạm tiêu chuẩn cộng đồng quá 3 lần. Khung chat tạm khóa gửi tin nhắn trong 30 giây.'
                 });
                 scrollToBottom();
             }

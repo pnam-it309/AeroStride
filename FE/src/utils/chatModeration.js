@@ -142,10 +142,6 @@ const GIBBERISH_PATTERNS = [
     'tyuiop',
     'zxcvbn',
     'xcvbnm',
-    '123456',
-    '234567',
-    '345678',
-    '456789',
     'abcdef',
     'jklfds',
     'ghjkjh',
@@ -195,9 +191,9 @@ export function validateChatMessage(text) {
 
     const { cleanRaw, noAccents } = normalizeText(trimmed);
 
-    // 1. Kiểm tra lặp ký tự vô nghĩa liên tiếp (ví dụ: aaaaaaaa, 11111111, .........)
-    const repeatedCharRegex = /(.)\1{5,}/;
-    if (repeatedCharRegex.test(trimmed)) {
+    // 1. Kiểm tra lặp ký tự chữ cái vô nghĩa liên tiếp (ví dụ: aaaaaaaa, hhhhhhhh). KHÔNG bắt số (như 000000 trong 2000000)
+    const repeatedLetterRegex = /([a-zA-Z\u00C0-\u024F\u1EA0-\u1EF9])\1{5,}/i;
+    if (repeatedLetterRegex.test(trimmed)) {
         return {
             isValid: false,
             reason: 'Tin nhắn chứa chuỗi ký tự lặp vô nghĩa hoặc spam phím. Vui lòng nhập nội dung rõ ràng.',
@@ -243,14 +239,17 @@ export function validateChatMessage(text) {
         }
     }
 
-    // 5. Kiểm tra chuỗi toàn phụ âm vô nghĩa dài (trên 7 phụ âm liên tiếp không có nguyên âm)
-    const longConsonantRegex = /[bcdfghjklmnpqrstvwxz]{7,}/i;
-    if (longConsonantRegex.test(noAccents.replace(/\s+/g, ''))) {
-        return {
-            isValid: false,
-            reason: 'Nội dung nhập không rõ nghĩa hoặc chứa ký tự spam. Vui lòng kiểm tra lại câu hỏi của bạn.',
-            type: 'GIBBERISH'
-        };
+    // 5. Kiểm tra từ đơn lẻ toàn phụ âm vô nghĩa dài (trên 7 phụ âm liên tiếp trong 1 từ)
+    const words = trimmed.split(/\s+/);
+    for (const word of words) {
+        const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+        if (cleanWord.length >= 7 && /^[bcdfghjklmnpqrstvwxzBCDFGHJKLMNPQRSTVWXZ]+$/.test(cleanWord)) {
+            return {
+                isValid: false,
+                reason: 'Nội dung nhập không rõ nghĩa hoặc chứa ký tự spam. Vui lòng kiểm tra lại câu hỏi của bạn.',
+                type: 'GIBBERISH'
+            };
+        }
     }
 
     return { isValid: true };
