@@ -65,4 +65,24 @@ public class AdminBanHangCheckoutRequest {
     private BigDecimal tienChuyenKhoan;
     /** Ma giao dich ngan hang/VNPay dung de doi soat thanh toan. */
     private String maGiaoDich; // Mã GD chuyển khoản (vnp_TransactionNo or BANK_TX_ID)
+
+    public void setSdtKhachHang(String sdtKhachHang) {
+        this.sdtKhachHang = (sdtKhachHang != null && !sdtKhachHang.trim().isEmpty()) ? sdtKhachHang.trim() : null;
+    }
+
+    public void setSdtNguoiNhan(String sdtNguoiNhan) {
+        this.sdtNguoiNhan = (sdtNguoiNhan != null && !sdtNguoiNhan.trim().isEmpty()) ? sdtNguoiNhan.trim() : null;
+    }
+
+    public void setEmailKhachHang(String emailKhachHang) {
+        this.emailKhachHang = (emailKhachHang != null && !emailKhachHang.trim().isEmpty()) ? emailKhachHang.trim() : null;
+    }
+
+    public void setTenKhachHang(String tenKhachHang) {
+        this.tenKhachHang = (tenKhachHang != null && !tenKhachHang.trim().isEmpty()) ? tenKhachHang.trim() : null;
+    }
+
+    public void setTenNguoiNhan(String tenNguoiNhan) {
+        this.tenNguoiNhan = (tenNguoiNhan != null && !tenNguoiNhan.trim().isEmpty()) ? tenNguoiNhan.trim() : null;
+    }
 }

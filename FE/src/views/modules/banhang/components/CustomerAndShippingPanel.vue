@@ -2,7 +2,7 @@
     <div class="d-flex flex-column">
         <!-- Khách hàng Card -->
         <v-card class="pos-navy-card pa-4 mb-3">
-            <!-- Header Row: Title & Search Field Side-by-Side -->
+            <!-- Header Row: Title & Action Buttons -->
             <div class="d-flex justify-space-between align-center border-b pb-2 mb-3 ga-2 flex-wrap">
                 <div class="d-flex align-center ga-2 flex-shrink-0">
                     <span class="font-weight-bold text-black" style="font-size: 15px !important">Khách hàng</span>
@@ -14,21 +14,18 @@
                     </span>
                 </div>
 
-                <!-- Customer Search Field & Clear Button -->
-                <div class="position-relative d-flex align-center ga-2" style="width: 250px">
-                    <v-text-field
-                        v-model="customerSearch"
-                        placeholder="Tìm theo SĐT, Tên..."
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        maxlength="100"
-                        prepend-inner-icon="mdi-magnify"
-                        class="navy-input-field flex-grow-1"
-                        @focus="onFocusCustomerSearch"
-                        @click="onFocusCustomerSearch"
-                        autocomplete="off"
-                    />
+                <div class="d-flex align-center ga-1.5">
+                    <v-btn
+                        size="x-small"
+                        variant="tonal"
+                        color="primary"
+                        class="text-none font-weight-bold rounded-lg px-2"
+                        style="height: 28px !important"
+                        @click="quickCreateCustomer"
+                    >
+                        <v-icon size="14" class="mr-1">mdi-account-plus</v-icon>
+                        Thêm mới
+                    </v-btn>
 
                     <v-btn
                         v-if="order?.idKhachHang || customerForm.ten || customerForm.sdt"
@@ -38,62 +35,104 @@
                         class="navy-clear-btn flex-shrink-0"
                         @click="$emit('remove-customer')"
                     >
-                        <v-icon size="16" color="#64748b">mdi-close</v-icon>
+                        <v-icon size="15" color="#64748b">mdi-close</v-icon>
                         <v-tooltip activator="parent" location="top">Gỡ khách hàng</v-tooltip>
                     </v-btn>
+                </div>
+            </div>
 
-                    <!-- CUSTOMER SEARCH SUGGESTIONS POPOVER -->
-                    <div
-                        v-if="showCustomerSuggestions"
-                        class="suggestion-popover d-flex flex-column"
-                        v-click-outside="() => (showCustomerSuggestions = false)"
-                    >
-                        <!-- Khi có kết quả tìm kiếm (vùng cuộn) -->
-                        <div v-if="customerResults.length > 0" class="suggestion-list-scroll overflow-y-auto flex-grow-1">
-                            <div
-                                v-for="c in customerResults"
-                                :key="c.id"
-                                @click="onSelectSuggestedCustomer(c)"
-                                class="suggestion-item d-flex align-center justify-space-between px-4 py-2.5 cursor-pointer"
-                            >
-                                <div class="d-flex flex-column text-truncate pr-2">
+            <!-- Search Row: Full width input with absolute dropdown spanning 100% width -->
+            <div class="position-relative w-100 mb-3">
+                <v-text-field
+                    v-model="customerSearch"
+                    placeholder="Tìm theo SĐT, Tên khách hàng..."
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    maxlength="100"
+                    prepend-inner-icon="mdi-magnify"
+                    class="navy-input-field w-100"
+                    @focus="onFocusCustomerSearch"
+                    @click="onFocusCustomerSearch"
+                    autocomplete="off"
+                />
+
+                <!-- CUSTOMER SEARCH SUGGESTIONS POPOVER (Full width, không bao giờ lệch mép) -->
+                <div
+                    v-if="showCustomerSuggestions"
+                    class="suggestion-popover d-flex flex-column"
+                    v-click-outside="() => (showCustomerSuggestions = false)"
+                >
+                    <!-- Header nhỏ trong popover -->
+                    <div class="px-3 py-2 bg-slate-50 border-b d-flex justify-space-between align-center flex-shrink-0">
+                        <span class="text-caption font-weight-bold text-slate-700">
+                            {{ customerResults.length > 0 ? `Kết quả tìm kiếm (${customerResults.length})` : 'Gợi ý khách hàng' }}
+                        </span>
+                        <v-btn
+                            icon
+                            size="x-small"
+                            variant="text"
+                            class="rounded-circle"
+                            style="width: 20px; height: 20px"
+                            @click="showCustomerSuggestions = false"
+                        >
+                            <v-icon size="14" color="#64748b">mdi-close</v-icon>
+                        </v-btn>
+                    </div>
+
+                    <!-- Khi có kết quả tìm kiếm (vùng cuộn) -->
+                    <div v-if="customerResults.length > 0" class="suggestion-list-scroll overflow-y-auto flex-grow-1">
+                        <div
+                            v-for="c in customerResults"
+                            :key="c.id"
+                            @click="onSelectSuggestedCustomer(c)"
+                            class="suggestion-item d-flex align-center justify-space-between px-3 py-2 cursor-pointer"
+                        >
+                            <div class="d-flex align-center text-truncate mr-2">
+                                <v-avatar size="28" color="blue-lighten-5" class="mr-2 flex-shrink-0">
+                                    <span class="text-caption font-weight-bold text-primary">
+                                        {{ (c.tenKhachHang || c.hoTen || c.ten || 'K').charAt(0).toUpperCase() }}
+                                    </span>
+                                </v-avatar>
+                                <div class="d-flex flex-column text-truncate">
                                     <span class="customer-name-text text-truncate">{{ c.tenKhachHang || c.hoTen || c.ten || 'Khách hàng' }}</span>
-                                    <span class="customer-email-text text-truncate mt-0.5">{{ c.email || 'Chưa đăng ký email' }}</span>
-                                </div>
-                                <div class="customer-phone-badge flex-shrink-0 ml-3">
-                                    {{ c.sdt }}
+                                    <span class="customer-email-text text-truncate">{{ c.email || 'Chưa đăng ký email' }}</span>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Khi không có kết quả tìm kiếm -->
-                        <div v-else-if="!isLoadingCustomerSearch" class="px-4 py-3 text-center">
-                            <div class="text-slate-500 text-caption font-weight-medium">
-                                {{ customerSearch.trim() ? 'Không tìm thấy khách hàng phù hợp' : 'Chưa có gợi ý khách hàng' }}
+                            <div class="customer-phone-badge flex-shrink-0">
+                                {{ c.sdt }}
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Khi đang tải -->
-                        <div v-else class="pa-4 text-center text-caption text-slate-500 d-flex align-center justify-center">
-                            <v-progress-circular indeterminate size="18" width="2" color="primary" class="mr-2" />
-                            Đang tìm kiếm...
+                    <!-- Khi không có kết quả tìm kiếm -->
+                    <div v-else-if="!isLoadingCustomerSearch" class="px-4 py-4 text-center">
+                        <v-icon size="28" color="#94a3b8" class="mb-1">mdi-account-search-outline</v-icon>
+                        <div class="text-slate-600 text-caption font-weight-medium">
+                            {{ customerSearch.trim() ? `Không tìm thấy "${customerSearch.trim()}"` : 'Chưa có gợi ý khách hàng' }}
                         </div>
+                    </div>
 
-                        <!-- Nút thêm nhanh LUÔN GHIM Ở ĐÁY POPOVER -->
-                        <div class="pa-2 border-t bg-slate-50 flex-shrink-0">
-                            <v-btn
-                                size="small"
-                                variant="flat"
-                                color="#2563eb"
-                                class="text-white text-none font-weight-bold w-100 rounded-lg py-2 quick-add-btn"
-                                style="height: 36px !important"
-                                @mousedown.prevent.stop="quickCreateCustomer"
-                                @click.stop="quickCreateCustomer"
-                            >
-                                <v-icon size="16" class="mr-1">mdi-plus</v-icon>
-                                {{ customerSearch.trim() ? `Thêm nhanh: "${customerSearch.trim()}"` : 'Thêm khách hàng mới' }}
-                            </v-btn>
-                        </div>
+                    <!-- Khi đang tải -->
+                    <div v-else class="pa-4 text-center text-caption text-slate-500 d-flex align-center justify-center">
+                        <v-progress-circular indeterminate size="18" width="2" color="primary" class="mr-2" />
+                        Đang tìm kiếm...
+                    </div>
+
+                    <!-- Nút thêm nhanh LUÔN GHIM Ở ĐÁY POPOVER -->
+                    <div class="pa-2 border-t bg-slate-50 flex-shrink-0">
+                        <v-btn
+                            size="small"
+                            variant="flat"
+                            color="#2563eb"
+                            class="text-white text-none font-weight-bold w-100 rounded-lg py-2 quick-add-btn"
+                            style="height: 36px !important"
+                            @mousedown.prevent.stop="quickCreateCustomer"
+                            @click.stop="quickCreateCustomer"
+                        >
+                            <v-icon size="16" class="mr-1.5">mdi-account-plus</v-icon>
+                            {{ customerSearch.trim() ? `Thêm nhanh: "${customerSearch.trim()}"` : 'Thêm khách hàng mới' }}
+                        </v-btn>
                     </div>
                 </div>
             </div>
@@ -713,24 +752,25 @@ watch(
     background-color: #e2e8f0 !important;
 }
 
-/* Popover Danh sách Tìm kiếm Khách hàng Mềm mại, Thoáng đãng */
+/* Popover Danh sách Tìm kiếm Khách hàng Mềm mại, Thoáng đãng, Không bao giờ tràn mép */
 .suggestion-popover {
     position: absolute;
-    top: calc(100% + 6px);
+    top: calc(100% + 4px);
+    left: 0;
     right: 0;
-    width: 360px !important;
+    width: 100%;
     max-height: 320px;
     background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 14px !important;
-    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(15, 23, 42, 0.06) !important;
-    z-index: 9999 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+    z-index: 1000 !important;
     overflow: hidden !important;
     padding: 0;
 }
 
 .suggestion-list-scroll {
-    max-height: 220px;
+    max-height: 200px;
     overflow-y: auto !important;
 }
 
@@ -748,8 +788,8 @@ watch(
 .suggestion-item {
     border-bottom: 1px solid #f1f5f9;
     transition: all 0.15s ease;
-    padding: 10px 16px !important;
-    min-height: 52px;
+    padding: 8px 12px !important;
+    min-height: 48px;
 }
 
 .suggestion-item:last-child {
@@ -759,32 +799,31 @@ watch(
 .suggestion-item:hover {
     background-color: #f8fafc !important;
     border-left: 3px solid #2563eb !important;
-    padding-left: 17px !important;
 }
 
 .customer-name-text {
-    font-size: 14px !important;
+    font-size: 13px !important;
     font-weight: 600 !important;
     color: #0f172a !important;
-    line-height: 1.4 !important;
-    display: block;
-}
-
-.customer-email-text {
-    font-size: 12px !important;
-    color: #64748b !important;
-    font-weight: 400 !important;
     line-height: 1.3 !important;
     display: block;
 }
 
+.customer-email-text {
+    font-size: 11px !important;
+    color: #64748b !important;
+    font-weight: 400 !important;
+    line-height: 1.2 !important;
+    display: block;
+}
+
 .customer-phone-badge {
-    font-size: 12px !important;
+    font-size: 11px !important;
     font-weight: 600 !important;
     color: #1d4ed8 !important;
     background-color: #eff6ff !important;
     border: 1px solid #dbeafe !important;
-    padding: 4px 10px !important;
+    padding: 2px 8px !important;
     border-radius: 20px !important;
     white-space: nowrap;
 }

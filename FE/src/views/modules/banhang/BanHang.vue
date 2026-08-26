@@ -1760,11 +1760,30 @@ const buildCheckoutPayload = (order, overrides = {}) => {
         ? [recipientAddressDetail.value || '', w ? w.name : '', d ? d.name : '', p ? p.name : ''].filter(Boolean).join(', ')
         : null;
 
+    const cleanText = (val) => {
+        if (val === null || val === undefined) return null;
+        const s = String(val).trim();
+        return s.length > 0 ? s : null;
+    };
+
+    const cleanPhone = (val) => {
+        if (val === null || val === undefined) return null;
+        const s = String(val).trim().replace(/\D/g, '');
+        return s.length > 0 ? s : null;
+    };
+
+    const resolvedTenKhachHang = cleanText(customerForm.value?.ten) || cleanText(order?.tenKhachHang) || (isGiaoHang.value ? cleanText(recipientName.value) : null);
+    const resolvedSdtKhachHang = cleanPhone(customerForm.value?.sdt) || cleanPhone(order?.sdtKhachHang) || (isGiaoHang.value ? cleanPhone(recipientPhone.value) : null);
+    const resolvedEmailKhachHang = cleanText(customerForm.value?.email) || cleanText(order?.emailKhachHang);
+
+    const resolvedTenNguoiNhan = isGiaoHang.value ? (cleanText(recipientName.value) || resolvedTenKhachHang) : null;
+    const resolvedSdtNguoiNhan = isGiaoHang.value ? (cleanPhone(recipientPhone.value) || resolvedSdtKhachHang) : null;
+
     return {
         idKhachHang: order?.idKhachHang || null,
-        tenKhachHang: order?.tenKhachHang || (isGiaoHang.value ? recipientName.value || null : null),
-        sdtKhachHang: order?.sdtKhachHang || (isGiaoHang.value ? recipientPhone.value || null : null),
-        emailKhachHang: order?.emailKhachHang || null,
+        tenKhachHang: resolvedTenKhachHang,
+        sdtKhachHang: resolvedSdtKhachHang,
+        emailKhachHang: resolvedEmailKhachHang,
         idPhieuGiamGia: order?.idPhieuGiamGia || null,
         tongTien: order?.tongTien || 0,
         phiVanChuyen: isGiaoHang.value ? shippingFee.value : 0,
@@ -1773,8 +1792,8 @@ const buildCheckoutPayload = (order, overrides = {}) => {
         deliveryMethod: isGiaoHang.value ? DELIVERY_METHODS.SHIPPING : DELIVERY_METHODS.TAKEAWAY,
         loaiDon: isGiaoHang.value ? 'GIAO_HANG' : 'TAI_QUAY',
         ghiChu: compiledNote,
-        tenNguoiNhan: isGiaoHang.value ? recipientName.value || order?.tenKhachHang || null : null,
-        sdtNguoiNhan: isGiaoHang.value ? recipientPhone.value || order?.sdtKhachHang || null : null,
+        tenNguoiNhan: resolvedTenNguoiNhan,
+        sdtNguoiNhan: resolvedSdtNguoiNhan,
         diaChiNguoiNhan: fullShippingAddressStr,
         diaChiChiTiet: isGiaoHang.value ? recipientAddressDetail.value || null : null,
         tinh: isGiaoHang.value ? (p ? p.name : null) : null,
