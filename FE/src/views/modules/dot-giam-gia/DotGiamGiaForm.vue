@@ -823,96 +823,62 @@ onMounted(init);
                             </v-btn>
                         </div>
 
-                        <div class="table-wrapper campaign-product-table border rounded-lg overflow-y-auto">
+                        <div class="table-wrapper campaign-product-table border rounded-lg overflow-y-auto custom-scrollbar">
                             <div v-if="selectionLoading" class="d-flex flex-column align-center justify-center h-100 py-12">
                                 <v-progress-circular indeterminate color="primary" size="36" width="3" />
                                 <span class="text-caption text-slate-500 mt-2">Đang tải danh sách sản phẩm...</span>
                             </div>
 
-                            <table v-else class="native-admin-table" :class="{ 'is-empty': !selectionLoading && productsList.length === 0 }">
-                                <thead>
-                                    <tr>
-                                        <th class="header-cell text-center text-no-wrap" style="width: 40px"></th>
-                                        <th class="header-cell text-center text-no-wrap" style="width: 60px">
-                                            <div class="d-flex justify-center align-center">
-                                                <v-checkbox-btn
-                                                    density="compact"
-                                                    color="primary"
-                                                    hide-details
-                                                    :model-value="isAllCurrentPageSelected"
-                                                    @change="toggleAllProductsSelection"
-                                                ></v-checkbox-btn>
-                                            </div>
-                                        </th>
-                                        <th class="header-cell text-center text-no-wrap">Mã sản phẩm</th>
-                                        <th class="header-cell text-center text-no-wrap">Tên sản phẩm</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template v-for="item in productsList" :key="item.id">
-                                        <tr class="data-row">
-                                            <td class="data-cell text-center">
-                                                <div class="d-flex align-center justify-center" style="height: 32px">
-                                                    <v-progress-circular
-                                                        v-if="loadingProductVariants[item.id]"
-                                                        indeterminate
-                                                        size="18"
-                                                        width="2"
-                                                        color="primary"
-                                                    />
-                                                    <v-btn
-                                                        v-else
-                                                        icon
-                                                        variant="text"
-                                                        size="small"
-                                                        density="compact"
-                                                        @click="toggleExpand(item.id)"
-                                                    >
-                                                        <v-icon>{{ getExpandIcon(item.id) }}</v-icon>
-                                                    </v-btn>
-                                                </div>
-                                            </td>
-                                            <td class="data-cell text-center">
-                                                <div class="d-flex align-center justify-center" style="height: 32px">
+                            <template v-else>
+                                <table class="native-admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="header-cell text-center text-no-wrap" style="width: 40px"></th>
+                                            <th class="header-cell text-center text-no-wrap" style="width: 60px">
+                                                <div class="d-flex justify-center align-center">
                                                     <v-checkbox-btn
-                                                        :model-value="isProductSelected(item)"
-                                                        :indeterminate="isProductIndeterminate(item)"
-                                                        @update:model-value="toggleProductSelection(item)"
-                                                        :readonly="isDetailView"
+                                                        density="compact"
                                                         color="primary"
                                                         hide-details
-                                                        density="compact"
-                                                        class="d-inline-flex ma-0 pa-0"
+                                                        :model-value="isAllCurrentPageSelected"
+                                                        @change="toggleAllProductsSelection"
                                                     ></v-checkbox-btn>
                                                 </div>
-                                            </td>
-                                            <td class="data-cell text-center text-primary font-weight-bold text-slate-600">
-                                                {{ item.ma }}
-                                            </td>
-                                            <td class="data-cell text-center font-weight-medium">
-                                                {{ item.ten }}
-                                            </td>
+                                            </th>
+                                            <th class="header-cell text-center text-no-wrap">Mã sản phẩm</th>
+                                            <th class="header-cell text-center text-no-wrap">Tên sản phẩm</th>
                                         </tr>
-                                        <!-- Variant rows (Lazy Loaded) -->
-                                        <template v-if="expandedProductIds.includes(item.id)">
-                                            <tr v-if="loadingProductVariants[item.id]" class="variant-row bg-slate-50">
-                                                <td colspan="4" class="text-center py-3 text-slate-500 text-caption">
-                                                    <v-progress-circular indeterminate size="16" width="2" color="primary" class="mr-2" />
-                                                    Đang tải biến thể của sản phẩm...
+                                    </thead>
+                                    <tbody v-if="productsList.length > 0">
+                                        <template v-for="item in productsList" :key="item.id">
+                                            <tr class="data-row">
+                                                <td class="data-cell text-center">
+                                                    <div class="d-flex align-center justify-center" style="height: 32px">
+                                                        <v-progress-circular
+                                                            v-if="loadingProductVariants[item.id]"
+                                                            indeterminate
+                                                            size="18"
+                                                            width="2"
+                                                            color="primary"
+                                                        />
+                                                        <v-btn
+                                                            v-else
+                                                            icon
+                                                            variant="text"
+                                                            size="small"
+                                                            density="compact"
+                                                            @click="toggleExpand(item.id)"
+                                                        >
+                                                            <v-icon>{{ getExpandIcon(item.id) }}</v-icon>
+                                                        </v-btn>
+                                                    </div>
                                                 </td>
-                                            </tr>
-                                            <tr v-else-if="!item.variants || item.variants.length === 0" class="variant-row bg-slate-50">
-                                                <td colspan="4" class="text-center py-3 text-slate-400 text-caption">
-                                                    Sản phẩm chưa có biến thể hoạt động nào.
-                                                </td>
-                                            </tr>
-                                            <tr v-else v-for="variant in item.variants" :key="variant.id" class="variant-row bg-slate-50">
-                                                <td class="data-cell text-right pr-3"></td>
                                                 <td class="data-cell text-center">
                                                     <div class="d-flex align-center justify-center" style="height: 32px">
                                                         <v-checkbox-btn
-                                                            :model-value="isVariantSelected(variant.id)"
-                                                            @update:model-value="toggleVariantSelection(variant)"
+                                                            :model-value="isProductSelected(item)"
+                                                            :indeterminate="isProductIndeterminate(item)"
+                                                            @update:model-value="toggleProductSelection(item)"
                                                             :readonly="isDetailView"
                                                             color="primary"
                                                             hide-details
@@ -921,31 +887,77 @@ onMounted(init);
                                                         ></v-checkbox-btn>
                                                     </div>
                                                 </td>
-                                                <td class="data-cell text-center text-slate-600 font-weight-medium">
-                                                    {{ variant.ma }}
+                                                <td class="data-cell text-center text-primary font-weight-bold text-slate-600">
+                                                    {{ item.ma }}
                                                 </td>
-                                                <td class="data-cell text-center text-slate-500">
-                                                    <div class="d-inline-flex align-center justify-center ga-2">
-                                                        <div
-                                                            class="color-dot"
-                                                            :style="{
-                                                                backgroundColor: getVariantColorHex(variant),
-                                                                border: '1px solid rgba(0, 0, 0, 0.15)'
-                                                            }"
-                                                        ></div>
-                                                        <span>{{ variant.color }} - {{ variant.kichCo }} - {{ variant.chatLieu }}</span>
-                                                    </div>
+                                                <td class="data-cell text-center font-weight-medium">
+                                                    {{ item.ten }}
                                                 </td>
                                             </tr>
+                                            <!-- Variant rows (Lazy Loaded) -->
+                                            <template v-if="expandedProductIds.includes(item.id)">
+                                                <tr v-if="loadingProductVariants[item.id]" class="variant-row bg-slate-50">
+                                                    <td colspan="4" class="text-center py-3 text-slate-500 text-caption">
+                                                        <v-progress-circular indeterminate size="16" width="2" color="primary" class="mr-2" />
+                                                        Đang tải biến thể của sản phẩm...
+                                                    </td>
+                                                </tr>
+                                                <tr v-else-if="!item.variants || item.variants.length === 0" class="variant-row bg-slate-50">
+                                                    <td colspan="4" class="text-center py-3 text-slate-400 text-caption">
+                                                        Sản phẩm chưa có biến thể hoạt động nào.
+                                                    </td>
+                                                </tr>
+                                                <tr v-else v-for="variant in item.variants" :key="variant.id" class="variant-row bg-slate-50">
+                                                    <td class="data-cell text-right pr-3"></td>
+                                                    <td class="data-cell text-center">
+                                                        <div class="d-flex align-center justify-center" style="height: 32px">
+                                                            <v-checkbox-btn
+                                                                :model-value="isVariantSelected(variant.id)"
+                                                                @update:model-value="toggleVariantSelection(variant)"
+                                                                :readonly="isDetailView"
+                                                                color="primary"
+                                                                hide-details
+                                                                density="compact"
+                                                                class="d-inline-flex ma-0 pa-0"
+                                                            ></v-checkbox-btn>
+                                                        </div>
+                                                    </td>
+                                                    <td class="data-cell text-center text-slate-600 font-weight-medium">
+                                                        {{ variant.ma }}
+                                                    </td>
+                                                    <td class="data-cell text-center text-slate-500">
+                                                        <div class="d-inline-flex align-center justify-center ga-2">
+                                                            <div
+                                                                class="color-dot"
+                                                                :style="{
+                                                                    backgroundColor: getVariantColorHex(variant),
+                                                                    border: '1px solid rgba(0, 0, 0, 0.15)'
+                                                                }"
+                                                            ></div>
+                                                            <span>{{ variant.color }} - {{ variant.kichCo }} - {{ variant.chatLieu }}</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </template>
                                         </template>
-                                    </template>
-                                    <TableEmptyState
-                                        v-if="!selectionLoading && productsList.length === 0"
-                                        :colspan="4"
-                                        text="Không tìm thấy sản phẩm nào."
-                                    />
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+
+                                <div
+                                    v-if="productsList.length === 0"
+                                    class="empty-state-wrapper py-12 w-100 d-flex flex-column align-center justify-center border-t"
+                                >
+                                    <div
+                                        class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3"
+                                        style="width: 68px; height: 68px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
+                                    >
+                                        <v-icon icon="mdi-database-search-outline" size="32" style="color: #94a3b8 !important" />
+                                    </div>
+                                    <span class="text-slate-600 text-center font-weight-medium" style="font-size: 14px !important; line-height: 1.5; max-width: 420px">
+                                        Không tìm thấy sản phẩm nào.
+                                    </span>
+                                </div>
+                            </template>
                         </div>
 
                         <AdminPagination
@@ -1098,8 +1110,8 @@ onMounted(init);
                             </template>
                         </AdminFilter>
 
-                        <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="max-height: 400px">
-                            <table class="native-admin-table" :class="{ 'is-empty': filteredSelectedDetails.length === 0 }">
+                        <div class="table-wrapper border rounded-lg overflow-y-auto mt-4 custom-scrollbar" style="max-height: 400px">
+                            <table class="native-admin-table">
                                 <thead>
                                     <tr>
                                         <th class="header-cell text-center text-no-wrap" style="width: 50px">
@@ -1127,7 +1139,7 @@ onMounted(init);
                                         <th class="header-cell text-center text-no-wrap">Màu sắc</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody v-if="filteredSelectedDetails.length > 0">
                                     <tr
                                         v-for="(item, index) in paginatedSelectedDetails"
                                         :key="item.id + '-' + item.ma + '-' + index"
@@ -1191,13 +1203,23 @@ onMounted(init);
                                             </div>
                                         </td>
                                     </tr>
-                                    <TableEmptyState
-                                        v-if="filteredSelectedDetails.length === 0"
-                                        :colspan="10"
-                                        text="Không tìm thấy sản phẩm nào phù hợp."
-                                    />
                                 </tbody>
                             </table>
+
+                            <div
+                                v-if="filteredSelectedDetails.length === 0"
+                                class="empty-state-wrapper py-12 w-100 d-flex flex-column align-center justify-center border-t"
+                            >
+                                <div
+                                    class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3"
+                                    style="width: 68px; height: 68px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
+                                >
+                                    <v-icon icon="mdi-database-search-outline" size="32" style="color: #94a3b8 !important" />
+                                </div>
+                                <span class="text-slate-600 text-center font-weight-medium" style="font-size: 14px !important; line-height: 1.5; max-width: 420px">
+                                    Không tìm thấy sản phẩm nào phù hợp.
+                                </span>
+                            </div>
                         </div>
 
                         <AdminPagination

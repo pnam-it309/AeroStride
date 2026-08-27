@@ -12,16 +12,16 @@ defineEmits(['action']);
 </script>
 
 <template>
-    <tr class="empty-state-row" style="width: 100% !important;">
-        <td :colspan="colspan || 20" class="empty-state py-8 text-center" style="width: 100% !important; text-align: center !important;">
-            <div class="d-flex flex-column align-center justify-center py-4 px-4 w-100 mx-auto animate-fade-in" style="width: 100% !important; max-width: 100% !important;">
+    <tr class="empty-state-row">
+        <td :colspan="colspan || 20" class="empty-state text-center py-10">
+            <div class="empty-state-content d-flex flex-column align-center justify-center mx-auto animate-fade-in">
                 <div
-                    class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3 mx-auto"
-                    style="width: 68px; height: 68px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
+                    class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3"
+                    style="width: 56px; height: 56px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
                 >
-                    <v-icon :icon="icon || 'mdi-database-search-outline'" size="32" style="color: #94a3b8 !important" />
+                    <v-icon :icon="icon || 'mdi-database-search-outline'" size="28" style="color: #94a3b8 !important" />
                 </div>
-                <span class="text-slate-600 text-center font-weight-medium" style="font-size: 14px !important; line-height: 1.5; max-width: 420px">{{ text }}</span>
+                <span class="text-slate-600 text-center font-weight-medium" style="font-size: 13px !important; line-height: 1.5; max-width: 420px">{{ text }}</span>
                 <span v-if="subtext" class="text-slate-400 text-center text-caption mt-1">{{ subtext }}</span>
                 <slot>
                     <v-btn
@@ -41,12 +41,13 @@ defineEmits(['action']);
 </template>
 
 <style scoped>
-.empty-state-row {
-    width: 100% !important;
-}
 .empty-state {
     border-bottom: none !important;
-    width: 100% !important;
+    vertical-align: middle !important;
     text-align: center !important;
+}
+
+.empty-state-content {
+    width: 100%;
 }
 </style>
