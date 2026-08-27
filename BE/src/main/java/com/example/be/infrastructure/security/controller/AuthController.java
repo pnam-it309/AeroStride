@@ -20,6 +20,7 @@ import com.example.be.infrastructure.exceptions.BusinessException;
 import com.example.be.infrastructure.exceptions.UnauthorizedException;
 import com.example.be.repository.KhachHangRepository;
 import com.example.be.repository.NhanVienRepository;
+import com.example.be.utils.CodeUtils;
 import com.example.be.core.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -112,7 +113,7 @@ public class AuthController {
                 .xoaMem(false)
                 .build();
         khachHang.setTen(request.getTen());
-        khachHang.setMa("KH_" + (System.currentTimeMillis() % 1000000));
+        khachHang.setMa(CodeUtils.generateRandom(KhachHang.class, khachHangRepository::existsByMa));
         khachHangRepository.save(khachHang);
 
         // Tự động đăng nhập sau khi đăng ký thành công (luồng CLIENT)

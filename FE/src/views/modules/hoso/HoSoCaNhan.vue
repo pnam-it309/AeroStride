@@ -380,7 +380,7 @@ onMounted(() => {
                     </v-alert>
 
                     <!-- TAB 1: THÔNG TIN HỒ SƠ -->
-                    <div v-if="activeTab === 'profile'" class="tab-content-panel">
+                    <div v-show="activeTab === 'profile'" class="tab-content-panel">
                         <!-- 1.1 Chế độ XEM (Read-only View) -->
                         <div v-if="!isEditing">
                             <div class="d-flex align-center mb-4">
@@ -398,8 +398,8 @@ onMounted(() => {
                                     <div class="info-field-box">
                                         <div class="field-label">Mã nhân viên</div>
                                         <div class="field-value">
-                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-identifier</v-icon>
-                                            {{ profile.ma || '—' }}
+                                            <v-icon size="16" color="#64748b" class="mr-2">mdi-pound</v-icon>
+                                            <span class="font-weight-semibold">{{ profile.ma || 'Chưa cập nhật' }}</span>
                                         </div>
                                     </div>
                                 </v-col>
@@ -407,17 +407,17 @@ onMounted(() => {
                                     <div class="info-field-box">
                                         <div class="field-label">Tên tài khoản</div>
                                         <div class="field-value">
-                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-account-outline</v-icon>
-                                            {{ profile.tenTaiKhoan || '—' }}
+                                            <v-icon size="16" color="#64748b" class="mr-2">mdi-account-outline</v-icon>
+                                            <span>{{ profile.tenTaiKhoan || 'Chưa cập nhật' }}</span>
                                         </div>
                                     </div>
                                 </v-col>
                                 <v-col cols="12" md="6">
                                     <div class="info-field-box">
                                         <div class="field-label">Họ và tên</div>
-                                        <div class="field-value font-weight-bold text-slate-800">
-                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-badge-account-outline</v-icon>
-                                            {{ profile.ten || '—' }}
+                                        <div class="field-value">
+                                            <v-icon size="16" color="#64748b" class="mr-2">mdi-card-text-outline</v-icon>
+                                            <span class="font-weight-semibold">{{ profile.ten || 'Chưa cập nhật' }}</span>
                                         </div>
                                     </div>
                                 </v-col>
@@ -425,8 +425,8 @@ onMounted(() => {
                                     <div class="info-field-box">
                                         <div class="field-label">Email</div>
                                         <div class="field-value">
-                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-email-outline</v-icon>
-                                            {{ profile.email || '—' }}
+                                            <v-icon size="16" color="#64748b" class="mr-2">mdi-email-outline</v-icon>
+                                            <span>{{ profile.email || 'Chưa cập nhật' }}</span>
                                         </div>
                                     </div>
                                 </v-col>
@@ -434,8 +434,8 @@ onMounted(() => {
                                     <div class="info-field-box">
                                         <div class="field-label">Số điện thoại</div>
                                         <div class="field-value">
-                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-phone-outline</v-icon>
-                                            {{ profile.sdt || '—' }}
+                                            <v-icon size="16" color="#64748b" class="mr-2">mdi-phone-outline</v-icon>
+                                            <span>{{ profile.sdt || 'Chưa cập nhật' }}</span>
                                         </div>
                                     </div>
                                 </v-col>
@@ -443,8 +443,8 @@ onMounted(() => {
                                     <div class="info-field-box">
                                         <div class="field-label">Giới tính</div>
                                         <div class="field-value">
-                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-gender-male-female</v-icon>
-                                            {{ gioiTinhLabel }}
+                                            <v-icon size="16" color="#64748b" class="mr-2">mdi-gender-male-female</v-icon>
+                                            <span>{{ gioiTinhLabel }}</span>
                                         </div>
                                     </div>
                                 </v-col>
@@ -452,17 +452,17 @@ onMounted(() => {
                                     <div class="info-field-box">
                                         <div class="field-label">Ngày sinh</div>
                                         <div class="field-value">
-                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-calendar-outline</v-icon>
-                                            {{ profile.ngaySinh || '—' }}
+                                            <v-icon size="16" color="#64748b" class="mr-2">mdi-calendar-outline</v-icon>
+                                            <span>{{ profile.ngaySinh || 'Chưa cập nhật' }}</span>
                                         </div>
                                     </div>
                                 </v-col>
                                 <v-col cols="12" md="6">
                                     <div class="info-field-box">
                                         <div class="field-label">Chức vụ / Quyền hạn</div>
-                                        <div class="field-value text-primary font-weight-medium">
-                                            <v-icon size="16" class="mr-2" color="primary">mdi-shield-account-outline</v-icon>
-                                            {{ chucVu }}
+                                        <div class="field-value">
+                                            <v-icon size="16" color="#1e257c" class="mr-2">mdi-shield-account-outline</v-icon>
+                                            <span class="font-weight-bold" style="color: #1e257c">{{ chucVu }}</span>
                                         </div>
                                     </div>
                                 </v-col>
@@ -470,228 +470,182 @@ onMounted(() => {
                                     <div class="info-field-box">
                                         <div class="field-label">Địa chỉ liên hệ</div>
                                         <div class="field-value">
-                                            <v-icon size="16" class="mr-2 text-slate-400">mdi-map-marker-outline</v-icon>
-                                            {{ diaChiDayDu || 'Chưa cập nhật địa chỉ' }}
+                                            <v-icon size="16" color="#64748b" class="mr-2">mdi-map-marker-outline</v-icon>
+                                            <span>{{ diaChiDayDu || 'Chưa cập nhật địa chỉ' }}</span>
                                         </div>
                                     </div>
                                 </v-col>
                             </v-row>
                         </div>
 
-                        <!-- 1.2 Chế độ CHỈNH SỬA (Editable Form) -->
-                        <div v-else class="edit-profile-section">
-                            <div class="d-flex align-center justify-space-between mb-4 pb-3 border-b">
+                        <!-- 1.2 Chế độ SỬA (Edit Profile Mode) -->
+                        <div v-else class="edit-profile-form">
+                            <div class="d-flex align-center justify-space-between mb-4">
                                 <div class="d-flex align-center">
                                     <div class="section-icon-box mr-3">
-                                        <v-icon color="#1e257c" size="20">mdi-account-edit-outline</v-icon>
+                                        <v-icon color="#1e257c" size="20">mdi-account-edit</v-icon>
                                     </div>
                                     <div>
-                                        <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-0">Cập nhật thông tin cá nhân</h3>
-                                        <p class="text-caption text-slate-500 mb-0">Chỉnh sửa các trường thông tin cần thiết và bấm Lưu</p>
+                                        <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-0">Chỉnh sửa thông tin</h3>
+                                        <p class="text-caption text-slate-500 mb-0">Cập nhật thông tin cá nhân của bạn</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <v-form @submit.prevent="handleSaveProfile">
-                                <v-row dense>
-                                    <v-col cols="12" md="6">
-                                        <div class="form-group mb-3">
-                                            <label class="form-input-label">Mã nhân viên (Cố định)</label>
-                                            <v-text-field
-                                                :model-value="profile.ma"
-                                                disabled
-                                                variant="outlined"
-                                                density="compact"
-                                                rounded="lg"
-                                                bg-color="#f8fafc"
-                                                prepend-inner-icon="mdi-identifier"
-                                                hide-details
-                                            />
-                                        </div>
-                                    </v-col>
+                            <v-row dense>
+                                <v-col cols="12" md="6">
+                                    <div class="mb-3">
+                                        <label class="form-input-label">Họ và tên <span class="text-error">*</span></label>
+                                        <v-text-field
+                                            v-model="editForm.ten"
+                                            placeholder="Nhập họ và tên"
+                                            variant="outlined"
+                                            density="compact"
+                                            hide-details="auto"
+                                            rounded="lg"
+                                        />
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="mb-3">
+                                        <label class="form-input-label">Email</label>
+                                        <v-text-field
+                                            v-model="editForm.email"
+                                            placeholder="example@aerostride.com"
+                                            variant="outlined"
+                                            density="compact"
+                                            hide-details="auto"
+                                            rounded="lg"
+                                        />
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="mb-3">
+                                        <label class="form-input-label">Số điện thoại</label>
+                                        <v-text-field
+                                            v-model="editForm.sdt"
+                                            placeholder="0987654321"
+                                            variant="outlined"
+                                            density="compact"
+                                            hide-details="auto"
+                                            rounded="lg"
+                                        />
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="mb-3">
+                                        <label class="form-input-label">Giới tính</label>
+                                        <v-radio-group v-model="editForm.gioiTinh" inline hide-details density="compact" class="gender-radio-group">
+                                            <v-radio label="Nam" :value="true" color="primary" />
+                                            <v-radio label="Nữ" :value="false" color="primary" />
+                                        </v-radio-group>
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="mb-3">
+                                        <label class="form-input-label">Ngày sinh</label>
+                                        <v-text-field
+                                            v-model="editForm.ngaySinh"
+                                            type="date"
+                                            variant="outlined"
+                                            density="compact"
+                                            hide-details="auto"
+                                            rounded="lg"
+                                        />
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="mb-3">
+                                        <label class="form-input-label">Tỉnh / Thành phố</label>
+                                        <v-select
+                                            v-model="editForm.tinh"
+                                            :items="provinces"
+                                            item-title="name"
+                                            item-value="name"
+                                            placeholder="Chọn Tỉnh / Thành"
+                                            variant="outlined"
+                                            density="compact"
+                                            hide-details="auto"
+                                            rounded="lg"
+                                            @update:model-value="fetchDistricts(editForm.tinh)"
+                                        />
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="mb-3">
+                                        <label class="form-input-label">Quận / Huyện</label>
+                                        <v-select
+                                            v-model="editForm.thanhPho"
+                                            :items="districts"
+                                            item-title="name"
+                                            item-value="name"
+                                            placeholder="Chọn Quận / Huyện"
+                                            variant="outlined"
+                                            density="compact"
+                                            hide-details="auto"
+                                            rounded="lg"
+                                            :disabled="!editForm.tinh"
+                                            @update:model-value="fetchWards(editForm.thanhPho)"
+                                        />
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="mb-3">
+                                        <label class="form-input-label">Phường / Xã</label>
+                                        <v-select
+                                            v-model="editForm.phuongXa"
+                                            :items="wards"
+                                            item-title="name"
+                                            item-value="name"
+                                            placeholder="Chọn Phường / Xã"
+                                            variant="outlined"
+                                            density="compact"
+                                            hide-details="auto"
+                                            rounded="lg"
+                                            :disabled="!editForm.thanhPho"
+                                        />
+                                    </div>
+                                </v-col>
+                                <v-col cols="12">
+                                    <div class="mb-3">
+                                        <label class="form-input-label">Địa chỉ chi tiết</label>
+                                        <v-text-field
+                                            v-model="editForm.diaChiChiTiet"
+                                            placeholder="Số nhà, tên đường..."
+                                            variant="outlined"
+                                            density="compact"
+                                            hide-details="auto"
+                                            rounded="lg"
+                                        />
+                                    </div>
+                                </v-col>
+                            </v-row>
 
-                                    <v-col cols="12" md="6">
-                                        <div class="form-group mb-3">
-                                            <label class="form-input-label">Tên tài khoản (Cố định)</label>
-                                            <v-text-field
-                                                :model-value="profile.tenTaiKhoan"
-                                                disabled
-                                                variant="outlined"
-                                                density="compact"
-                                                rounded="lg"
-                                                bg-color="#f8fafc"
-                                                prepend-inner-icon="mdi-account-outline"
-                                                hide-details
-                                            />
-                                        </div>
-                                    </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <div class="form-group mb-3">
-                                            <label class="form-input-label">Họ và tên <span class="text-error">*</span></label>
-                                            <v-text-field
-                                                v-model="editForm.ten"
-                                                placeholder="Nhập họ và tên"
-                                                variant="outlined"
-                                                density="compact"
-                                                rounded="lg"
-                                                prepend-inner-icon="mdi-badge-account-outline"
-                                                hide-details="auto"
-                                                required
-                                            />
-                                        </div>
-                                    </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <div class="form-group mb-3">
-                                            <label class="form-input-label">Email</label>
-                                            <v-text-field
-                                                v-model="editForm.email"
-                                                placeholder="Nhập địa chỉ email"
-                                                variant="outlined"
-                                                density="compact"
-                                                rounded="lg"
-                                                prepend-inner-icon="mdi-email-outline"
-                                                hide-details="auto"
-                                            />
-                                        </div>
-                                    </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <div class="form-group mb-3">
-                                            <label class="form-input-label">Số điện thoại</label>
-                                            <v-text-field
-                                                v-model="editForm.sdt"
-                                                placeholder="Nhập số điện thoại"
-                                                variant="outlined"
-                                                density="compact"
-                                                rounded="lg"
-                                                prepend-inner-icon="mdi-phone-outline"
-                                                hide-details="auto"
-                                            />
-                                        </div>
-                                    </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <div class="form-group mb-3">
-                                            <label class="form-input-label">Giới tính</label>
-                                            <v-radio-group
-                                                v-model="editForm.gioiTinh"
-                                                inline
-                                                density="compact"
-                                                hide-details
-                                                class="gender-radio-group"
-                                            >
-                                                <v-radio label="Nam" :value="true" color="primary"></v-radio>
-                                                <v-radio label="Nữ" :value="false" color="primary"></v-radio>
-                                            </v-radio-group>
-                                        </div>
-                                    </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <div class="form-group mb-3">
-                                            <label class="form-input-label">Ngày sinh</label>
-                                            <v-text-field
-                                                v-model="editForm.ngaySinh"
-                                                type="date"
-                                                variant="outlined"
-                                                density="compact"
-                                                rounded="lg"
-                                                prepend-inner-icon="mdi-calendar-outline"
-                                                hide-details="auto"
-                                            />
-                                        </div>
-                                    </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <div class="form-group mb-3">
-                                            <label class="form-input-label">Tỉnh / Thành phố</label>
-                                            <v-text-field
-                                                v-model="editForm.tinh"
-                                                placeholder="Tỉnh/Thành phố"
-                                                variant="outlined"
-                                                density="compact"
-                                                rounded="lg"
-                                                prepend-inner-icon="mdi-city-variant-outline"
-                                                hide-details="auto"
-                                            />
-                                        </div>
-                                    </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <div class="form-group mb-3">
-                                            <label class="form-input-label">Quận / Huyện / TP</label>
-                                            <v-text-field
-                                                v-model="editForm.thanhPho"
-                                                placeholder="Quận/Huyện"
-                                                variant="outlined"
-                                                density="compact"
-                                                rounded="lg"
-                                                prepend-inner-icon="mdi-home-city-outline"
-                                                hide-details="auto"
-                                            />
-                                        </div>
-                                    </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <div class="form-group mb-3">
-                                            <label class="form-input-label">Phường / Xã</label>
-                                            <v-text-field
-                                                v-model="editForm.phuongXa"
-                                                placeholder="Phường/Xã"
-                                                variant="outlined"
-                                                density="compact"
-                                                rounded="lg"
-                                                prepend-inner-icon="mdi-sign-direction"
-                                                hide-details="auto"
-                                            />
-                                        </div>
-                                    </v-col>
-
-                                    <v-col cols="12">
-                                        <div class="form-group mb-4">
-                                            <label class="form-input-label">Địa chỉ chi tiết (Số nhà, tên đường...)</label>
-                                            <v-text-field
-                                                v-model="editForm.diaChiChiTiet"
-                                                placeholder="Ví dụ: Số 12 Ngõ 23 Hàng Bạc"
-                                                variant="outlined"
-                                                density="compact"
-                                                rounded="lg"
-                                                prepend-inner-icon="mdi-map-marker-outline"
-                                                hide-details="auto"
-                                            />
-                                        </div>
-                                    </v-col>
-                                </v-row>
-
-                                <div class="d-flex align-center ga-3 mt-2">
-                                    <v-btn
-                                        :loading="saveLoading"
-                                        type="submit"
-                                        color="primary"
-                                        variant="flat"
-                                        class="text-none font-weight-bold px-6 rounded-lg save-btn"
-                                        height="42"
-                                        style="background-color: #1e257c !important"
-                                    >
-                                        <v-icon start size="18">mdi-content-save-check-outline</v-icon>
-                                        Lưu thay đổi
-                                    </v-btn>
-                                    <v-btn
-                                        variant="tonal"
-                                        class="text-none font-weight-medium px-5 rounded-lg"
-                                        height="42"
-                                        @click="cancelEditing"
-                                    >
-                                        Hủy
-                                    </v-btn>
-                                </div>
-                            </v-form>
+                            <div class="d-flex justify-end ga-3 mt-4">
+                                <v-btn
+                                    variant="outlined"
+                                    color="grey-darken-1"
+                                    class="text-none px-5 rounded-lg"
+                                    @click="cancelEditing"
+                                >
+                                    Hủy
+                                </v-btn>
+                                <v-btn
+                                    :loading="saveLoading"
+                                    color="primary"
+                                    variant="flat"
+                                    class="text-none font-weight-bold px-6 rounded-lg save-btn"
+                                    style="background-color: #1e257c !important"
+                                    @click="handleSaveProfile"
+                                >
+                                    Lưu thay đổi
+                                </v-btn>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- TAB 2: TÀI KHOẢN & ĐỔI MẬT KHẨU (Bố cục 2 cột cân xứng lấp đầy 100% card) -->
-                    <div v-else-if="activeTab === 'account'" class="tab-content-panel">
+                    <!-- TAB 2: TÀI KHOẢN & ĐỔI MẬT KHẨU (Giao diện liền mạch, gọn gàng) -->
+                    <div v-show="activeTab === 'account'" class="tab-content-panel">
                         <div class="d-flex align-center mb-4">
                             <div class="section-icon-box mr-3">
                                 <v-icon color="#1e257c" size="20">mdi-lock-reset</v-icon>
@@ -704,48 +658,19 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <v-row class="mt-1">
-                            <!-- Cột Trái: Hướng dẫn bảo mật -->
-                            <v-col cols="12" md="5">
-                                <div class="security-tips-box pa-4 rounded-xl border h-100">
-                                    <div class="d-flex align-center ga-2 mb-3">
-                                        <v-icon color="primary" size="20">mdi-shield-check-outline</v-icon>
-                                        <span class="font-weight-bold text-slate-800" style="font-size: 13px">Quy tắc bảo mật mật khẩu</span>
-                                    </div>
-                                    <div class="security-tips-list d-flex flex-column ga-2.5">
-                                        <div class="d-flex align-start ga-2 text-caption text-slate-600">
-                                            <v-icon size="16" color="#10b981" class="mt-0.5">mdi-check-circle-outline</v-icon>
-                                            <span>Mật khẩu phải có độ dài tối thiểu từ <strong>6 ký tự</strong> trở lên.</span>
-                                        </div>
-                                        <div class="d-flex align-start ga-2 text-caption text-slate-600">
-                                            <v-icon size="16" color="#10b981" class="mt-0.5">mdi-check-circle-outline</v-icon>
-                                            <span>Nên kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt (!@#$%).</span>
-                                        </div>
-                                        <div class="d-flex align-start ga-2 text-caption text-slate-600">
-                                            <v-icon size="16" color="#10b981" class="mt-0.5">mdi-check-circle-outline</v-icon>
-                                            <span>Không sử dụng thông tin dễ đoán như ngày sinh, số điện thoại.</span>
-                                        </div>
-                                        <div class="d-flex align-start ga-2 text-caption text-slate-600">
-                                            <v-icon size="16" color="#10b981" class="mt-0.5">mdi-check-circle-outline</v-icon>
-                                            <span>Đổi mật khẩu định kỳ 3-6 tháng một lần để bảo vệ an toàn.</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </v-col>
+                        <div class="pa-5 rounded-xl border bg-white mt-1">
+                            <v-alert
+                                v-if="pwMessage.text"
+                                :type="pwMessage.type === 'success' ? 'success' : 'error'"
+                                variant="tonal"
+                                density="compact"
+                                class="mb-4 rounded-lg"
+                            >
+                                {{ pwMessage.text }}
+                            </v-alert>
 
-                            <!-- Cột Phải: Form nhập mật khẩu -->
-                            <v-col cols="12" md="7">
-                                <div class="pa-4 rounded-xl border bg-white">
-                                    <v-alert
-                                        v-if="pwMessage.text"
-                                        :type="pwMessage.type === 'success' ? 'success' : 'error'"
-                                        variant="tonal"
-                                        density="compact"
-                                        class="mb-4 rounded-lg"
-                                    >
-                                        {{ pwMessage.text }}
-                                    </v-alert>
-
+                            <v-row dense>
+                                <v-col cols="12">
                                     <div class="mb-3">
                                         <label class="form-input-label">Mật khẩu hiện tại <span class="text-error">*</span></label>
                                         <v-text-field
@@ -761,7 +686,8 @@ onMounted(() => {
                                             @click:append-inner="showOldPassword = !showOldPassword"
                                         />
                                     </div>
-
+                                </v-col>
+                                <v-col cols="12" md="6">
                                     <div class="mb-3">
                                         <label class="form-input-label">Mật khẩu mới <span class="text-error">*</span></label>
                                         <v-text-field
@@ -777,7 +703,8 @@ onMounted(() => {
                                             @click:append-inner="showNewPassword = !showNewPassword"
                                         />
                                     </div>
-
+                                </v-col>
+                                <v-col cols="12" md="6">
                                     <div class="mb-4">
                                         <label class="form-input-label">Xác nhận mật khẩu mới <span class="text-error">*</span></label>
                                         <v-text-field
@@ -793,22 +720,24 @@ onMounted(() => {
                                             @click:append-inner="showConfirmPassword = !showConfirmPassword"
                                         />
                                     </div>
+                                </v-col>
+                            </v-row>
 
-                                    <v-btn
-                                        :loading="pwLoading"
-                                        color="primary"
-                                        variant="flat"
-                                        class="text-none font-weight-bold px-6 rounded-lg save-btn"
-                                        height="42"
-                                        style="background-color: #1e257c !important"
-                                        @click="handleChangePassword"
-                                    >
-                                        <v-icon start size="18">mdi-content-save-check-outline</v-icon>
-                                        Cập nhật mật khẩu
-                                    </v-btn>
-                                </div>
-                            </v-col>
-                        </v-row>
+                            <div class="d-flex justify-end mt-3">
+                                <v-btn
+                                    :loading="pwLoading"
+                                    color="primary"
+                                    variant="flat"
+                                    class="text-none font-weight-bold px-6 rounded-lg save-btn"
+                                    height="42"
+                                    style="background-color: #1e257c !important"
+                                    @click="handleChangePassword"
+                                >
+                                    <v-icon start size="18">mdi-content-save-check-outline</v-icon>
+                                    Cập nhật mật khẩu
+                                </v-btn>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </v-card>
@@ -1009,27 +938,16 @@ onMounted(() => {
     padding: 2px 12px;
 }
 
+.profile-body-content {
+    min-height: 460px;
+}
+
 .save-btn {
     box-shadow: 0 4px 12px rgba(30, 37, 124, 0.25) !important;
 }
 
 .tab-content-panel {
-    animation: fadeIn 0.2s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(2px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.security-tips-box {
-    background-color: #f8fafc;
-    border-color: #e2e8f0;
+    /* Đứng yên tĩnh, không dùng translateY gây giật layout */
+    width: 100%;
 }
 </style>

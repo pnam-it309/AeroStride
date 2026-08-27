@@ -82,7 +82,16 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate', 'empty-
             </div>
 
             <!-- Main Table -->
-            <div class="table-wrapper">
+            <div class="table-wrapper position-relative">
+                <!-- Smooth Top Progress Bar when updating/paginating existing data -->
+                <v-progress-linear
+                    v-if="loading && items.length > 0"
+                    indeterminate
+                    color="primary"
+                    height="2.5"
+                    class="table-fetching-bar"
+                />
+
                 <table class="native-admin-table">
                     <thead>
                         <slot name="headers">
@@ -105,16 +114,16 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate', 'empty-
                             </tr>
                         </slot>
                     </thead>
-                    <tbody v-if="!loading && items.length > 0">
+                    <tbody v-if="items.length > 0" :class="['table-body-transition', { 'table-is-fetching': loading }]">
                         <template v-for="(item, index) in items" :key="item.id ?? index">
                             <slot name="row" :item="item" :index="index"></slot>
                         </template>
                     </tbody>
                 </table>
 
-                <!-- Render empty and loading states outside the table -->
+                <!-- Render empty and initial loading states only when no items are present -->
                 <div
-                    v-if="loading || items.length === 0"
+                    v-if="items.length === 0"
                     class="empty-state-wrapper py-12 w-100 d-flex flex-column align-center justify-center border-t"
                 >
                     <div v-if="loading" class="d-flex flex-column align-center justify-center w-100 py-6">
@@ -162,5 +171,20 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate', 'empty-
 </template>
 
 <style scoped>
-/* Core styles are now centralized in _admin-common.scss */
+.table-fetching-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+}
+
+.table-body-transition {
+    transition: opacity 0.15s ease;
+}
+
+.table-is-fetching {
+    opacity: 0.55;
+    pointer-events: none;
+}
 </style>

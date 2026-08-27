@@ -31,6 +31,8 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, String> {
 
     boolean existsByTenTaiKhoanIgnoreCase(String tenTaiKhoan);
 
+    boolean existsByMa(String ma);
+
     @Query("SELECT k FROM KhachHang k WHERE k.ngaySinh IS NOT NULL AND MONTH(k.ngaySinh) = :month AND DAY(k.ngaySinh) = :day AND (k.xoaMem IS NULL OR k.xoaMem = false)")
     List<KhachHang> findCustomersWithBirthdayToday(@Param("month") int month, @Param("day") int day);
 }

@@ -88,9 +88,9 @@ const calculatedShortfall = computed(() => {
             </div>
 
             <!-- Warning Notice Banner -->
-            <div class="warning-banner d-flex align-start ga-3 pa-3.5 mb-4 rounded-xl">
-                <AlertTriangleIcon size="20" class="warning-icon flex-shrink-0 mt-0.5" />
-                <div class="text-subtitle-2 font-weight-medium text-amber-950" style="line-height: 1.45">
+            <div class="warning-banner d-flex align-center ga-3 px-3.5 py-3 mb-4">
+                <AlertTriangleIcon size="20" class="warning-icon flex-shrink-0" />
+                <div class="warning-text font-weight-medium text-amber-950">
                     {{ message || `Đơn hàng chưa đạt giá trị tối thiểu của phiếu giảm giá [${voucherCode}]. Cần thêm ${formatCurrency(calculatedShortfall)} để áp dụng.` }}
                 </div>
             </div>
@@ -199,9 +199,18 @@ const calculatedShortfall = computed(() => {
 .warning-banner {
     background-color: #fffbeb !important;
     border: 1px solid #fde68a !important;
+    border-left: 4px solid #f59e0b !important;
+    border-radius: 8px !important;
+}
+
+.warning-text {
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: #78350f !important;
 }
 
 .voucher-details-container {
+    border-radius: 10px !important;
     border-color: #e2e8f0 !important;
 }
 
@@ -220,6 +229,8 @@ const calculatedShortfall = computed(() => {
 .suggestion-box {
     background-color: #f0f9ff;
     border: 1px solid #bae6fd;
+    border-left: 4px solid #0284c7;
+    border-radius: 8px !important;
 }
 
 .font-tabular {

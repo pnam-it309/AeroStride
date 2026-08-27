@@ -1236,21 +1236,16 @@ onMounted(init);
 
 .campaign-product-table {
     flex: 1 1 auto;
-    min-height: 280px;
+    height: 440px;
+    max-height: 440px;
+    overflow-y: auto;
 }
 
-.mo-ta-textarea {
-    flex: 1 1 auto;
-}
-
-.mo-ta-textarea :deep(.v-input__control),
-.mo-ta-textarea :deep(.v-field),
-.mo-ta-textarea :deep(.v-field__field) {
-    height: 100%;
-}
-
-.mo-ta-textarea :deep(textarea) {
-    height: 100% !important;
+.campaign-product-table :deep(thead th) {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #f8fafc !important;
 }
 
 :deep(.v-field),

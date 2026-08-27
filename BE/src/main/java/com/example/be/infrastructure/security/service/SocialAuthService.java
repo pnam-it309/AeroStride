@@ -9,6 +9,7 @@ import com.example.be.infrastructure.security.dto.AuthResponse;
 import com.example.be.infrastructure.security.dto.SocialLoginRequest;
 import com.example.be.repository.KhachHangRepository;
 import com.example.be.repository.NhanVienRepository;
+import com.example.be.utils.CodeUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -165,7 +166,7 @@ public class SocialAuthService {
                 .build();
 
         newKhachHang.setTen(name);
-        newKhachHang.setMa("KH_OA2_" + (System.currentTimeMillis() % 1000000));
+        newKhachHang.setMa(CodeUtils.generateRandom(KhachHang.class, khachHangRepository::existsByMa));
         newKhachHang.setTrangThai(TrangThai.DANG_HOAT_DONG);
 
         return khachHangRepository.save(newKhachHang);

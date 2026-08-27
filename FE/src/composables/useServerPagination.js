@@ -2,16 +2,10 @@ import { reactive, ref } from 'vue';
 
 /**
  * Composable phân trang + tải dữ liệu server-side dùng chung.
- *
- * Khác với useAdminTable (spread thẳng filters vào params), composable này để CALLER tự dựng
- * params lọc bên trong `fetchPage` — phù hợp các màn cần map param tùy biến
- * (vd. khoangGia -> minGia/maxGia, sanPhamId, ...). Composable chỉ quản lý page/size/tổng trang.
+ * Tích hợp bộ nhớ đệm trang (Client-side Page Cache) giúp chuyển trang 0ms tức thì.
  *
  * @param {(pageable: { page: number, size: number }) => Promise<any>} fetchPage
- *        Hàm gọi API, nhận { page (0-based), size } và trả PageResponse
- *        ({ content, totalElements, totalPages }) hoặc envelope { data: { ... } }.
  * @param {{ pageSize?: number, onError?: (error: any) => void, onLoaded?: () => void }} [options]
- *        onLoaded: chạy sau mỗi lần tải trang thành công (vd. đồng bộ lựa chọn, cập nhật meta header).
  */
 export function useServerPagination(fetchPage, { pageSize = 10, onError, onLoaded } = {}) {
     const items = ref([]);
@@ -20,22 +14,58 @@ export function useServerPagination(fetchPage, { pageSize = 10, onError, onLoade
     const totalElements = ref(0);
     const totalPages = ref(1);
 
+    const pageCache = new Map();
+
+    const clearCache = () => {
+        pageCache.clear();
+    };
+
     let currentRequestId = 0;
 
-    // Tải trang hiện tại. Nếu trang vượt quá tổng số trang (vd. sau khi xóa dòng cuối) thì lùi về trang cuối và tải lại.
-    const load = async () => {
+    // Tải trang hiện tại với kiểm tra cache 0ms
+    const load = async (forceFresh = false) => {
+        const targetPage = pagination.page;
+        const targetSize = pagination.size;
+        const cacheKey = `p${targetPage}_s${targetSize}`;
+
+        if (!forceFresh && pageCache.has(cacheKey)) {
+            const cached = pageCache.get(cacheKey);
+            items.value = cached.items || [];
+            totalElements.value = cached.totalElements || 0;
+            totalPages.value = cached.totalPages || 1;
+            loading.value = false;
+            if (onLoaded) onLoaded();
+            return;
+        }
+
         const requestId = ++currentRequestId;
         loading.value = true;
+
         try {
-            const response = await fetchPage({ page: Math.max(pagination.page - 1, 0), size: pagination.size });
+            const response = await fetchPage({ page: Math.max(targetPage - 1, 0), size: targetSize });
             if (requestId !== currentRequestId) return;
             const result = response?.data || response;
-            items.value = Array.isArray(result?.content) ? result.content : [];
-            totalElements.value = Number(result?.totalElements ?? items.value.length);
-            totalPages.value = Math.max(Number(result?.totalPages ?? 1), 1);
+            const loadedItems = Array.isArray(result?.content) ? result.content : [];
+            const total = Number(result?.totalElements ?? loadedItems.length);
+            const pages = Math.max(Number(result?.totalPages ?? 1), 1);
 
-            if (pagination.page > totalPages.value) {
-                pagination.page = totalPages.value;
+            items.value = loadedItems;
+            totalElements.value = total;
+            totalPages.value = pages;
+
+            pageCache.set(cacheKey, {
+                items: loadedItems,
+                totalElements: total,
+                totalPages: pages
+            });
+
+            if (pageCache.size > 50) {
+                const firstKey = pageCache.keys().next().value;
+                pageCache.delete(firstKey);
+            }
+
+            if (pagination.page > pages) {
+                pagination.page = pages;
                 await load();
                 return;
             }
@@ -60,9 +90,10 @@ export function useServerPagination(fetchPage, { pageSize = 10, onError, onLoade
 
     // Về trang đầu rồi tải lại (dùng khi đổi bộ lọc/từ khóa).
     const reload = async () => {
+        clearCache();
         pagination.page = 1;
-        await load();
+        await load(true);
     };
 
-    return { items, loading, pagination, totalElements, totalPages, load, reload };
+    return { items, loading, pagination, totalElements, totalPages, load, reload, clearCache };
 }

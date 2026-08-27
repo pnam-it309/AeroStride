@@ -5,6 +5,7 @@ import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.constants.VaiTro;
 import com.example.be.repository.KhachHangRepository;
 import com.example.be.repository.NhanVienRepository;
+import com.example.be.utils.CodeUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -48,7 +49,7 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                     
                     // Set base class fields not available in Lombok @Builder
                     newKhachHang.setTen(name != null ? name : "Khách hàng");
-                    newKhachHang.setMa("KH_OA2_" + (System.currentTimeMillis() % 100000));
+                    newKhachHang.setMa(CodeUtils.generateRandom(KhachHang.class, khachHangRepository::existsByMa));
                     newKhachHang.setTrangThai(TrangThai.DANG_HOAT_DONG);
                     
                     khachHangRepository.save(newKhachHang);

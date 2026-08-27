@@ -52,12 +52,6 @@
     border-collapse: separate;
     border-spacing: 0;
 
-    &.is-empty,
-    &:has(.empty-state),
-    &:has(.empty-state-row) {
-        table-layout: auto !important;
-    }
-
     .header-cell {
         position: sticky;
         top: 0;
@@ -133,4 +127,32 @@
     padding: 0 !important;
     margin: 0 !important;
     flex-shrink: 0 !important;
+}
+
+/* CUSTOM SCROLLBAR DÙNG CHUNG CHO BẢNG */
+.custom-scrollbar,
+.table-wrapper,
+.campaign-product-table {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+
+        &:hover {
+            background: #94a3b8;
+        }
+    }
 }

@@ -2,7 +2,8 @@ import { ref, reactive, watch } from 'vue';
 
 /**
  * Composable để quản lý trạng thái bảng Admin (Pagination, Filters, Loading)
- * Giúp giảm bớt code lặp lại trong các file .vue
+ * Tích hợp bộ nhớ đệm trang (Client-side Page Cache) cho tốc độ chuyển trang tức thì (0ms)
+ * và tối ưu debounce tìm kiếm mượt mà.
  *
  * @param {Function} fetchFn - Hàm lấy dữ liệu từ service (ví dụ: dichVuNhanVien.getAll)
  * @param {Object} initialFilters - Giá trị lọc mặc định
@@ -18,42 +19,67 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
     });
 
     const filters = ref({
-        search: '', // Sử dụng 'search' làm mặc định để tương thích tốt nhất
+        search: '',
         trangThai: null,
         ...initialFilters
     });
 
+    // In-memory cache lưu kết quả theo từng trang và filter
+    const pageCache = new Map();
+
+    const getCacheKey = (page, size, f) => {
+        return JSON.stringify({ page, size, ...f });
+    };
+
+    const clearCache = () => {
+        pageCache.clear();
+    };
+
     let currentRequestId = 0;
     let searchDebounceTimer = null;
 
-    const loadData = async () => {
+    const loadData = async (forceFresh = false) => {
+        const targetPage = pagination.value.page;
+        const targetSize = pagination.value.size;
+        const currentFilters = { ...filters.value };
+        const cacheKey = getCacheKey(targetPage, targetSize, currentFilters);
+
+        // 1. Kiểm tra cache trước - nếu có thì nạp NGAY LẬP TỨC (0ms)
+        if (!forceFresh && pageCache.has(cacheKey)) {
+            const cached = pageCache.get(cacheKey);
+            items.value = cached.items || [];
+            pagination.value.totalElements = cached.totalElements || 0;
+            pagination.value.totalPages = cached.totalPages || 1;
+            loading.value = false;
+            return;
+        }
+
         const requestId = ++currentRequestId;
         loading.value = true;
+
         try {
-            // Chuẩn bị params sạch sẽ để gửi đi
             const params = {
-                page: pagination.value.page - 1, // 1-indexed (UI) -> 0-indexed (API)
-                size: pagination.value.size,
-                ...filters.value
+                page: Math.max(targetPage - 1, 0),
+                size: targetSize,
+                ...currentFilters
             };
 
             const response = await fetchFn(params);
             if (requestId !== currentRequestId) return;
 
-            // Map dữ liệu
             const result = response;
 
-            // 1. Thuật toán quét sâu (Deep Scan) để tìm dữ liệu và phân trang
+            // Thuật toán quét sâu (Deep Scan) tìm dữ liệu và phân trang
             const findDataInObject = (obj, depth = 0) => {
                 if (!obj || typeof obj !== 'object' || depth > 3) return { items: [], total: null };
 
-                let items = null;
-                let total = null;
+                let itms = null;
+                let tot = null;
 
                 const possibleArrays = ['content', 'data', 'items', 'nhanViens', 'khachHangs', 'sanPhams', 'list'];
                 for (const key of possibleArrays) {
                     if (Array.isArray(obj[key])) {
-                        items = obj[key];
+                        itms = obj[key];
                         break;
                     }
                 }
@@ -61,37 +87,32 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
                 const possibleTotals = ['totalElements', 'totalCount', 'total', 'total_records', 'count'];
                 for (const key of possibleTotals) {
                     if (typeof obj[key] === 'number') {
-                        total = obj[key];
+                        tot = obj[key];
                         break;
                     }
                 }
 
-                if (Array.isArray(obj)) items = obj;
+                if (Array.isArray(obj)) itms = obj;
 
-                // Nếu chưa đủ bộ, quét sâu vào các thuộc tính con
-                if (!items || total === null) {
+                if (!itms || tot === null) {
                     for (const key in obj) {
                         if (obj[key] && typeof obj[key] === 'object' && key !== 'items') {
                             const deep = findDataInObject(obj[key], depth + 1);
-                            if (!items && deep.items && deep.items.length > 0) items = deep.items;
-                            if (total === null && deep.total !== null) total = deep.total;
-                            if (items && total !== null) break;
+                            if (!itms && deep.items && deep.items.length > 0) itms = deep.items;
+                            if (tot === null && deep.total !== null) tot = deep.total;
+                            if (itms && tot !== null) break;
                         }
                     }
                 }
 
-                return { items, total };
+                return { items: itms, total: tot };
             };
 
             const extracted = findDataInObject(result);
-            items.value = extracted.items || [];
+            const loadedItems = extracted.items || [];
+            const total = extracted.total !== null ? extracted.total : loadedItems.length;
 
-            const total = extracted.total !== null ? extracted.total : items.value.length;
-            pagination.value.totalElements = total;
-
-            // 2. Tính toán số trang (Đồng bộ tuyệt đối)
-            let finalTotalPages = Math.ceil(total / pagination.value.size) || 1;
-
+            let finalTotalPages = Math.ceil(total / targetSize) || 1;
             const beTotalPages =
                 result?.totalPages ||
                 result?.total_pages ||
@@ -104,10 +125,23 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
                 finalTotalPages = beTotalPages;
             }
 
+            items.value = loadedItems;
+            pagination.value.totalElements = total;
             pagination.value.totalPages = finalTotalPages;
 
-            // Logic an toàn: Nếu đang ở một trang vượt quá tổng số trang (do xóa bớt dữ liệu hoặc lỗi phân trang)
-            // thì tự động quay về trang cuối cùng hợp lệ
+            // Lưu vào cache cho lần bấm sau chuyển ngay tức thì
+            pageCache.set(cacheKey, {
+                items: loadedItems,
+                totalElements: total,
+                totalPages: finalTotalPages
+            });
+
+            // Giới hạn kích thước cache tối đa 50 trang để tránh tốn RAM
+            if (pageCache.size > 50) {
+                const firstKey = pageCache.keys().next().value;
+                pageCache.delete(firstKey);
+            }
+
             if (pagination.value.page > finalTotalPages && finalTotalPages > 0) {
                 pagination.value.page = finalTotalPages;
             }
@@ -132,23 +166,31 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
         }
     );
 
-    const handleFilter = () => {
+    const handleFilter = (immediate = false) => {
         pagination.value.page = 1;
         if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+
+        if (immediate === true) {
+            loadData();
+            return;
+        }
+
+        // Tối ưu debounce từ 300ms xuống 150ms (cực nhạy, phản hồi nhanh)
         searchDebounceTimer = setTimeout(() => {
             loadData();
-        }, 300);
+        }, 150);
     };
 
     const handleReset = () => {
         if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+        clearCache();
         filters.value = {
             search: '',
             trangThai: null,
             ...initialFilters
         };
         pagination.value.page = 1;
-        loadData();
+        loadData(true);
     };
 
     return {
@@ -158,6 +200,7 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
         filters,
         loadData,
         handleFilter,
-        handleReset
+        handleReset,
+        clearCache
     };
 }

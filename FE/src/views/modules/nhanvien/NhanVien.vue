@@ -241,7 +241,7 @@ onMounted(() => {
         <!-- 1. FILTER -->
         <div class="filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                <v-col cols="12" md="4" class="filter-cell">
+                <v-col cols="12" sm="5" md="4" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm nhân viên</div>
                     <v-text-field
                         v-model="filters.search"
@@ -256,7 +256,7 @@ onMounted(() => {
                         @update:model-value="handleFilter"
                     ></v-text-field>
                 </v-col>
-                <v-col cols="12" md="4" class="filter-cell">
+                <v-col cols="12" sm="3" md="3" class="filter-cell">
                     <div class="filter-field-label">Giới tính</div>
                     <v-select
                         v-model="filters.gioiTinh"
@@ -269,7 +269,7 @@ onMounted(() => {
                         @update:model-value="handleFilter"
                     ></v-select>
                 </v-col>
-                <v-col cols="12" md="4" class="filter-cell">
+                <v-col cols="12" sm="3" md="3" class="filter-cell">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select
                         v-model="filters.trangThai"
