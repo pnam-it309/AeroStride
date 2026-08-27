@@ -73,6 +73,15 @@ const viewProductDetail = (productId) => {
     router.push(`/product/${productId}`);
 };
 
+const formatProductPrice = (prod) => {
+    const min = prod?.giaBanThapNhat ?? prod?.giaBan ?? prod?.giaBanMin ?? prod?.gia ?? 0;
+    const max = prod?.giaBanCaoNhat;
+    if (min > 0 && max && max > min) {
+        return `${formatCurrency(min)} - ${formatCurrency(max)}`;
+    }
+    return formatCurrency(min);
+};
+
 const totalSteps = 5;
 const isFinished = computed(() => !currentQuestion.value && !loading.value && (history.value.length > 0 || recommendedProducts.value.length > 0));
 const currentStep = computed(() => {
@@ -201,7 +210,7 @@ const progressPercentage = computed(() => {
                                             </div>
                                             <div class="d-flex align-center justify-space-between mt-3">
                                                 <div class="price-text text-h6 font-weight-bold text-primary">
-                                                    {{ formatCurrency(prod.giaBanMin || prod.giaBan) }}
+                                                    {{ formatProductPrice(prod) }}
                                                 </div>
                                                 <v-btn color="primary" variant="text" size="small" class="text-none font-weight-bold">
                                                     Xem ngay

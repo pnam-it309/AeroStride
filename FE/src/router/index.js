@@ -21,6 +21,7 @@ export const router = createRouter({
         },
         {
             path: PATH.SHOES,
+            alias: ['/san-pham', '/products'],
             name: 'ShoeListing',
             component: () => import('@/views/pages/products/ShoeListing.vue')
         },

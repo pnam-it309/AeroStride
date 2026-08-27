@@ -69,6 +69,15 @@ const viewProductDetail = (productId) => {
     router.push(`/product/${productId}`);
 };
 
+const formatProductPrice = (prod) => {
+    const min = prod?.giaBanThapNhat ?? prod?.giaBan ?? prod?.giaBanMin ?? prod?.gia ?? 0;
+    const max = prod?.giaBanCaoNhat;
+    if (min > 0 && max && max > min) {
+        return `${formatCurrency(min)} - ${formatCurrency(max)}`;
+    }
+    return formatCurrency(min);
+};
+
 const totalSteps = 5;
 const isFinished = computed(() => !currentQuestion.value && !loading.value && (history.value.length > 0 || recommendedProducts.value.length > 0));
 const currentStep = computed(() => {
@@ -98,7 +107,7 @@ onMounted(() => {
 
         <main class="main-content">
             <!-- Header Section: Logo Blue Gradient + Crisp White Text -->
-            <div class="page-header py-14 border-b text-white">
+            <div class="page-header py-12 border-b text-white">
                 <v-container>
                     <div class="d-flex justify-center mb-3">
                         <v-chip
@@ -112,16 +121,17 @@ onMounted(() => {
                         </v-chip>
                     </div>
                     <h1 class="page-header-title text-h3 font-weight-black text-center mb-3">GỢI Ý CHỌN SẢN PHẨM</h1>
-                    <p class="page-header-subtitle text-center text-subtitle-1 max-w-2xl mx-auto">
+                    <p class="page-header-subtitle text-center text-subtitle-1 max-w-2xl mx-auto mb-0">
                         Hãy hoàn thành bài trắc nghiệm ngắn dưới đây để AeroStride AI phân tích phong cách và nhu cầu để tìm ra những đôi giày hoàn hảo nhất cho bạn.
                     </p>
                 </v-container>
             </div>
 
-            <!-- Quiz Layout Container: Expanded Comfortable Width -->
-            <v-container class="py-12">
-                <v-row justify="center">
-                    <v-col cols="12" md="10" lg="9" xl="8">
+            <!-- Quiz Layout Container: Dynamic Wide Grid on Results -->
+            <v-container :class="['py-10', { 'max-w-1300': recommendedProducts.length > 0 }]">
+                <!-- Case 1: In Progress / Loading / Asking Questions -->
+                <v-row v-if="!isFinished || loading" justify="center">
+                    <v-col cols="12" md="10" lg="8" xl="7">
                         <v-card class="quiz-card overflow-hidden border">
                             <!-- Progress Bar -->
                             <div class="progress-bar-container px-6 px-md-10 pt-6 pb-2">
@@ -151,117 +161,42 @@ onMounted(() => {
                                     </div>
                                 </div>
 
-                                <div v-else>
-                                    <!-- Question Step -->
-                                    <div v-if="currentQuestion" class="animate-fade-in">
-                                        <div class="d-flex align-center justify-center mb-6">
-                                            <v-icon color="primary" size="32" class="mr-2 animate-bounce">mdi-wizard-hat</v-icon>
-                                            <span class="text-overline font-weight-bold text-primary tracking-wider">AEROSTRIDE AI QUIZ</span>
-                                        </div>
-                                        <h2 class="text-h5 font-weight-black mb-8 text-slate-900 text-center question-text">
-                                            {{ currentQuestion.questionText }}
-                                        </h2>
-                                        <v-row class="ga-4 flex-column align-center px-2 px-md-4">
+                                <!-- Question Step -->
+                                <div v-else-if="currentQuestion" class="animate-fade-in">
+                                    <div class="d-flex align-center justify-center mb-6">
+                                        <v-icon color="primary" size="30" class="mr-2 animate-bounce">mdi-wizard-hat</v-icon>
+                                        <span class="text-overline font-weight-bold text-primary tracking-wider">AEROSTRIDE AI QUIZ</span>
+                                    </div>
+                                    <h2 class="text-h5 font-weight-black mb-8 text-slate-900 text-center question-text">
+                                        {{ currentQuestion.questionText }}
+                                    </h2>
+                                    <v-row class="ga-3" justify="center">
+                                        <v-col
+                                            v-for="opt in currentQuestion.options"
+                                            :key="opt.value"
+                                            cols="12"
+                                            :sm="currentQuestion.options.length > 2 ? 6 : 12"
+                                            class="pa-1"
+                                        >
                                             <v-card
-                                                v-for="opt in currentQuestion.options"
-                                                :key="opt.value"
-                                                class="option-card w-100 pa-5 pa-md-6 d-flex align-center justify-space-between border cursor-pointer transition elevation-1"
+                                                class="option-card h-100 pa-4 pa-md-5 d-flex align-center justify-space-between border cursor-pointer transition elevation-1"
                                                 variant="outlined"
                                                 @click="selectOption(opt.value)"
                                             >
-                                                <div class="font-weight-bold text-h6 text-slate-800">{{ opt.label }}</div>
-                                                <v-icon color="primary" size="24" class="option-arrow">mdi-chevron-right</v-icon>
+                                                <div class="font-weight-bold text-subtitle-1 text-slate-800">{{ opt.label }}</div>
+                                                <v-icon color="primary" size="22" class="option-arrow">mdi-chevron-right</v-icon>
                                             </v-card>
-                                        </v-row>
-                                    </div>
-
-                                    <!-- Quiz Recommendations Results -->
-                                    <div v-else-if="recommendedProducts.length > 0" class="animate-fade-in">
-                                        <div class="text-center mb-8">
-                                            <v-icon color="success" size="56" class="mb-3 animate-bounce">mdi-check-circle-outline</v-icon>
-                                            <h2 class="text-h4 font-weight-black text-slate-900">Sản Phẩm Phù Hợp Với Bạn!</h2>
-                                            <p class="text-subtitle-1 text-slate-600 mt-2">
-                                                Dưới đây là danh sách sản phẩm được gợi ý riêng dựa trên các câu trả lời của bạn:
-                                            </p>
-                                        </div>
-
-                                        <v-row class="mt-4">
-                                            <v-col v-for="prod in recommendedProducts" :key="prod.id" cols="12" sm="6" class="pa-3">
-                                                <v-card class="result-product-card h-100 d-flex flex-column elevation-2" @click="viewProductDetail(prod.id)">
-                                                    <div class="product-img-wrapper position-relative">
-                                                        <v-img
-                                                            :src="prod.hinhAnh || '/assets/images/products/s4.jpg'"
-                                                            height="240"
-                                                            cover
-                                                            class="product-img"
-                                                        >
-                                                            <template #placeholder>
-                                                                <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
-                                                                    <v-progress-circular indeterminate color="grey"></v-progress-circular>
-                                                                </div>
-                                                            </template>
-                                                        </v-img>
-                                                        <v-chip
-                                                            color="primary"
-                                                            size="small"
-                                                            class="brand-badge position-absolute font-weight-bold"
-                                                            style="top: 12px; left: 12px"
-                                                        >
-                                                            {{ prod.tenThuongHieu || 'AeroStride' }}
-                                                        </v-chip>
-                                                    </div>
-                                                    <div class="pa-5 d-flex flex-column justify-space-between flex-grow-1">
-                                                        <div>
-                                                            <h3 class="font-weight-bold text-h6 text-slate-900 text-truncate">
-                                                                {{ prod.tenSanPham }}
-                                                            </h3>
-                                                            <div class="text-caption text-slate-500 font-weight-medium mt-1">
-                                                                {{ prod.tenMucDichChay }} | {{ prod.tenChatLieu }}
-                                                            </div>
-                                                        </div>
-                                                        <div class="d-flex align-center justify-space-between mt-4 pt-3 border-t">
-                                                            <div class="price-text text-h6 font-weight-black text-primary">
-                                                                {{ formatCurrency(prod.giaBanMin || prod.giaBan) }}
-                                                            </div>
-                                                            <v-btn color="primary" variant="flat" size="small" class="text-none font-weight-bold px-4 rounded-lg">
-                                                                Xem chi tiết
-                                                            </v-btn>
-                                                        </div>
-                                                    </div>
-                                                </v-card>
-                                            </v-col>
-                                        </v-row>
-                                    </div>
-
-                                    <!-- No matching products -->
-                                    <div v-else class="text-center py-12 animate-fade-in">
-                                        <v-icon color="warning" size="64" class="mb-4">mdi-alert-circle-outline</v-icon>
-                                        <h2 class="text-h5 font-weight-bold text-slate-900">Không tìm thấy sản phẩm phù hợp</h2>
-                                        <p class="text-body-1 text-slate-600 mt-3 px-8 mx-auto" style="max-width: 500px">
-                                            Rất tiếc, hiện tại không có đôi giày nào trong cửa hàng đáp ứng đầy đủ tất cả các lựa chọn của bạn. Bạn hãy thử làm lại khảo sát với các lựa chọn rộng hơn nhé!
-                                        </p>
-                                        <v-btn
-                                            color="primary"
-                                            size="large"
-                                            class="mt-8 font-weight-bold text-none px-8 rounded-lg"
-                                            @click="
-                                                resetQuiz();
-                                                fetchNextQuestion();
-                                            "
-                                        >
-                                            <v-icon start class="mr-2">mdi-refresh</v-icon>
-                                            Thử Lại Khảo Sát
-                                        </v-btn>
-                                    </div>
+                                        </v-col>
+                                    </v-row>
                                 </div>
                             </v-card-text>
 
                             <!-- Footer Navigation -->
-                            <v-card-actions class="quiz-footer px-6 px-md-10 py-5 border-t bg-grey-lighten-4 d-flex justify-space-between">
+                            <v-card-actions class="quiz-footer px-6 px-md-10 py-4 border-t bg-grey-lighten-4 d-flex justify-space-between">
                                 <v-btn
                                     variant="outlined"
                                     color="secondary"
-                                    class="text-none font-weight-bold px-5 py-2 rounded-lg"
+                                    class="text-none font-weight-bold px-4 py-2 rounded-lg"
                                     :disabled="history.length === 0 || loading"
                                     @click="goBack"
                                 >
@@ -283,130 +218,101 @@ onMounted(() => {
                                 </v-btn>
                             </v-card-actions>
                         </v-card>
-
-                        <!-- Live Real-time Recommendations List Below Quiz Card -->
-                        <div v-if="currentQuestion && recommendedProducts && recommendedProducts.length > 0" class="mt-10 animate-fade-in">
-                            <div class="d-flex align-center justify-space-between mb-4 flex-wrap ga-2 border-b pb-3">
-                                <div class="d-flex align-center">
-                                    <v-icon color="primary" size="24" class="mr-2">mdi-sparkles</v-icon>
-                                    <h3 class="text-h6 font-weight-black text-slate-900">
-                                        GỢI Ý SẢN PHẨM PHÙ HỢP THỜI GIAN THỰC
-                                    </h3>
-                                </div>
-                                <v-chip color="success" variant="tonal" class="font-weight-bold size-small px-3">
-                                    {{ recommendedProducts.length }} Sản phẩm khớp lựa chọn
-                                </v-chip>
-                            </div>
-
-                            <v-row dense>
-                                <v-col v-for="prod in recommendedProducts" :key="prod.id" cols="12" sm="6" md="4" class="pa-2">
-                                    <v-card
-                                        class="result-product-card h-100 d-flex flex-column elevation-2 hover-lift border bg-white rounded-xl overflow-hidden cursor-pointer"
-                                        @click="viewProductDetail(prod.id)"
-                                    >
-                                        <div class="product-img-wrapper position-relative">
-                                            <v-img
-                                                :src="prod.hinhAnh || '/assets/images/products/s4.jpg'"
-                                                height="200"
-                                                cover
-                                                class="product-img"
-                                            >
-                                                <template #placeholder>
-                                                    <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
-                                                        <v-progress-circular indeterminate color="grey" size="24"></v-progress-circular>
-                                                    </div>
-                                                </template>
-                                            </v-img>
-                                            <v-chip
-                                                color="primary"
-                                                size="x-small"
-                                                class="brand-badge position-absolute font-weight-bold"
-                                                style="top: 10px; left: 10px"
-                                            >
-                                                {{ prod.tenThuongHieu || 'AeroStride' }}
-                                            </v-chip>
-                                        </div>
-                                        <div class="pa-4 d-flex flex-column justify-space-between flex-grow-1">
-                                            <div>
-                                                <h4 class="font-weight-bold text-subtitle-1 text-slate-900 text-truncate" :title="prod.tenSanPham">
-                                                    {{ prod.tenSanPham }}
-                                                </h4>
-                                                <div class="text-caption text-slate-500 mt-1">
-                                                    {{ prod.tenMucDichChay || 'Giày thể thao' }} &bull; {{ prod.tenChatLieu || 'Thoáng khí' }}
-                                                </div>
-                                            </div>
-                                            <div class="d-flex align-center justify-space-between mt-3 pt-2 border-t">
-                                                <div class="price-text font-weight-black text-primary text-body-1">
-                                                    {{ formatCurrency(prod.giaBanMin || prod.giaBan) }}
-                                                </div>
-                                                <v-btn color="primary" variant="flat" size="small" class="text-none font-weight-bold px-3 rounded-lg">
-                                                    Xem ngay
-                                                </v-btn>
-                                            </div>
-                                        </div>
-                                    </v-card>
-                                </v-col>
-                            </v-row>
-                        </div>
                     </v-col>
                 </v-row>
-            </v-container>
 
-            <!-- Dynamic AI Recommended Products Section -->
-            <section v-if="recommendedProducts.length > 0" class="ai-recommendations-section py-12 bg-slate-100 border-t">
-                <v-container>
-                    <div class="d-flex align-center justify-space-between flex-wrap ga-4 mb-8">
-                        <div>
-                            <div class="d-flex align-center mb-2">
-                                <v-chip color="primary" variant="flat" size="small" class="font-weight-bold mr-2">
-                                    <v-icon start size="16">mdi-robot-outline</v-icon>
-                                    AI ASSISTED
-                                </v-chip>
-                                <span class="text-caption font-weight-bold text-slate-500 text-uppercase tracking-wider">Tự động gợi ý theo lựa chọn</span>
-                            </div>
-                            <h2 class="text-h4 font-weight-black text-slate-800">DANH SÁCH SẢN PHẨM GỢI Ý BỞI AI</h2>
-                            <p class="text-body-2 text-slate-600 mb-0">
-                                Dưới đây là danh sách đôi giày phù hợp nhất với tiêu chí của bạn (Tìm thấy {{ recommendedProducts.length }} sản phẩm):
-                            </p>
+                <!-- Case 2: Quiz Finished & Recommendations Results (Full Wide Grid) -->
+                <div v-else-if="recommendedProducts.length > 0" class="animate-fade-in">
+                    <div class="results-header-banner bg-white border rounded-2xl pa-6 pa-md-8 mb-8 text-center elevation-1">
+                        <v-icon color="success" size="56" class="mb-3 animate-bounce">mdi-check-circle-outline</v-icon>
+                        <h2 class="text-h4 font-weight-black text-slate-900 mb-2">Sản Phẩm Phù Hợp Hoàn Hảo Với Bạn!</h2>
+                        <p class="text-subtitle-1 text-slate-600 max-w-2xl mx-auto mb-4">
+                            Dựa trên phân tích tiêu chí của bạn, AeroStride AI đã chọn lọc được <strong>{{ recommendedProducts.length }}</strong> mẫu giày phù hợp nhất:
+                        </p>
+                        <div class="d-flex justify-center flex-wrap ga-3">
+                            <v-btn
+                                color="primary"
+                                variant="flat"
+                                class="rounded-pill font-weight-bold text-none px-6"
+                                @click="
+                                    resetQuiz();
+                                    fetchNextQuestion();
+                                "
+                            >
+                                <v-icon start class="mr-1">mdi-refresh</v-icon>
+                                Làm lại khảo sát
+                            </v-btn>
+                            <v-btn
+                                variant="outlined"
+                                color="primary"
+                                class="rounded-pill font-weight-bold text-none px-6"
+                                to="/shoes"
+                            >
+                                <v-icon start class="mr-1">mdi-shoe-sneaker</v-icon>
+                                Khám phá tất cả sản phẩm
+                            </v-btn>
                         </div>
                     </div>
 
+                    <!-- Products Grid: 4 columns on large desktop, 3 on laptop, 2 on tablet/mobile -->
                     <v-row class="products-grid-row">
-                        <v-col v-for="prod in recommendedProducts" :key="prod.id" cols="6" sm="6" md="4" lg="3" class="pa-2 pa-sm-3">
-                            <v-card class="product-item-card bg-white rounded-xl overflow-hidden border elevation-1 h-100 d-flex flex-column cursor-pointer transition" @click="viewProductDetail(prod.id)">
-                                <div class="position-relative overflow-hidden bg-slate-100 recommend-card-img-box">
-                                    <v-img :src="prod.hinhAnh || '/assets/images/products/s4.jpg'" height="100%" cover class="product-img">
+                        <v-col
+                            v-for="prod in recommendedProducts"
+                            :key="prod.id"
+                            cols="12"
+                            sm="6"
+                            md="4"
+                            lg="3"
+                            class="pa-3"
+                        >
+                            <v-card
+                                class="result-product-card h-100 d-flex flex-column elevation-2 hover-lift border bg-white rounded-2xl overflow-hidden cursor-pointer"
+                                @click="viewProductDetail(prod.id)"
+                            >
+                                <div class="product-img-wrapper position-relative bg-slate-50">
+                                    <v-img
+                                        :src="prod.hinhAnh || '/assets/images/products/s4.jpg'"
+                                        height="230"
+                                        cover
+                                        class="product-img"
+                                    >
                                         <template #placeholder>
                                             <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
-                                                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                                                <v-progress-circular indeterminate color="primary" size="28"></v-progress-circular>
                                             </div>
                                         </template>
                                     </v-img>
-                                    <v-chip color="primary" size="x-small" class="position-absolute font-weight-bold shadow-sm" style="top: 10px; left: 10px; z-index: 2">
-                                        🤖 AI Phù hợp 98%
+                                    <v-chip
+                                        color="primary"
+                                        size="small"
+                                        class="brand-badge position-absolute font-weight-bold"
+                                        style="top: 12px; left: 12px"
+                                    >
+                                        {{ prod.tenThuongHieu || 'AeroStride' }}
                                     </v-chip>
                                 </div>
-
-                                <div class="pa-4 d-flex flex-column flex-grow-1">
-                                    <div class="text-caption font-weight-bold text-primary text-uppercase mb-1">
-                                        {{ prod.tenThuongHieu || 'AEROSTRIDE' }}
-                                    </div>
-                                    <h3 class="product-title font-weight-bold text-body-1 text-slate-800 mb-2 line-clamp-2" style="height: 42px; line-height: 1.3">
-                                        {{ prod.tenSanPham }}
-                                    </h3>
-                                    <div class="d-flex ga-1 flex-wrap mb-3">
-                                        <v-chip size="x-small" variant="tonal" color="secondary" class="font-weight-medium" v-if="prod.tenMucDichChay">
-                                            {{ prod.tenMucDichChay }}
-                                        </v-chip>
-                                        <v-chip size="x-small" variant="tonal" color="info" class="font-weight-medium" v-if="prod.tenChatLieu">
-                                            {{ prod.tenChatLieu }}
-                                        </v-chip>
-                                    </div>
-                                    <div class="mt-auto d-flex align-center justify-space-between pt-2 border-t">
-                                        <div class="font-weight-black text-primary text-body-1">
-                                            {{ formatCurrency(prod.giaBanMin || prod.giaBan) }}
+                                <div class="pa-5 d-flex flex-column justify-space-between flex-grow-1">
+                                    <div>
+                                        <h3 class="font-weight-bold text-subtitle-1 text-slate-900 text-truncate" :title="prod.tenSanPham">
+                                            {{ prod.tenSanPham }}
+                                        </h3>
+                                        <div class="d-flex ga-1 flex-wrap mt-2">
+                                            <v-chip size="x-small" variant="tonal" color="primary" class="font-weight-medium" v-if="prod.tenMucDichChay">
+                                                {{ prod.tenMucDichChay }}
+                                            </v-chip>
+                                            <v-chip size="x-small" variant="tonal" color="info" class="font-weight-medium" v-if="prod.tenChatLieu">
+                                                {{ prod.tenChatLieu }}
+                                            </v-chip>
                                         </div>
-                                        <v-btn size="small" variant="flat" color="primary" class="rounded-pill font-weight-bold text-none px-3">
+                                    </div>
+                                    <div class="d-flex align-center justify-space-between mt-4 pt-3 border-t">
+                                        <div>
+                                            <div class="text-caption text-slate-400 font-weight-medium">Giá bán</div>
+                                            <div class="price-text text-h6 font-weight-black text-primary">
+                                                {{ formatProductPrice(prod) }}
+                                            </div>
+                                        </div>
+                                        <v-btn color="primary" variant="flat" size="small" class="text-none font-weight-bold px-4 rounded-lg">
                                             Xem chi tiết
                                         </v-btn>
                                     </div>
@@ -414,8 +320,44 @@ onMounted(() => {
                             </v-card>
                         </v-col>
                     </v-row>
-                </v-container>
-            </section>
+                </div>
+
+                <!-- Case 3: No Matching Products -->
+                <v-row v-else justify="center" class="animate-fade-in">
+                    <v-col cols="12" md="8" lg="6">
+                        <v-card class="pa-10 text-center rounded-2xl border elevation-2 bg-white">
+                            <v-icon color="warning" size="64" class="mb-4">mdi-alert-circle-outline</v-icon>
+                            <h2 class="text-h5 font-weight-black text-slate-900 mb-2">Không tìm thấy sản phẩm phù hợp</h2>
+                            <p class="text-body-1 text-slate-600 mb-6">
+                                Rất tiếc, hiện tại không có mẫu giày nào đáp ứng đầy đủ tất cả các tiêu chí bạn đã chọn. Bạn hãy thử làm lại khảo sát với tiêu chí mở rộng hơn nhé!
+                            </p>
+                            <div class="d-flex justify-center flex-wrap ga-3">
+                                <v-btn
+                                    color="primary"
+                                    size="large"
+                                    class="font-weight-bold text-none px-6 rounded-lg"
+                                    @click="
+                                        resetQuiz();
+                                        fetchNextQuestion();
+                                    "
+                                >
+                                    <v-icon start class="mr-2">mdi-refresh</v-icon>
+                                    Thử Lại Khảo Sát
+                                </v-btn>
+                                <v-btn
+                                    variant="outlined"
+                                    color="primary"
+                                    size="large"
+                                    class="font-weight-bold text-none px-6 rounded-lg"
+                                    to="/shoes"
+                                >
+                                    Xem Tất Cả Sản Phẩm
+                                </v-btn>
+                            </div>
+                        </v-card>
+                    </v-col>
+                </v-row>
+            </v-container>
         </main>
 
         <footer class="footer-landing py-10 text-center text-grey-darken-1 bg-white border-t">

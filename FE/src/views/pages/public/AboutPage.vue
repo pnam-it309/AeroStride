@@ -6,6 +6,7 @@ import CustomerChat from '@/components/shared/CustomerChat.vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 
+import { PATH } from '@/router/routePaths';
 import { dichVuGioiThieu } from '@/services/public/dichVuGioiThieu';
 
 const router = useRouter();
@@ -93,7 +94,7 @@ const teamMembers = [
 ];
 
 const goToProducts = () => {
-    router.push('/san-pham');
+    router.push(PATH.SHOES);
 };
 
 const scrollToSection = (id) => {
@@ -131,7 +132,7 @@ onMounted(() => {
                         EST. 2024 &bull; AEROSTRIDE VIỆT NAM
                     </v-chip>
                     <h1 class="hero-title font-weight-black mb-4 animate-up">
-                        BƯỚC CHÂN CỦA SỰ <span class="text-gradient">ĐAM MÊ & THÀNH CÔNG</span>
+                        BƯỚC CHÂN CỦA SỰ <span class="text-gradient shimmer-effect">ĐAM MÊ & THÀNH CÔNG</span>
                     </h1>
                     <p class="hero-subtitle mb-8 max-w-700 mx-auto">
                         Hành trình mang lại chuẩn mực mua sắm giày thể thao chính hãng đỉnh cao, hiện đại và tràn đầy cảm hứng cho người Việt.
@@ -163,47 +164,43 @@ onMounted(() => {
             </section>
 
             <!-- Quick Navigation Tabs -->
-            <section id="story-section" class="py-8 bg-grey-lighten-5 border-b">
+            <section class="border-b bg-slate-50 sticky-nav-section" id="story-section">
                 <v-container>
-                    <div class="d-flex justify-center flex-wrap ga-3">
+                    <div class="d-flex justify-center flex-wrap ga-2 py-4">
                         <v-btn
                             :variant="activeTab === 'story' ? 'flat' : 'text'"
-                            :color="activeTab === 'story' ? 'primary' : 'grey-darken-1'"
-                            rounded="pill"
-                            class="font-weight-bold px-6"
+                            :color="activeTab === 'story' ? 'primary' : 'default'"
+                            class="rounded-pill font-weight-bold text-none px-6"
+                            prepend-icon="mdi-book-open-page-variant"
                             @click="activeTab = 'story'"
                         >
-                            <v-icon class="mr-2">mdi-book-open-variant</v-icon>
                             Câu Chuyện Thương Hiệu
                         </v-btn>
                         <v-btn
                             :variant="activeTab === 'values' ? 'flat' : 'text'"
-                            :color="activeTab === 'values' ? 'primary' : 'grey-darken-1'"
-                            rounded="pill"
-                            class="font-weight-bold px-6"
+                            :color="activeTab === 'values' ? 'primary' : 'default'"
+                            class="rounded-pill font-weight-bold text-none px-6"
+                            prepend-icon="mdi-star-outline"
                             @click="activeTab = 'values'"
                         >
-                            <v-icon class="mr-2">mdi-star-outline</v-icon>
                             Giá Trị Cốt Lõi
                         </v-btn>
                         <v-btn
                             :variant="activeTab === 'timeline' ? 'flat' : 'text'"
-                            :color="activeTab === 'timeline' ? 'primary' : 'grey-darken-1'"
-                            rounded="pill"
-                            class="font-weight-bold px-6"
+                            :color="activeTab === 'timeline' ? 'primary' : 'default'"
+                            class="rounded-pill font-weight-bold text-none px-6"
+                            prepend-icon="mdi-timeline-outline"
                             @click="activeTab = 'timeline'"
                         >
-                            <v-icon class="mr-2">mdi-timeline-text-outline</v-icon>
                             Hành Trình Phát Triển
                         </v-btn>
                         <v-btn
                             :variant="activeTab === 'team' ? 'flat' : 'text'"
-                            :color="activeTab === 'team' ? 'primary' : 'grey-darken-1'"
-                            rounded="pill"
-                            class="font-weight-bold px-6"
+                            :color="activeTab === 'team' ? 'primary' : 'default'"
+                            class="rounded-pill font-weight-bold text-none px-6"
+                            prepend-icon="mdi-account-group-outline"
                             @click="activeTab = 'team'"
                         >
-                            <v-icon class="mr-2">mdi-account-group-outline</v-icon>
                             Đội Ngũ Sáng Lập
                         </v-btn>
                     </div>
@@ -215,31 +212,56 @@ onMounted(() => {
                 <v-container>
                     <!-- Tab 1: Story -->
                     <div v-if="activeTab === 'story'" class="animate-fade-in">
-                        <v-row align="center">
-                            <v-col cols="12" md="6" class="pr-md-8">
+                        <v-row align="center" class="mb-16">
+                            <v-col cols="12" md="6">
                                 <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold mb-3">VỀ AEROSTRIDE</v-chip>
                                 <h2 class="text-h3 font-weight-black text-slate-900 mb-6">Chúng Tôi Là Ai?</h2>
                                 <p class="text-body-1 text-slate-700 leading-relaxed mb-4">
-                                    Được khởi nguồn vào năm 2024, <strong>AeroStride</strong> sinh ra từ tình yêu mãnh liệt với các bộ môn thể thao và văn hóa Sneakers năng động. Chúng tôi đặt mục tiêu xóa bỏ mọi lo lắng về hàng giả, mang đến không gian mua sắm đáng tin cậy 100%.
+                                    Được khởi nguồn vào năm 2024, <strong>AeroStride</strong> sinh ra từ tình yêu mãnh liệt với các bộ môn thể thao và văn hóa Sneakers năng động. Chúng tôi đặt mục tiêu xóa bỏ mọi lo ngại về hàng giả, hàng nhái bằng việc cung cấp 100% sản phẩm chính hãng với tiêu chuẩn dịch vụ khách hàng cao cấp nhất.
                                 </p>
                                 <p class="text-body-1 text-slate-700 leading-relaxed mb-6">
-                                    Mỗi đôi giày tại AeroStride không chỉ sở hữu thiết kế thời thượng mà còn được ứng dụng những công nghệ đệm tối tân giúp từng bước chạy trở nên nhẹ nhàng, bứt phá giới hạn.
+                                    "Aero" đại diện cho sự nhẹ nhàng, bứt phá không giới hạn, còn "Stride" là từng sải bước tự tin hướng về phía trước. Mỗi đôi giày bạn mua tại AeroStride không chỉ là một phụ kiện thời trang, mà là người bạn đồng hành tin cậy trên từng chặng đường chinh phục mục tiêu cá nhân.
                                 </p>
-                                <v-alert border="start" border-color="primary" class="bg-blue-lighten-5 text-slate-800 rounded-lg">
-                                    <template #title>
-                                        <div class="font-weight-bold text-primary">Sứ mệnh cốt lõi</div>
-                                    </template>
-                                    "Truyền cảm hứng và cung cấp trang thiết bị chạy bộ chính hãng tốt nhất để mọi người tự tin chinh phục mọi ước mơ."
-                                </v-alert>
+                                <div class="d-flex ga-4">
+                                    <div class="border-l-4 border-primary pl-4">
+                                        <div class="text-h6 font-weight-black text-primary">SỨ MỆNH</div>
+                                        <div class="text-caption text-slate-600">Truyền cảm hứng và nâng tầm sức khỏe người Việt qua từng bước chạy.</div>
+                                    </div>
+                                    <div class="border-l-4 border-secondary pl-4">
+                                        <div class="text-h6 font-weight-black text-secondary">TẦM NHÌN</div>
+                                        <div class="text-caption text-slate-600">Trở thành chuỗi bán lẻ giày thể thao công nghệ hàng đầu Đông Nam Á.</div>
+                                    </div>
+                                </div>
                             </v-col>
-                            <v-col cols="12" md="6" class="mt-6 mt-md-0">
-                                <v-row dense>
+                            <v-col cols="12" md="6">
+                                <v-row>
                                     <v-col cols="6">
-                                        <v-img src="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&q=80&w=600" height="260" cover class="rounded-xl shadow-sm mb-4"></v-img>
-                                        <v-img src="https://images.unsplash.com/photo-1514989940723-e8e51635b782?auto=format&fit=crop&q=80&w=600" height="180" cover class="rounded-xl shadow-sm"></v-img>
+                                        <v-img
+                                            src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=600"
+                                            class="rounded-2xl elevation-3 hover-lift mb-4"
+                                            height="260"
+                                            cover
+                                        ></v-img>
+                                        <v-img
+                                            src="https://images.unsplash.com/photo-1514989940723-e8e51635b782?auto=format&fit=crop&q=80&w=600"
+                                            class="rounded-2xl elevation-3 hover-lift"
+                                            height="180"
+                                            cover
+                                        ></v-img>
                                     </v-col>
-                                    <v-col cols="6">
-                                        <v-img src="https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&q=80&w=600" height="455" cover class="rounded-xl shadow-md"></v-img>
+                                    <v-col cols="6" class="pt-8">
+                                        <v-img
+                                            src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=600"
+                                            class="rounded-2xl elevation-3 hover-lift mb-4"
+                                            height="180"
+                                            cover
+                                        ></v-img>
+                                        <v-img
+                                            src="https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&q=80&w=600"
+                                            class="rounded-2xl elevation-3 hover-lift"
+                                            height="260"
+                                            cover
+                                        ></v-img>
                                     </v-col>
                                 </v-row>
                             </v-col>
@@ -349,7 +371,7 @@ onMounted(() => {
                         color="primary"
                         size="x-large"
                         rounded="pill"
-                        class="font-weight-bold px-10 elevation-4"
+                        class="font-weight-bold px-10 elevation-4 text-white"
                         @click="goToProducts"
                     >
                         MUA SẮM NGAY
@@ -389,9 +411,10 @@ onMounted(() => {
 
 .hero-title {
     font-size: clamp(1.8rem, 2.8vw, 2.6rem) !important;
-    line-height: 1.2;
+    line-height: 1.25;
     color: #ffffff !important;
     white-space: nowrap;
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 @media (max-width: 600px) {
@@ -401,15 +424,25 @@ onMounted(() => {
 }
 
 .hero-subtitle {
-    color: rgba(255, 255, 255, 0.85) !important;
+    color: rgba(255, 255, 255, 0.88) !important;
     font-size: 1.15rem;
     line-height: 1.6;
 }
 
 .text-gradient {
-    background: linear-gradient(90deg, #60a5fa, #3b82f6, #93c5fd);
+    background: linear-gradient(90deg, #60a5fa 0%, #38bdf8 35%, #93c5fd 50%, #60a5fa 75%, #38bdf8 100%);
+    background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    animation: textShine 4s linear infinite;
+    display: inline-block;
+    filter: drop-shadow(0 2px 8px rgba(56, 189, 248, 0.4));
+}
+
+@keyframes textShine {
+    to {
+        background-position: 200% center;
+    }
 }
 
 .text-gradient-blue {
