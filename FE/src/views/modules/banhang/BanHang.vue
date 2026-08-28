@@ -1438,6 +1438,10 @@ const onAddProduct = async (product) => {
         });
         updateOrderInList(updated);
 
+        if (updated.bestVoucherId && !updated.idPhieuGiamGia) {
+            void onApplyVoucher(updated.bestVoucherId, true, true);
+        }
+
         if (updated.priceChanged) {
             addNotification({ title: 'Giá sản phẩm thay đổi', subtitle: updated.priceChangeMessage, color: 'warning' });
         }
@@ -1636,21 +1640,34 @@ const refreshBestVoucher = async (order = selectedOrder.value, autoApply = true)
     if (!order?.id) return;
     const refreshSerial = ++voucherRefreshSerial;
     try {
-        const [list, backendBestVoucher] = await Promise.all([
-            dichVuDonHang.getVouchers(order.tongTien || 0),
-            dichVuDonHang.getBestVoucher(order.id)
-        ]);
+        const list = await dichVuDonHang.getVouchers(order.tongTien || 0);
         const decorated = (list || []).map((v) => decorateVoucher(v, order));
         if (refreshSerial !== voucherRefreshSerial) return;
         vouchers.value = decorated;
 
-        // Không tự tính/sort bằng soTienGiam ở FE vì voucher phần trăm có thể không có trường này.
         if (autoApply) {
-            const bestId = backendBestVoucher?.id || null;
+            let bestId = order.bestVoucherId || null;
+            if (!bestId && list && list.length > 0) {
+                const available = list.filter((v) => !v.disabled && Number(v.donHangToiThieu || 0) <= Number(order.tongTien || 0));
+                if (available.length > 0) {
+                    const best = available.reduce((max, cur) => {
+                        const curDiscount = getVoucherDiscountValue(cur, Number(order.tongTien || 0));
+                        const maxDiscount = getVoucherDiscountValue(max, Number(order.tongTien || 0));
+                        return curDiscount > maxDiscount ? cur : max;
+                    }, available[0]);
+                    bestId = best?.id || null;
+                }
+            }
+
+            if (!bestId) {
+                const backendBestVoucher = await dichVuDonHang.getBestVoucher(order.id);
+                bestId = backendBestVoucher?.id || null;
+            }
+
             const currentId = order.idPhieuGiamGia || null;
             if (bestId && String(currentId) !== String(bestId)) {
                 await onApplyVoucher(bestId, false, true);
-            } else if (!bestId && currentId) {
+            } else if (!bestId && currentId && Number(order.phieuGiamGia?.donHangToiThieu || 0) > Number(order.tongTien || 0)) {
                 await onApplyVoucher(null, false, true);
             }
         }
@@ -1667,7 +1684,9 @@ const onApplyVoucher = async (voucherId, autoApply = false, isInternalCall = fal
     try {
         const updated = await dichVuDonHang.setVoucher(order.id, voucherId || null);
         updateOrderInList(updated);
-        await refreshBestVoucher(updated, false);
+        if (vouchers.value?.length) {
+            vouchers.value = vouchers.value.map((v) => decorateVoucher(v, updated));
+        }
     } catch (e) {
         order.suggestedVoucherId = null;
     }
@@ -2439,7 +2458,14 @@ const handleVnPayCallbackFromUrl = async () => {
 </script>
 
 <template>
-    <v-container fluid class="pos-wrapper pa-0">
+    <v-container fluid class="pos-wrapper pa-0 position-relative">
+        <v-progress-linear
+            v-if="loading"
+            indeterminate
+            color="primary"
+            height="3"
+            style="position: absolute; top: 0; left: 0; right: 0; z-index: 9999"
+        />
         <div class="pos-shell">
             <header class="pos-header-row d-flex align-center justify-space-between">
                 <div class="d-flex align-center ga-4">
@@ -2589,9 +2615,10 @@ const handleVnPayCallbackFromUrl = async () => {
                 </v-col>
             </v-row>
 
-            <!-- Loading Spinner -->
-            <div v-else-if="loading" class="fill-height d-flex align-center justify-center text-grey">
-                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            <!-- Loading Placeholder -->
+            <div v-else-if="loading" class="fill-height d-flex flex-column align-center justify-center text-slate-500 py-16">
+                <v-progress-circular indeterminate color="primary" size="36" class="mb-3" />
+                <span class="text-caption font-weight-medium text-slate-400">Đang chuẩn bị màn hình bán hàng...</span>
             </div>
 
             <!-- Empty Orders State -->

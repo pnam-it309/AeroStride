@@ -156,25 +156,17 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
         hoaDonChiTietRepository.deleteAll(details);
 
-        // Soft-delete: chuyển trạng thái sang DA_HUY thay vì xóa hẳn khỏi DB
-        Integer trangThaiCu = hd.getTrangThai() != null ? hd.getTrangThai().ordinal() : null;
-        hd.setTrangThai(OrderStatus.DA_HUY);
-        hoaDonRepository.save(hd);
+        List<LichSuTrangThaiHoaDon> lichSuList = lichSuTrangThaiHoaDonRepository.findAllByHoaDonOrderByNgayTaoDesc(hd);
+        if (lichSuList != null && !lichSuList.isEmpty()) {
+            lichSuTrangThaiHoaDonRepository.deleteAll(lichSuList);
+        }
 
-        // Ghi lịch sử hủy hóa đơn
-        String nguoiThucHienName = SecurityUtils.getCurrentUserEmail()
-                .map(email -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email)
-                        .map(nv -> nv.getTen() != null ? nv.getTen() : email)
-                        .orElse(email))
-                .orElse("Hệ thống");
-        LichSuTrangThaiHoaDon lichSu = LichSuTrangThaiHoaDon.builder()
-                .hoaDon(hd)
-                .trangThaiCu(trangThaiCu)
-                .trangThaiMoi(OrderStatus.DA_HUY.ordinal())
-                .ghiChu("Hủy hóa đơn chờ tại quầy")
-                .nguoiThucHien(nguoiThucHienName)
-                .build();
-        lichSuTrangThaiHoaDonRepository.save(lichSu);
+        List<GiaoDichThanhToan> giaoDichList = giaoDichThanhToanRepository.findAllByHoaDon(hd);
+        if (giaoDichList != null && !giaoDichList.isEmpty()) {
+            giaoDichThanhToanRepository.deleteAll(giaoDichList);
+        }
+
+        hoaDonRepository.delete(hd);
     }
 
     @Override

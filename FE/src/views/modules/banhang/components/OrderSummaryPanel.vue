@@ -304,23 +304,20 @@ const activeVoucher = computed(() => {
     const baseVoucher = props.appliedVoucher || null;
     const voucherIdOrCode = props.selectedVoucherId;
 
-    // selectedVoucherId/appliedVoucher là nguồn trạng thái duy nhất; không suy diễn từ câu gợi ý.
-    if (props.vouchers?.length) {
-        if (voucherIdOrCode) {
-            const found = props.vouchers.find(
-                (v) =>
-                    String(v.id) === String(voucherIdOrCode) ||
-                    String(v.ma) === String(voucherIdOrCode) ||
-                    String(v.maPhieu) === String(voucherIdOrCode)
-            );
-            if (found) return found;
-        }
-    }
-
     if (baseVoucher) {
         const matched = props.vouchers?.find((v) => String(v.id) === String(baseVoucher.id) || String(v.ma) === String(baseVoucher.ma));
         if (matched) return matched;
         return baseVoucher;
+    }
+
+    if (props.vouchers?.length && voucherIdOrCode) {
+        const found = props.vouchers.find(
+            (v) =>
+                String(v.id) === String(voucherIdOrCode) ||
+                String(v.ma) === String(voucherIdOrCode) ||
+                String(v.maPhieu) === String(voucherIdOrCode)
+        );
+        if (found) return found;
     }
 
     if (voucherIdOrCode) {
@@ -328,7 +325,7 @@ const activeVoucher = computed(() => {
             id: voucherIdOrCode,
             ma: isUuidString(voucherIdOrCode) ? '' : voucherIdOrCode,
             ten: 'Phiếu giảm giá ưu đãi',
-            soTienGiam: props.totalDiscountAmount,
+            soTienGiam: props.voucherDiscountAmount || props.totalDiscountAmount,
             donHangToiThieu: 0,
             loaiPhieu: 'SO_TIEN'
         };

@@ -60,6 +60,16 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
             .or(hd.loaiDon.notIn("TAI_QUAY", "GIAO_HANG"))
         );
 
+        // Đơn hàng đã hủy (DA_HUY): Chỉ có bên trực tuyến (ONLINE), không có bên bán hàng tại quầy.
+        // Loại bỏ hoàn toàn hóa đơn bán hàng tại quầy đã hủy khỏi Quản lý hóa đơn.
+        builder.and(
+            hd.trangThai.ne(OrderStatus.DA_HUY)
+            .or(
+                hd.orderType.eq(OrderType.ONLINE)
+                .or(hd.orderType.isNull().and(hd.nhanVien.isNull()).and(hd.loaiDon.equalsIgnoreCase("ONLINE")))
+            )
+        );
+
         if (req.getSearch() != null && !req.getSearch().trim().isEmpty()) {
             String search = req.getSearch().toLowerCase().trim();
             builder.and(hd.maHoaDon.toLowerCase().contains(search)

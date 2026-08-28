@@ -34,46 +34,48 @@
                 </div>
             </div>
 
-            <!-- Money Input -->
-            <div class="d-flex align-center justify-space-between mb-3">
-                <span class="text-slate-600" style="font-size: 13px !important">
-                    {{ paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
-                </span>
-                <v-text-field
-                    :model-value="receivedAmount > 0 ? formatNumberWithDots(receivedAmount) : ''"
-                    :placeholder="formatNumberWithDots(finalCollectAmount || 0)"
-                    @input="onAmountInput"
-                    variant="outlined"
-                    density="compact"
-                    suffix="đ"
-                    hide-details
-                    maxlength="15"
-                    style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important"
-                    class="text-right-input"
-                />
-            </div>
+            <!-- Money Input (Chỉ hiển thị khi là Tiền mặt, VNPay tự động thanh toán chính xác số tiền) -->
+            <template v-if="paymentMethod === 'CASH'">
+                <div class="d-flex align-center justify-space-between mb-3">
+                    <span class="text-slate-600" style="font-size: 13px !important">
+                        Tiền khách đưa
+                    </span>
+                    <v-text-field
+                        :model-value="receivedAmount > 0 ? formatNumberWithDots(receivedAmount) : ''"
+                        :placeholder="formatNumberWithDots(finalCollectAmount || 0)"
+                        @input="onAmountInput"
+                        variant="outlined"
+                        density="compact"
+                        suffix="đ"
+                        hide-details
+                        maxlength="15"
+                        style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important"
+                        class="text-right-input"
+                    />
+                </div>
 
-            <!-- Unpaid / Refund Message Alert -->
-            <div
-                v-if="remainingBalance > 0"
-                class="d-flex align-center justify-space-between pa-3 rounded-lg bg-red-50 text-red-800 border-red"
-            >
-                <div class="d-flex align-center ga-2">
-                    <v-icon color="error" size="18">mdi-alert-circle-outline</v-icon>
-                    <span class="text-slate-600" style="font-size: 13px !important">Còn thiếu</span>
+                <!-- Unpaid / Refund Message Alert -->
+                <div
+                    v-if="remainingBalance > 0"
+                    class="d-flex align-center justify-space-between pa-3 rounded-lg bg-red-50 text-red-800 border-red"
+                >
+                    <div class="d-flex align-center ga-2">
+                        <v-icon color="error" size="18">mdi-alert-circle-outline</v-icon>
+                        <span class="text-slate-600" style="font-size: 13px !important">Còn thiếu</span>
+                    </div>
+                    <span class="font-weight-bold" style="font-size: 13px !important">{{ formatCurrency(remainingBalance) }}</span>
                 </div>
-                <span class="font-weight-bold" style="font-size: 13px !important">{{ formatCurrency(remainingBalance) }}</span>
-            </div>
-            <div
-                v-else-if="changeAmount > 0"
-                class="d-flex align-center justify-space-between pa-3 rounded-lg bg-blue-50 text-blue-800 border-blue"
-            >
-                <div class="d-flex align-center ga-2">
-                    <v-icon color="primary" size="18">mdi-cash-refund</v-icon>
-                    <span class="text-slate-600" style="font-size: 13px !important">Tiền thừa trả khách</span>
+                <div
+                    v-else-if="changeAmount > 0"
+                    class="d-flex align-center justify-space-between pa-3 rounded-lg bg-blue-50 text-blue-800 border-blue"
+                >
+                    <div class="d-flex align-center ga-2">
+                        <v-icon color="primary" size="18">mdi-cash-refund</v-icon>
+                        <span class="text-slate-600" style="font-size: 13px !important">Tiền thừa trả khách</span>
+                    </div>
+                    <span class="font-weight-bold" style="font-size: 13px !important">{{ formatCurrency(changeAmount) }}</span>
                 </div>
-                <span class="font-weight-bold" style="font-size: 13px !important">{{ formatCurrency(changeAmount) }}</span>
-            </div>
+            </template>
         </v-card>
 
         <!-- Checkout / Print Action Buttons at Bottom Right -->
