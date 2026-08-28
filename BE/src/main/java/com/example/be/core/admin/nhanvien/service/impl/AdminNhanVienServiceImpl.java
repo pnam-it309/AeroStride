@@ -198,6 +198,21 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
             }
         }
 
+        // Kiểm tra duy trì tối thiểu 3 Quản lý đang hoạt động khi chuyển chức vụ hoặc ngừng hoạt động
+        if (isRoleAdmin(nv) && nv.getTrangThai() == TrangThai.DANG_HOAT_DONG) {
+            boolean willRemainAdmin = false;
+            if (request.getIdPhanQuyen() != null) {
+                com.example.be.entity.PhanQuyen newPq = phanQuyenRepository.findById(request.getIdPhanQuyen()).orElse(null);
+                if (newPq != null && VaiTro.isManagementRole(newPq)) {
+                    willRemainAdmin = true;
+                }
+            }
+            boolean isDeactivated = (request.getTrangThai() != null && request.getTrangThai() == TrangThai.NGUNG_HOAT_DONG);
+            if (!willRemainAdmin || isDeactivated) {
+                validateMinimumAdminCount(nv, !willRemainAdmin ? "chuyển chức vụ của quản lý này" : "ngừng hoạt động quản lý này");
+            }
+        }
+
         applyEntityFields(nv, request);
 
         if (request.getIdPhanQuyen() != null) {
@@ -218,6 +233,9 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         NhanVien nv = adminNhanVienRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với id: " + id));
         validateStatusChangePermission(nv);
+        if (trangThai == TrangThai.NGUNG_HOAT_DONG) {
+            validateMinimumAdminCount(nv, "ngừng hoạt động quản lý này");
+        }
         nv.setTrangThai(trangThai);
         adminNhanVienRepository.saveAndFlush(nv);
     }
@@ -229,8 +247,20 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         NhanVien nv = adminNhanVienRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với id: " + id));
         validateStatusChangePermission(nv);
+        validateMinimumAdminCount(nv, "ngừng hoạt động quản lý này");
         nv.setTrangThai(TrangThai.NGUNG_HOAT_DONG);
         adminNhanVienRepository.save(nv);
+    }
+
+    private void validateMinimumAdminCount(NhanVien targetNv, String actionDescription) {
+        if (isRoleAdmin(targetNv) && targetNv.getTrangThai() == TrangThai.DANG_HOAT_DONG) {
+            long activeAdminCount = adminNhanVienRepository.findAll().stream()
+                    .filter(n -> n.getTrangThai() == TrangThai.DANG_HOAT_DONG && isRoleAdmin(n))
+                    .count();
+            if (activeAdminCount <= 3) {
+                throw new ValidationException("Hệ thống phải duy trì tối thiểu 3 Quản lý đang hoạt động. Không thể " + actionDescription + "!");
+            }
+        }
     }
 
     private void validateStatusChangePermission(NhanVien targetNv) {
@@ -243,10 +273,6 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
 
         if (isSelf) {
             throw new ValidationException(MessageConstants.CANNOT_CHANGE_OWN_STATUS);
-        }
-
-        if (isRoleAdmin(targetNv)) {
-            throw new ValidationException(MessageConstants.CANNOT_CHANGE_OTHER_ADMIN_STATUS);
         }
     }
 
