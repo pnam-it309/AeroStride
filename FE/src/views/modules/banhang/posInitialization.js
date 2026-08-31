@@ -1,8 +1,8 @@
 /**
- * Khôi phục các hóa đơn chờ từ server trước khi cân nhắc tạo hóa đơn mới.
- * Nếu API lỗi, exception được giữ nguyên và tuyệt đối không tạo thêm hóa đơn rỗng.
+ * Khôi phục các hóa đơn chờ từ server.
+ * Không tự động tạo thêm hóa đơn rỗng.
  */
-export const initializePendingOrders = async ({ fetchPendingOrders, setPendingOrders, createEmptyOrder, preferredOrderId = null }) => {
+export const initializePendingOrders = async ({ fetchPendingOrders, setPendingOrders, preferredOrderId = null }) => {
     const payload = await fetchPendingOrders();
     const pendingOrders = Array.isArray(payload)
         ? payload
@@ -13,10 +13,6 @@ export const initializePendingOrders = async ({ fetchPendingOrders, setPendingOr
             : [];
 
     setPendingOrders(pendingOrders, { preferOrderId: preferredOrderId });
-
-    if (pendingOrders.length === 0) {
-        await createEmptyOrder();
-    }
 
     return pendingOrders;
 };

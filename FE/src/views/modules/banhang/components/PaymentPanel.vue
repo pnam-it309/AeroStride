@@ -78,25 +78,12 @@
             </template>
         </v-card>
 
-        <!-- Checkout / Print Action Buttons at Bottom Right -->
-        <div class="d-flex ga-3 mt-4 w-100">
-            <v-btn
-                color="#107c41"
-                height="60"
-                class="font-weight-bold rounded-lg elevation-2 text-white px-4 flex-grow-1"
-                style="font-size: 17px !important"
-                :disabled="!hasItems"
-                @click="$emit('print-invoice')"
-                elevation="0"
-            >
-                <v-icon class="mr-1">mdi-printer</v-icon>
-                IN HÓA ĐƠN
-            </v-btn>
-
+        <!-- Checkout Action Button at Bottom Right -->
+        <div class="mt-4 w-100">
             <v-btn
                 color="primary"
                 height="60"
-                class="font-weight-bold rounded-lg btn-checkout elevation-2 text-white px-4 flex-grow-1"
+                class="font-weight-bold rounded-lg btn-checkout elevation-2 text-white w-100"
                 style="font-size: 17px !important"
                 :loading="isProcessing"
                 :disabled="!hasItems"
@@ -125,7 +112,6 @@ const props = defineProps({
 const emit = defineEmits([
     'update:paymentMethod',
     'update:receivedAmount',
-    'print-invoice',
     'checkout'
 ]);
 

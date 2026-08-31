@@ -90,7 +90,6 @@ const handleGiaoCaSuccess = async () => {
         await initializePendingOrders({
             fetchPendingOrders: () => dichVuDonHang.layDonHangCho(),
             setPendingOrders: setOrders,
-            createEmptyOrder: () => createNewOrder({ force: true, silent: true }),
             preferredOrderId: getStoredActiveOrderId()
         });
     }
@@ -888,7 +887,6 @@ onMounted(async () => {
             initializePendingOrders({
                 fetchPendingOrders: () => dichVuDonHang.layDonHangCho(),
                 setPendingOrders: setOrders,
-                createEmptyOrder: () => createNewOrder({ force: true, silent: true }),
                 preferredOrderId: getStoredActiveOrderId()
             })
         ]);
@@ -1350,7 +1348,6 @@ const closeOrder = (orderId, index) => {
                 await dichVuDonHang.xoaDonHang(orderId);
                 orders.value.splice(index, 1);
                 clampActiveOrderIndex();
-                if (orders.value.length === 0) await createNewOrder();
                 confirmDialog.value.show = false;
             } catch (e) {
                 addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.DELETE_DATA, color: 'error' });
@@ -1832,9 +1829,6 @@ const completePaidOrder = async (orderId) => {
     const index = orders.value.findIndex((order) => order.id === orderId);
     if (index !== -1) {
         orders.value.splice(index, 1);
-    }
-    if (orders.value.length === 0) {
-        await createNewOrder({ force: true, silent: true });
     }
     clampActiveOrderIndex();
     checkoutData.value.receivedAmount = 0;
@@ -2609,7 +2603,6 @@ const handleVnPayCallbackFromUrl = async () => {
                         :has-items="hasValidCartItems"
                         :vnpay-method="checkoutData.vnpayMethod"
                         :vnpay-dialog="vnpayDialog"
-                        @print-invoice="onPrintInvoice"
                         @checkout="onCheckout"
                     />
                 </v-col>
