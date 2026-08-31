@@ -16,7 +16,7 @@ import MainView from './Main.vue';
                     <RouterView v-slot="{ Component, route }">
                         <template v-if="Component">
                             <transition name="route-shell" mode="out-in">
-                                <keep-alive :max="10">
+                                <keep-alive :max="5" :exclude="['Thống kê', 'BanHang']">
                                     <Suspense>
                                         <template #default>
                                             <component :is="Component" :key="route.meta?.key || (route.name === 'ThuocTinh' ? 'ThuocTinh' : route.path)" />

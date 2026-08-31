@@ -1,11 +1,13 @@
 <script setup>
 import { LayoutGridIcon } from 'vue-tabler-icons';
 
-defineProps({
+const props = defineProps({
     title: { type: String, default: 'Danh sách' },
     headers: { type: Array, default: () => [] },
     items: { type: Array, default: () => [] },
     loading: { type: Boolean, default: false },
+    initialLoading: { type: Boolean, default: false }, // lần đầu tải → skeleton
+    fetching: { type: Boolean, default: false },        // pagination/filter → dim
     addButtonText: { type: String, default: 'Thêm mới' },
     showAddButton: { type: Boolean, default: true },
     showExportButton: { type: Boolean, default: false },
@@ -19,10 +21,18 @@ defineProps({
     emptyActionText: { type: String, default: '' },
     selectable: { type: Boolean, default: false },
     hideToolbar: { type: Boolean, default: false },
-    totalCount: { type: Number, default: 0 }
+    totalCount: { type: Number, default: 0 },
+    skeletonRows: { type: Number, default: 7 } // số skeleton rows
 });
 
 const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate', 'empty-action']);
+
+// isSkeletonMode: dùng initialLoading nếu được pass, fallback về loading & items rỗng
+const isSkeletonMode = () =>
+    props.initialLoading || (props.loading && props.items.length === 0 && !props.fetching);
+
+const isFetchingMode = () =>
+    props.fetching || (props.loading && props.items.length > 0);
 </script>
 
 <template>
@@ -83,9 +93,9 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate', 'empty-
 
             <!-- Main Table -->
             <div class="table-wrapper position-relative">
-                <!-- Smooth Top Progress Bar when updating/paginating existing data -->
+                <!-- Top Progress Bar khi pagination/filter (fetching mode) -->
                 <v-progress-linear
-                    v-if="loading && items.length > 0"
+                    v-if="isFetchingMode()"
                     indeterminate
                     color="primary"
                     height="2.5"
@@ -114,16 +124,34 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate', 'empty-
                             </tr>
                         </slot>
                     </thead>
-                    <tbody v-if="items.length > 0" :class="['table-body-transition', { 'table-is-fetching': loading }]">
+
+                    <!-- Skeleton Rows: hiện khi initial load (chưa có data) -->
+                    <tbody v-if="isSkeletonMode()" class="skeleton-tbody">
+                        <tr v-for="r in skeletonRows" :key="'sk-' + r" class="skeleton-row">
+                            <td v-if="selectable" class="text-center px-0"><div class="skeleton-cell skeleton-check"></div></td>
+                            <td v-for="(header, idx) in (headers.length ? headers : Array(4).fill({}))"
+                                :key="idx"
+                                class="skeleton-td"
+                            >
+                                <div class="skeleton-cell" :style="{ width: idx === 0 ? '40%' : idx === 1 ? '60%' : '50%' }"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+
+                    <!-- Real data rows -->
+                    <tbody
+                        v-else-if="items.length > 0"
+                        :class="['table-body-transition', { 'table-is-fetching': isFetchingMode() }]"
+                    >
                         <template v-for="(item, index) in items" :key="item.id ?? index">
                             <slot name="row" :item="item" :index="index"></slot>
                         </template>
                     </tbody>
                 </table>
 
-                <!-- Render empty and initial loading states only when no items are present -->
+                <!-- Empty state: chỉ hiện khi không còn loading và items rỗng -->
                 <div
-                    v-if="items.length === 0"
+                    v-if="!isSkeletonMode() && items.length === 0"
                     class="empty-state-wrapper py-12 w-100 d-flex flex-column align-center justify-center border-t"
                 >
                     <div v-if="loading" class="d-flex flex-column align-center justify-center w-100 py-6">
@@ -180,11 +208,41 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate', 'empty-
 }
 
 .table-body-transition {
-    transition: opacity 0.15s ease;
+    transition: opacity 0.12s ease;
 }
 
 .table-is-fetching {
-    opacity: 0.55;
+    opacity: 0.5;
     pointer-events: none;
+}
+
+/* Skeleton styles */
+.skeleton-tbody .skeleton-row {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.skeleton-td {
+    padding: 10px 12px;
+}
+
+.skeleton-cell {
+    height: 14px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f1f5f9 25%, #e8edf4 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+    min-width: 40px;
+}
+
+.skeleton-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    margin: 0 auto;
+}
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 </style>

@@ -1,19 +1,63 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { dichVuVoucher } from '@/services/public/dichVuVoucher';
 import { useToastStore } from '@/stores/toastStore';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 
+const SNAPSHOT_KEY = 'aerostride-voucher-snapshot';
 const toast = useToastStore();
 const vouchers = ref([]);
 const loading = ref(false);
+const changedVoucherIds = ref(new Set());
+
+// Các field dùng để so sánh thay đổi
+const COMPARE_FIELDS = ['donHangToiThieu', 'soTienGiam', 'phanTramGiamGia', 'giamToiDa', 'loaiPhieu', 'ngayKetThuc'];
+
+const hasChangedVouchers = computed(() => changedVoucherIds.value.size > 0);
+
+const loadSnapshot = () => {
+    try {
+        const raw = localStorage.getItem(SNAPSHOT_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+};
+
+const saveSnapshot = (voucherList) => {
+    try {
+        const snapshot = {};
+        voucherList.forEach((v) => {
+            snapshot[v.id] = {};
+            COMPARE_FIELDS.forEach((f) => { snapshot[v.id][f] = v[f]; });
+        });
+        localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snapshot));
+    } catch { /* ignore quota errors */ }
+};
+
+const detectChanges = (voucherList, snapshot) => {
+    const changed = new Set();
+    if (!snapshot) return changed; // lần đầu vào — chưa có gì để so sánh
+    voucherList.forEach((v) => {
+        const prev = snapshot[v.id];
+        if (!prev) return; // voucher mới thêm — không coi là "đã thay đổi"
+        const isChanged = COMPARE_FIELDS.some((f) => String(v[f] ?? '') !== String(prev[f] ?? ''));
+        if (isChanged) changed.add(v.id);
+    });
+    return changed;
+};
 
 const fetchVouchers = async () => {
     loading.value = true;
     try {
-        vouchers.value = await dichVuVoucher.layDanhSachVoucher();
+        const data = await dichVuVoucher.layDanhSachVoucher();
+        const snapshot = loadSnapshot();
+        changedVoucherIds.value = detectChanges(data || [], snapshot);
+        vouchers.value = data || [];
+        // Cập nhật snapshot sau khi detect
+        saveSnapshot(vouchers.value);
     } catch (error) {
         console.error('Error fetching vouchers:', error);
         toast.error('Không thể tải danh sách mã giảm giá.');
@@ -25,12 +69,8 @@ const fetchVouchers = async () => {
 const copyToClipboard = (code) => {
     navigator.clipboard
         .writeText(code)
-        .then(() => {
-            toast.success(`Đã sao chép mã: ${code}`);
-        })
-        .catch((err) => {
-            console.error('Could not copy text: ', err);
-        });
+        .then(() => { toast.success(`Đã sao chép mã: ${code}`); })
+        .catch((err) => { console.error('Could not copy text: ', err); });
 };
 
 const formatPrice = (price) => {
@@ -57,6 +97,7 @@ onMounted(() => {
 });
 </script>
 
+
 <template>
     <div class="voucher-listing-page bg-grey-lighten-4 min-vh-100">
         <MainHeader />
@@ -69,6 +110,21 @@ onMounted(() => {
                 <p class="text-h6 text-grey-darken-1">Săn mã giảm giá cực hời, chốt ngay đôi giày ưng ý tại AeroStride.</p>
             </div>
 
+            <!-- Banner cảnh báo khi có voucher bị thay đổi -->
+            <v-alert
+                v-if="hasChangedVouchers && !loading"
+                type="warning"
+                variant="tonal"
+                class="mb-6 rounded-xl"
+                border="start"
+                icon="mdi-bell-alert-outline"
+            >
+                <strong>Một số phiếu giảm giá vừa được cập nhật điều kiện.</strong>
+                Vui lòng kiểm tra lại các mã được đánh dấu
+                <span class="font-weight-bold" style="color:#d97706">"Đã cập nhật"</span>
+                trước khi sử dụng để tránh nhầm lẫn.
+            </v-alert>
+
             <v-row v-if="loading">
                 <v-col v-for="n in 6" :key="n" cols="12" md="6" lg="4">
                     <v-skeleton-loader type="card" height="200"></v-skeleton-loader>
@@ -77,7 +133,16 @@ onMounted(() => {
 
             <v-row v-else-if="vouchers.length > 0">
                 <v-col v-for="v in vouchers" :key="v.id" cols="12" md="6" lg="4">
-                    <div class="voucher-card">
+                    <div
+                        class="voucher-card"
+                        :class="{ 'voucher-card--updated': changedVoucherIds.has(v.id) }"
+                    >
+                        <!-- Badge "Đã cập nhật" -->
+                        <div v-if="changedVoucherIds.has(v.id)" class="updated-badge">
+                            <v-icon size="11" class="mr-1">mdi-refresh</v-icon>
+                            Đã cập nhật
+                        </div>
+
                         <div class="voucher-left" :style="{ background: v.phanTramGiamGia ? '#FF1744' : '#2962FF' }">
                             <v-icon color="white" size="40">mdi-ticket-percent</v-icon>
                             <span class="discount-val">
@@ -220,5 +285,30 @@ onMounted(() => {
 
 .min-vh-100 {
     min-height: 100vh;
+}
+
+/* Voucher đã bị thay đổi – viền cam nổi bật */
+.voucher-card--updated {
+    border: 2px solid #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15), 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* Badge "Đã cập nhật" floating góc trên phải */
+.updated-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 5;
+    background: #f59e0b;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    letter-spacing: 0.02em;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    white-space: nowrap;
 }
 </style>

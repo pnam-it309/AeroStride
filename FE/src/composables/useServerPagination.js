@@ -2,14 +2,17 @@ import { reactive, ref } from 'vue';
 
 /**
  * Composable phân trang + tải dữ liệu server-side dùng chung.
- * Tích hợp bộ nhớ đệm trang (Client-side Page Cache) giúp chuyển trang 0ms tức thì.
+ * - initialLoading: true khi lần đầu tải (chưa có data) → skeleton rows
+ * - fetching: true khi pagination sau đó → dim + progress bar, không xóa bảng
  *
  * @param {(pageable: { page: number, size: number }) => Promise<any>} fetchPage
  * @param {{ pageSize?: number, onError?: (error: any) => void, onLoaded?: () => void }} [options]
  */
 export function useServerPagination(fetchPage, { pageSize = 10, onError, onLoaded } = {}) {
     const items = ref([]);
-    const loading = ref(true);
+    const loading = ref(true);        // backward-compat: initialLoading || fetching
+    const initialLoading = ref(true); // skeleton phase
+    const fetching = ref(false);      // dim phase
     const pagination = reactive({ page: 1, size: pageSize });
     const totalElements = ref(0);
     const totalPages = ref(1);
@@ -24,6 +27,12 @@ export function useServerPagination(fetchPage, { pageSize = 10, onError, onLoade
         const targetSize = pagination.size;
 
         const requestId = ++currentRequestId;
+
+        if (items.value.length > 0 && !forceFresh) {
+            fetching.value = true;
+        } else {
+            initialLoading.value = true;
+        }
         loading.value = true;
 
         try {
@@ -57,6 +66,8 @@ export function useServerPagination(fetchPage, { pageSize = 10, onError, onLoade
             }
         } finally {
             if (requestId === currentRequestId) {
+                initialLoading.value = false;
+                fetching.value = false;
                 loading.value = false;
             }
         }
@@ -69,5 +80,5 @@ export function useServerPagination(fetchPage, { pageSize = 10, onError, onLoade
         await load(true);
     };
 
-    return { items, loading, pagination, totalElements, totalPages, load, reload, clearCache };
+    return { items, loading, initialLoading, fetching, pagination, totalElements, totalPages, load, reload, clearCache };
 }

@@ -66,7 +66,7 @@ export const useUIStore = defineStore('ui', () => {
     const stopProgress = () => {
         setTimeout(() => {
             progressBar.value = false;
-        }, 500);
+        }, 150);
     };
 
     // ==========================================

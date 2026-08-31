@@ -1,16 +1,18 @@
-import { ref, reactive, watch } from 'vue';
+import { ref, watch } from 'vue';
 
 /**
  * Composable để quản lý trạng thái bảng Admin (Pagination, Filters, Loading)
- * Tích hợp bộ nhớ đệm trang (Client-side Page Cache) cho tốc độ chuyển trang tức thì (0ms)
- * và tối ưu debounce tìm kiếm mượt mà.
+ * - initialLoading: true khi chưa có data (lần đầu) → hiện skeleton rows
+ * - fetching: true khi đã có data và đang tải lại (pagination/filter) → dim table + progress bar
  *
- * @param {Function} fetchFn - Hàm lấy dữ liệu từ service (ví dụ: dichVuNhanVien.getAll)
+ * @param {Function} fetchFn - Hàm lấy dữ liệu từ service
  * @param {Object} initialFilters - Giá trị lọc mặc định
  */
 export function useAdminTable(fetchFn, initialFilters = {}) {
     const items = ref([]);
-    const loading = ref(true);
+    const loading = ref(true);        // backward-compat alias = initialLoading || fetching
+    const initialLoading = ref(true); // chưa có data lần nào → skeleton
+    const fetching = ref(false);      // đang tải lại (pagination / filter) → dim
     const pagination = ref({
         page: 1,
         size: 10,
@@ -35,6 +37,13 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
         const currentFilters = { ...filters.value };
 
         const requestId = ++currentRequestId;
+
+        // Nếu đã có data: chỉ fetching (dim), không xóa trắng bảng
+        if (items.value.length > 0 && !forceFresh) {
+            fetching.value = true;
+        } else {
+            initialLoading.value = true;
+        }
         loading.value = true;
 
         try {
@@ -120,6 +129,8 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
             items.value = [];
         } finally {
             if (requestId === currentRequestId) {
+                initialLoading.value = false;
+                fetching.value = false;
                 loading.value = false;
             }
         }
@@ -142,10 +153,10 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
             return;
         }
 
-        // Tối ưu debounce từ 300ms xuống 150ms (cực nhạy, phản hồi nhanh)
+        // 250ms debounce – phản hồi nhanh nhưng không re-render quá nhiều
         searchDebounceTimer = setTimeout(() => {
             loadData();
-        }, 150);
+        }, 250);
     };
 
     const handleReset = () => {
@@ -163,6 +174,8 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
     return {
         items,
         loading,
+        initialLoading,
+        fetching,
         pagination,
         filters,
         loadData,

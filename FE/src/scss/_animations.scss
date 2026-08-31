@@ -3,36 +3,10 @@
    All transitions, keyframes, and motion logic go here.
    ========================================================================== */
 
-@keyframes routeShellEnter {
-    from {
-        opacity: 0;
-        transform: translateY(14px) scale(0.985);
-        filter: blur(8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        filter: blur(0);
-    }
-}
-
-@keyframes routeShellLeave {
-    from {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        filter: blur(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-10px) scale(0.99);
-        filter: blur(6px);
-    }
-}
-
 @keyframes slideUpFade {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(16px);
     }
     to {
         opacity: 1;
@@ -43,7 +17,7 @@
 @keyframes premiumFadeIn {
     from {
         opacity: 0;
-        transform: translateY(12px);
+        transform: translateY(8px);
     }
     to {
         opacity: 1;
@@ -54,24 +28,18 @@
 @keyframes modalPopIn {
     from {
         opacity: 0;
-        transform: translateY(26px) scale(0.94);
-        filter: blur(8px);
+        transform: translateY(16px) scale(0.97);
     }
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
-        filter: blur(0);
     }
 }
 
 @keyframes confirmPopIn {
     from {
         opacity: 0;
-        transform: translateY(18px) scale(0.88);
-    }
-    70% {
-        opacity: 1;
-        transform: translateY(-2px) scale(1.01);
+        transform: translateY(12px) scale(0.95);
     }
     to {
         opacity: 1;
@@ -79,97 +47,93 @@
     }
 }
 
-.route-shell-enter-active,
+/* Route transitions – lightweight, no blur */
+.route-shell-enter-active {
+    transition:
+        opacity 0.15s cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 .route-shell-leave-active {
     transition:
-        opacity 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
-        transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
-        filter 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+        opacity 0.1s cubic-bezier(0.4, 0, 1, 1),
+        transform 0.1s cubic-bezier(0.4, 0, 1, 1);
 }
 
 .route-shell-enter-from {
     opacity: 0;
-    transform: translateY(14px) scale(0.985);
-    filter: blur(8px);
+    transform: translateY(8px);
 }
 
 .route-shell-leave-to {
     opacity: 0;
-    transform: translateY(-10px) scale(0.99);
-    filter: blur(6px);
+    transform: translateY(-4px);
 }
 
 .animate-fade-in {
-    animation: premiumFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: premiumFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .animate-slide-up {
-    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .add-btn-primary {
-    transition:
-        box-shadow 0.18s ease,
-        filter 0.18s ease !important;
+    transition: box-shadow 0.15s ease !important;
     will-change: box-shadow;
 }
 
 .add-btn-primary:hover {
-    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.18);
 }
 
 .action-icon-btn--edit {
     transition:
-        background-color 0.18s ease,
-        color 0.18s ease !important;
+        background-color 0.15s ease,
+        color 0.15s ease !important;
 }
 
 .action-icon-btn--edit:hover {
     background-color: rgba(37, 99, 235, 0.08);
 }
 
-.action-icon-btn--edit:active {
-    animation: editButtonPress 220ms ease-out;
-}
-
+/* Variant modal – no blur */
 .variant-modal-transition-enter-active,
 .variant-modal-transition-leave-active {
     transition:
-        opacity 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-        transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-        filter 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+        opacity 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .variant-modal-transition-enter-from,
 .variant-modal-transition-leave-to {
     opacity: 0;
-    transform: translateY(26px) scale(0.94);
-    filter: blur(8px);
+    transform: translateY(14px) scale(0.97);
 }
 
 .variant-modal-transition-enter-to,
 .variant-modal-transition-leave-from {
     opacity: 1;
     transform: translateY(0) scale(1);
-    filter: blur(0);
 }
 
 .variant-modal-card {
     transform-origin: center top;
-    animation: modalPopIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: modalPopIn 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* Confirm dialog – no blur */
 .confirm-dialog-transition-enter-active,
 .confirm-dialog-transition-leave-active {
     transition:
-        opacity 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
-        transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+        opacity 0.15s cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .confirm-dialog-transition-enter-from,
 .confirm-dialog-transition-leave-to {
     opacity: 0;
-    transform: translateY(18px) scale(0.88);
+    transform: translateY(10px) scale(0.95);
 }
 
 .confirm-dialog-transition-enter-to,
@@ -180,16 +144,17 @@
 
 .premium-confirm-card {
     transform-origin: center;
-    animation: confirmPopIn 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: confirmPopIn 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* Stagger delays for lists */
 .stagger-1 {
-    animation-delay: 0.1s;
+    animation-delay: 0.06s;
 }
 .stagger-2 {
-    animation-delay: 0.2s;
+    animation-delay: 0.12s;
 }
 .stagger-3 {
-    animation-delay: 0.3s;
+    animation-delay: 0.18s;
 }
+

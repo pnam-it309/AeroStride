@@ -36,7 +36,7 @@ const { globalLoading: overlay, progressBar, loadingMessage: message } = storeTo
 }
 
 .global-overlay {
-    backdrop-filter: blur(15px);
+    background: rgba(255, 255, 255, 0.95) !important;
     z-index: 10000;
 }
 

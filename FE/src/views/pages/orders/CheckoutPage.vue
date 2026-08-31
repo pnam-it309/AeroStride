@@ -6,6 +6,7 @@ import CustomerChat from '@/components/shared/CustomerChat.vue';
 
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useToastStore } from '@/stores/toastStore';
 import apiService from '@/services/apiService';
 import { dichVuDatHang } from '@/services/public/dichVuDatHang';
 import { dichVuKhachHang } from '@/services/public/dichVuKhachHang';
@@ -25,6 +26,7 @@ const { provinces, districts, wards, loadingLocations, fetchProvinces, fetchDist
 
 const loading = ref(false);
 const voucherLoading = ref(false);
+const toast = useToastStore();
 
 const shippingInfo = ref({
     tenNguoiNhan: '',
@@ -357,11 +359,76 @@ const fetchUserProfile = async () => {
     }
 };
 
+const voucherChangedInfo = ref(null);    // lưu thông tin voucher bị thay đổi điều kiện
+const showVoucherChangedModal = ref(false);
+
+// Các field so sánh điều kiện voucher
+const VOUCHER_CONDITION_FIELDS = ['donHangToiThieu', 'soTienGiam', 'phanTramGiamGia', 'giamToiDa', 'loaiPhieu'];
+
+/**
+ * Sau khi fetch xong danh sách mới, kiểm tra xem selectedVoucher có còn hợp lệ không.
+ * - Không còn trong danh sách → gỡ + toast
+ * - Điều kiện thay đổi + không đủ điều kiện mới → gỡ + showVoucherChangedModal
+ * - Đủ điều kiện → cập nhật selectedVoucher với data mới nhất từ server
+ */
+const revalidateSelectedVoucher = () => {
+    if (!selectedVoucher.value) return;
+
+    const freshData = availableVouchers.value.find((v) => v.id === selectedVoucher.value.id);
+
+    // Voucher không còn trong danh sách
+    if (!freshData) {
+        const removed = selectedVoucher.value;
+        selectedVoucher.value = null;
+        toast.warning(`Phiếu giảm giá "${removed.ten || removed.ma}" không còn khả dụng và đã được gỡ bỏ.`);
+        return;
+    }
+
+    // Phát hiện điều kiện thay đổi
+    const conditionsChanged = VOUCHER_CONDITION_FIELDS.some(
+        (f) => String(freshData[f] ?? '') !== String(selectedVoucher.value[f] ?? '')
+    );
+
+    const minOrder = freshData.donHangToiThieu || 0;
+    const nowIneligible = minOrder > 0 && cartStore.cartTotal < minOrder;
+
+    if (conditionsChanged && nowIneligible) {
+        // Điều kiện bị thay đổi VÀ không còn đủ điều kiện
+        const shortfall = minOrder - cartStore.cartTotal;
+        voucherChangedInfo.value = {
+            voucher: freshData,
+            oldVoucher: { ...selectedVoucher.value },
+            minOrder,
+            currentTotal: cartStore.cartTotal,
+            shortfall,
+            conditionsChanged: true
+        };
+        selectedVoucher.value = null;
+        showVoucherChangedModal.value = true;
+    } else if (nowIneligible) {
+        // Không thay đổi nhưng vẫn không đủ (ví dụ cart giảm)
+        const shortfall = minOrder - cartStore.cartTotal;
+        ineligibleVoucherInfo.value = {
+            voucher: freshData,
+            minOrder,
+            currentTotal: cartStore.cartTotal,
+            shortfall
+        };
+        selectedVoucher.value = null;
+        showVoucherIneligibleModal.value = true;
+    } else {
+        // Hợp lệ: cập nhật data mới nhất
+        selectedVoucher.value = freshData;
+    }
+};
+
 const fetchVouchers = async () => {
     voucherLoading.value = true;
     try {
         const res = await dichVuDatHang.layVoucherKhaDung(cartStore.cartTotal);
         availableVouchers.value = (res || []).sort((a, b) => calcVoucherDiscount(b) - calcVoucherDiscount(a));
+        // Sau khi fetch, kiểm tra lại voucher đang chọn
+        revalidateSelectedVoucher();
     } catch (error) {
         console.error('Error fetching vouchers:', error);
     } finally {
@@ -377,7 +444,15 @@ const openVoucherModal = () => {
 const selectVoucher = (voucher) => {
     if (voucher.donHangToiThieu && cartStore.cartTotal < voucher.donHangToiThieu) {
         const diff = voucher.donHangToiThieu - cartStore.cartTotal;
-        alert(`Đơn hàng chưa đạt đơn tối thiểu ${formatPrice(voucher.donHangToiThieu)}. Cần mua thêm ${formatPrice(diff)} để sử dụng mã này!`);
+        // Đóng dialog trước khi hiện modal điều kiện
+        showVoucherDialog.value = false;
+        ineligibleVoucherInfo.value = {
+            voucher,
+            minOrder: voucher.donHangToiThieu,
+            currentTotal: cartStore.cartTotal,
+            shortfall: diff
+        };
+        showVoucherIneligibleModal.value = true;
         return;
     }
     selectedVoucher.value = voucher;
@@ -387,6 +462,7 @@ const selectVoucher = (voucher) => {
 const removeVoucher = () => {
     selectedVoucher.value = null;
 };
+
 
 const showConfirmDialog = ref(false);
 
@@ -1747,6 +1823,71 @@ onUnmounted(() => {
                         variant="flat"
                         class="flex-grow-1 font-weight-bold rounded-pill text-none"
                         @click="handleContinueShopping"
+                    >
+                        <v-icon start size="16">mdi-cart-plus</v-icon>
+                        Mua thêm sản phẩm
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Modal: Phiếu đã được admin thay đổi điều kiện & không còn đủ điều kiện -->
+        <v-dialog v-model="showVoucherChangedModal" max-width="480" persistent>
+            <v-card class="rounded-xl overflow-hidden shadow-2xl">
+                <div class="pa-4 d-flex align-center justify-space-between text-white" style="background: #92400e">
+                    <div class="d-flex align-center">
+                        <v-icon class="mr-2" color="amber-lighten-3">mdi-alert-decagram</v-icon>
+                        <span class="font-weight-bold text-subtitle-1">Phiếu giảm giá đã được cập nhật</span>
+                    </div>
+                    <v-btn icon="mdi-close" variant="text" size="small" color="white" @click="showVoucherChangedModal = false"></v-btn>
+                </div>
+                <v-card-text class="pa-6">
+                    <div class="pa-4 rounded-xl mb-4" style="background: #fffbeb; border: 1px solid #fde68a">
+                        <div class="d-flex align-center mb-2">
+                            <v-icon color="#b45309" size="20" class="mr-2">mdi-ticket-percent</v-icon>
+                            <strong style="color: #92400e">{{ voucherChangedInfo?.voucher?.ten || voucherChangedInfo?.voucher?.ma }}</strong>
+                        </div>
+                        <p class="text-body-2 mb-0" style="color: #b45309">
+                            Phiếu giảm giá này <strong>vừa được cập nhật điều kiện</strong> bởi quản trị viên.
+                            Bạn hiện chưa đủ điều kiện để áp dụng.
+                        </p>
+                    </div>
+
+                    <div class="py-2 px-3 bg-slate-50 rounded-lg mb-4 text-body-2">
+                        <div class="d-flex justify-space-between py-1">
+                            <span class="text-slate-500">Giá trị đơn hàng hiện tại:</span>
+                            <strong class="text-slate-800">{{ formatPrice(voucherChangedInfo?.currentTotal) }}</strong>
+                        </div>
+                        <div class="d-flex justify-space-between py-1">
+                            <span class="text-slate-500">Đơn tối thiểu mới (sau cập nhật):</span>
+                            <strong style="color: #b45309">{{ formatPrice(voucherChangedInfo?.minOrder) }}</strong>
+                        </div>
+                        <v-divider class="my-2"></v-divider>
+                        <div class="d-flex justify-space-between py-1">
+                            <span class="text-amber-800 font-weight-bold">Cần mua thêm để đủ điều kiện:</span>
+                            <strong style="color: #b45309; font-size: 1.05rem">+{{ formatPrice(voucherChangedInfo?.shortfall) }}</strong>
+                        </div>
+                    </div>
+
+                    <p class="text-caption text-slate-500 mb-0">
+                        Phiếu giảm giá đã được gỡ bỏ. Bạn có thể mua thêm để đáp ứng điều kiện mới hoặc chọn mã khác phù hợp hơn.
+                    </p>
+                </v-card-text>
+                <v-card-actions class="pa-4 bg-slate-50 border-t d-flex ga-2">
+                    <v-btn
+                        variant="outlined"
+                        color="warning"
+                        class="flex-grow-1 font-weight-bold rounded-pill text-none"
+                        @click="showVoucherChangedModal = false; openVoucherModal()"
+                    >
+                        <v-icon start size="16">mdi-ticket-search</v-icon>
+                        Chọn phiếu khác
+                    </v-btn>
+                    <v-btn
+                        style="background: #92400e; color: white !important"
+                        variant="flat"
+                        class="flex-grow-1 font-weight-bold rounded-pill text-none"
+                        @click="showVoucherChangedModal = false; handleContinueShopping()"
                     >
                         <v-icon start size="16">mdi-cart-plus</v-icon>
                         Mua thêm sản phẩm
