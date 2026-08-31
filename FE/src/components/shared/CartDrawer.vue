@@ -22,7 +22,7 @@ const resolveImg = (v) => {
 };
 
 const FREE_SHIP_THRESHOLD = 5000000;
-const SHIPPING_FEE = 30000;
+const SHIPPING_FEE = 35000;
 
 const formatPrice = (price) => {
     if (!price) return '0 ₫';

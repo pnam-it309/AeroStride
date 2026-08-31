@@ -25,7 +25,7 @@ public class ShippingConfigController {
         config.put("freeShipThreshold", FREE_SHIP_THRESHOLD);
         config.put("extraFeePerKm", EXTRA_FEE_PER_KM);
         // Cấu hình cơ bản (optional)
-        config.put("baseFee", new BigDecimal("30000"));
+        config.put("baseFee", new BigDecimal("35000"));
         return ResponseEntity.ok(ApiResponse.success(config));
     }
 
@@ -47,16 +47,16 @@ public class ShippingConfigController {
         // 2. Tính phí dựa trên khoảng cách
         if (distance != null && distance > 0) {
             if (distance <= 5.0) {
-                fee = new BigDecimal("30000"); // Dưới 5km: 30k
+                fee = new BigDecimal("35000"); // Dưới 5km: 35k
             } else {
-                // Trên 5km: 30k + 5k/km phát sinh
+                // Trên 5km: 35k + 5k/km phát sinh
                 BigDecimal extraDistance = BigDecimal.valueOf(distance - 5.0);
                 BigDecimal extraFee = extraDistance.multiply(EXTRA_FEE_PER_KM);
-                fee = new BigDecimal("30000").add(extraFee);
+                fee = new BigDecimal("35000").add(extraFee);
             }
         } else {
             // Mặc định nếu không có distance
-            fee = new BigDecimal("30000");
+            fee = new BigDecimal("35000");
         }
 
         Map<String, Object> result = new HashMap<>();

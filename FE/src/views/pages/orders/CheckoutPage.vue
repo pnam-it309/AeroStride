@@ -153,8 +153,8 @@ const formatPrice = (price) => {
 };
 
 const FREE_SHIP_THRESHOLD = ref(500000);
-const baseShippingFee = ref(30000);
-const calculatedShippingFee = ref(30000);
+const baseShippingFee = ref(35000);
+const calculatedShippingFee = ref(35000);
 const ghnShippingFee = ref(null);
 const shippingFeeLoading = ref(false);
 
@@ -163,11 +163,13 @@ const fetchShippingConfig = async () => {
         const response = await apiService.get('/config/shipping');
         if (response.data?.success) {
             FREE_SHIP_THRESHOLD.value = response.data.data.freeShipThreshold;
-            baseShippingFee.value = response.data.data.baseFee;
-            calculatedShippingFee.value = response.data.data.baseFee;
+            baseShippingFee.value = response.data.data.baseFee || 35000;
+            calculatedShippingFee.value = response.data.data.baseFee || 35000;
         }
     } catch (e) {
         console.error('Lỗi khi lấy cấu hình phí vận chuyển', e);
+        baseShippingFee.value = 35000;
+        calculatedShippingFee.value = 35000;
     }
 };
 
@@ -180,8 +182,9 @@ const calculateGhnShippingFee = async () => {
     const selectedDistrict = districts.value.find((d) => String(d.code) === String(shippingInfo.value.quanHuyen));
     const selectedWard = wards.value.find((w) => String(w.code) === String(shippingInfo.value.phuongXa));
 
+    // Trường hợp địa chỉ là nguồn dự phòng (OpenAPI/Local) -> Không có mã GHN chuẩn -> Áp dụng phí tiêu chuẩn 35k
     if (selectedDistrict?.source === 'OPEN_API' || selectedWard?.source === 'OPEN_API') {
-        ghnShippingFee.value = baseShippingFee.value || 30000;
+        ghnShippingFee.value = baseShippingFee.value || 35000;
         return;
     }
 
@@ -195,18 +198,28 @@ const calculateGhnShippingFee = async () => {
                 toDistrictId: shippingInfo.value.quanHuyen,
                 toWardCode: shippingInfo.value.phuongXa,
                 weight
-            }
+            },
+            timeout: 5000
         });
+
+        // Kiểm tra cờ lỗi hoặc GHN không khả dụng từ server
+        if (res?.data?.unavailable || res?.data?.success === false) {
+            ghnShippingFee.value = baseShippingFee.value || 35000;
+            return;
+        }
+
         const total = Number(res?.data?.data?.total || res?.data?.total || res?.data?.data || 0);
         if (total > 0) {
             ghnShippingFee.value = total;
             calculatedShippingFee.value = total;
         } else {
-            ghnShippingFee.value = baseShippingFee.value || 30000;
+            // GHN trả về 0đ hoặc không tính được -> Fallback về phí mặc định 35k
+            ghnShippingFee.value = baseShippingFee.value || 35000;
         }
     } catch (e) {
-        console.error('Lỗi khi tính phí vận chuyển GHN:', e);
-        ghnShippingFee.value = baseShippingFee.value || 30000;
+        // Bắt mọi lỗi mạng, timeout, HTTP 500/502 -> Fallback an toàn về 35k
+        console.warn('GHN API lỗi hoặc mất kết nối, áp dụng phí mặc định 35k:', e);
+        ghnShippingFee.value = baseShippingFee.value || 35000;
     } finally {
         shippingFeeLoading.value = false;
     }
