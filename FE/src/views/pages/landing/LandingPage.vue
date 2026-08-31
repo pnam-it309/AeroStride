@@ -184,6 +184,7 @@ const mapToCard = (item, type = 'NEW') => {
         giaBanThapNhat: giaBan,
         giaGoc: giaGoc,
         phanTramGiam: phanTram,
+        tenDotGiamGia: item.tenDotGiamGia ?? null,
         badgeType: type
     };
 };
@@ -442,7 +443,8 @@ const scrollToCategories = () => {
                             <div class="brand-favorite-row">
                                 <div class="d-flex align-center" style="gap: 6px">
                                     <span class="product-brand-tag">{{ product.tenThuongHieu }}</span>
-                                    <span v-if="product.phanTramGiam > 0" class="category-sub-chip chip-discount">Giảm giá</span>
+                                    <span v-if="product.tenDotGiamGia" class="category-sub-chip chip-discount">{{ product.tenDotGiamGia }}</span>
+                                    <span v-else-if="product.phanTramGiam > 0" class="category-sub-chip chip-discount">Giảm giá</span>
                                     <span v-else-if="product.badgeType === 'NEW'" class="category-sub-chip chip-new">Mới về</span>
                                     <span v-else-if="product.badgeType === 'HOT'" class="category-sub-chip chip-hot">Bán chạy</span>
                                 </div>

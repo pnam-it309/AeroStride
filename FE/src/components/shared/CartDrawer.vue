@@ -184,10 +184,13 @@ const handleCheckout = () => {
                                 <div class="mt-auto">
                                     <div class="d-flex align-center flex-wrap ga-2 mb-2">
                                         <p class="cart-item-price text-body-1 font-weight-bold mb-0" :style="{ color: item.phanTramGiam > 0 ? '#dc2626' : '#1e257c' }">{{ formatPrice(item.giaBan) }}</p>
-                                        <template v-if="item.phanTramGiam > 0">
-                                            <span class="text-caption text-grey text-decoration-line-through">{{ formatPrice(item.giaGoc || item.giaBan / (1 - item.phanTramGiam / 100)) }}</span>
+                                        <template v-if="item.phanTramGiam > 0 && item.giaGoc && Number(item.giaGoc) > Number(item.giaBan)">
+                                            <span class="text-caption text-grey text-decoration-line-through">{{ formatPrice(item.giaGoc) }}</span>
                                             <v-chip size="x-small" color="error" variant="flat" class="font-weight-bold px-1" style="height: 16px; font-size: 10px">-{{ item.phanTramGiam }}%</v-chip>
                                         </template>
+                                        <v-chip v-if="item.tenDotGiamGia" size="x-small" color="error" variant="tonal" class="font-weight-medium px-1" style="height: 16px; font-size: 10px">
+                                            {{ item.tenDotGiamGia }}
+                                        </v-chip>
                                     </div>
 
                                     <!-- Quantity Controls -->

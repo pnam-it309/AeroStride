@@ -596,19 +596,29 @@ const quickCreateCustomer = () => {
     emit('open-quick-add', initialData);
 };
 
+const currentOrderId = ref(props.order?.id || null);
+
+let formChangeTimeout = null;
 const emitFormChange = () => {
-    emit('update:customer-form', customerForm.value);
+    if (formChangeTimeout) clearTimeout(formChangeTimeout);
+    formChangeTimeout = setTimeout(() => {
+        emit('update:customer-form', customerForm.value);
+    }, 100);
 };
 
+let shippingChangeTimeout = null;
 const emitShippingChange = () => {
-    emit('update:shipping', {
-        name: recipientName.value || customerForm.value.ten || '',
-        phone: recipientPhone.value || customerForm.value.sdt || '',
-        detail: recipientAddressDetail.value,
-        province: recipientProvince.value,
-        district: recipientDistrict.value,
-        ward: recipientWard.value
-    });
+    if (shippingChangeTimeout) clearTimeout(shippingChangeTimeout);
+    shippingChangeTimeout = setTimeout(() => {
+        emit('update:shipping', {
+            name: recipientName.value || customerForm.value.ten || '',
+            phone: recipientPhone.value || customerForm.value.sdt || '',
+            detail: recipientAddressDetail.value,
+            province: recipientProvince.value,
+            district: recipientDistrict.value,
+            ward: recipientWard.value
+        });
+    }, 100);
 };
 
 const onProvinceChange = async (val) => {
@@ -639,33 +649,33 @@ const onWardChange = (val) => {
 };
 
 watch(
-    () => props.initialCustomerForm,
-    (newVal) => {
-        customerForm.value = { ...newVal };
-    },
-    { deep: true }
-);
+    () => props.order?.id,
+    async (newOrderId, oldOrderId) => {
+        if (newOrderId && newOrderId !== oldOrderId) {
+            currentOrderId.value = newOrderId;
+            customerForm.value = { ...props.initialCustomerForm };
+            recipientName.value = props.initialShipping?.name || '';
+            recipientPhone.value = props.initialShipping?.phone || '';
+            recipientAddressDetail.value = props.initialShipping?.detail || '';
+            recipientProvince.value = props.initialShipping?.province || null;
+            recipientDistrict.value = props.initialShipping?.district || null;
+            recipientWard.value = props.initialShipping?.ward || null;
 
-watch(
-    () => props.initialShipping,
-    async (newVal) => {
-        recipientName.value = newVal.name;
-        recipientPhone.value = newVal.phone;
-        recipientAddressDetail.value = newVal.detail;
+            if (props.initialShipping?.province) {
+                await fetchDistrictsShip(props.initialShipping.province);
+            }
+            if (props.initialShipping?.district) {
+                await fetchWardsShip(props.initialShipping.district);
+            }
 
-        if (recipientProvince.value !== newVal.province) {
-            recipientProvince.value = newVal.province;
-            if (newVal.province) await fetchDistrictsShip(newVal.province);
+            if (props.order?.idKhachHang) {
+                await fetchCustomerAddresses();
+            } else {
+                customerAddresses.value = [];
+                selectedAddressId.value = '';
+            }
         }
-
-        if (recipientDistrict.value !== newVal.district) {
-            recipientDistrict.value = newVal.district;
-            if (newVal.district) await fetchWardsShip(newVal.district);
-        }
-
-        recipientWard.value = newVal.ward;
-    },
-    { deep: true }
+    }
 );
 </script>
 

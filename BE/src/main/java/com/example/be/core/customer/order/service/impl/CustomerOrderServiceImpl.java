@@ -233,9 +233,12 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 ? request.getEmail().trim()
                 : (khachHang != null && khachHang.getEmail() != null ? khachHang.getEmail().trim() : null);
 
+        boolean isVnPay = PaymentConstants.METHOD_VNPAY.equalsIgnoreCase(request.getPhuongThucThanhToan());
+        OrderStatus initialStatus = isVnPay ? OrderStatus.XAC_NHAN : OrderStatus.CHO_XAC_NHAN;
+
         HoaDon hoaDon = HoaDon.builder()
                 .maHoaDon(CodeUtils.generateRandom(HoaDon.class))
-                .trangThai(OrderStatus.CHO_XAC_NHAN)
+                .trangThai(initialStatus)
                 .khachHang(khachHang)
                 .loaiDon(OrderType.ONLINE.name())
                 .orderType(OrderType.ONLINE)
@@ -254,12 +257,17 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
         hoaDon = hoaDonRepository.save(hoaDon);
 
-        // 7. Tạo chi tiết hóa đơn (CHƯA trừ kho lúc đặt hàng online; sẽ trừ khi Admin xác nhận hóa đơn hoặc thanh toán VNPay thành công)
+        // 7. Tạo chi tiết hóa đơn (trừ kho ngay nếu VNPay/XAC_NHAN; hoặc trừ khi Admin xác nhận đơn COD)
         for (ChiTietSanPham ctsp : variants) {
             int soLuong = quantityMap.get(ctsp.getId());
             if (ctsp.getSoLuong() == null || ctsp.getSoLuong() < soLuong) {
                 String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
                 throw new RuntimeException("Sản phẩm '" + tenSP + "' không đủ số lượng trong kho. Vui lòng tải lại giỏ hàng.");
+            }
+
+            if (isVnPay) {
+                ctsp.setSoLuong(ctsp.getSoLuong() - soLuong);
+                chiTietSanPhamRepository.save(ctsp);
             }
 
             HoaDonChiTiet hdct = HoaDonChiTiet.builder()
@@ -275,8 +283,8 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         LichSuTrangThaiHoaDon lichSu = LichSuTrangThaiHoaDon.builder()
                 .hoaDon(hoaDon)
                 .trangThaiCu(null)
-                .trangThaiMoi(OrderStatus.CHO_XAC_NHAN.ordinal())
-                .ghiChu("Khách hàng đặt hàng trực tuyến")
+                .trangThaiMoi(initialStatus.ordinal())
+                .ghiChu(isVnPay ? "Khách hàng đặt hàng trực tuyến thanh toán VNPay - Đã xác nhận" : "Khách hàng đặt hàng trực tuyến")
                 .nguoiThucHien(username)
                 .build();
         lichSuRepository.save(lichSu);
@@ -301,13 +309,13 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .build();
         giaoDichRepository.save(giaoDich);
 
-        if (!PaymentConstants.METHOD_VNPAY.equalsIgnoreCase(payMethod) && recipientEmail != null && !recipientEmail.isBlank()) {
+        if (recipientEmail != null && !recipientEmail.isBlank()) {
             eventPublisher.publishEvent(new com.example.be.core.common.events.OrderPlacedEvent(
                     this, hoaDon.getId(), recipientEmail, tongTienSauGiam));
             log.info("Published OrderPlacedEvent for order {} to email {}", hoaDon.getId(), recipientEmail);
         }
 
-        log.info("Checkout thành công: hoaDon={}, khachHang={}, tongTien={}", hoaDon.getId(), username, tongTienSauGiam);
+        log.info("Checkout thành công: hoaDon={}, khachHang={}, tongTien={}, trangThai={}", hoaDon.getId(), username, tongTienSauGiam, initialStatus);
 
         return mapToResponse(hoaDon, payMethod);
     }

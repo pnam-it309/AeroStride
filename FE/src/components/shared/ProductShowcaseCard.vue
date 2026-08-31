@@ -109,7 +109,10 @@ const originalPrice = computed(() => {
 
                 <!-- Attributes Info -->
                 <div class="d-flex ga-1 mb-3 flex-wrap">
-                    <span v-if="product.phanTramGiam && Number(product.phanTramGiam) > 0" class="attr-chip discount-chip">
+                    <span v-if="product.tenDotGiamGia" class="attr-chip discount-chip">
+                        {{ product.tenDotGiamGia }}
+                    </span>
+                    <span v-else-if="product.phanTramGiam && Number(product.phanTramGiam) > 0" class="attr-chip discount-chip">
                         Sale -{{ Math.round(product.phanTramGiam) }}%
                     </span>
                     <span v-if="product.kichThuoc" class="attr-chip">Size {{ product.kichThuoc }}</span>

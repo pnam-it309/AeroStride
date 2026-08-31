@@ -76,6 +76,7 @@ export const useCartStore = defineStore('cart', {
                         giaBan: i.giaBan || null,
                         giaGoc: i.giaGoc || null,
                         phanTramGiam: i.phanTramGiam || null,
+                        tenDotGiamGia: i.tenDotGiamGia || null,
                         soLuongTonKho: i.soLuongTonKho || null
                     }))
                 )
@@ -152,6 +153,9 @@ export const useCartStore = defineStore('cart', {
                 if (product.tenMauSac) existing.tenMauSac = product.tenMauSac;
                 if (product.tenKichThuoc) existing.tenKichThuoc = product.tenKichThuoc;
                 if (product.giaBan) existing.giaBan = product.giaBan;
+                if (product.giaGoc) existing.giaGoc = product.giaGoc;
+                if (product.phanTramGiam) existing.phanTramGiam = product.phanTramGiam;
+                if (product.tenDotGiamGia) existing.tenDotGiamGia = product.tenDotGiamGia;
                 if (product.soLuongTonKho !== undefined) existing.soLuongTonKho = product.soLuongTonKho;
             } else {
                 this.items.push({
@@ -165,6 +169,7 @@ export const useCartStore = defineStore('cart', {
                     giaBan: product.giaBan || null,
                     giaGoc: product.giaGoc || null,
                     phanTramGiam: product.phanTramGiam || null,
+                    tenDotGiamGia: product.tenDotGiamGia || null,
                     soLuongTonKho: product.soLuongTonKho || null
                 });
             }

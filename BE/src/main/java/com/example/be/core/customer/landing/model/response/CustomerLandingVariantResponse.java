@@ -26,8 +26,10 @@ public class CustomerLandingVariantResponse {
     private String tenKichThuoc;
     private String giaTriKichThuoc;
     private Integer soLuong;
+    private BigDecimal giaGoc;
     private BigDecimal giaBan;
     private BigDecimal phanTramGiam;
+    private String tenDotGiamGia;
     private String hinhAnh;
     private List<String> images;
 }

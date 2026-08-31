@@ -5,8 +5,10 @@ import com.example.be.core.customer.order.repository.CustomerOrderGiaoDichThanhT
 import com.example.be.core.customer.order.repository.CustomerOrderHoaDonChiTietRepository;
 import com.example.be.core.customer.order.repository.CustomerOrderHoaDonRepository;
 import com.example.be.core.customer.order.repository.CustomerOrderLichSuTrangThaiHoaDonRepository;
+import com.example.be.entity.ChiTietSanPham;
 import com.example.be.entity.GiaoDichThanhToan;
 import com.example.be.entity.HoaDon;
+import com.example.be.entity.HoaDonChiTiet;
 import com.example.be.entity.LichSuTrangThaiHoaDon;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.constants.OrderType;
@@ -21,7 +23,7 @@ import java.util.Map;
 /**
  * Ghi nhận kết quả thanh toán thành công từ cổng (VNPay) vào DB:
  * Cập nhật trạng thái giao dịch thanh toán, ghi nhận lịch sử đơn hàng.
- * Đơn hàng trực tuyến giữ trạng thái CHO_XAC_NHAN (tồn kho sẽ được trừ khi Admin xác nhận đơn).
+ * Đơn hàng trực tuyến thanh toán VNPay thành công được chuyển sang trạng thái XAC_NHAN (Đã xác nhận) và trừ kho.
  */
 @Slf4j
 @Service
@@ -65,22 +67,42 @@ public class PaymentOrderFinalizer {
             }
         }
 
+        OrderStatus oldStatus = hoaDon.getTrangThai();
+        boolean isFromChoXacNhan = (oldStatus == OrderStatus.CHO_XAC_NHAN || oldStatus == null);
+
+        // Với đơn ONLINE thanh toán VNPay thành công: Chuyển trạng thái sang ĐÃ XÁC NHẬN và trừ kho
+        if (isOnlineOrder(hoaDon) && isFromChoXacNhan) {
+            hoaDon.setTrangThai(OrderStatus.XAC_NHAN);
+            if (hoaDon.getListsHoaDonChiTiet() != null) {
+                for (HoaDonChiTiet detail : hoaDon.getListsHoaDonChiTiet()) {
+                    ChiTietSanPham ct = detail.getChiTietSanPham();
+                    if (ct != null && detail.getSoLuong() != null) {
+                        int currentStock = ct.getSoLuong() != null ? ct.getSoLuong() : 0;
+                        ct.setSoLuong(Math.max(0, currentStock - detail.getSoLuong()));
+                        chiTietSanPhamRepository.saveAndFlush(ct);
+                    }
+                }
+            }
+        }
+
         hoaDon.setNgayCapNhat(System.currentTimeMillis());
         hoaDonRepository.save(hoaDon);
 
         String txnIdentifier = vnpTxnNo != null ? vnpTxnNo : (vnpTxnRef != null ? vnpTxnRef : "Thành công");
-        String ghiChuLichSu = "Khách hàng đã thanh toán thành công qua VNPay (Mã GD: " + txnIdentifier + "). Đang chờ Admin xác nhận đơn hàng.";
+        String ghiChuLichSu = isOnlineOrder(hoaDon)
+                ? "Khách hàng đã thanh toán thành công qua VNPay (Mã GD: " + txnIdentifier + "). Đơn hàng đã tự động chuyển sang Đã xác nhận."
+                : "Thanh toán thành công qua VNPay (Mã GD: " + txnIdentifier + ").";
 
         LichSuTrangThaiHoaDon lichSu = LichSuTrangThaiHoaDon.builder()
                 .hoaDon(hoaDon)
-                .trangThaiCu(hoaDon.getTrangThai() != null ? hoaDon.getTrangThai().ordinal() : OrderStatus.CHO_XAC_NHAN.ordinal())
-                .trangThaiMoi(hoaDon.getTrangThai() != null ? hoaDon.getTrangThai().ordinal() : OrderStatus.CHO_XAC_NHAN.ordinal())
+                .trangThaiCu(oldStatus != null ? oldStatus.ordinal() : OrderStatus.CHO_XAC_NHAN.ordinal())
+                .trangThaiMoi(hoaDon.getTrangThai() != null ? hoaDon.getTrangThai().ordinal() : OrderStatus.XAC_NHAN.ordinal())
                 .ghiChu(ghiChuLichSu)
-                .nguoiThucHien("Khách hàng")
+                .nguoiThucHien("Khách hàng (VNPay)")
                 .build();
         lichSuRepository.save(lichSu);
 
-        log.info("VNPay callback: đã ghi nhận thanh toán cho hóa đơn id={}, vnpTxnNo={}", orderId, vnpTxnNo);
+        log.info("VNPay callback: đã ghi nhận thanh toán cho hóa đơn id={}, vnpTxnNo={}, trangThai={}", orderId, vnpTxnNo, hoaDon.getTrangThai());
 
         String email = hoaDon.getEmailNguoiNhan() != null && !hoaDon.getEmailNguoiNhan().isBlank()
                 ? hoaDon.getEmailNguoiNhan().trim()

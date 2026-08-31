@@ -387,7 +387,9 @@ const totalDiscountAmount = computed(() => {
 
 // Tổng thanh toán (bao gồm phí vận chuyển)
 const finalCollectAmount = computed(() => {
-    return Number(selectedOrder.value?.thanhTien || 0);
+    const afterDiscount = Number(selectedOrder.value?.tongTienSauGiam ?? selectedOrder.value?.tongTien ?? 0);
+    const shipFee = isGiaoHang.value && !isFreeShip.value ? Number(shippingFee.value || 0) : 0;
+    return Math.max(0, afterDiscount + shipFee);
 });
 
 const remainingBalance = computed(() => {
@@ -533,16 +535,6 @@ watch(orderChannel, (channel) => {
     syncShippingAndChannel();
 });
 
-// Dong bo phuong thuc nhan hang khi tuy chon thu tien thay doi.
-watch(onlyChargeIfReturned, (val) => {
-    if (selectedOrder.value) {
-        selectedOrder.value.orderType = ORDER_TYPES.IN_STORE;
-        selectedOrder.value.deliveryMethod = val ? DELIVERY_METHODS.TAKEAWAY : DELIVERY_METHODS.SHIPPING;
-        selectedOrder.value.loaiDon = val ? 'TAI_QUAY' : 'GIAO_HANG';
-    }
-    syncShippingAndChannel();
-});
-
 // Automatically sync received amount with total payable amount when VNPay is selected
 watch(
     () => [checkoutData.value.paymentMethod, finalCollectAmount.value],
@@ -574,33 +566,26 @@ const onQuickAddSuccess = async (customer) => {
     }
 };
 
-// Nhận dữ liệu địa chỉ giao hàng từ panel bên phải để watcher GHN ở màn chính tính lại phí ship.
-const onShippingPanelUpdate = async (shipping) => {
-    const next = shipping || {};
-    syncingRecipientAddress.value = true;
-    shippingFeeError.value = '';
-    try {
-        recipientName.value = next.name || '';
-        recipientPhone.value = next.phone || '';
-        recipientAddressDetail.value = next.detail || '';
-        recipientProvince.value = next.province || null;
-        recipientDistrict.value = next.district || null;
-        recipientWard.value = next.ward || null;
+let shipFeeCalcTimeout = null;
+const debouncedCalculateShippingFee = () => {
+    if (shipFeeCalcTimeout) clearTimeout(shipFeeCalcTimeout);
+    shipFeeCalcTimeout = setTimeout(() => {
+        void calculateShippingFee();
+    }, 250);
+};
 
-        if (recipientProvince.value) {
-            await fetchDistrictsShip(recipientProvince.value);
-        }
-        if (recipientDistrict.value) {
-            await fetchWardsShip(recipientDistrict.value);
-        }
-    } catch (e) {
-        console.error('Lỗi đồng bộ địa chỉ từ shipping panel:', e);
-    } finally {
-        syncingRecipientAddress.value = false;
-    }
+// Nhận dữ liệu địa chỉ giao hàng từ panel bên phải
+const onShippingPanelUpdate = (shipping) => {
+    const next = shipping || {};
+    recipientName.value = next.name || '';
+    recipientPhone.value = next.phone || '';
+    recipientAddressDetail.value = next.detail || '';
+    recipientProvince.value = next.province || null;
+    recipientDistrict.value = next.district || null;
+    recipientWard.value = next.ward || null;
 
     if (isGiaoHang.value && recipientDistrict.value && recipientWard.value) {
-        await calculateShippingFee();
+        debouncedCalculateShippingFee();
     }
 };
 
@@ -1091,11 +1076,11 @@ watch(
     }
 );
 
-// Tải lại danh sách voucher + tự động áp dụng tốt nhất khi đổi hóa đơn, khách hàng, hoặc tổng tiền.
+// Tải lại danh sách voucher khi đổi hóa đơn hoặc khách hàng
 const voucherRealtimeKey = computed(() => {
     const order = selectedOrder.value;
     if (!order?.id) return '';
-    return `${order.id}|${order.idKhachHang || ''}|${order.tongTien || 0}`;
+    return `${order.id}|${order.idKhachHang || ''}`;
 });
 
 watch(
@@ -1265,30 +1250,12 @@ async function calculateShippingFee() {
     }
 }
 
-// Tự động tính lại phí ship GHN khi số lượng sản phẩm trong giỏ thay đổi
-watch(selectedOrderItemCount, async () => {
-    if (isGiaoHang.value && recipientWard.value && recipientDistrict.value && !syncingRecipientAddress.value) {
-        await calculateShippingFee();
+// Tự động tính lại phí ship GHN khi số lượng sản phẩm hoặc địa chỉ thay đổi
+watch([selectedOrderItemCount, () => recipientWard.value, () => recipientDistrict.value, isGiaoHang], () => {
+    if (isGiaoHang.value && recipientWard.value && recipientDistrict.value && !isFreeShip.value) {
+        debouncedCalculateShippingFee();
     }
 });
-
-watch(
-    () => recipientWard.value,
-    async (newVal) => {
-        if (newVal && !syncingRecipientAddress.value) {
-            await calculateShippingFee();
-        }
-    }
-);
-
-watch(
-    () => selectedOrderItemCount.value,
-    async () => {
-        if (recipientWard.value && isGiaoHang.value) {
-            await calculateShippingFee();
-        }
-    }
-);
 
 // Logic: Hóa đơn
 const createNewOrder = async ({ silent = false, force = false } = {}) => {
@@ -1435,10 +1402,6 @@ const onAddProduct = async (product) => {
         });
         updateOrderInList(updated);
 
-        if (updated.bestVoucherId && !updated.idPhieuGiamGia) {
-            void onApplyVoucher(updated.bestVoucherId, true, true);
-        }
-
         if (updated.priceChanged) {
             addNotification({ title: 'Giá sản phẩm thay đổi', subtitle: updated.priceChangeMessage, color: 'warning' });
         }
@@ -1544,6 +1507,36 @@ const onUpdateQty = async (item, delta, inputEventTarget = null) => {
         inputEventTarget.value = newQty;
     }
 
+    // Tự động tính lại tổng tiền đơn hàng và voucher tức thì (0ms)
+    if (selectedOrder.value?.listsHoaDonChiTiet) {
+        const newTotal = selectedOrder.value.listsHoaDonChiTiet.reduce((sum, it) => sum + (Number(it.thanhTien) || 0), 0);
+        selectedOrder.value.tongTien = newTotal;
+        if (vouchers.value?.length) {
+            const available = vouchers.value.filter((v) => !v.disabled && Number(v.donHangToiThieu || 0) <= newTotal);
+            if (available.length > 0) {
+                const best = available.reduce((max, cur) => {
+                    const curDisc = getVoucherDiscountValue(cur, newTotal);
+                    const maxDisc = getVoucherDiscountValue(max, newTotal);
+                    return curDisc > maxDisc ? cur : max;
+                }, available[0]);
+                if (best) {
+                    const disc = getVoucherDiscountValue(best, newTotal);
+                    selectedOrder.value.idPhieuGiamGia = best.id;
+                    selectedOrder.value.phieuGiamGia = best;
+                    selectedOrder.value.tienGiamGiaPhieu = disc;
+                    selectedOrder.value.tongTienSauGiam = Math.max(0, newTotal - disc);
+                    selectedOrder.value.thanhTien = selectedOrder.value.tongTienSauGiam + Number(selectedOrder.value.phiVanChuyen || 0);
+                }
+            } else {
+                selectedOrder.value.idPhieuGiamGia = null;
+                selectedOrder.value.phieuGiamGia = null;
+                selectedOrder.value.tienGiamGiaPhieu = 0;
+                selectedOrder.value.tongTienSauGiam = newTotal;
+                selectedOrder.value.thanhTien = newTotal + Number(selectedOrder.value.phiVanChuyen || 0);
+            }
+        }
+    }
+
     // Debounce API call (300ms after last click)
     const timer = setTimeout(async () => {
         pendingQtyUpdates.delete(updateKey);
@@ -1633,7 +1626,7 @@ const decorateVoucher = (v, order = selectedOrder.value) => {
 // BE là nguồn quyết định voucher tốt nhất (đã xét %/tiền mặt, trần giảm, thời hạn và phiếu cá nhân).
 // Dùng serial để response cũ không ghi đè khi nhân viên thêm/xóa sản phẩm liên tục.
 let voucherRefreshSerial = 0;
-const refreshBestVoucher = async (order = selectedOrder.value, autoApply = true) => {
+const refreshBestVoucher = async (order = selectedOrder.value) => {
     if (!order?.id) return;
     const refreshSerial = ++voucherRefreshSerial;
     try {
@@ -1641,33 +1634,6 @@ const refreshBestVoucher = async (order = selectedOrder.value, autoApply = true)
         const decorated = (list || []).map((v) => decorateVoucher(v, order));
         if (refreshSerial !== voucherRefreshSerial) return;
         vouchers.value = decorated;
-
-        if (autoApply) {
-            let bestId = order.bestVoucherId || null;
-            if (!bestId && list && list.length > 0) {
-                const available = list.filter((v) => !v.disabled && Number(v.donHangToiThieu || 0) <= Number(order.tongTien || 0));
-                if (available.length > 0) {
-                    const best = available.reduce((max, cur) => {
-                        const curDiscount = getVoucherDiscountValue(cur, Number(order.tongTien || 0));
-                        const maxDiscount = getVoucherDiscountValue(max, Number(order.tongTien || 0));
-                        return curDiscount > maxDiscount ? cur : max;
-                    }, available[0]);
-                    bestId = best?.id || null;
-                }
-            }
-
-            if (!bestId) {
-                const backendBestVoucher = await dichVuDonHang.getBestVoucher(order.id);
-                bestId = backendBestVoucher?.id || null;
-            }
-
-            const currentId = order.idPhieuGiamGia || null;
-            if (bestId && String(currentId) !== String(bestId)) {
-                await onApplyVoucher(bestId, false, true);
-            } else if (!bestId && currentId && Number(order.phieuGiamGia?.donHangToiThieu || 0) > Number(order.tongTien || 0)) {
-                await onApplyVoucher(null, false, true);
-            }
-        }
     } catch (e) {
         console.error('Lỗi khi cập nhật phiếu giảm giá:', e);
     }

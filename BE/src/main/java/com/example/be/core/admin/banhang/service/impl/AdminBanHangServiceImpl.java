@@ -695,7 +695,12 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     public List<PhieuGiamGia> getVouchers(BigDecimal tongTien) {
-        return phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG);
+        long now = System.currentTimeMillis();
+        return phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG).stream()
+                .filter(v -> (v.getSoLuong() == null || v.getSoLuong() != 0)
+                        && (v.getNgayBatDau() == null || now >= v.getNgayBatDau())
+                        && (v.getNgayKetThuc() == null || now <= v.getNgayKetThuc()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -894,18 +899,21 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         hd.setTongTien(total);
 
-        if (hd.getPhieuGiamGia() != null) {
+        long now = System.currentTimeMillis();
+        List<PhieuGiamGia> activeVouchers = phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG);
+
+        if (autoSelectBestVoucher) {
+            PhieuGiamGia bestVoucher = getBestVoucher(hd, activeVouchers);
+            hd.setPhieuGiamGia(bestVoucher);
+        } else if (hd.getPhieuGiamGia() != null) {
             PhieuGiamGia currentVoucher = hd.getPhieuGiamGia();
             if (currentVoucher.getId() != null) {
                 currentVoucher = phieuGiamGiaRepository.findById(currentVoucher.getId()).orElse(currentVoucher);
             }
-            long now = System.currentTimeMillis();
             if (currentVoucher == null || !isVoucherAvailableForOrder(currentVoucher, hd, now)) {
                 // Voucher bị hủy, hết hạn, hoặc hết lượt dùng -> gỡ bỏ
                 hd.setPhieuGiamGia(null);
             } else {
-                // Voucher vẫn còn hiệu lực (kể cả khi tổng tiền chưa đạt đơn tối thiểu)
-                // Giữ nguyên voucher để mapToHoaDonResponse hiển thị cảnh báo và modal cho nhân viên
                 hd.setPhieuGiamGia(currentVoucher);
             }
         }

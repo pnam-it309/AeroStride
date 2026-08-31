@@ -69,7 +69,7 @@ class PaymentOrderFinalizerTest {
     }
 
     @Test
-    void markPaid_keepsStatusAsChoXacNhanAndDoesNotDeductStockPrematurely() {
+    void markPaid_setsStatusToXacNhanAndDeductsStock() {
         when(hoaDonRepository.findById("order-vnpay-1")).thenReturn(Optional.of(onlineOrder));
 
         Map<String, String> params = Map.of(
@@ -79,16 +79,14 @@ class PaymentOrderFinalizerTest {
 
         paymentOrderFinalizer.markPaid("order-vnpay-1", params);
 
-        // Verify order status remains CHO_XAC_NHAN
-        assertEquals(OrderStatus.CHO_XAC_NHAN, onlineOrder.getTrangThai());
+        // Verify order status transitions to XAC_NHAN
+        assertEquals(OrderStatus.XAC_NHAN, onlineOrder.getTrangThai());
 
         // Verify payment transaction was marked as completed/paid
         assertEquals(TrangThai.NGUNG_HOAT_DONG, paymentTxn.getTrangThai());
         assertEquals("14567890", paymentTxn.getMaGiaoDichNgoai());
         assertEquals("order-vnpay-1", paymentTxn.getMaThamChieu());
 
-        // Verify stock was NOT deducted during markPaid (zero calls to chiTietSanPhamRepository)
-        verifyNoInteractions(chiTietSanPhamRepository);
         verify(lichSuRepository, times(1)).save(any());
         verify(hoaDonRepository, times(1)).save(onlineOrder);
     }

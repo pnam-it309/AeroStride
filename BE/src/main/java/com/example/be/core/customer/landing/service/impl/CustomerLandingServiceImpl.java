@@ -38,6 +38,7 @@ import com.example.be.core.customer.landing.model.response.CustomerLandingFlashS
 import com.example.be.repository.DotGiamGiaRepository;
 import com.example.be.core.customer.sanpham.model.response.CustomerProductFormOptionsResponse;
 import com.example.be.core.customer.sanpham.service.CustomerSanPhamService;
+import com.example.be.utils.DiscountPriceUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -116,59 +117,9 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
                 .filter(rel -> rel.getChiTietSanPham() != null)
                 .collect(Collectors.groupingBy(rel -> rel.getChiTietSanPham().getId()));
 
-        long now = System.currentTimeMillis();
-
-        return variants.stream().map(v -> {
-            List<AnhChiTietSanPham> imgs = imageMap.getOrDefault(v.getId(), Collections.emptyList());
-            List<String> imgUrls = imgs.stream().map(AnhChiTietSanPham::getDuongDanAnh).toList();
-            String primaryImage = imgs.stream()
-                    .filter(AnhChiTietSanPham::getHinhAnhDaiDien)
-                    .findFirst()
-                    .map(AnhChiTietSanPham::getDuongDanAnh)
-                    .orElse(imgUrls.isEmpty() ? null : imgUrls.get(0));
-                    
-            if (primaryImage == null && v.getSanPham() != null) {
-                primaryImage = v.getSanPham().getHinhAnh();
-            }
-
-            BigDecimal activeDiscount = BigDecimal.ZERO;
-            List<ChiTietDotGiamGia> rels = relationMap.getOrDefault(v.getId(), Collections.emptyList());
-            if (!rels.isEmpty()) {
-                List<DotGiamGia> validCampaigns = new ArrayList<>();
-                for (ChiTietDotGiamGia ct : rels) {
-                    DotGiamGia d = ct.getDotGiamGia();
-                    if (d != null && d.getTrangThai() == TrangThai.DANG_HOAT_DONG
-                            && d.getNgayBatDau() != null && d.getNgayKetThuc() != null
-                            && d.getNgayBatDau() <= now && now <= d.getNgayKetThuc()
-                            && d.getSoTienGiam() != null) {
-                        validCampaigns.add(d);
-                    }
-                }
-                if (!validCampaigns.isEmpty()) {
-                    validCampaigns.sort((c1, c2) -> c2.getSoTienGiam().compareTo(c1.getSoTienGiam()));
-                    activeDiscount = validCampaigns.get(0).getSoTienGiam();
-                }
-            }
-
-            return CustomerLandingVariantResponse.builder()
-                    .id(v.getId())
-                    .idSanPham(v.getSanPham() != null ? v.getSanPham().getId() : null)
-                    .maSanPham(v.getSanPham() != null ? v.getSanPham().getMa() : null)
-                    .tenSanPham(v.getSanPham() != null ? v.getSanPham().getTen() : null)
-                    .tenThuongHieu(v.getSanPham() != null && v.getSanPham().getThuongHieu() != null
-                            ? v.getSanPham().getThuongHieu().getTen() : null)
-                    .maChiTietSanPham(v.getMaChiTietSanPham())
-                    .tenMauSac(v.getMauSac() != null ? v.getMauSac().getTen() : null)
-                    .maMauHex(v.getMauSac() != null ? v.getMauSac().getMaMauHex() : null)
-                    .tenKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getTen() : null)
-                    .giaTriKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getGiaTriKichThuoc() : null)
-                    .soLuong(v.getSoLuong())
-                    .giaBan(v.getGiaBan())
-                    .phanTramGiam(activeDiscount)
-                    .hinhAnh(primaryImage)
-                    .images(imgUrls)
-                    .build();
-        }).collect(Collectors.toList());
+        return variants.stream()
+                .map(v -> mapVariantToLandingResponse(v, imageMap, relationMap))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -179,7 +130,6 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
             return Collections.emptyList();
         }
 
-        // Gom nhóm theo Sản Phẩm cha để mỗi sản phẩm chỉ hiển thị 1 biến thể giảm giá tiêu biểu
         Map<String, ChiTietSanPham> distinctByProduct = activeDiscounts.stream()
                 .map(ChiTietDotGiamGia::getChiTietSanPham)
                 .filter(v -> v != null && !Boolean.TRUE.equals(v.getXoaMem()) && v.getTrangThai() == TrangThai.DANG_HOAT_DONG && v.getSanPham() != null)
@@ -212,57 +162,9 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
                 .filter(rel -> rel.getChiTietSanPham() != null)
                 .collect(Collectors.groupingBy(rel -> rel.getChiTietSanPham().getId()));
 
-        return variants.stream().map(v -> {
-            List<AnhChiTietSanPham> imgs = imageMap.getOrDefault(v.getId(), Collections.emptyList());
-            List<String> imgUrls = imgs.stream().map(AnhChiTietSanPham::getDuongDanAnh).toList();
-            String primaryImage = imgs.stream()
-                    .filter(AnhChiTietSanPham::getHinhAnhDaiDien)
-                    .findFirst()
-                    .map(AnhChiTietSanPham::getDuongDanAnh)
-                    .orElse(imgUrls.isEmpty() ? null : imgUrls.get(0));
-
-            if (primaryImage == null && v.getSanPham() != null) {
-                primaryImage = v.getSanPham().getHinhAnh();
-            }
-
-            BigDecimal activeDiscount = BigDecimal.ZERO;
-            List<ChiTietDotGiamGia> rels = relationMap.getOrDefault(v.getId(), Collections.emptyList());
-            if (!rels.isEmpty()) {
-                List<DotGiamGia> validCampaigns = new ArrayList<>();
-                for (ChiTietDotGiamGia ct : rels) {
-                    DotGiamGia d = ct.getDotGiamGia();
-                    if (d != null && d.getTrangThai() == TrangThai.DANG_HOAT_DONG
-                            && d.getNgayBatDau() != null && d.getNgayKetThuc() != null
-                            && d.getNgayBatDau() <= now && now <= d.getNgayKetThuc()
-                            && d.getSoTienGiam() != null) {
-                        validCampaigns.add(d);
-                    }
-                }
-                if (!validCampaigns.isEmpty()) {
-                    validCampaigns.sort((c1, c2) -> c2.getSoTienGiam().compareTo(c1.getSoTienGiam()));
-                    activeDiscount = validCampaigns.get(0).getSoTienGiam();
-                }
-            }
-
-            return CustomerLandingVariantResponse.builder()
-                    .id(v.getId())
-                    .idSanPham(v.getSanPham() != null ? v.getSanPham().getId() : null)
-                    .maSanPham(v.getSanPham() != null ? v.getSanPham().getMa() : null)
-                    .tenSanPham(v.getSanPham() != null ? v.getSanPham().getTen() : null)
-                    .tenThuongHieu(v.getSanPham() != null && v.getSanPham().getThuongHieu() != null
-                            ? v.getSanPham().getThuongHieu().getTen() : null)
-                    .maChiTietSanPham(v.getMaChiTietSanPham())
-                    .tenMauSac(v.getMauSac() != null ? v.getMauSac().getTen() : null)
-                    .maMauHex(v.getMauSac() != null ? v.getMauSac().getMaMauHex() : null)
-                    .tenKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getTen() : null)
-                    .giaTriKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getGiaTriKichThuoc() : null)
-                    .soLuong(v.getSoLuong())
-                    .giaBan(v.getGiaBan())
-                    .phanTramGiam(activeDiscount)
-                    .hinhAnh(primaryImage)
-                    .images(imgUrls)
-                    .build();
-        }).collect(Collectors.toList());
+        return variants.stream()
+                .map(v -> mapVariantToLandingResponse(v, imageMap, relationMap))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -273,7 +175,6 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
 
         if (allTopVariants.isEmpty()) return Collections.emptyList();
 
-        // Gom nhóm theo Sản Phẩm cha để mỗi sản phẩm chỉ hiển thị 1 biến thể bán chạy/nhiều số lượng nhất
         Map<String, ChiTietSanPham> distinctByProduct = allTopVariants.stream()
                 .filter(v -> v.getSanPham() != null)
                 .collect(Collectors.toMap(
@@ -301,53 +202,54 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
                 .filter(rel -> rel.getChiTietSanPham() != null)
                 .collect(Collectors.groupingBy(rel -> rel.getChiTietSanPham().getId()));
 
-        long now = System.currentTimeMillis();
+        return variants.stream()
+                .map(v -> mapVariantToLandingResponse(v, imageMap, relationMap))
+                .collect(Collectors.toList());
+    }
 
-        return variants.stream().map(v -> {
-            List<AnhChiTietSanPham> imgs = imageMap.getOrDefault(v.getId(), Collections.emptyList());
-            List<String> imgUrls = imgs.stream().map(AnhChiTietSanPham::getDuongDanAnh).toList();
-            String primaryImage = imgs.stream()
-                    .filter(AnhChiTietSanPham::getHinhAnhDaiDien)
-                    .findFirst()
-                    .map(AnhChiTietSanPham::getDuongDanAnh)
-                    .orElse(imgUrls.isEmpty() ? null : imgUrls.get(0));
-                    
-            if (primaryImage == null && v.getSanPham() != null) {
-                primaryImage = v.getSanPham().getHinhAnh();
-            }
+    private CustomerLandingVariantResponse mapVariantToLandingResponse(
+            ChiTietSanPham v,
+            Map<String, List<AnhChiTietSanPham>> imageMap,
+            Map<String, List<ChiTietDotGiamGia>> relationMap) {
 
-            BigDecimal activeDiscount = BigDecimal.ZERO;
-            List<ChiTietDotGiamGia> rels = relationMap.getOrDefault(v.getId(), Collections.emptyList());
-            for (ChiTietDotGiamGia ct : rels) {
-                DotGiamGia d = ct.getDotGiamGia();
-                if (d != null && d.getTrangThai() == TrangThai.DANG_HOAT_DONG
-                        && d.getNgayBatDau() != null && d.getNgayKetThuc() != null
-                        && d.getNgayBatDau() <= now && now <= d.getNgayKetThuc()
-                        && d.getSoTienGiam() != null
-                        && d.getSoTienGiam().compareTo(activeDiscount) > 0) {
-                    activeDiscount = d.getSoTienGiam();
-                }
-            }
+        List<AnhChiTietSanPham> imgs = imageMap.getOrDefault(v.getId(), Collections.emptyList());
+        List<String> imgUrls = imgs.stream().map(AnhChiTietSanPham::getDuongDanAnh).toList();
+        String primaryImage = imgs.stream()
+                .filter(AnhChiTietSanPham::getHinhAnhDaiDien)
+                .findFirst()
+                .map(AnhChiTietSanPham::getDuongDanAnh)
+                .orElse(imgUrls.isEmpty() ? null : imgUrls.get(0));
 
-            return CustomerLandingVariantResponse.builder()
-                    .id(v.getId())
-                    .idSanPham(v.getSanPham() != null ? v.getSanPham().getId() : null)
-                    .maSanPham(v.getSanPham() != null ? v.getSanPham().getMa() : null)
-                    .tenSanPham(v.getSanPham() != null ? v.getSanPham().getTen() : null)
-                    .tenThuongHieu(v.getSanPham() != null && v.getSanPham().getThuongHieu() != null
-                            ? v.getSanPham().getThuongHieu().getTen() : null)
-                    .maChiTietSanPham(v.getMaChiTietSanPham())
-                    .tenMauSac(v.getMauSac() != null ? v.getMauSac().getTen() : null)
-                    .maMauHex(v.getMauSac() != null ? v.getMauSac().getMaMauHex() : null)
-                    .tenKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getTen() : null)
-                    .giaTriKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getGiaTriKichThuoc() : null)
-                    .soLuong(v.getSoLuong())
-                    .giaBan(v.getGiaBan())
-                    .phanTramGiam(activeDiscount)
-                    .hinhAnh(primaryImage)
-                    .images(imgUrls)
-                    .build();
-        }).collect(Collectors.toList());
+        if (primaryImage == null && v.getSanPham() != null) {
+            primaryImage = v.getSanPham().getHinhAnh();
+        }
+
+        List<ChiTietDotGiamGia> rels = relationMap.getOrDefault(v.getId(), Collections.emptyList());
+        BigDecimal originalPrice = v.getGiaBan() != null ? v.getGiaBan() : BigDecimal.ZERO;
+        BigDecimal discountedPrice = DiscountPriceUtils.calculateDiscountedPrice(originalPrice, rels);
+        BigDecimal activeDiscountPercent = DiscountPriceUtils.getActiveDiscountPercent(originalPrice, rels);
+        String discountName = DiscountPriceUtils.getActiveDiscountName(originalPrice, rels);
+
+        return CustomerLandingVariantResponse.builder()
+                .id(v.getId())
+                .idSanPham(v.getSanPham() != null ? v.getSanPham().getId() : null)
+                .maSanPham(v.getSanPham() != null ? v.getSanPham().getMa() : null)
+                .tenSanPham(v.getSanPham() != null ? v.getSanPham().getTen() : null)
+                .tenThuongHieu(v.getSanPham() != null && v.getSanPham().getThuongHieu() != null
+                        ? v.getSanPham().getThuongHieu().getTen() : null)
+                .maChiTietSanPham(v.getMaChiTietSanPham())
+                .tenMauSac(v.getMauSac() != null ? v.getMauSac().getTen() : null)
+                .maMauHex(v.getMauSac() != null ? v.getMauSac().getMaMauHex() : null)
+                .tenKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getTen() : null)
+                .giaTriKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getGiaTriKichThuoc() : null)
+                .soLuong(v.getSoLuong())
+                .giaGoc(activeDiscountPercent.compareTo(BigDecimal.ZERO) > 0 ? originalPrice : null)
+                .giaBan(discountedPrice)
+                .phanTramGiam(activeDiscountPercent)
+                .tenDotGiamGia(discountName)
+                .hinhAnh(primaryImage)
+                .images(imgUrls)
+                .build();
     }
 
     @Override

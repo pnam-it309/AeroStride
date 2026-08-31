@@ -68,7 +68,9 @@ const displayProducts = computed(() => {
         maMauHex: v.maMauHex,
         hinhAnh: resolveImg(v.hinhAnh),
         giaBan: v.giaBan,
+        giaGoc: v.giaGoc || null,
         phanTramGiam: Number(v.phanTramGiam) || 0,
+        tenDotGiamGia: v.tenDotGiamGia || null,
         soLuong: v.soLuong || 0,
         sizes: v.tenKichThuoc ? [v.tenKichThuoc] : [],
         tenMauSac: v.tenMauSac
@@ -174,8 +176,8 @@ const addToCart = (e, product) => {
                                                     formatPrice(product.giaBan)
                                                 }}</span>
                                                 <span v-else class="price-contact">Liên hệ</span>
-                                                <span v-if="product.phanTramGiam > 0" class="price-old">
-                                                    {{ formatPrice(product.giaBan / (1 - product.phanTramGiam / 100)) }}
+                                                <span v-if="product.phanTramGiam > 0 && (product.giaGoc || product.giaBan)" class="price-old">
+                                                    {{ formatPrice(product.giaGoc || (product.giaBan / (1 - product.phanTramGiam / 100))) }}
                                                 </span>
                                             </div>
 

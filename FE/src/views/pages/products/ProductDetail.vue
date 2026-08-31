@@ -276,36 +276,27 @@ const colorHexMap = computed(() => {
 
 const discountPercent = computed(() => {
     if (selectedVariant.value && selectedVariant.value.phanTramGiam) {
-        const val = Number(selectedVariant.value.phanTramGiam);
-        if (val > 0 && val < 100) return val;
-        if (val > 0 && selectedVariant.value.giaBan) {
-            return Math.round((val / selectedVariant.value.giaBan) * 100);
-        }
+        return Number(selectedVariant.value.phanTramGiam) || 0;
     }
     return 0;
 });
 
 const currentPrice = computed(() => {
     if (selectedVariant.value) {
-        const basePrice = selectedVariant.value.giaBan || 0;
-        const discountAmt = Number(selectedVariant.value.phanTramGiam) || 0;
-        if (discountAmt > 0) {
-            if (discountAmt < 100) {
-                return basePrice * (1 - discountAmt / 100);
-            } else {
-                return basePrice - discountAmt;
-            }
-        }
-        return basePrice;
+        return selectedVariant.value.giaBan || 0;
     }
     return product.value?.minPrice || 0;
 });
 
 const oldPrice = computed(() => {
-    if (selectedVariant.value && Number(selectedVariant.value.phanTramGiam) > 0) {
-        return selectedVariant.value.giaBan;
+    if (selectedVariant.value && selectedVariant.value.giaGoc && Number(selectedVariant.value.giaGoc) > Number(selectedVariant.value.giaBan)) {
+        return selectedVariant.value.giaGoc;
     }
     return null;
+});
+
+const activeDiscountName = computed(() => {
+    return selectedVariant.value?.tenDotGiamGia || null;
 });
 
 const formattedCurrentPrice = computed(() => formatPrice(currentPrice.value));
@@ -376,7 +367,10 @@ const buyNow = async () => {
             hinhAnh: variant.images?.[0]?.duongDanAnh || product.value?.hinhAnh || '',
             tenMauSac: variant.tenMauSac || selectedColor.value || '',
             tenKichThuoc: variant.tenKichThuoc || selectedSize.value || '',
-            giaBan: variant.giaBan || displayPrice.value || 0,
+            giaBan: currentPrice.value || variant.giaBan || displayPrice.value || 0,
+            giaGoc: oldPrice.value || null,
+            phanTramGiam: discountPercent.value || null,
+            tenDotGiamGia: activeDiscountName.value || null,
             soLuongTonKho: variant.soLuong || 0
         });
         if (result?.success) {
@@ -680,8 +674,9 @@ const addToCart = async () => {
             hinhAnh: variant.images?.[0]?.duongDanAnh || product.value?.hinhAnh || '',
             tenMauSac: variant.tenMauSac || selectedColor.value || '',
             giaBan: currentPrice.value || variant.giaBan || displayPrice.value || 0,
-            giaGoc: oldPrice.value || variant.giaBan || 0,
-            phanTramGiam: discountPercent.value || 0,
+            giaGoc: oldPrice.value || null,
+            phanTramGiam: discountPercent.value || null,
+            tenDotGiamGia: activeDiscountName.value || null,
             soLuongTonKho: variant.soLuong || 0
         });
         if (result?.success) {
@@ -861,12 +856,15 @@ const toggleFavorite = () => {
                         </div>
 
                         <!-- Price Section -->
-                        <div class="product-price-row d-flex align-center gap-4 mb-6">
+                        <div class="product-price-row d-flex align-center flex-wrap gap-4 mb-6">
                             <span class="current-price-label-new">{{ formattedCurrentPrice }}</span>
                             <span v-if="discountPercent > 0 && formattedOldPrice" class="old-price-label-new">
                                 {{ formattedOldPrice }}
                             </span>
                             <span v-if="discountPercent > 0" class="discount-badge-new"> -{{ discountPercent }}% </span>
+                            <v-chip v-if="activeDiscountName" color="error" size="small" variant="tonal" prepend-icon="mdi-tag-outline" class="font-weight-bold ml-2">
+                                {{ activeDiscountName }}
+                            </v-chip>
                         </div>
 
                         <!-- Color Selection -->

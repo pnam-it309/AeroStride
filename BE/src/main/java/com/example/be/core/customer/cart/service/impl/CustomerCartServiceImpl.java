@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -81,15 +82,12 @@ public class CustomerCartServiceImpl implements CustomerCartService {
             }
 
             BigDecimal giaGoc = ctsp.getGiaBan() != null ? ctsp.getGiaBan() : BigDecimal.ZERO;
-            BigDecimal giaBan = DiscountPriceUtils.calculateDiscountedPrice(giaGoc, relationMap.get(ctsp.getId()));
+            List<ChiTietDotGiamGia> rels = relationMap.getOrDefault(ctsp.getId(), Collections.emptyList());
+            BigDecimal giaBan = DiscountPriceUtils.calculateDiscountedPrice(giaGoc, rels);
             BigDecimal discount = giaGoc.subtract(giaBan).max(BigDecimal.ZERO);
+            BigDecimal activePercent = DiscountPriceUtils.getActiveDiscountPercent(giaGoc, rels);
+            String discountName = DiscountPriceUtils.getActiveDiscountName(giaGoc, rels);
             tongTien = tongTien.add(giaBan.multiply(BigDecimal.valueOf(finalQty)));
-
-            Integer phanTramGiam = 0;
-            if (giaGoc.compareTo(BigDecimal.ZERO) > 0 && discount.compareTo(BigDecimal.ZERO) > 0) {
-                phanTramGiam = discount.multiply(BigDecimal.valueOf(100))
-                        .divide(giaGoc, java.math.RoundingMode.HALF_UP).intValue();
-            }
 
             responses.add(CustomerCartItemResponse.builder()
                     .idChiTietSanPham(ctsp.getId())
@@ -100,7 +98,8 @@ public class CustomerCartServiceImpl implements CustomerCartService {
                     .tenKichThuoc(ctsp.getKichThuoc() != null ? ctsp.getKichThuoc().getTen() : "")
                     .giaBan(giaBan)
                     .giaGoc(discount.compareTo(BigDecimal.ZERO) > 0 ? giaGoc : null)
-                    .phanTramGiam(phanTramGiam > 0 ? phanTramGiam : null)
+                    .phanTramGiam(activePercent.compareTo(BigDecimal.ZERO) > 0 ? activePercent.intValue() : null)
+                    .tenDotGiamGia(discountName)
                     .soLuong(finalQty)
                     .soLuongTonKho(stock)
                     .isAvailable(isAvailable)

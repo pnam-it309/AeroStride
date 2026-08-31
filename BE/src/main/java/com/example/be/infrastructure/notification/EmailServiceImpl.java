@@ -58,58 +58,56 @@ public class EmailServiceImpl implements EmailService {
         if (request == null || request.getTo() == null || request.getTo().isBlank()) {
             return;
         }
-        mailExecutor.execute(() -> {
-            try {
-                log.info("Starting to send async email to: {}", request.getTo());
-                
-                Map<String, Object> vars = request.getVariables() != null ? new HashMap<>(request.getVariables()) : new HashMap<>();
-                vars.putIfAbsent("baseUrl", frontendUrl);
-                vars.putIfAbsent("frontendUrl", frontendUrl);
+        try {
+            log.info("Starting to send async email to: {}", request.getTo());
+            
+            Map<String, Object> vars = request.getVariables() != null ? new HashMap<>(request.getVariables()) : new HashMap<>();
+            vars.putIfAbsent("baseUrl", frontendUrl);
+            vars.putIfAbsent("frontendUrl", frontendUrl);
 
-                Context context = new Context();
-                context.setVariables(vars);
+            Context context = new Context();
+            context.setVariables(vars);
 
-                String html = templateEngine.process("email/" + request.getTemplateName(), context);
+            String html = templateEngine.process("email/" + request.getTemplateName(), context);
 
-                // 1. Ưu tiên gửi qua Resend HTTP API (cổng 443 HTTPS - hoàn toàn không bị chặn trên Render/Cloud)
-                if (resendApiKey != null && !resendApiKey.isBlank()) {
-                    boolean sent = sendViaResend(request.getTo(), request.getSubject(), html);
-                    if (sent) {
-                        return;
-                    }
-                    log.warn("Resend API failed, attempting SMTP fallback...");
+            // 1. Ưu tiên gửi qua Resend HTTP API (cổng 443 HTTPS - hoàn toàn không bị chặn trên Render/Cloud)
+            if (resendApiKey != null && !resendApiKey.isBlank()) {
+                boolean sent = sendViaResend(request.getTo(), request.getSubject(), html);
+                if (sent) {
+                    return;
                 }
-
-                // 2. Fallback sang JavaMailSender (SMTP) nếu Resend chưa cấu hình hoặc thất bại
-                if (fromEmail != null && !fromEmail.isBlank()) {
-                    MimeMessage message = mailSender.createMimeMessage();
-                    MimeMessageHelper helper = new MimeMessageHelper(
-                            message, 
-                            MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, 
-                            StandardCharsets.UTF_8.name()
-                    );
-
-                    try {
-                        helper.setFrom(fromEmail, "AeroStride");
-                    } catch (Exception e) {
-                        helper.setFrom(fromEmail);
-                    }
-                    helper.setTo(request.getTo());
-                    helper.setSubject(request.getSubject());
-                    helper.setText(html, true);
-
-                    mailSender.send(message);
-                    log.info("Email sent successfully via SMTP to: {}", request.getTo());
-                } else {
-                    log.warn("Không thể gửi email đến {}: Chưa cấu hình RESEND_API_KEY hoặc MAIL_USERNAME.", request.getTo());
-                }
-                
-            } catch (MessagingException | MailException e) {
-                log.error("Failed to send email to: {}. Error: {}", request.getTo(), e.getMessage());
-            } catch (Exception e) {
-                log.error("Unexpected error during async email sending to: {}. Error: {}", request.getTo(), e.getMessage());
+                log.warn("Resend API failed, attempting SMTP fallback...");
             }
-        });
+
+            // 2. Fallback sang JavaMailSender (SMTP) nếu Resend chưa cấu hình hoặc thất bại
+            if (fromEmail != null && !fromEmail.isBlank()) {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(
+                        message, 
+                        MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, 
+                        StandardCharsets.UTF_8.name()
+                );
+
+                try {
+                    helper.setFrom(fromEmail, "AeroStride");
+                } catch (Exception e) {
+                    helper.setFrom(fromEmail);
+                }
+                helper.setTo(request.getTo());
+                helper.setSubject(request.getSubject());
+                helper.setText(html, true);
+
+                mailSender.send(message);
+                log.info("Email sent successfully via SMTP to: {}", request.getTo());
+            } else {
+                log.warn("Không thể gửi email đến {}: Chưa cấu hình RESEND_API_KEY hoặc MAIL_USERNAME.", request.getTo());
+            }
+            
+        } catch (MessagingException | MailException e) {
+            log.error("Failed to send email to: {}. Error: {}", request.getTo(), e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error during async email sending to: {}. Error: {}", request.getTo(), e.getMessage());
+        }
     }
 
     private boolean sendViaResend(String to, String subject, String html) {

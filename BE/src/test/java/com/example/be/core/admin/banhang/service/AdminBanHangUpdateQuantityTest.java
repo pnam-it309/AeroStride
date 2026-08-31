@@ -161,14 +161,13 @@ class AdminBanHangUpdateQuantityTest {
         when(chiTietSanPhamRepository.saveAndFlush(any())).thenReturn(variant);
         when(hoaDonChiTietRepository.findAllByHoaDon(hoaDon)).thenReturn(List.of(oldPriceDetail));
         when(chiTietDotGiamGiaRepository.findAllByChiTietSanPhamIdIn(anyList())).thenReturn(Collections.emptyList());
-        when(phieuGiamGiaRepository.findById("voucher-500k")).thenReturn(Optional.of(voucher));
+        when(phieuGiamGiaRepository.findAllByTrangThai(com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG)).thenReturn(List.of(voucher));
 
         AdminBanHangHoaDonResponse response = service.updateSoLuong("order-1", "detail-1", 1);
 
         assertNotNull(response);
-        assertTrue(response.getVoucherIneligible());
-        assertEquals("MIN_ORDER_NOT_MET", response.getVoucherIneligibleReason());
-        assertEquals(new BigDecimal("500000"), response.getVoucherMinOrder());
-        assertNotNull(response.getVoucherIneligibleMessage());
+        // Khi giảm số lượng xuống dưới 500k, voucher 500k tự động gỡ bỏ vì không còn đủ điều kiện
+        assertNull(response.getIdPhieuGiamGia());
+        assertEquals(new BigDecimal("100000"), response.getTongTien());
     }
 }

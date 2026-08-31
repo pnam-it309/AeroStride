@@ -27,6 +27,8 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.example.be.utils.DiscountPriceUtils;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -360,24 +362,14 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
 
         // 3. Map to responses in memory
         return variants.stream().map(v -> {
-            v.setChiTietDotGiamGias(new java.util.LinkedHashSet<>(relationMap.getOrDefault(v.getId(), new ArrayList<>())));
+            List<ChiTietDotGiamGia> rels = relationMap.getOrDefault(v.getId(), new ArrayList<>());
+            v.setChiTietDotGiamGias(new java.util.LinkedHashSet<>(rels));
             List<CustomerProductVariantImageResponse> imgs = imageMap.getOrDefault(v.getId(), new ArrayList<>());
 
-            BigDecimal activeDiscount = BigDecimal.ZERO;
-            if (v.getChiTietDotGiamGias() != null) {
-                for (ChiTietDotGiamGia ct : v.getChiTietDotGiamGias()) {
-                    DotGiamGia d = ct.getDotGiamGia();
-                    if (d != null && d.getTrangThai() == TrangThai.DANG_HOAT_DONG) {
-                        if (d.getNgayBatDau() != null && d.getNgayKetThuc() != null
-                                && d.getNgayBatDau() <= now && now <= d.getNgayKetThuc()) {
-                            BigDecimal val = ct.getGiaTriGiam() != null ? ct.getGiaTriGiam() : d.getSoTienGiam();
-                            if (val != null && val.compareTo(activeDiscount) > 0) {
-                                activeDiscount = val;
-                            }
-                        }
-                    }
-                }
-            }
+            BigDecimal originalPrice = v.getGiaBan() != null ? v.getGiaBan() : BigDecimal.ZERO;
+            BigDecimal discountedPrice = DiscountPriceUtils.calculateDiscountedPrice(originalPrice, rels);
+            BigDecimal activeDiscountPercent = DiscountPriceUtils.getActiveDiscountPercent(originalPrice, rels);
+            String discountName = DiscountPriceUtils.getActiveDiscountName(originalPrice, rels);
 
             return CustomerProductVariantResponse.builder()
                     .id(v.getId())
@@ -400,8 +392,10 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                     .tenKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getTen() : null)
                     .giaTriKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getGiaTriKichThuoc() : null)
                     .soLuong(v.getSoLuong())
-                    .giaBan(v.getGiaBan())
-                    .phanTramGiam(activeDiscount)
+                    .giaGoc(activeDiscountPercent.compareTo(BigDecimal.ZERO) > 0 ? originalPrice : null)
+                    .giaBan(discountedPrice)
+                    .phanTramGiam(activeDiscountPercent)
+                    .tenDotGiamGia(discountName)
                     .trangThai(v.getTrangThai())
                     .ngayTao(v.getNgayTao())
                     .ngayCapNhat(v.getNgayCapNhat())

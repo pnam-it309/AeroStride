@@ -357,32 +357,17 @@ const canUpdateStatus = computed(() => order.value && getOrderStatus() !== null 
 const isDelivering = computed(() => getOrderStatus() === ORDER_STATUS_ORDINALS.DANG_GIAO);
 const canEditOrder = computed(() => {
     if (!order.value) return false;
-    const ord = getOrderStatus();
-    const status = order.value.trangThai;
-    if (
-        ord === ORDER_STATUS_ORDINALS.HOAN_THANH ||
-        ord === ORDER_STATUS_ORDINALS.DA_HUY ||
-        ord === ORDER_STATUS_ORDINALS.HOAN_DON ||
-        ord === ORDER_STATUS_ORDINALS.GIAO_THAT_BAI ||
-        ord === ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN
-    ) {
-        return false;
-    }
-    if (
-        status === ORDER_STATUS.HOAN_THANH ||
-        status === ORDER_STATUS.DA_HUY ||
-        status === ORDER_STATUS.HOAN_DON ||
-        status === ORDER_STATUS.GIAO_THAT_BAI ||
-        status === ORDER_STATUS.KHACH_KHONG_NHAN ||
-        status === 'HOAN_THANH' ||
-        status === 'DA_HUY' ||
-        status === 'HOAN_DON' ||
-        status === 'GIAO_THAT_BAI' ||
-        status === 'KHACH_KHONG_NHAN'
-    ) {
-        return false;
-    }
-    return true;
+    const meta = getOrderStatusMeta(order.value.trangThai);
+    const key = meta?.key;
+    if (!key) return false;
+    return (
+        key === ORDER_STATUS.CHO_XAC_NHAN ||
+        key === ORDER_STATUS.XAC_NHAN ||
+        key === ORDER_STATUS.CHO_GIAO ||
+        key === ORDER_STATUS.DANG_GIAO ||
+        key === ORDER_STATUS.GIAO_THAT_BAI ||
+        key === ORDER_STATUS.KHACH_KHONG_NHAN
+    );
 });
 
 const canHoanPhi = computed(() => {
@@ -574,23 +559,24 @@ const allHistoryLogs = computed(() => {
 });
 
 const allowedStatuses = computed(() => {
-    const current = order.value.trangThai;
+    const meta = getOrderStatusMeta(order.value?.trangThai);
+    const currentKey = meta?.key || null;
     const allItems = [
         { title: 'Chờ xác nhận', value: ORDER_STATUS.CHO_XAC_NHAN },
         { title: 'Đã xác nhận', value: ORDER_STATUS.XAC_NHAN },
         { title: 'Chờ giao hàng', value: ORDER_STATUS.CHO_GIAO },
         { title: 'Đang giao hàng', value: ORDER_STATUS.DANG_GIAO },
         { title: 'Hoàn thành', value: ORDER_STATUS.HOAN_THANH },
-        { title: 'Đã hủy', value: ORDER_STATUS.DA_HUY }
+        { title: 'Đã hủy', value: ORDER_STATUS.DA_HUY },
+        { title: 'Hoàn đơn', value: ORDER_STATUS.HOAN_DON }
     ];
 
-    if (!current) return allItems;
+    if (!currentKey) return allItems;
 
     return allItems.filter((item) => {
-        // Không hiển thị trạng thái hiện tại trong danh sách chọn
-        if (item.value === current) return false;
+        if (item.value === currentKey) return false;
 
-        switch (current) {
+        switch (currentKey) {
             case ORDER_STATUS.CHO_XAC_NHAN:
                 return item.value === ORDER_STATUS.XAC_NHAN || item.value === ORDER_STATUS.DA_HUY;
             case ORDER_STATUS.XAC_NHAN:
@@ -610,11 +596,12 @@ const allowedStatuses = computed(() => {
                 return (
                     item.value === ORDER_STATUS.DANG_GIAO ||
                     item.value === ORDER_STATUS.HOAN_THANH ||
-                    item.value === ORDER_STATUS.DA_HUY
+                    item.value === ORDER_STATUS.HOAN_DON
                 );
             case ORDER_STATUS.DA_HUY:
                 return item.value === ORDER_STATUS.CHO_XAC_NHAN;
             case ORDER_STATUS.HOAN_THANH:
+                return item.value === ORDER_STATUS.HOAN_DON;
             default:
                 return false;
         }
@@ -826,13 +813,17 @@ const requestStatusUpdate = (status) => {
         action: async (note) => {
             confirmDialog.value.loading = true;
             try {
-                await dichVuHoaDon.capNhatTrangThaiHoaDon(order.value.id, targetOrdinal, note);
-                addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật trạng thái đơn hàng', color: 'success' });
-                await loadOrderDetail();
+                const updated = await dichVuHoaDon.capNhatTrangThaiHoaDon(order.value.id, targetOrdinal, note);
+                if (updated) {
+                    order.value = updated;
+                } else {
+                    await loadOrderDetail();
+                }
                 confirmDialog.value.show = false;
                 statusDialogOpen.value = false;
+                addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật trạng thái đơn hàng', color: 'success' });
             } catch (error) {
-                addNotification({ title: 'Lỗi', subtitle: 'Cập nhật thất bại', color: 'error' });
+                addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Cập nhật thất bại', color: 'error' });
             } finally {
                 confirmDialog.value.loading = false;
             }
@@ -852,14 +843,18 @@ const handleReorder = () => {
         action: async (note) => {
             confirmDialog.value.loading = true;
             try {
-                await dichVuHoaDon.capNhatTrangThaiHoaDon(
+                const updated = await dichVuHoaDon.capNhatTrangThaiHoaDon(
                     order.value.id,
                     ORDER_STATUS_ORDINALS.CHO_XAC_NHAN,
                     note || 'Đặt lại đơn hàng đã hủy'
                 );
-                addNotification({ title: 'Thành công', subtitle: 'Đã đặt lại đơn hàng về Chờ xác nhận', color: 'success' });
-                await loadOrderDetail();
+                if (updated) {
+                    order.value = updated;
+                } else {
+                    await loadOrderDetail();
+                }
                 confirmDialog.value.show = false;
+                addNotification({ title: 'Thành công', subtitle: 'Đã đặt lại đơn hàng về Chờ xác nhận', color: 'success' });
             } catch (error) {
                 addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Đặt lại đơn hàng thất bại', color: 'error' });
             } finally {
@@ -888,29 +883,53 @@ const openEditModal = () => {
 const submitEditOrder = async () => {
     loading.value = true;
     try {
-        // 1. Update Info (Recipient details, note) if allowed
-        if (!order.value.daSuaThongTin) {
-            await dichVuHoaDon.capNhatThongTinHoaDon(order.value.id, {
+        let hasUpdated = false;
+
+        // 1. Update Info (Recipient details, note) only if in CHO_XAC_NHAN, not yet edited, and actually changed
+        const currentMeta = getOrderStatusMeta(order.value.trangThai);
+        const currentKey = currentMeta?.key;
+        const canEditInfo = currentKey === ORDER_STATUS.CHO_XAC_NHAN && !order.value.daSuaThongTin;
+        const infoChanged =
+            (editForm.value.tenNguoiNhan || '') !== (order.value.tenNguoiNhan || '') ||
+            (editForm.value.soDienThoaiNguoiNhan || '') !== (order.value.soDienThoaiNguoiNhan || '') ||
+            (editForm.value.diaChiNguoiNhan || '') !== (order.value.diaChiNguoiNhan || '') ||
+            (editForm.value.ghiChu || '') !== (order.value.ghiChu || '');
+
+        if (canEditInfo && infoChanged) {
+            const updatedInfo = await dichVuHoaDon.capNhatThongTinHoaDon(order.value.id, {
                 tenNguoiNhan: editForm.value.tenNguoiNhan,
                 soDienThoaiNguoiNhan: editForm.value.soDienThoaiNguoiNhan,
                 diaChiNguoiNhan: editForm.value.diaChiNguoiNhan,
                 ghiChu: editForm.value.ghiChu
             });
+            if (updatedInfo) {
+                order.value = updatedInfo;
+            }
+            hasUpdated = true;
         }
 
         // 2. Update Status if changed
-        if (editForm.value.trangThai && editForm.value.trangThai !== order.value.trangThai) {
-            const targetOrdinal = getOrderStatusOrdinal(editForm.value.trangThai);
-            await dichVuHoaDon.capNhatTrangThaiHoaDon(
+        const currentOrdinal = getOrderStatusOrdinal(editForm.value.trangThai);
+        const targetOrdinal = getOrderStatusOrdinal(editForm.value.trangThai);
+        const currentOrderOrdinal = getOrderStatusOrdinal(order.value.trangThai);
+        if (targetOrdinal !== null && targetOrdinal !== currentOrderOrdinal) {
+            const updatedStatus = await dichVuHoaDon.capNhatTrangThaiHoaDon(
                 order.value.id,
                 targetOrdinal,
                 editForm.value.ghiChuTrangThai || 'Cập nhật trạng thái từ modal chỉnh sửa'
             );
+            if (updatedStatus) {
+                order.value = updatedStatus;
+            }
+            hasUpdated = true;
         }
 
-        addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật thông tin đơn hàng', color: 'success' });
-        await loadOrderDetail();
-        editOrderDialogOpen.value = false;
+        if (hasUpdated) {
+            editOrderDialogOpen.value = false;
+            addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật đơn hàng thành công', color: 'success' });
+        } else {
+            editOrderDialogOpen.value = false;
+        }
     } catch (error) {
         console.error(error);
         addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Cập nhật đơn hàng thất bại', color: 'error' });
@@ -1862,7 +1881,7 @@ onMounted(() => {
                                 </v-col>
 
                                 <!-- Status Update Note (Visible if status changed) -->
-                                <v-col cols="12" v-if="editForm.trangThai && editForm.trangThai !== order.trangThai" class="mb-2">
+                                <v-col cols="12" v-if="editForm.trangThai && getOrderStatusOrdinal(editForm.trangThai) !== getOrderStatusOrdinal(order.trangThai)" class="mb-2">
                                     <span class="text-body-2 text-warning font-weight-bold d-block mb-2">Mô tả cập nhật trạng thái</span>
                                     <v-text-field
                                         v-model="editForm.ghiChuTrangThai"
