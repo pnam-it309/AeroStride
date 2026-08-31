@@ -23,7 +23,7 @@ import {
     UsersIcon
 } from 'vue-tabler-icons';
 import { FormattedNumberField, FormattedPercentField } from '@/components/common';
-import { getNameRules } from '@/utils/validators';
+import { getNameRules, lengthBetween3And255, noSpecialChar } from '@/utils/validators';
 
 const route = useRoute();
 const router = useRouter();
@@ -235,16 +235,14 @@ const handleSave = () => {
         addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập tên phiếu giảm giá', color: 'error' });
         return;
     }
-    if (String(rawName).trim().length > 255) {
-        addNotification({ title: 'Lỗi', subtitle: 'Tên phiếu giảm giá không được vượt quá 255 ký tự', color: 'error' });
+    const lenCheck = lengthBetween3And255(rawName);
+    if (lenCheck !== true) {
+        addNotification({ title: 'Lỗi', subtitle: `Tên phiếu giảm giá: ${lenCheck}`, color: 'error' });
         return;
     }
-    if (!/^[\p{L}0-9\s]+$/u.test(rawName)) {
-        addNotification({ title: 'Lỗi', subtitle: 'Tên phiếu giảm giá không được chứa ký tự đặc biệt', color: 'error' });
-        return;
-    }
-    if (rawName.trim() !== rawName) {
-        addNotification({ title: 'Lỗi', subtitle: 'Tên phiếu giảm giá không được chứa khoảng trắng ở 2 đầu', color: 'error' });
+    const specialCharCheck = noSpecialChar(rawName);
+    if (specialCharCheck !== true) {
+        addNotification({ title: 'Lỗi', subtitle: `Tên phiếu giảm giá: ${specialCharCheck}`, color: 'error' });
         return;
     }
 
@@ -326,6 +324,14 @@ const handleSave = () => {
             confirmDialog.value.loading = true;
             saving.value = true;
             try {
+                if (!form.value.ma || !String(form.value.ma).trim()) {
+                    try {
+                        form.value.ma = await generateRandomCode('PhieuGiamGia');
+                    } catch (codeErr) {
+                        form.value.ma = 'PGG' + Date.now().toString().slice(-6);
+                    }
+                }
+
                 const payload = {
                     ...form.value,
                     ghiChu: form.value.moTa,
@@ -346,7 +352,8 @@ const handleSave = () => {
                 confirmDialog.value.show = false;
                 router.push(PATH.PHIEU_GIAM_GIA);
             } catch (e) {
-                addNotification({ title: 'Lỗi', subtitle: 'Lỗi khi lưu dữ liệu', color: 'error' });
+                const errMsg = e?.response?.data?.message || e?.userMessage || 'Lỗi khi lưu dữ liệu';
+                addNotification({ title: 'Lỗi', subtitle: errMsg, color: 'error' });
             } finally {
                 saving.value = false;
                 confirmDialog.value.loading = false;

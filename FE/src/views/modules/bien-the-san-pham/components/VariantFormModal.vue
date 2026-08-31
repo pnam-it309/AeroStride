@@ -346,8 +346,7 @@ const hasValue = (value) => {
 
 const rules = {
     required: (v) => {
-        if (v === null || v === undefined || v === '') return 'Trường này là bắt buộc';
-        if (typeof v === 'string' && !v.trim()) return 'Trường này không được chỉ chứa khoảng trắng';
+        if (v === null || v === undefined || v === '' || (typeof v === 'string' && !v.trim())) return 'Trường này là bắt buộc';
         return hasValue(v) || 'Trường này là bắt buộc';
     },
     min0: (v) => Number(v) >= 0 || 'Giá trị phải >= 0'

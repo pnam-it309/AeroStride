@@ -83,7 +83,7 @@ export default function HomeScreen() {
       }
     >
       {/* Hero Section with abstract shapes */}
-      <View style={[styles.hero, { paddingTop: insets.top + Spacing.three, backgroundColor: theme.surface }]}>
+      <View style={[styles.hero, { paddingTop: Math.max(insets.top, Platform.OS === 'android' ? 28 : 0) + Spacing.two, backgroundColor: theme.surface }]}>
         {/* Background glow elements */}
         <View style={styles.glowCircle1} />
         <View style={styles.glowCircle2} />
@@ -208,7 +208,7 @@ export default function HomeScreen() {
                       <Image
                         source={fileService.getImageSource(product.hinhAnh)}
                         style={styles.featuredImage}
-                        contentFit="cover"
+                        contentFit="contain"
                         transition={300}
                       />
                     ) : (
@@ -237,7 +237,7 @@ export default function HomeScreen() {
 
         {/* Trending Products - Grid */}
         {trending.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(500).duration(500)} style={[styles.section, { paddingBottom: Spacing.six }]}>
+          <Animated.View entering={FadeInDown.delay(500).duration(500)} style={[styles.section, { paddingBottom: Spacing.four }]}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>Xu hướng mới</Text>
             </View>
@@ -257,7 +257,7 @@ export default function HomeScreen() {
                       <Image
                         source={fileService.getImageSource(product.hinhAnh)}
                         style={styles.trendingImage}
-                        contentFit="cover"
+                        contentFit="contain"
                         transition={300}
                       />
                     ) : (
@@ -285,7 +285,7 @@ export default function HomeScreen() {
         )}
       </View>
     </ScrollView>
-    <FloatingChatButton bottomOffset={75} />
+    <FloatingChatButton bottomOffset={20} />
   </View>
   );
 }

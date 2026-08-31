@@ -21,7 +21,7 @@ import { useUIStore } from '@/stores/ui';
 import { getColorHexByName } from '@/utils/colorDictionary';
 import { CalendarIcon, GiftIcon, InfoCircleIcon, TagIcon, BoxIcon, SearchIcon, TrashIcon } from 'vue-tabler-icons';
 import { PATH } from '@/router/routePaths';
-import { getNameRules } from '@/utils/validators';
+import { getNameRules, lengthBetween3And255, noSpecialChar } from '@/utils/validators';
 import { SYSTEM_STATUS } from '@/constants/statusConstants';
 import { MESSAGES } from '@/constants/messages';
 import SafeProductImage from '@/views/modules/san-pham/components/SafeProductImage.vue';
@@ -545,16 +545,14 @@ const handleSave = () => {
         addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập tên đợt giảm giá', color: 'error' });
         return;
     }
-    if (String(rawName).trim().length > 255) {
-        addNotification({ title: 'Lỗi', subtitle: 'Tên đợt giảm giá không được vượt quá 255 ký tự', color: 'error' });
+    const lenCheck = lengthBetween3And255(rawName);
+    if (lenCheck !== true) {
+        addNotification({ title: 'Lỗi', subtitle: `Tên đợt giảm giá: ${lenCheck}`, color: 'error' });
         return;
     }
-    if (!/^[\p{L}0-9\s]+$/u.test(rawName)) {
-        addNotification({ title: 'Lỗi', subtitle: 'Tên đợt giảm giá không được chứa ký tự đặc biệt', color: 'error' });
-        return;
-    }
-    if (rawName.trim() !== rawName) {
-        addNotification({ title: 'Lỗi', subtitle: 'Tên đợt giảm giá không được chứa khoảng trắng ở 2 đầu', color: 'error' });
+    const specialCharCheck = noSpecialChar(rawName);
+    if (specialCharCheck !== true) {
+        addNotification({ title: 'Lỗi', subtitle: `Tên đợt giảm giá: ${specialCharCheck}`, color: 'error' });
         return;
     }
 
@@ -614,13 +612,39 @@ const handleSave = () => {
                     }
                 }
 
+                if (!form.value.ma || !String(form.value.ma).trim()) {
+                    try {
+                        form.value.ma = await generateRandomCode('DotGiamGia');
+                    } catch (codeErr) {
+                        form.value.ma = 'DGG' + Date.now().toString().slice(-6);
+                    }
+                }
+
+                const parseTimestamp = (val) => {
+                    if (!val) return null;
+                    if (val instanceof Date) return val.getTime();
+                    if (typeof val === 'number') return val;
+                    const d = new Date(val);
+                    return isNaN(d.getTime()) ? null : d.getTime();
+                };
+
                 const payload = {
-                    ...form.value,
+                    ma: String(form.value.ma).trim(),
+                    ten: String(form.value.ten).trim(),
+                    moTa: form.value.moTa ? String(form.value.moTa).trim() : '',
+                    loaiGiamGia: form.value.loaiGiamGia || 'PHAN_TRAM',
+                    soTienGiam: Number(form.value.soTienGiam),
+                    dieuKienGiamGia: form.value.dieuKienGiamGia ? Number(form.value.dieuKienGiamGia) : 0,
                     giamToiDa: giamToiDaValue,
-                    ngayBatDau: new Date(form.value.ngayBatDau).getTime(),
-                    ngayKetThuc: new Date(form.value.ngayKetThuc).getTime(),
+                    mucUuTien: form.value.mucUuTien !== undefined && form.value.mucUuTien !== null ? Number(form.value.mucUuTien) : 0,
+                    ngayBatDau: parseTimestamp(form.value.ngayBatDau),
+                    ngayKetThuc: parseTimestamp(form.value.ngayKetThuc),
+                    trangThai: form.value.trangThai || 'DANG_HOAT_DONG',
+                    isFlashSale: !!form.value.isFlashSale,
+                    khungGio: form.value.khungGio || null,
                     listIdChiTietSanPham: selectedVariantsIds.value
                 };
+
                 if (isEditMode.value) {
                     await dichVuDotGiamGia.capNhatDotGiamGia(route.params.id, payload);
                     addNotification({ title: 'Thành công', subtitle: MESSAGES.SUCCESS.UPDATE, color: 'success' });
@@ -631,7 +655,8 @@ const handleSave = () => {
                 confirmDialog.value.show = false;
                 router.push(PATH.DOT_GIAM_GIA);
             } catch (e) {
-                addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.SAVE_DATA, color: 'error' });
+                const errMsg = e?.response?.data?.message || e?.userMessage || MESSAGES.ERROR.SAVE_DATA;
+                addNotification({ title: 'Lỗi', subtitle: errMsg, color: 'error' });
             } finally {
                 confirmDialog.value.loading = false;
                 saving.value = false;

@@ -6,28 +6,25 @@
 
 .admin-module-page {
     background-color: #f1f5f9 !important;
-    height: 100vh !important;
+    min-height: 100% !important;
+    height: auto !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow: hidden !important;
     padding: 20px 44px 22px 44px !important;
     box-sizing: border-box !important;
 }
 
-/* Root của AdminTable: nối chuỗi flex để table chiếm hết chiều cao còn lại
-   trong .admin-module-page (100vh). Trang không dùng wrapper này sẽ giữ nguyên hành vi cũ. */
+/* Root của AdminTable: co giãn vừa vặn với nội dung bảng và phân trang */
 .admin-table-main-root {
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
+    width: 100%;
 }
 
 .admin-table-container {
     display: flex !important;
     flex-direction: column !important;
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
+    height: auto !important;
     background: white;
     border-radius: $border-radius-root !important;
     overflow: hidden;
@@ -36,12 +33,9 @@
     border: 1px solid rgba(226, 232, 240, 0.8) !important;
 }
 
-/* Vùng cuộn của bảng: chỉ thân bảng cuộn dọc, header dính ở trên (.header-cell đã sticky),
-   footer phân trang luôn hiển thị. Nhờ vậy đặt 100 dòng/trang không làm dài cả trang. */
+/* Vùng cuộn của bảng: cuộn ngang khi màn hình hẹp, vừa vặn khít với số dòng dữ liệu */
 .table-wrapper {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
+    width: 100%;
     overflow-x: auto;
     background: #ffffff;
 }

@@ -18,35 +18,39 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const { cartCount } = useCart();
 
-  const bottomInset = Math.max(insets.bottom, Platform.OS === 'android' ? 12 : 8);
-  const tabHeight = 52 + bottomInset;
+  const bottomInset = Math.max(insets.bottom, Platform.OS === 'android' ? 14 : 8);
+  const tabHeight = 58 + bottomInset;
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          position: 'absolute',
-          backgroundColor: 'transparent',
-          borderTopColor: 'rgba(255, 255, 255, 0.1)',
+          backgroundColor: theme.surface,
+          borderTopColor: theme.border,
           borderTopWidth: 1,
           height: tabHeight,
-          paddingBottom: bottomInset,
-          paddingTop: 6,
-          elevation: 0,
+          paddingBottom: bottomInset + 2,
+          paddingTop: 8,
+          ...Platform.select({
+            ios: {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: -3 },
+              shadowOpacity: 0.08,
+              shadowRadius: 6,
+            },
+            android: {
+              elevation: 12,
+            },
+          }),
         },
-        tabBarBackground: () => (
-          <BlurView 
-            tint="dark" 
-            intensity={80} 
-            style={StyleSheet.absoluteFill} 
-          />
-        ),
         tabBarActiveTintColor: Brand.primary,
         tabBarInactiveTintColor: theme.textTertiary,
         tabBarLabelStyle: {
           fontSize: FontSizes.xs,
-          fontWeight: FontWeights.medium,
+          fontWeight: FontWeights.semibold,
+          includeFontPadding: false,
+          marginTop: 2,
         },
       }}
     >

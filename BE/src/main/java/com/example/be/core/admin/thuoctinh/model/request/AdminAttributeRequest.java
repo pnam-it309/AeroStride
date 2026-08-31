@@ -14,7 +14,7 @@ public class AdminAttributeRequest {
     private String ma;
 
     @NotBlank(message = "Ten thuoc tinh khong duoc de trong")
-    @Size(min = 2, max = 255, message = "Ten thuoc tinh phai tu 2 den 255 ky tu")
+    @Size(min = 3, max = 255, message = "Ten thuoc tinh phai tu 3 den 255 ky tu")
     private String ten;
 
     @Size(max = 255, message = "Mo ta khong duoc vuot qua 255 ky tu")

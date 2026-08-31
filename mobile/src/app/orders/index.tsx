@@ -20,6 +20,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { orderService, type Order } from '@/services/orderService';
 import { OrderCard } from '@/components/OrderCard';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { LinearProgressBar } from '@/components/ui/LinearProgressBar';
 
 const STATUS_TABS = [
   { key: '', label: 'Tất cả' },
@@ -77,41 +78,46 @@ export default function OrdersScreen() {
       </View>
 
       {/* Status Tabs */}
-      <FlatList
-        data={STATUS_TABS}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabsContainer}
-        keyExtractor={(item) => item.key}
-        renderItem={({ item }) => {
-          const isActive = activeTab === item.key;
-          return (
-            <Pressable
-              style={[
-                styles.tab,
-                {
-                  backgroundColor: isActive ? Brand.primary : theme.surfaceElevated,
-                  borderColor: isActive ? Brand.primary : theme.border,
-                },
-              ]}
-              onPress={() => setActiveTab(item.key)}
-            >
-              <Text
+      <View style={styles.tabsWrapper}>
+        <FlatList
+          data={STATUS_TABS}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabsContainer}
+          keyExtractor={(item) => item.key}
+          renderItem={({ item }) => {
+            const isActive = activeTab === item.key;
+            return (
+              <Pressable
                 style={[
-                  styles.tabText,
-                  { color: isActive ? '#FFFFFF' : theme.textSecondary },
+                  styles.tab,
+                  {
+                    backgroundColor: isActive ? Brand.primary : theme.surfaceElevated,
+                    borderColor: isActive ? Brand.primary : theme.border,
+                  },
                 ]}
+                onPress={() => setActiveTab(item.key)}
               >
-                {item.label}
-              </Text>
-            </Pressable>
-          );
-        }}
-      />
+                <Text
+                  style={[
+                    styles.tabText,
+                    { color: isActive ? '#FFFFFF' : theme.textSecondary },
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              </Pressable>
+            );
+          }}
+        />
+        <LinearProgressBar loading={loading && !refreshing} height={2.5} color={Brand.primary} />
+      </View>
 
       {/* Orders List */}
-      {loading ? (
-        <LoadingSpinner fullScreen />
+      {loading && orders.length === 0 ? (
+        <View style={styles.initialLoadingContainer}>
+          <LoadingSpinner size={32} />
+        </View>
       ) : (
         <FlatList
           data={orders}
@@ -163,23 +169,41 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.lg,
     fontWeight: FontWeights.bold,
   },
+  tabsWrapper: {
+    marginBottom: Spacing.one,
+  },
   tabsContainer: {
     paddingHorizontal: Spacing.three,
     gap: Spacing.two,
-    marginBottom: Spacing.three,
+    paddingTop: Spacing.one,
+    paddingBottom: Spacing.two,
+    alignItems: 'center',
   },
   tab: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one + 4,
+    paddingHorizontal: Spacing.three + 2,
+    paddingVertical: 7,
+    minHeight: 34,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabText: {
     fontSize: FontSizes.sm,
-    fontWeight: FontWeights.medium,
+    fontWeight: FontWeights.semibold,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    lineHeight: 18,
+  },
+  initialLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: Spacing.seven,
   },
   listContent: {
     paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.one,
     paddingBottom: 100,
   },
   emptyContainer: {

@@ -25,6 +25,7 @@ import { productService, type Product, type ProductFilters, type ProductSearchPa
 import { fileService } from '@/services/fileService';
 import { formatPriceRange } from '@/utils/format';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { LinearProgressBar } from '@/components/ui/LinearProgressBar';
 import { FloatingChatButton } from '@/components/FloatingChatButton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -108,7 +109,7 @@ export default function ShopScreen() {
       >
         <View style={[styles.imageContainer, { backgroundColor: theme.backgroundElement }]}>
           {imageSource ? (
-            <Image source={imageSource} style={styles.image} contentFit="cover" transition={300} />
+            <Image source={imageSource} style={styles.image} contentFit="contain" transition={300} />
           ) : (
             <Ionicons name="footsteps-outline" size={36} color={theme.textTertiary} />
           )}
@@ -179,7 +180,7 @@ export default function ShopScreen() {
     (filters?.thuongHieus?.length ?? 0) > 0 || (filters?.danhMucs?.length ?? 0) > 0;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: theme.background, paddingTop: Math.max(insets.top, Platform.OS === 'android' ? 28 : 0) + Spacing.two }]}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.text }]}>Sản phẩm</Text>
@@ -216,44 +217,51 @@ export default function ShopScreen() {
       </View>
 
       {/* Sort pills */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.sortRow}
-      >
-        {sortOptions.map((opt) => {
-          const isActive = sortBy === opt.sortBy && sortDir === opt.sortDir;
-          return (
-            <Pressable
-              key={opt.label}
-              style={[
-                styles.sortPill,
-                {
-                  backgroundColor: isActive ? Brand.primary : theme.surfaceElevated,
-                  borderColor: isActive ? Brand.primary : theme.border,
-                },
-              ]}
-              onPress={() => {
-                setSortBy(opt.sortBy);
-                setSortDir(opt.sortDir);
-              }}
-            >
-              <Text
+      <View style={styles.sortContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.sortScrollView}
+          contentContainerStyle={styles.sortRow}
+        >
+          {sortOptions.map((opt) => {
+            const isActive = sortBy === opt.sortBy && sortDir === opt.sortDir;
+            return (
+              <Pressable
+                key={opt.label}
                 style={[
-                  styles.sortPillText,
-                  { color: isActive ? '#FFFFFF' : theme.textSecondary },
+                  styles.sortPill,
+                  {
+                    backgroundColor: isActive ? Brand.primary : theme.surfaceElevated,
+                    borderColor: isActive ? Brand.primary : theme.border,
+                  },
                 ]}
+                onPress={() => {
+                  setSortBy(opt.sortBy);
+                  setSortDir(opt.sortDir);
+                }}
               >
-                {opt.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+                <Text
+                  style={[
+                    styles.sortPillText,
+                    { color: isActive ? '#FFFFFF' : theme.textSecondary },
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+        {/* Horizontal top progress bar when fetching */}
+        <LinearProgressBar loading={loading && !refreshing} height={2.5} color={Brand.primary} />
+      </View>
 
       {/* Product Grid */}
-      {loading ? (
-        <LoadingSpinner fullScreen />
+      {loading && products.length === 0 ? (
+        <View style={styles.initialLoadingContainer}>
+          <LoadingSpinner size={32} />
+        </View>
       ) : (
         <FlatList
           data={products}
@@ -347,7 +355,7 @@ export default function ShopScreen() {
           </View>
         </View>
       </Modal>
-      <FloatingChatButton bottomOffset={75} />
+      <FloatingChatButton bottomOffset={20} />
     </View>
   );
 }
@@ -390,24 +398,45 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  sortContainer: {
+    marginBottom: Spacing.two,
+  },
+  sortScrollView: {
+    flexGrow: 0,
+  },
   sortRow: {
     paddingHorizontal: Spacing.three,
     gap: Spacing.two,
-    marginBottom: Spacing.three,
+    paddingTop: Spacing.one,
+    paddingBottom: Spacing.two,
+    alignItems: 'center',
   },
   sortPill: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one + 2,
+    paddingHorizontal: Spacing.three + 2,
+    paddingVertical: 7,
+    minHeight: 34,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sortPillText: {
     fontSize: FontSizes.xs,
-    fontWeight: FontWeights.medium,
+    fontWeight: FontWeights.semibold,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    lineHeight: 16,
+  },
+  initialLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: Spacing.seven,
   },
   gridContainer: {
     paddingHorizontal: Spacing.three,
-    paddingBottom: 100,
+    paddingTop: Spacing.one,
+    paddingBottom: Spacing.four,
   },
   gridRow: {
     gap: Spacing.two,

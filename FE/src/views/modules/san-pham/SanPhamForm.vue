@@ -1778,13 +1778,16 @@ const validateProduct = () => {
         return false;
     }
 
-    if (product.value.tenSanPham && product.value.tenSanPham.length > 255) {
-        addNotification({
-            title: 'Lỗi',
-            subtitle: 'Tên sản phẩm không được vượt quá 255 ký tự',
-            color: 'error'
-        });
-        return false;
+    if (product.value.tenSanPham) {
+        const lenCheck = lengthBetween3And255(product.value.tenSanPham);
+        if (lenCheck !== true) {
+            addNotification({
+                title: 'Lỗi',
+                subtitle: `Tên sản phẩm: ${lenCheck}`,
+                color: 'error'
+            });
+            return false;
+        }
     }
 
     const valStr = String(product.value.tenSanPham).trim().toLowerCase();

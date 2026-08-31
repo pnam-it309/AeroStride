@@ -32,7 +32,7 @@ export default function CartScreen() {
 
   if (isEmpty) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
+      <View style={[styles.container, { backgroundColor: theme.background, paddingTop: Math.max(insets.top, Platform.OS === 'android' ? 28 : 0) + Spacing.two }]}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: theme.text }]}>Giỏ hàng</Text>
         </View>
@@ -55,10 +55,10 @@ export default function CartScreen() {
     );
   }
 
-  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 12 : 8) + 68;
+  const bottomPadding = Spacing.four;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: theme.background, paddingTop: Math.max(insets.top, Platform.OS === 'android' ? 28 : 0) + Spacing.two }]}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.text }]}>

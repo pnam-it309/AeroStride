@@ -255,10 +255,6 @@ const handleSave = () => {
         addNotification({ title: 'Lỗi', subtitle: 'Họ và tên không được chứa ký tự đặc biệt', color: 'error' });
         return;
     }
-    if (rawName.trim() !== rawName) {
-        addNotification({ title: 'Lỗi', subtitle: 'Họ và tên không được chứa khoảng trắng ở 2 đầu', color: 'error' });
-        return;
-    }
 
     const email = employeeForm.value.email;
     if (!email || !String(email).trim()) {

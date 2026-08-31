@@ -68,13 +68,13 @@ export default function AccountScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.background }]}
-      contentContainerStyle={{ paddingBottom: 100 }}
+      contentContainerStyle={{ paddingBottom: Spacing.four }}
       showsVerticalScrollIndicator={false}
     >
       {/* Profile Header */}
       <LinearGradient
         colors={['#0B1120', '#152238', '#1E3A5F']}
-        style={[styles.profileHeader, { paddingTop: insets.top + Spacing.three }]}
+        style={[styles.profileHeader, { paddingTop: Math.max(insets.top, Platform.OS === 'android' ? 28 : 0) + Spacing.three }]}
       >
         {isAuthenticated && user ? (
           <>

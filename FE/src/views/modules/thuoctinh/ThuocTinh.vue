@@ -15,7 +15,7 @@ import {
 import { useNotifications } from '@/services/notificationService';
 import { generateRandomCode } from '@/utils/codeGenerator';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
-import { noSpecialChar, lengthBetween2And255 } from '@/utils/validators';
+import { noSpecialChar, lengthBetween3And255 } from '@/utils/validators';
 import { isActiveStatus } from '@/utils/statusUtils';
 import { SYSTEM_STATUS } from '@/constants/statusConstants';
 
@@ -290,7 +290,7 @@ const confirmSaveItem = () => {
             return;
         }
 
-        const lengthRes = lengthBetween2And255(trimmed);
+        const lengthRes = lengthBetween3And255(trimmed);
         if (lengthRes !== true) {
             addNotification({ title: 'Lỗi', subtitle: `Tên ${getCurrentTabTitle().toLowerCase()}: ${lengthRes}`, color: 'error' });
             return;
@@ -593,7 +593,7 @@ watch(selectedTab, (n) => {
 </script>
 
 <template>
-    <v-container fluid class="pa-4 animate-fade-in d-flex flex-column overflow-hidden font-body admin-module-page">
+    <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs
             :items="[
