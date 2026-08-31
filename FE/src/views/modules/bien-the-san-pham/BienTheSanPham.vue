@@ -141,7 +141,7 @@ const clearVariantSelection = () => {
 };
 
 // Đưa các form filter về trạng thái ban đầu
-const resetFilters = () => {
+const resetFilters = async () => {
     filters.keyword = '';
     filters.mauSacId = '';
     filters.kichThuocId = '';
@@ -149,6 +149,7 @@ const resetFilters = () => {
     filters.khoangGia = [MIN_VARIANT_PRICE, dynamicMaxPrice.value];
     pagination.page = 1;
     clearVariantSelection();
+    await reloadVariants();
 };
 
 // Tải các option bộ lọc (màu sắc, kích thước, trạng thái) từ API

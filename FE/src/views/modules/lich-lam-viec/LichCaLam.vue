@@ -93,6 +93,8 @@ const paginatedItems = computed(() => {
 
 const handleRefresh = async () => {
     isRefreshing.value = true;
+    filters.value.search = '';
+    pagination.value.page = 1;
     await loadData();
     setTimeout(() => (isRefreshing.value = false), 800);
 };

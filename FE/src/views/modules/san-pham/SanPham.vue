@@ -216,7 +216,7 @@ const handleSearch = async () => {
 const handleRefresh = async () => {
     await refreshData(async () => {
         resetProductFiltersState();
-        await loadProducts();
+        await reloadProducts();
     });
 };
 

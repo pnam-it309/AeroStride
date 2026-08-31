@@ -304,6 +304,7 @@ watch(searchQuery, () => {
 });
 
 const handleRefreshSearch = () => {
+    if (searchTimer) clearTimeout(searchTimer);
     searchQuery.value = '';
     loadProductsToSelect(1);
 };

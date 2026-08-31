@@ -101,19 +101,9 @@ const {
     }
 );
 
-const handleCustomReset = () => {
-    filters.value = {
-        keyword: '',
-        trangThai: 'ALL',
-        diemDanhGia: null
-    };
-    pagination.value.page = 1;
-    loadReviews();
-};
-
 const onRefresh = async () => {
     await executeRefresh(async () => {
-        handleCustomReset();
+        handleReset();
         await loadConfigAndStats();
     });
 };
