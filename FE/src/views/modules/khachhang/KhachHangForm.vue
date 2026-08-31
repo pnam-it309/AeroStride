@@ -194,6 +194,41 @@ const handleSave = async () => {
         }
     }
 
+    if (customerForm.value.ngaySinh) {
+        let formattedDate = customerForm.value.ngaySinh;
+        if (typeof formattedDate === 'string' && formattedDate.includes('/')) {
+            const parts = formattedDate.split('/');
+            if (parts.length === 3) {
+                formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+        }
+        const bd = new Date(formattedDate);
+        if (isNaN(bd.getTime())) {
+            addNotification({ title: 'Lỗi xác thực', subtitle: 'Định dạng ngày sinh không hợp lệ', color: 'error' });
+            return;
+        }
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        bd.setHours(0, 0, 0, 0);
+        if (bd.getTime() > now.getTime()) {
+            addNotification({ title: 'Lỗi xác thực', subtitle: 'Ngày sinh không thể ở trong tương lai', color: 'error' });
+            return;
+        }
+        let age = now.getFullYear() - bd.getFullYear();
+        const m = now.getMonth() - bd.getMonth();
+        if (m < 0 || (m === 0 && now.getDate() < bd.getDate())) {
+            age--;
+        }
+        if (age < 16) {
+            addNotification({ title: 'Lỗi xác thực', subtitle: 'Khách hàng phải từ 16 tuổi trở lên', color: 'error' });
+            return;
+        }
+        if (age > 100) {
+            addNotification({ title: 'Lỗi xác thực', subtitle: 'Ngày sinh không hợp lệ (không vượt quá 100 tuổi)', color: 'error' });
+            return;
+        }
+    }
+
     confirmDialog.value = {
         show: true,
         title: isEditMode.value ? 'Cập nhật khách hàng' : 'Thêm khách hàng mới',
@@ -552,8 +587,8 @@ const handlePhoneInput = () => {
 
 const nameRules = [
     (v) => !!v || 'Vui lòng nhập Họ và tên',
-    (v) => (v && v.trim().length >= 2) || 'Họ và tên phải có ít nhất 2 ký tự',
-    (v) => (v && v.length <= 100) || 'Họ và tên không được vượt quá 100 ký tự',
+    (v) => (v && v.trim().length >= 3) || 'Họ và tên phải có ít nhất 3 ký tự',
+    (v) => (v && v.length <= 255) || 'Họ và tên không được vượt quá 255 ký tự',
     (v) =>
         (v &&
             /^[a-zA-ZàáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠÂẦẤẨẪẬĂẰẮẲẴẶÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ\s]+$/.test(
@@ -581,27 +616,13 @@ const addressDetailRules = [
     (v) => (v && v.length <= 255) || 'Địa chỉ cụ thể không được vượt quá 255 ký tự'
 ];
 
-// const dobRules = [
-//     (v) => {
-//         if (!v) return true;
-//         const bd = new Date(v);
-//         const now = new Date();
-//         if (bd.getTime() > now.getTime()) return 'Ngày sinh không thể ở trong tương lai';
-//         let age = now.getFullYear() - bd.getFullYear();
-//         const m = now.getMonth() - bd.getMonth();
-//         if (m < 0 || (m === 0 && now.getDate() < bd.getDate())) {
-//             age--;
-//         }
-//         return age >= 18 || 'Khách hàng phải từ 18 tuổi trở lên';
-//     }
-// ];
 const dobRules = [
     (v) => {
         if (!v) return true;
 
         // 1. Chuyển đổi định dạng DD/MM/YYYY sang YYYY-MM-DD
         let formattedDate = v;
-        if (v.includes('/')) {
+        if (typeof v === 'string' && v.includes('/')) {
             const parts = v.split('/');
             // Đảm bảo tách đúng 3 phần (ngày, tháng, năm)
             if (parts.length === 3) {
@@ -633,9 +654,9 @@ const dobRules = [
             age--;
         }
 
-        if (age > 120) return 'Năm sinh không thực tế';
+        if (age > 100) return 'Ngày sinh không hợp lệ (không vượt quá 100 tuổi)';
 
-        return age >= 18 || 'Khách hàng phải từ 18 tuổi trở lên';
+        return age >= 16 || 'Khách hàng phải từ 16 tuổi trở lên';
     }
 ];
 </script>

@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -100,6 +101,20 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
             request.setEmail(generatedEmail);
         }
 
+        // Validate độ tuổi (nếu có ngày sinh)
+        if (request.getNgaySinh() != null) {
+            LocalDate today = LocalDate.now();
+            if (request.getNgaySinh().isAfter(today)) {
+                throw new com.example.be.infrastructure.exceptions.ValidationException("Ngày sinh không thể là ngày trong tương lai.");
+            }
+            if (request.getNgaySinh().isAfter(today.minusYears(16))) {
+                throw new com.example.be.infrastructure.exceptions.ValidationException("Khách hàng phải từ 16 tuổi trở lên.");
+            }
+            if (request.getNgaySinh().isBefore(today.minusYears(100))) {
+                throw new com.example.be.infrastructure.exceptions.ValidationException("Ngày sinh không hợp lệ (không quá 100 tuổi).");
+            }
+        }
+
         if (request.getGioiTinh() == null) {
             request.setGioiTinh(true);
         }
@@ -165,6 +180,20 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
         }
         if (adminKhachHangRepository.existsByTenTaiKhoanAndIdNot(req.getTenTaiKhoan(), id)) {
             throw new DuplicateResourceException(MessageConstants.DUPLICATE_USERNAME);
+        }
+
+        // Validate độ tuổi (nếu có ngày sinh)
+        if (req.getNgaySinh() != null) {
+            LocalDate today = LocalDate.now();
+            if (req.getNgaySinh().isAfter(today)) {
+                throw new com.example.be.infrastructure.exceptions.ValidationException("Ngày sinh không thể là ngày trong tương lai.");
+            }
+            if (req.getNgaySinh().isAfter(today.minusYears(16))) {
+                throw new com.example.be.infrastructure.exceptions.ValidationException("Khách hàng phải từ 16 tuổi trở lên.");
+            }
+            if (req.getNgaySinh().isBefore(today.minusYears(100))) {
+                throw new com.example.be.infrastructure.exceptions.ValidationException("Ngày sinh không hợp lệ (không quá 100 tuổi).");
+            }
         }
 
         applyEntityFields(kh, req);
