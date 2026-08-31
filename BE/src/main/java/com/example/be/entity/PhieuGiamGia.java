@@ -20,6 +20,10 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 @CodePrefix("PGG")
+@jakarta.persistence.EntityListeners({
+    com.example.be.infrastructure.listener.PrimaryEntityListener.class,
+    com.example.be.infrastructure.listener.PhieuGiamGiaListener.class
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @AttributeOverrides({
     @AttributeOverride(name = "ma", column = @Column(name = "ma_phieu_giam_gia")),

@@ -212,7 +212,38 @@ const getHinhThucChipClass = (item) => {
     return getHinhThucLabel(getHinhThucValue(item)) === 'Cá nhân' ? 'status-chip-private' : 'status-chip-public';
 };
 
-onMounted(() => taiDanhSachPhieuGiamGia());
+import { chatSocket } from '@/services/chatSocket';
+
+let voucherSubscription = null;
+
+onMounted(() => {
+    taiDanhSachPhieuGiamGia();
+
+    chatSocket.connect(() => {
+        voucherSubscription = chatSocket.subscribe('/topic/voucher-updates', (data) => {
+            if (!data) return;
+            if (Array.isArray(danhSachPhieuGiamGia.value)) {
+                const target = danhSachPhieuGiamGia.value.find((p) => p.id === data.id || p.ma === data.ma);
+                if (target) {
+                    if (data.soLuong !== undefined) {
+                        target.soLuong = data.soLuong;
+                    }
+                    if (data.trangThai !== undefined) {
+                        target.trangThai = data.trangThai;
+                    }
+                } else {
+                    taiDanhSachPhieuGiamGia();
+                }
+            }
+        });
+    });
+});
+
+onBeforeUnmount(() => {
+    if (voucherSubscription && typeof voucherSubscription.unsubscribe === 'function') {
+        voucherSubscription.unsubscribe();
+    }
+});
 </script>
 
 <template>

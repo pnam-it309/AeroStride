@@ -501,6 +501,20 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         hd.setNgayCapNhat(System.currentTimeMillis());
         hoaDonRepository.save(hd);
 
+        // Trừ số lượng phiếu giảm giá khi thanh toán tại quầy
+        if (voucher != null) {
+            final String voucherId = voucher.getId();
+            if (voucher.getSoLuong() != null && voucher.getSoLuong() > 0) {
+                voucher.setSoLuong(voucher.getSoLuong() - 1);
+                phieuGiamGiaRepository.save(voucher);
+            }
+            if (hd.getKhachHang() != null && HinhThucPhieuGiamGia.isCaNhan(voucher.getHinhThuc()) && voucherId != null) {
+                phieuGiamGiaCaNhanRepository.findByKhachHangId(hd.getKhachHang().getId()).stream()
+                        .filter(pgn -> pgn.getPhieuGiamGia() != null && voucherId.equals(pgn.getPhieuGiamGia().getId()))
+                        .forEach(phieuGiamGiaCaNhanRepository::delete);
+            }
+        }
+
         saveDefaultShippingAddressIfNeeded(hd, request);
 
         if (request.getTienMat() != null && request.getTienMat().compareTo(BigDecimal.ZERO) > 0) {

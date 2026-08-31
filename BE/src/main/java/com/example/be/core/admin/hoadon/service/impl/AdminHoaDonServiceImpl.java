@@ -53,6 +53,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     private final AdminHoaDonMapper hoaDonMapper;
     private final com.example.be.core.notification.EmailService emailService;
     private final com.example.be.core.payment.PaymentService paymentService;
+    private final com.example.be.repository.PhieuGiamGiaRepository phieuGiamGiaRepository;
 
     @org.springframework.beans.factory.annotation.Value("${app.frontend_url}")
     private String frontendUrl;
@@ -274,6 +275,15 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                             chiTietSanPhamRepository.saveAndFlush(ct);
                         }
                     });
+                }
+            }
+
+            // Hoàn lại số lượng voucher nếu đơn hàng bị hủy
+            if (newStatus == OrderStatus.DA_HUY && hd.getPhieuGiamGia() != null && oldStatus != OrderStatus.DA_HUY) {
+                PhieuGiamGia v = hd.getPhieuGiamGia();
+                if (v.getSoLuong() != null && v.getSoLuong() >= 0) {
+                    v.setSoLuong(v.getSoLuong() + 1);
+                    phieuGiamGiaRepository.save(v);
                 }
             }
         }
