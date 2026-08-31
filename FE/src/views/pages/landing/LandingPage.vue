@@ -113,15 +113,17 @@ const formatPrice = (v) => {
 const activeTab = ref('MỚI NHẤT');
 
 const newestProducts = computed(() => {
+    if (featuredVariants.value?.length) {
+        return featuredVariants.value;
+    }
     if (landingProducts.value?.length) {
         return landingProducts.value;
     }
-
-    return featuredVariants.value || [];
+    return [];
 });
 
 const categoryCardImages = computed(() => {
-    const list = landingProducts.value || featuredVariants.value || [];
+    const list = featuredVariants.value || landingProducts.value || [];
 
     const getValidShoeImg = (item, defaultImg) => {
         if (!item) return defaultImg;
@@ -173,8 +175,9 @@ const mapToCard = (item, type = 'NEW') => {
         resolved = DEFAULT_SHOE_IMAGE;
     }
     const phanTram = Number(item.phanTramGiam ?? item.giamGia ?? 0);
-    const giaBan = Number(item.giaBanThapNhat ?? item.giaBan ?? item.gia ?? 0);
-    const giaGoc = item.giaGoc ? Number(item.giaGoc) : (phanTram > 0 ? giaBan / (1 - phanTram / 100) : null);
+    const giaBan = Number(item.giaBan ?? item.giaBanThapNhat ?? item.gia ?? 0);
+    const rawGiaGoc = item.giaGoc != null ? Number(item.giaGoc) : null;
+    const giaGoc = rawGiaGoc && rawGiaGoc > giaBan ? rawGiaGoc : null;
 
     return {
         id: item.idSanPham ?? item.sanPhamId ?? item.id,

@@ -14,29 +14,14 @@ export function useServerPagination(fetchPage, { pageSize = 10, onError, onLoade
     const totalElements = ref(0);
     const totalPages = ref(1);
 
-    const pageCache = new Map();
-
-    const clearCache = () => {
-        pageCache.clear();
-    };
+    const clearCache = () => {};
 
     let currentRequestId = 0;
 
-    // Tải trang hiện tại với kiểm tra cache 0ms
+    // Tải trang hiện tại
     const load = async (forceFresh = false) => {
         const targetPage = pagination.page;
         const targetSize = pagination.size;
-        const cacheKey = `p${targetPage}_s${targetSize}`;
-
-        if (!forceFresh && pageCache.has(cacheKey)) {
-            const cached = pageCache.get(cacheKey);
-            items.value = cached.items || [];
-            totalElements.value = cached.totalElements || 0;
-            totalPages.value = cached.totalPages || 1;
-            loading.value = false;
-            if (onLoaded) onLoaded();
-            return;
-        }
 
         const requestId = ++currentRequestId;
         loading.value = true;
@@ -52,17 +37,6 @@ export function useServerPagination(fetchPage, { pageSize = 10, onError, onLoade
             items.value = loadedItems;
             totalElements.value = total;
             totalPages.value = pages;
-
-            pageCache.set(cacheKey, {
-                items: loadedItems,
-                totalElements: total,
-                totalPages: pages
-            });
-
-            if (pageCache.size > 50) {
-                const firstKey = pageCache.keys().next().value;
-                pageCache.delete(firstKey);
-            }
 
             if (pagination.page > pages) {
                 pagination.page = pages;

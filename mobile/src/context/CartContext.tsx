@@ -12,7 +12,10 @@ export interface CartItem {
   hinhAnh: string;
   tenMauSac: string;
   tenKichThuoc: string;
+  giaGoc?: number;
   giaBan: number;
+  phanTramGiam?: number;
+  tenDotGiamGia?: string;
   soLuong: number;
   soLuongTonKho: number;
 }

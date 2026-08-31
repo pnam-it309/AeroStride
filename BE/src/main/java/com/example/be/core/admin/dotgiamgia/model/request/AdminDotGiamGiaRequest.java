@@ -18,7 +18,6 @@ public class AdminDotGiamGiaRequest {
 
     @NotBlank(message = "Tên đợt giảm giá không được để trống")
     @Size(min = 3, max = 255, message = "Tên đợt giảm giá phải từ 3 đến 255 ký tự")
-    @Pattern(regexp = "^[\\p{L}0-9\\s]+$", message = "Tên đợt giảm giá không được chứa ký tự đặc biệt")
     private String ten;
 
     @NotBlank(message = "Loại giảm giá không được để trống")

@@ -160,33 +160,26 @@ public interface AdminThongKeRepository extends HoaDonRepository,
            SELECT sp.ma_san_pham AS ma,
                   sp.ten_san_pham AS ten,
                   COALESCE(th.ten_thuong_hieu, 'Khác') AS thuongHieu,
-                  COALESCE(SUM(hdct.so_luong * hdct.don_gia), 0) AS doanhThu,
-                  COALESCE(SUM(hdct.so_luong), 0) AS soLuongBan
-           FROM hoa_don_chi_tiet hdct
-           JOIN chi_tiet_san_pham ctsp ON hdct.id_chi_tiet_san_pham = ctsp.id
-           JOIN san_pham sp ON ctsp.id_san_pham = sp.id
+                  COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong * hdct.don_gia ELSE 0 END), 0) AS doanhThu,
+                  COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong ELSE 0 END), 0) AS soLuongBan
+           FROM san_pham sp
            LEFT JOIN thuong_hieu th ON sp.id_thuong_hieu = th.id
-           JOIN hoa_don hd ON hdct.id_hoa_don = hd.id
-           WHERE hd.trang_thai = 4
-             AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
-             AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+           LEFT JOIN chi_tiet_san_pham ctsp ON ctsp.id_san_pham = sp.id AND (ctsp.xoa_mem = false OR ctsp.xoa_mem IS NULL)
+           LEFT JOIN hoa_don_chi_tiet hdct ON hdct.id_chi_tiet_san_pham = ctsp.id
+           LEFT JOIN hoa_don hd ON hdct.id_hoa_don = hd.id AND hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+           WHERE (sp.xoa_mem = false OR sp.xoa_mem IS NULL)
              AND (:keyword IS NULL OR :keyword = '' OR LOWER(sp.ma_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')))
            GROUP BY sp.id, sp.ma_san_pham, sp.ten_san_pham, th.ten_thuong_hieu
            ORDER BY 
-               CASE WHEN :sortBy = 'revenueDesc' THEN SUM(hdct.so_luong * hdct.don_gia) END DESC,
-               CASE WHEN :sortBy = 'revenueAsc' THEN SUM(hdct.so_luong * hdct.don_gia) END ASC,
-               CASE WHEN :sortBy = 'leastSelling' THEN SUM(hdct.so_luong) END ASC,
-               SUM(hdct.so_luong) DESC
+               CASE WHEN :sortBy = 'revenueDesc' THEN COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong * hdct.don_gia ELSE 0 END), 0) END DESC,
+               CASE WHEN :sortBy = 'revenueAsc' THEN COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong * hdct.don_gia ELSE 0 END), 0) END ASC,
+               CASE WHEN :sortBy IN ('slowSelling', 'leastSelling') THEN COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong ELSE 0 END), 0) END ASC,
+               COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong ELSE 0 END), 0) DESC
            """,
            countQuery = """
-           SELECT COUNT(DISTINCT sp.id)
-           FROM hoa_don_chi_tiet hdct
-           JOIN chi_tiet_san_pham ctsp ON hdct.id_chi_tiet_san_pham = ctsp.id
-           JOIN san_pham sp ON ctsp.id_san_pham = sp.id
-           JOIN hoa_don hd ON hdct.id_hoa_don = hd.id
-           WHERE hd.trang_thai = 4
-             AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
-             AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+           SELECT COUNT(sp.id)
+           FROM san_pham sp
+           WHERE (sp.xoa_mem = false OR sp.xoa_mem IS NULL)
              AND (:keyword IS NULL OR :keyword = '' OR LOWER(sp.ma_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')))
            """,
            nativeQuery = true)

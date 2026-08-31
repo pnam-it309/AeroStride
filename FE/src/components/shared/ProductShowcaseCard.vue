@@ -59,10 +59,6 @@ const originalPrice = computed(() => {
     if (props.product.giaGoc && Number(props.product.giaGoc) > Number(props.product.giaBan)) {
         return props.product.giaGoc;
     }
-    if (!props.product.giaBan) return null;
-    if (props.product.phanTramGiam && Number(props.product.phanTramGiam) > 0) {
-        return props.product.giaBan / (1 - Number(props.product.phanTramGiam) / 100);
-    }
     return null;
 });
 </script>

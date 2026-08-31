@@ -89,8 +89,11 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
             // Generating DGG sequential or unique code
             d.setMa("DGG" + System.currentTimeMillis() % 1000000);
         }
-        repo.save(d);
-        saveProducts(d, req.getListIdChiTietSanPham());
+        if (d.getTrangThai() == null) {
+            d.setTrangThai(TrangThai.DANG_HOAT_DONG);
+        }
+        DotGiamGia saved = repo.saveAndFlush(d);
+        saveProducts(saved, req.getListIdChiTietSanPham());
     }
 
     @Override
@@ -101,10 +104,11 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DOT_GIAM_GIA_NOT_FOUND_ID + id));
         BeanUtils.copyProperties(req, d);
         d.setId(id); // Keep the ID
-        repo.save(d);
+        DotGiamGia saved = repo.saveAndFlush(d);
 
         chiTietDotGiamGiaRepo.deleteByDotGiamGiaId(id);
-        saveProducts(d, req.getListIdChiTietSanPham());
+        chiTietDotGiamGiaRepo.flush();
+        saveProducts(saved, req.getListIdChiTietSanPham());
     }
 
     private void validateRequest(AdminDotGiamGiaRequest req) {
@@ -127,30 +131,19 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
                 .collect(Collectors.toList());
         if (distinctVariantIds.isEmpty()) return;
 
-        String sql = "INSERT INTO chi_tiet_dot_giam_gia (id, id_dot_giam_gia, id_chi_tiet_san_pham, gia_tri_giam, trang_thai, ngay_tao, ngay_cap_nhat) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        List<ChiTietSanPham> variants = chiTietSanPhamRepo.findAllById(distinctVariantIds);
+        if (variants.isEmpty()) return;
 
-        long now = System.currentTimeMillis();
-        java.math.BigDecimal giaTriGiam = d.getSoTienGiam();
-        int trangThai = (d.getTrangThai() != null ? d.getTrangThai().ordinal() : TrangThai.DANG_HOAT_DONG.ordinal());
+        List<ChiTietDotGiamGia> details = variants.stream().map(v -> {
+            ChiTietDotGiamGia ct = new ChiTietDotGiamGia();
+            ct.setDotGiamGia(d);
+            ct.setChiTietSanPham(v);
+            ct.setGiaTriGiam(d.getSoTienGiam());
+            ct.setTrangThai(d.getTrangThai() != null ? d.getTrangThai() : TrangThai.DANG_HOAT_DONG);
+            return ct;
+        }).collect(Collectors.toList());
 
-        jdbcTemplate.batchUpdate(sql, new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
-            @Override
-            public void setValues(java.sql.PreparedStatement ps, int i) throws java.sql.SQLException {
-                ps.setString(1, java.util.UUID.randomUUID().toString());
-                ps.setString(2, d.getId());
-                ps.setString(3, distinctVariantIds.get(i));
-                ps.setBigDecimal(4, giaTriGiam);
-                ps.setInt(5, trangThai);
-                ps.setLong(6, now);
-                ps.setLong(7, now);
-            }
-
-            @Override
-            public int getBatchSize() {
-                return distinctVariantIds.size();
-            }
-        });
+        chiTietDotGiamGiaRepo.saveAll(details);
     }
 
     @Override

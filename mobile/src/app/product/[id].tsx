@@ -162,12 +162,57 @@ export default function ProductDetailScreen() {
       tenMauSac: selectedVariant.tenMauSac,
       tenKichThuoc: selectedVariant.tenKichThuoc,
       giaBan: selectedVariant.giaBan,
+      giaGoc: selectedVariant.giaGoc || selectedVariant.giaBan,
+      phanTramGiam: selectedVariant.phanTramGiam,
+      tenDotGiamGia: selectedVariant.tenDotGiamGia,
       soLuong: quantity,
       soLuongTonKho: selectedVariant.soLuong,
     });
 
     if (result.success) {
       showToast({ type: 'success', title: 'Thành công', message: result.message });
+    } else {
+      showToast({ type: 'warning', title: 'Lưu ý', message: result.message });
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!product) return;
+    let variantToBuy = selectedVariant;
+
+    if (!variantToBuy && product.variants && product.variants.length > 0) {
+      const inStock = product.variants.find((v) => v.soLuong > 0) || product.variants[0];
+      variantToBuy = inStock;
+      setSelectedColor(inStock.idMauSac);
+      setSelectedSize(inStock.idKichThuoc);
+    }
+
+    if (!variantToBuy) {
+      showToast({ type: 'warning', title: 'Thông báo', message: 'Vui lòng chọn màu sắc và kích thước' });
+      return;
+    }
+
+    if (variantToBuy.soLuong <= 0) {
+      showToast({ type: 'warning', title: 'Hết hàng', message: 'Sản phẩm này tạm thời hết hàng' });
+      return;
+    }
+
+    const result = addToCart({
+      idChiTietSanPham: variantToBuy.id,
+      tenSanPham: product.tenSanPham,
+      hinhAnh: images[0]?.duongDanAnh || images[0]?.url || product.hinhAnh || '',
+      tenMauSac: variantToBuy.tenMauSac,
+      tenKichThuoc: variantToBuy.tenKichThuoc,
+      giaBan: variantToBuy.giaBan,
+      giaGoc: variantToBuy.giaGoc || variantToBuy.giaBan,
+      phanTramGiam: variantToBuy.phanTramGiam,
+      tenDotGiamGia: variantToBuy.tenDotGiamGia,
+      soLuong: quantity,
+      soLuongTonKho: variantToBuy.soLuong,
+    });
+
+    if (result.success) {
+      router.push('/checkout');
     } else {
       showToast({ type: 'warning', title: 'Lưu ý', message: result.message });
     }
@@ -191,9 +236,32 @@ export default function ProductDetailScreen() {
     );
   }
 
+  const minGiaBan = product?.variants?.length
+    ? Math.min(...product.variants.map((v) => Number(v.giaBan) || 0))
+    : (product?.giaBanThapNhat || 0);
+  const maxGiaBan = product?.variants?.length
+    ? Math.max(...product.variants.map((v) => Number(v.giaBan) || 0))
+    : (product?.giaBanCaoNhat || 0);
+
+  const currentPrice = selectedVariant
+    ? selectedVariant.giaBan
+    : minGiaBan;
+
+  const currentOriginalPrice = selectedVariant
+    ? (selectedVariant.giaGoc && selectedVariant.giaGoc > selectedVariant.giaBan ? selectedVariant.giaGoc : null)
+    : (product?.variants?.find((v) => v.giaGoc && v.giaGoc > v.giaBan)?.giaGoc || null);
+
+  const currentDiscountPercent = selectedVariant
+    ? (selectedVariant.phanTramGiam || (currentOriginalPrice ? Math.round((1 - selectedVariant.giaBan / currentOriginalPrice) * 100) : 0))
+    : (product?.variants?.find((v) => v.phanTramGiam && v.phanTramGiam > 0)?.phanTramGiam || 0);
+
+  const currentCampaignName = selectedVariant?.tenDotGiamGia || product?.variants?.find((v) => v.tenDotGiamGia)?.tenDotGiamGia || null;
+
   const displayPrice = selectedVariant
     ? formatCurrency(selectedVariant.giaBan)
-    : 'Chọn phân loại';
+    : (minGiaBan === maxGiaBan || minGiaBan <= 0
+        ? formatCurrency(minGiaBan)
+        : `${formatCurrency(minGiaBan)} - ${formatCurrency(maxGiaBan)}`);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -279,7 +347,30 @@ export default function ProductDetailScreen() {
 
           <Text style={[styles.productName, { color: theme.text }]}>{product.tenSanPham}</Text>
 
-          <Text style={[styles.displayPrice, { color: Brand.primary }]}>{displayPrice}</Text>
+          {/* Price & Discount Info */}
+          <View style={styles.priceContainer}>
+            <View style={styles.priceMainRow}>
+              <Text style={[styles.displayPrice, { color: Brand.primary }]}>{displayPrice}</Text>
+              {currentDiscountPercent > 0 ? (
+                <View style={styles.discountBadge}>
+                  <Text style={styles.discountText}>-{currentDiscountPercent}%</Text>
+                </View>
+              ) : null}
+            </View>
+
+            {currentOriginalPrice != null ? (
+              <Text style={[styles.originalPrice, { color: theme.textTertiary }]}>
+                {formatCurrency(currentOriginalPrice)}
+              </Text>
+            ) : null}
+
+            {currentCampaignName ? (
+              <View style={styles.campaignBadge}>
+                <Ionicons name="pricetag" size={11} color="#FFFFFF" />
+                <Text style={styles.campaignText}>{currentCampaignName}</Text>
+              </View>
+            ) : null}
+          </View>
 
           {/* Color Selection */}
           {availableColors.length > 0 && (
@@ -480,7 +571,7 @@ export default function ProductDetailScreen() {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Bottom Add to Cart */}
+      {/* Bottom Actions Bar */}
       <View
         style={[
           styles.bottomBar,
@@ -492,22 +583,40 @@ export default function ProductDetailScreen() {
         ]}
       >
         <View style={styles.bottomPrice}>
-          <Text style={[styles.bottomPriceLabel, { color: theme.textSecondary }]}>Tổng</Text>
+          <Text style={[styles.bottomPriceLabel, { color: theme.textSecondary }]}>Tổng cộng</Text>
           <Text style={[styles.bottomPriceValue, { color: Brand.primary }]}>
-            {selectedVariant ? formatCurrency(selectedVariant.giaBan * quantity) : '—'}
+            {formatCurrency(currentPrice * quantity)}
           </Text>
         </View>
-        <Pressable
-          style={({ pressed }) => [
-            styles.addToCartBtn,
-            { opacity: !selectedVariant || pressed ? 0.7 : 1 },
-          ]}
-          onPress={handleAddToCart}
-          disabled={!selectedVariant}
-        >
-          <Ionicons name="bag-add-outline" size={20} color="#FFFFFF" />
-          <Text style={styles.addToCartText}>Thêm vào giỏ</Text>
-        </Pressable>
+        <View style={styles.bottomActionButtons}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.addToCartBtn,
+              {
+                backgroundColor: theme.surfaceElevated,
+                borderColor: Brand.primary,
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+            onPress={handleAddToCart}
+          >
+            <Ionicons name="cart-outline" size={18} color={Brand.primary} />
+            <Text style={[styles.addToCartText, { color: Brand.primary }]}>Thêm vào giỏ</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.buyNowBtn,
+              {
+                backgroundColor: Brand.primary,
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+            onPress={handleBuyNow}
+          >
+            <Ionicons name="flash-outline" size={18} color="#FFFFFF" />
+            <Text style={styles.buyNowText}>Mua ngay</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -604,16 +713,23 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     marginTop: Spacing.one,
   },
+  priceContainer: {
+    marginTop: Spacing.two,
+    gap: 4,
+  },
+  priceMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
   displayPrice: {
     fontSize: FontSizes['2xl'],
     fontWeight: FontWeights.extrabold,
-    marginTop: Spacing.two,
   },
   discountRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 2,
   },
   originalPrice: {
     fontSize: FontSizes.base,
@@ -628,6 +744,22 @@ const styles = StyleSheet.create({
   discountText: {
     color: Brand.error,
     fontSize: FontSizes.xs,
+    fontWeight: FontWeights.bold,
+  },
+  campaignBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Brand.accent,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.full,
+    alignSelf: 'flex-start',
+    gap: 4,
+    marginTop: 2,
+  },
+  campaignText: {
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: FontWeights.bold,
   },
   optionSection: {
@@ -731,18 +863,35 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.lg,
     fontWeight: FontWeights.extrabold,
   },
-  addToCartBtn: {
+  bottomActionButtons: {
     flexDirection: 'row',
-    backgroundColor: Brand.primary,
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
-    borderRadius: BorderRadius.lg,
     alignItems: 'center',
     gap: Spacing.two,
   },
+  addToCartBtn: {
+    flexDirection: 'row',
+    borderWidth: 1.5,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two + 4,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    gap: 6,
+  },
   addToCartText: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.bold,
+  },
+  buyNowBtn: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two + 4,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    gap: 6,
+  },
+  buyNowText: {
     color: '#FFFFFF',
-    fontSize: FontSizes.base,
+    fontSize: FontSizes.sm,
     fontWeight: FontWeights.bold,
   },
   reviewsSection: {

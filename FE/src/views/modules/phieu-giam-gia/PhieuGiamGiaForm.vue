@@ -287,8 +287,8 @@ const handleSave = () => {
         addNotification({ title: 'Lỗi', subtitle: 'Hóa đơn tối thiểu không hợp lệ', color: 'error' });
         return;
     }
-    if (form.value.loaiPhieu === 'TIEN_MAT' && minOrder < Number(form.value.soTienGiam)) {
-        addNotification({ title: 'Lỗi', subtitle: 'Hóa đơn tối thiểu phải lớn hơn hoặc bằng mức giảm giá', color: 'error' });
+    if (form.value.loaiPhieu === 'TIEN_MAT' && minOrder <= Number(form.value.soTienGiam)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Hóa đơn tối thiểu phải lớn hơn giá trị giảm', color: 'error' });
         return;
     }
 

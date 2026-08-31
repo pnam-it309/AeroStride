@@ -184,8 +184,9 @@ const fetchFormOptions = async () => {
 // Tải danh sách tên sản phẩm để hiển thị trong select box bộ lọc
 const fetchProductOptions = async () => {
     try {
-        const response = await dichVuSanPham.layDanhSachSanPham({ page: 0, size: 100 });
+        const response = await dichVuSanPham.layDanhSachSanPham({ page: 0, size: 1000 });
         productOptions.value = response.content || [];
+        updateSelectedProductMeta();
     } catch (error) {
         console.error('Lỗi khi tải danh sách sản phẩm:', error);
     }
@@ -695,9 +696,43 @@ watch(
     scheduleVariantReload
 );
 
+// Đồng bộ hóa khi route query thay đổi (khi bấm từ Sản phẩm khác chuyển sang)
+watch(
+    () => route.query.productId,
+    (newProductId) => {
+        const targetId = newProductId ? newProductId.toString() : 'ALL';
+        if (selectedProductId.value !== targetId) {
+            selectedProductId.value = targetId;
+        }
+    },
+    { immediate: true }
+);
+
+watch(
+    () => route.query.keyword,
+    (newKeyword) => {
+        const targetKeyword = newKeyword ? newKeyword.toString() : '';
+        if (filters.keyword !== targetKeyword) {
+            filters.keyword = targetKeyword;
+        }
+    },
+    { immediate: true }
+);
+
 watch(
     () => selectedProductId.value,
-    async () => {
+    async (newVal) => {
+        const queryVal = route.query.productId?.toString();
+        const targetVal = newVal && newVal !== 'ALL' ? newVal : undefined;
+        if (queryVal !== targetVal) {
+            router.replace({
+                query: {
+                    ...route.query,
+                    productId: targetVal
+                }
+            });
+        }
+        updateSelectedProductMeta();
         clearVariantSelection();
         await reloadVariants();
     }
@@ -722,13 +757,15 @@ const handleRealtimeStockUpdate = (event) => {
 
 onMounted(async () => {
     window.addEventListener('product-stock-update', handleRealtimeStockUpdate);
-    await Promise.all([loadMaxPrice(), fetchFormOptions(), fetchProductOptions()]);
     const routeProductId = route.query.productId?.toString();
     selectedProductId.value = routeProductId || 'ALL';
 
     if (route.query.keyword) {
         filters.keyword = route.query.keyword.toString();
     }
+
+    await Promise.all([loadMaxPrice(), fetchFormOptions(), fetchProductOptions()]);
+    updateSelectedProductMeta();
 });
 
 onBeforeUnmount(() => {

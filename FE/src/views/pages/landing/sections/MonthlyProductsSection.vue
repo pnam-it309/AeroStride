@@ -176,8 +176,8 @@ const addToCart = (e, product) => {
                                                     formatPrice(product.giaBan)
                                                 }}</span>
                                                 <span v-else class="price-contact">Liên hệ</span>
-                                                <span v-if="product.phanTramGiam > 0 && (product.giaGoc || product.giaBan)" class="price-old">
-                                                    {{ formatPrice(product.giaGoc || (product.giaBan / (1 - product.phanTramGiam / 100))) }}
+                                                <span v-if="product.giaGoc && Number(product.giaGoc) > Number(product.giaBan)" class="price-old">
+                                                    {{ formatPrice(product.giaGoc) }}
                                                 </span>
                                             </div>
 

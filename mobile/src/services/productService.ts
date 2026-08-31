@@ -60,8 +60,10 @@ export interface ProductVariant {
   tenKichThuoc: string;
   giaTriKichThuoc: string;
   soLuong: number;
+  giaGoc?: number;
   giaBan: number;
-  phanTramGiam: number;
+  phanTramGiam?: number;
+  tenDotGiamGia?: string;
   trangThai: string;
   ngayTao: number;
   images: VariantImage[];
@@ -85,6 +87,8 @@ export interface ProductDetail {
   hinhAnh: string;
   trangThai: string;
   ngayTao: number;
+  giaBanThapNhat?: number;
+  giaBanCaoNhat?: number;
   variants: ProductVariant[];
 }
 

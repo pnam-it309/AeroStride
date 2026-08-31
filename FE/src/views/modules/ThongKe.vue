@@ -107,12 +107,12 @@ const startHourlyChartSeries = ref([
     {
         name: 'Doanh thu',
         type: 'line',
-        data: []
+        data: Array(24).fill(0)
     },
     {
         name: 'Khách hàng',
         type: 'line',
-        data: []
+        data: Array(24).fill(0)
     }
 ]);
 
@@ -120,12 +120,12 @@ const endHourlyChartSeries = ref([
     {
         name: 'Doanh thu',
         type: 'line',
-        data: []
+        data: Array(24).fill(0)
     },
     {
         name: 'Khách hàng',
         type: 'line',
-        data: []
+        data: Array(24).fill(0)
     }
 ]);
 
@@ -174,7 +174,8 @@ const hourlyPercentageInfo = computed(() => {
 
 const getHourlyChartOptions = (color, maxVal, maxCust) => {
     const isUnder50M = !maxVal || maxVal <= 50000000;
-    const yaxisMaxRevenue = isUnder50M ? 50000000 : Math.ceil((maxVal * 1.2) / 10000000) * 10000000;
+    const safeMaxVal = Number.isFinite(maxVal) ? maxVal : 0;
+    const yaxisMaxRevenue = isUnder50M ? 50000000 : Math.ceil((safeMaxVal * 1.2) / 10000000) * 10000000;
     return {
         chart: {
             type: 'line',
@@ -411,15 +412,22 @@ const productStats = ref([]);
 const productSearchKeyword = ref('');
 const productSortBy = ref('bestSelling');
 const productPage = ref(1);
-const productPageSize = ref(10);
 const productPageSizeOptions = [
     { title: '10 dòng', value: 10 },
     { title: '20 dòng', value: 20 }
 ];
 const productSortOptions = [
-    { title: 'Bán chạy nhất', value: 'bestSelling' },
-    { title: 'Doanh thu cao nhất', value: 'revenueDesc' }
+    { title: 'Bán chạy nhất', value: 'bestSelling', icon: 'mdi-fire', iconColor: '#ef4444' },
+    { title: 'Bán chậm / Không bán chạy', value: 'slowSelling', icon: 'mdi-trending-down', iconColor: '#64748b' },
+    { title: 'Doanh thu cao nhất', value: 'revenueDesc', icon: 'mdi-cash-multiple', iconColor: '#10b981' },
+    { title: 'Doanh thu thấp nhất', value: 'revenueAsc', icon: 'mdi-cash-minus', iconColor: '#f59e0b' }
 ];
+
+const setProductSort = (val) => {
+    productSortBy.value = val;
+    productPage.value = 1;
+    fetchProductStats();
+};
 
 const monthlyRevenue = ref([]);
 
@@ -427,7 +435,13 @@ const monthlyRevenue = ref([]);
 const areaChartSeries = ref([
     {
         name: 'Doanh thu',
-        data: []
+        type: 'line',
+        data: Array(12).fill(0)
+    },
+    {
+        name: 'Khách hàng',
+        type: 'line',
+        data: Array(12).fill(0)
     }
 ]);
 
@@ -567,7 +581,7 @@ const statusBarOptions = ref({
         },
         fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
     },
-    colors: ['#4f939c', '#e39b32', '#6fba83', '#c9473d'],
+    colors: ['#4f939c', '#e39b32', '#16a34a', '#c9473d'],
     plotOptions: {
         bar: {
             distributed: true,
@@ -595,10 +609,15 @@ const statusBarOptions = ref({
             show: false
         },
         labels: {
+            show: true,
+            rotate: 0,
+            rotateAlways: false,
+            hideOverlappingLabels: false,
+            trim: false,
             style: {
-                colors: '#334155',
-                fontSize: '12px',
-                fontWeight: 500
+                colors: ['#4f939c', '#e39b32', '#16a34a', '#c9473d'],
+                fontSize: '11px',
+                fontWeight: 600
             }
         }
     },
@@ -639,12 +658,14 @@ const getDateRange = () => {
 const productTotalElements = ref(0);
 const productTotalPages = ref(1);
 const productLoading = ref(false);
+const isFallbackYearData = ref(false);
 
 const fetchProductStats = async () => {
     productLoading.value = true;
+    isFallbackYearData.value = false;
     try {
         const { tuNgay, denNgay } = getDateRange();
-        const response = await dichVuThongKe.layThongKeSanPham({
+        let response = await dichVuThongKe.layThongKeSanPham({
             tuNgay: tuNgay || undefined,
             denNgay: denNgay || undefined,
             keyword: productSearchKeyword.value || undefined,
@@ -653,8 +674,31 @@ const fetchProductStats = async () => {
             sortBy: productSortBy.value
         });
 
-        productStats.value = Array.isArray(response?.content) ? response.content : [];
-        productTotalElements.value = response?.totalElements || 0;
+        let list = Array.isArray(response?.content) ? response.content : [];
+        const hasSoldProducts = list.some((item) => Number(item.quantity || 0) > 0 || Number(item.revenue || 0) > 0);
+
+        // Nếu trong khoảng ngày/tháng được chọn không có dữ liệu bán, tự động fallback hiển thị theo năm đã chọn
+        if (!hasSoldProducts && (tuNgay || denNgay) && selectedYear.value) {
+            const startOfYear = `${selectedYear.value}-01-01`;
+            const endOfYear = `${selectedYear.value}-12-31`;
+            const fallbackResponse = await dichVuThongKe.layThongKeSanPham({
+                tuNgay: startOfYear,
+                denNgay: endOfYear,
+                keyword: productSearchKeyword.value || undefined,
+                page: productPage.value - 1,
+                size: productPageSize.value,
+                sortBy: productSortBy.value
+            });
+            const fallbackList = Array.isArray(fallbackResponse?.content) ? fallbackResponse.content : [];
+            if (fallbackList.length > 0) {
+                response = fallbackResponse;
+                list = fallbackList;
+                isFallbackYearData.value = true;
+            }
+        }
+
+        productStats.value = list;
+        productTotalElements.value = response?.totalElements || list.length;
         productTotalPages.value = response?.totalPages || 1;
     } catch (error) {
         console.error('Error loading product stats table:', error);
@@ -716,8 +760,12 @@ const loadStatistics = async () => {
                 doanhThuDaHuy: overview.doanhThuDaHuy || 0
             };
 
-            if (overview.topSanPhamBanChay && overview.topSanPhamBanChay.length > 0) {
-                topProducts.value = overview.topSanPhamBanChay.map((item) => ({
+            const effectiveTopProducts = (overview.topSanPhamBanChay && overview.topSanPhamBanChay.length > 0)
+                ? overview.topSanPhamBanChay
+                : (yearlyOverview?.topSanPhamBanChay || []);
+
+            if (effectiveTopProducts.length > 0) {
+                topProducts.value = effectiveTopProducts.map((item) => ({
                     maSanPham: item.maSanPham || '',
                     name: item.name,
                     thuongHieu: item.thuongHieu || '',
@@ -729,14 +777,17 @@ const loadStatistics = async () => {
                 topProducts.value = [];
             }
 
-            const brandShares = Array.isArray(overview.tyTrongTheoThuongHieu)
+            const effectiveBrandShares = (Array.isArray(overview.tyTrongTheoThuongHieu) && overview.tyTrongTheoThuongHieu.length > 0)
                 ? overview.tyTrongTheoThuongHieu
-                      .map((item) => ({
-                          name: item.name || 'Khác',
-                          revenue: Number(item.revenue || 0)
-                      }))
-                      .filter((item) => Number.isFinite(item.revenue) && item.revenue > 0)
-                : [];
+                : (Array.isArray(yearlyOverview?.tyTrongTheoThuongHieu) ? yearlyOverview.tyTrongTheoThuongHieu : []);
+
+            const brandShares = effectiveBrandShares
+                .map((item) => ({
+                    name: item.name || 'Khác',
+                    revenue: Number(item.revenue || 0)
+                }))
+                .filter((item) => Number.isFinite(item.revenue) && item.revenue > 0);
+
             donutChartSeries.value = brandShares.map((item) => item.revenue);
             donutChartOptions.value = {
                 ...donutChartOptions.value,
@@ -744,8 +795,12 @@ const loadStatistics = async () => {
             };
             donutChartKey.value += 1;
 
-            if (overview.topKhachHang && overview.topKhachHang.length > 0) {
-                customerPurchaseStats.value = overview.topKhachHang.map((item) => ({
+            const effectiveCustomers = (overview.topKhachHang && overview.topKhachHang.length > 0)
+                ? overview.topKhachHang
+                : (yearlyOverview?.topKhachHang || []);
+
+            if (effectiveCustomers.length > 0) {
+                customerPurchaseStats.value = effectiveCustomers.map((item) => ({
                     tenKhachHang: item.tenKhachHang || 'Khách lẻ',
                     tongChi: Number(item.tongChi || 0),
                     tongSanPham: Number(item.tongSanPham || 0),
@@ -756,8 +811,12 @@ const loadStatistics = async () => {
                 customerPurchaseStats.value = [];
             }
 
-            if (overview.topNhanVien && overview.topNhanVien.length > 0) {
-                employeePurchaseStats.value = overview.topNhanVien.map((item) => ({
+            const effectiveEmployees = (overview.topNhanVien && overview.topNhanVien.length > 0)
+                ? overview.topNhanVien
+                : (yearlyOverview?.topNhanVien || []);
+
+            if (effectiveEmployees.length > 0) {
+                employeePurchaseStats.value = effectiveEmployees.map((item) => ({
                     maNhanVien: item.maNhanVien || '',
                     tenNhanVien: item.tenNhanVien || 'Hệ thống/Online',
                     tongChi: Number(item.tongChi || 0),
@@ -953,10 +1012,10 @@ const statusBarSeries = computed(() => [
     {
         name: 'Số đơn',
         data: [
-            yearlyRevenueStats.value.donHangChoXacNhan,
-            yearlyRevenueStats.value.donHangDangGiao,
-            yearlyRevenueStats.value.donHangHoanThanh,
-            yearlyRevenueStats.value.donHangDaHuy
+            Number(yearlyRevenueStats.value.donHangChoXacNhan || 0),
+            Number(yearlyRevenueStats.value.donHangDangGiao || 0),
+            Number(yearlyRevenueStats.value.donHangHoanThanh || 0),
+            Number(yearlyRevenueStats.value.donHangDaHuy || 0)
         ]
     }
 ]);
@@ -1567,6 +1626,9 @@ onMounted(() => {
                     <div class="product-stats-title">
                         <v-icon color="#e11d48" size="17">mdi-cube-outline</v-icon>
                         <h2>Thống kê sản phẩm</h2>
+                        <span v-if="isFallbackYearData" class="text-caption text-amber-800 bg-amber-50 border border-amber-200 rounded-pill px-2 py-0.5 ml-2 font-weight-medium">
+                            (Dữ liệu năm {{ selectedYear }})
+                        </span>
                     </div>
                     <span class="product-count-chip">{{ formatNumber(productTotalElements) }} sản phẩm</span>
                 </div>
@@ -1574,37 +1636,48 @@ onMounted(() => {
                     <v-progress-circular indeterminate color="primary" />
                 </div>
                 <div v-else class="product-table-section">
-                    <AdminFilter title="" @refresh="resetProductFilters">
-                        <v-col cols="12" sm="6" md="4" class="pb-1">
-                            <div class="filter-field-label">Tìm kiếm</div>
+                    <div class="product-filter-bar d-flex flex-wrap align-center justify-space-between gap-3 mb-4 pa-2 bg-slate-50 rounded-lg border">
+                        <div class="d-flex align-center gap-2 flex-grow-1" style="max-width: 360px">
                             <v-text-field
                                 v-model="productSearchKeyword"
-                                placeholder="Mã hoặc tên sản phẩm..."
-                                density="comfortable"
+                                placeholder="Tìm theo mã hoặc tên sản phẩm..."
+                                density="compact"
                                 variant="outlined"
                                 hide-details
                                 clearable
                                 prepend-inner-icon="mdi-magnify"
                                 bg-color="white"
+                                class="compact-input flex-grow-1"
                                 @input="onSearchInput"
                                 @click:clear="onSearchClear"
                             ></v-text-field>
-                        </v-col>
-                        <v-col cols="12" sm="6" md="4" class="pb-1">
-                            <div class="filter-field-label">Sắp xếp</div>
-                            <v-select
-                                v-model="productSortBy"
-                                :items="productSortOptions"
-                                item-title="title"
-                                item-value="value"
-                                density="comfortable"
-                                variant="outlined"
-                                hide-details
-                                bg-color="white"
-                                @update:model-value="refreshProductFilters"
-                            ></v-select>
-                        </v-col>
-                    </AdminFilter>
+                        </div>
+                        <div class="d-flex align-center gap-2 flex-wrap">
+                            <span class="text-caption font-weight-bold text-slate-600 mr-1">Bộ lọc:</span>
+                            <v-btn
+                                v-for="opt in productSortOptions"
+                                :key="opt.value"
+                                size="small"
+                                variant="flat"
+                                :color="productSortBy === opt.value ? 'primary' : 'white'"
+                                :class="productSortBy === opt.value ? 'text-white font-weight-bold shadow-sm' : 'text-slate-700 font-weight-medium border'"
+                                class="rounded-pill text-none px-3"
+                                style="text-transform: none !important"
+                                @click="setProductSort(opt.value)"
+                            >
+                                <v-icon size="15" class="mr-1" :color="productSortBy === opt.value ? 'white' : opt.iconColor">{{ opt.icon }}</v-icon>
+                                {{ opt.title }}
+                            </v-btn>
+                            <v-btn
+                                icon="mdi-refresh"
+                                size="small"
+                                variant="text"
+                                color="slate-600"
+                                @click="resetProductFilters"
+                                title="Làm mới bộ lọc"
+                            />
+                        </div>
+                    </div>
                     <AdminTable
                         hide-toolbar
                         :loading="productLoading"
@@ -1625,7 +1698,7 @@ onMounted(() => {
                                 <td class="data-cell text-left">
                                     <div class="product-name-cell" style="justify-content: flex-start; text-align: left">
                                         <span class="font-weight-medium" style="color: #1e293b">{{ item.name }}</span>
-                                        <small style="color: #64748b; font-size: 11px">Thời gian chọn</small>
+                                        <small style="color: #64748b; font-size: 11px">{{ isFallbackYearData ? 'Dữ liệu năm ' + selectedYear : 'Thời gian chọn' }}</small>
                                     </div>
                                 </td>
                                 <td class="data-cell">

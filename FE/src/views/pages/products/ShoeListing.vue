@@ -312,9 +312,7 @@ const getOldPrice = (p) => {
     if (p.giaGoc && Number(p.giaGoc) > Number(getProductPrice(p))) {
         return p.giaGoc;
     }
-    const price = getProductPrice(p);
-    if (!price || !p.phanTramGiam || p.phanTramGiam >= 100) return null;
-    return price / (1 - p.phanTramGiam / 100);
+    return null;
 };
 
 const goToDetail = (id) => {

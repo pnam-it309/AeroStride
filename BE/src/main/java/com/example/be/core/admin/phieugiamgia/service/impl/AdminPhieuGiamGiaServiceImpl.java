@@ -126,6 +126,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     @Override
     @Transactional
     public void add(AdminPhieuGiamGiaRequest req) {
+        validateRequest(req);
         PhieuGiamGia p = new PhieuGiamGia();
         BeanUtils.copyProperties(req, p);
 
@@ -191,6 +192,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     @Override
     @Transactional
     public void update(AdminPhieuGiamGiaRequest req, String id) {
+        validateRequest(req);
         PhieuGiamGia p = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PHIEU_GIAM_GIA_UPDATE_ERROR));
         TrangThai oldStatus = p.getTrangThai();
@@ -202,6 +204,24 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         if (HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc())) {
             String statusDesc = p.getTrangThai() == TrangThai.DANG_HOAT_DONG ? "được kích hoạt hoạt động" : "đã kết thúc";
             sendVoucherStatusEmail(p, statusDesc);
+        }
+    }
+
+    private void validateRequest(AdminPhieuGiamGiaRequest req) {
+        if (req.getTen() != null) {
+            req.setTen(req.getTen().trim());
+        }
+        if (req.getNgayBatDau() != null && req.getNgayKetThuc() != null) {
+            if (req.getNgayBatDau() >= req.getNgayKetThuc()) {
+                throw new com.example.be.infrastructure.exceptions.SystemException("Ngày kết thúc phải sau ngày bắt đầu");
+            }
+        }
+        if (LoaiPhieuGiamGia.isTienMat(req.getLoaiPhieu())) {
+            if (req.getSoTienGiam() != null && req.getDonHangToiThieu() != null) {
+                if (req.getDonHangToiThieu().compareTo(req.getSoTienGiam()) <= 0) {
+                    throw new com.example.be.infrastructure.exceptions.SystemException("Hóa đơn tối thiểu phải lớn hơn giá trị giảm");
+                }
+            }
         }
     }
 

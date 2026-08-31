@@ -61,7 +61,7 @@ class AdminDotGiamGiaServiceImplTest {
     void add_ShouldSaveEntity() {
         service.add(testRequest);
 
-        verify(repo).save(any(DotGiamGia.class));
+        verify(repo).saveAndFlush(any(DotGiamGia.class));
     }
 
     @Test
@@ -78,7 +78,7 @@ class AdminDotGiamGiaServiceImplTest {
         service.update(testRequest, "1");
 
         assertEquals("DGG001", testEntity.getMa());
-        verify(repo).save(testEntity);
+        verify(repo).saveAndFlush(testEntity);
     }
 
     @Test

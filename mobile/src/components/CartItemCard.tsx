@@ -60,9 +60,28 @@ export function CartItemCard({ item }: CartItemCardProps) {
         )}
 
         <View style={styles.footer}>
-          <Text style={[styles.price, { color: Brand.primary }]}>
-            {formatCurrency(item.giaBan)}
-          </Text>
+          <View style={styles.priceContainer}>
+            <Text style={[styles.price, { color: Brand.primary }]}>
+              {formatCurrency(item.giaBan)}
+            </Text>
+            {item.giaGoc && item.giaGoc > item.giaBan ? (
+              <View style={styles.discountRow}>
+                <Text style={[styles.originalPrice, { color: theme.textTertiary }]}>
+                  {formatCurrency(item.giaGoc)}
+                </Text>
+                {item.phanTramGiam ? (
+                  <View style={styles.discountBadge}>
+                    <Text style={styles.discountText}>-{item.phanTramGiam}%</Text>
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+            {item.tenDotGiamGia ? (
+              <Text style={styles.campaignTag} numberOfLines={1}>
+                {item.tenDotGiamGia}
+              </Text>
+            ) : null}
+          </View>
 
           <View style={[styles.quantityControl, { borderColor: theme.border }]}>
             <Pressable
@@ -133,9 +152,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 'auto',
   },
+  priceContainer: {
+    gap: 2,
+    flex: 1,
+    marginRight: Spacing.two,
+  },
   price: {
     fontSize: FontSizes.base,
     fontWeight: FontWeights.bold,
+  },
+  discountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  originalPrice: {
+    fontSize: 11,
+    textDecorationLine: 'line-through',
+  },
+  discountBadge: {
+    backgroundColor: Brand.error + '18',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 3,
+  },
+  discountText: {
+    color: Brand.error,
+    fontSize: 9,
+    fontWeight: FontWeights.bold,
+  },
+  campaignTag: {
+    fontSize: 10,
+    color: Brand.accent,
+    fontWeight: FontWeights.medium,
   },
   quantityControl: {
     flexDirection: 'row',

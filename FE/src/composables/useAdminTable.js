@@ -24,16 +24,7 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
         ...initialFilters
     });
 
-    // In-memory cache lưu kết quả theo từng trang và filter
-    const pageCache = new Map();
-
-    const getCacheKey = (page, size, f) => {
-        return JSON.stringify({ page, size, ...f });
-    };
-
-    const clearCache = () => {
-        pageCache.clear();
-    };
+    const clearCache = () => {};
 
     let currentRequestId = 0;
     let searchDebounceTimer = null;
@@ -42,17 +33,6 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
         const targetPage = pagination.value.page;
         const targetSize = pagination.value.size;
         const currentFilters = { ...filters.value };
-        const cacheKey = getCacheKey(targetPage, targetSize, currentFilters);
-
-        // 1. Kiểm tra cache trước - nếu có thì nạp NGAY LẬP TỨC (0ms)
-        if (!forceFresh && pageCache.has(cacheKey)) {
-            const cached = pageCache.get(cacheKey);
-            items.value = cached.items || [];
-            pagination.value.totalElements = cached.totalElements || 0;
-            pagination.value.totalPages = cached.totalPages || 1;
-            loading.value = false;
-            return;
-        }
 
         const requestId = ++currentRequestId;
         loading.value = true;
@@ -128,19 +108,6 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
             items.value = loadedItems;
             pagination.value.totalElements = total;
             pagination.value.totalPages = finalTotalPages;
-
-            // Lưu vào cache cho lần bấm sau chuyển ngay tức thì
-            pageCache.set(cacheKey, {
-                items: loadedItems,
-                totalElements: total,
-                totalPages: finalTotalPages
-            });
-
-            // Giới hạn kích thước cache tối đa 50 trang để tránh tốn RAM
-            if (pageCache.size > 50) {
-                const firstKey = pageCache.keys().next().value;
-                pageCache.delete(firstKey);
-            }
 
             if (pagination.value.page > finalTotalPages && finalTotalPages > 0) {
                 pagination.value.page = finalTotalPages;

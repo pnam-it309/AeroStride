@@ -94,8 +94,11 @@ export default function CartScreen() {
         ]}
       >
         <View style={styles.totalRow}>
-          <Text style={[styles.totalLabel, { color: theme.textSecondary }]}>Tạm tính</Text>
-          <Text style={[styles.totalPrice, { color: theme.text }]}>{formatCurrency(cartTotal)}</Text>
+          <View>
+            <Text style={[styles.totalLabel, { color: theme.textSecondary }]}>Tổng cộng</Text>
+            <Text style={[styles.itemCountText, { color: theme.textTertiary }]}>{cartCount} sản phẩm</Text>
+          </View>
+          <Text style={[styles.totalPrice, { color: Brand.primary }]}>{formatCurrency(cartTotal)}</Text>
         </View>
         <Pressable
           style={({ pressed }) => [styles.checkoutButton, { opacity: pressed ? 0.85 : 1 }]}
@@ -171,10 +174,14 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: FontSizes.base,
+    fontWeight: FontWeights.semibold,
+  },
+  itemCountText: {
+    fontSize: FontSizes.xs,
   },
   totalPrice: {
     fontSize: FontSizes.xl,
-    fontWeight: FontWeights.bold,
+    fontWeight: FontWeights.extrabold,
   },
   checkoutButton: {
     flexDirection: 'row',
