@@ -245,3 +245,39 @@ export const useCartStore = defineStore('cart', {
         }
     }
 });
+
+// Auto-sync cart in realtime when any product variant stock or price is updated
+if (typeof window !== 'undefined') {
+    window.addEventListener('product-stock-update', () => {
+        try {
+            const store = useCartStore();
+            if (store && store.items && store.items.length > 0) {
+                store.syncWithBackend();
+            }
+        } catch (e) {
+            // Ignore error if Pinia not yet ready
+        }
+    });
+
+    // Ensure websocket connection is active for receiving stock/variant updates
+    setTimeout(() => {
+        import('@/services/auth/websocketService').then(({ default: webSocketService }) => {
+            if (webSocketService && !webSocketService.connected && !webSocketService.connecting) {
+                webSocketService.connect((message) => {
+                    if (
+                        message &&
+                        (message.type === 'PRODUCT_STOCK_UPDATE' || (message.id && message.soLuongTon !== undefined && message.maChiTietSanPham))
+                    ) {
+                        try {
+                            const store = useCartStore();
+                            if (store && store.items && store.items.length > 0) {
+                                store.syncWithBackend();
+                            }
+                        } catch (e) {}
+                    }
+                });
+            }
+        });
+    }, 1000);
+}
+

@@ -715,6 +715,22 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                                     </div>
                                 </v-col>
 
+                                <v-col cols="12" md="6">
+                                    <div class="form-group">
+                                        <div class="field-label">Số lượng <span class="text-error">*</span></div>
+                                        <FormattedNumberField
+                                            v-model="formData.soLuong"
+                                            min="0"
+                                            :rules="[rules.required, rules.min0]"
+                                            variant="outlined"
+                                            density="comfortable"
+                                            hide-details="auto"
+                                            placeholder="0"
+                                            class="modern-input"
+                                        ></FormattedNumberField>
+                                    </div>
+                                </v-col>
+
                                 <v-col cols="12">
                                     <div class="form-group">
                                         <div class="field-label">Mã SKU</div>

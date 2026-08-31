@@ -998,7 +998,7 @@ const generateSkuForDraft = (productCode, colorId, sizeId) => {
 };
 
 // Tao bien the nhap lieu tu cap mau-size; giu lai gia/ton kho neu da co ban nhap cu.
-const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackImageUrl = '') => {
+const createGeneratedVariant = (colorId, sizeId, existingVariant = {}) => {
     const defaultSku = generateSkuForDraft(product.value?.maSanPham, colorId, sizeId);
     return mapVariantToFormState({
         ...existingVariant,
@@ -1009,7 +1009,7 @@ const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackI
         giaBan: Number(existingVariant.giaBan ?? 0),
         trangThai: existingVariant.trangThai || defaultVariantStatus,
         maChiTietSanPham: existingVariant.maChiTietSanPham || defaultSku,
-        urlAnh: normalizeUploadedFileUrl(existingVariant.urlAnh || fallbackImageUrl || '')
+        urlAnh: normalizeUploadedFileUrl(existingVariant.urlAnh || '')
     });
 };
 
@@ -1348,7 +1348,7 @@ const executeGenerateVariants = () => {
         selectedSizes.value.forEach((sizeId) => {
             const combinationKey = getVariantCombinationKey(colorId, sizeId);
             nextVariants.push(
-                createGeneratedVariant(colorId, sizeId, existingVariantMap.get(combinationKey), getColorUploadEntry(colorId).url)
+                createGeneratedVariant(colorId, sizeId, existingVariantMap.get(combinationKey))
             );
         });
     });

@@ -395,7 +395,7 @@ onMounted(async () => {
                         </template>
                     </div>
                 </div>
-                <!-- Trạng thái bất thường -->
+                <!-- Trạng thái bất thường (Hủy / Hoàn) -->
                 <div v-else-if="isCancelled" class="cancelled-banner section-block mb-8 d-flex align-center justify-space-between flex-wrap ga-3">
                     <div class="d-flex align-center">
                         <v-icon size="22" class="mr-3" color="#991b1b">{{ statusIcon(order.trangThai) }}</v-icon>
@@ -414,6 +414,14 @@ onMounted(async () => {
                         <v-icon size="16" class="mr-1">mdi-refresh</v-icon>
                         Đặt lại đơn hàng
                     </v-btn>
+                </div>
+                <!-- Trạng thái giao thất bại / khách không nhận -->
+                <div v-else-if="order.trangThai === ORDER_STATUS.GIAO_THAT_BAI || order.trangThai === ORDER_STATUS.KHACH_KHONG_NHAN" class="cancelled-banner section-block mb-8 d-flex align-center justify-space-between flex-wrap ga-3" style="background: #fffbeb; border: 1px solid #fde68a;">
+                    <div class="d-flex align-center">
+                        <v-icon size="22" class="mr-3" color="#d97706">{{ statusIcon(order.trangThai) }}</v-icon>
+                        <span style="color: #b45309; font-weight: 600;">Đơn hàng: {{ statusLabel(order.trangThai) }}</span>
+                    </div>
+                    <span class="text-caption text-amber-800 font-weight-medium">Đơn vị vận chuyển sẽ liên hệ lại hoặc hỗ trợ giao lại cho bạn</span>
                 </div>
 
                 <v-row class="content-grid">

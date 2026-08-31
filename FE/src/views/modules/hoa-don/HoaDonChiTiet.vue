@@ -722,70 +722,170 @@ const getPaymentStatusText = (pay) => {
     return 'Thành công';
 };
 
+const STEP_CONFIG = {
+    [ORDER_STATUS_ORDINALS.CHO_XAC_NHAN]: { key: ORDER_STATUS_ORDINALS.CHO_XAC_NHAN, label: 'Chờ xác nhận', icon: CalendarIcon, note: 'Đơn hàng mới tạo' },
+    [ORDER_STATUS_ORDINALS.XAC_NHAN]: { key: ORDER_STATUS_ORDINALS.XAC_NHAN, label: 'Đã xác nhận', icon: CircleCheckIcon, note: 'Đơn hàng đã được xác nhận' },
+    [ORDER_STATUS_ORDINALS.CHO_GIAO]: { key: ORDER_STATUS_ORDINALS.CHO_GIAO, label: 'Chờ giao', icon: PackageIcon, note: 'Đơn hàng chờ giao' },
+    [ORDER_STATUS_ORDINALS.DANG_GIAO]: { key: ORDER_STATUS_ORDINALS.DANG_GIAO, label: 'Đang giao', icon: TruckIcon, note: 'Đơn hàng đang được giao' },
+    [ORDER_STATUS_ORDINALS.HOAN_THANH]: { key: ORDER_STATUS_ORDINALS.HOAN_THANH, label: 'Hoàn thành', icon: CheckIcon, note: 'Đơn hàng đã hoàn thành' },
+    [ORDER_STATUS_ORDINALS.DA_HUY]: { key: ORDER_STATUS_ORDINALS.DA_HUY, label: 'Đã hủy', icon: CircleXIcon, note: 'Đơn hàng bị hủy', isException: true },
+    [ORDER_STATUS_ORDINALS.GIAO_THAT_BAI]: { key: ORDER_STATUS_ORDINALS.GIAO_THAT_BAI, label: 'Giao thất bại', icon: AlertCircleIcon, note: 'Giao hàng không thành công', isException: true },
+    [ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN]: { key: ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN, label: 'Khách không nhận', icon: CircleXIcon, note: 'Khách từ chối nhận hàng', isException: true },
+    [ORDER_STATUS_ORDINALS.HOAN_DON]: { key: ORDER_STATUS_ORDINALS.HOAN_DON, label: 'Hoàn đơn', icon: CircleXIcon, note: 'Đơn hàng hoàn về kho', isException: true }
+};
+
 const timelineSteps = computed(() => {
-    const status = getOrderStatus();
+    const currentStatus = getOrderStatus();
+    if (currentStatus === null) return [];
 
-    // Core flow steps
-    const coreSteps = [
-        { key: ORDER_STATUS_ORDINALS.CHO_XAC_NHAN, label: 'Chờ xác nhận', icon: CalendarIcon, note: 'Đơn hàng mới tạo' },
-        { key: ORDER_STATUS_ORDINALS.XAC_NHAN, label: 'Đã xác nhận', icon: CircleCheckIcon, note: 'Đơn hàng đã được xác nhận' },
-        { key: ORDER_STATUS_ORDINALS.CHO_GIAO, label: 'Chờ giao', icon: PackageIcon, note: 'Đơn hàng chờ giao' },
-        { key: ORDER_STATUS_ORDINALS.DANG_GIAO, label: 'Đang giao', icon: TruckIcon, note: 'Đơn hàng đang được giao' },
-        { key: ORDER_STATUS_ORDINALS.HOAN_THANH, label: 'Hoàn thành', icon: CheckIcon, note: 'Đơn hàng đã hoàn thành' }
-    ];
-
-    // Exception steps
-    const exceptionSteps = [
-        { key: ORDER_STATUS_ORDINALS.DA_HUY, label: 'Đã hủy', icon: CircleXIcon, note: 'Đơn hàng bị hủy' },
-        { key: ORDER_STATUS_ORDINALS.GIAO_THAT_BAI, label: 'Giao thất bại', icon: AlertCircleIcon, note: 'Giao hàng không thành công' },
-        { key: ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN, label: 'Khách không nhận', icon: CircleXIcon, note: 'Khách từ chối nhận hàng' }
-    ];
-
-    let steps = [...coreSteps];
-    const tsMap = getStatusTimestampMap.value;
-    const statusOrdinal = status === null ? -1 : status;
-
-    // Đơn mua tại quầy: bỏ qua các bước giao hàng trung gian, chỉ hiện Chờ xác nhận -> Hoàn thành
+    // Đơn mua tại quầy: chỉ hiện Chờ xác nhận -> Hoàn thành (hoặc Đã hủy)
     if (isCounterOrder.value) {
-        steps = steps.filter((s) => s.key === ORDER_STATUS_ORDINALS.CHO_XAC_NHAN || s.key === ORDER_STATUS_ORDINALS.HOAN_THANH);
+        if (currentStatus === ORDER_STATUS_ORDINALS.DA_HUY) {
+            return [
+                {
+                    key: ORDER_STATUS_ORDINALS.CHO_XAC_NHAN,
+                    label: 'Chờ xác nhận',
+                    icon: CalendarIcon,
+                    state: 'done',
+                    tone: getStatusTone(ORDER_STATUS_ORDINALS.CHO_XAC_NHAN),
+                    uniqueKey: '0-0',
+                    isException: false
+                },
+                {
+                    key: ORDER_STATUS_ORDINALS.DA_HUY,
+                    label: 'Đã hủy',
+                    icon: CircleXIcon,
+                    state: 'active',
+                    tone: getStatusTone(ORDER_STATUS_ORDINALS.DA_HUY),
+                    uniqueKey: '5-1',
+                    isException: true
+                }
+            ];
+        }
+        return [
+            {
+                key: ORDER_STATUS_ORDINALS.CHO_XAC_NHAN,
+                label: 'Chờ xác nhận',
+                icon: CalendarIcon,
+                state: currentStatus === ORDER_STATUS_ORDINALS.CHO_XAC_NHAN ? 'active' : 'done',
+                tone: getStatusTone(ORDER_STATUS_ORDINALS.CHO_XAC_NHAN),
+                uniqueKey: '0-0',
+                isException: false
+            },
+            {
+                key: ORDER_STATUS_ORDINALS.HOAN_THANH,
+                label: 'Hoàn thành',
+                icon: CheckIcon,
+                state: currentStatus === ORDER_STATUS_ORDINALS.HOAN_THANH ? 'active' : 'pending',
+                tone: getStatusTone(ORDER_STATUS_ORDINALS.HOAN_THANH),
+                uniqueKey: '4-1',
+                isException: false
+            }
+        ];
     }
 
-    // Nếu trạng thái hiện tại là Hủy, Giao thất bại, hoặc Khách không nhận
-    if (status >= ORDER_STATUS_ORDINALS.DA_HUY && status <= ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN) {
-        const exc = exceptionSteps.find((s) => s.key === status);
-        if (exc) {
-            if (isCounterOrder.value) {
-                steps = [coreSteps[0], exc];
-            } else {
-                steps = [...coreSteps.slice(0, 4), exc]; // Giữ 4 bước đầu, bước 5 là trạng thái đặc biệt
+    // Luồng giao hàng chuẩn
+    const standardOrder = [
+        ORDER_STATUS_ORDINALS.CHO_XAC_NHAN,
+        ORDER_STATUS_ORDINALS.XAC_NHAN,
+        ORDER_STATUS_ORDINALS.CHO_GIAO,
+        ORDER_STATUS_ORDINALS.DANG_GIAO,
+        ORDER_STATUS_ORDINALS.HOAN_THANH
+    ];
+
+    // Lấy danh sách lịch sử sắp xếp từ cũ đến mới
+    const rawLogs = Array.isArray(order.value?.listsLichSuHoaDon)
+        ? [...order.value.listsLichSuHoaDon].sort((a, b) => new Date(a.ngayTao || 0) - new Date(b.ngayTao || 0))
+        : [];
+
+    // Xây dựng danh sách các mốc trạng thái (milestones)
+    const milestones = [
+        { key: ORDER_STATUS_ORDINALS.CHO_XAC_NHAN, timestamp: order.value?.ngayTao }
+    ];
+
+    for (const log of rawLogs) {
+        const ord = getOrderStatusOrdinal(log?.trangThaiMoi);
+        if (ord === null) continue;
+
+        const lastKey = milestones[milestones.length - 1].key;
+        if (ord === lastKey) continue;
+
+        // Nếu chuyển tiếp trong luồng chuẩn và có bước bị nhảy qua -> bổ sung bước chuẩn trung gian
+        if (standardOrder.includes(lastKey) && standardOrder.includes(ord) && ord > lastKey) {
+            const startIdx = standardOrder.indexOf(lastKey);
+            const endIdx = standardOrder.indexOf(ord);
+            for (let i = startIdx + 1; i < endIdx; i++) {
+                const intermediateKey = standardOrder[i];
+                if (!milestones.some((m) => m.key === intermediateKey)) {
+                    milestones.push({ key: intermediateKey, timestamp: log.ngayTao });
+                }
             }
         }
+
+        milestones.push({
+            key: ord,
+            timestamp: log?.ngayTao ?? Date.now(),
+            isException: ord >= ORDER_STATUS_ORDINALS.DA_HUY
+        });
     }
 
-    const currentActiveIndex = steps.findIndex((s) => s.key === status);
-
-    return steps
-        .filter((_, index) => index <= currentActiveIndex)
-        .map((step, index) => {
-            let state = 'pending';
-
-            if (status >= ORDER_STATUS_ORDINALS.DA_HUY && status <= ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN) {
-                if (index < currentActiveIndex) state = 'done';
-                else if (index === currentActiveIndex) state = 'active';
-                else state = 'disabled';
-            } else {
-                if (index < currentActiveIndex) state = 'done';
-                else if (index === currentActiveIndex) state = 'active';
-                else state = 'pending';
+    // Đảm bảo trạng thái hiện tại nằm ở cuối chuỗi mốc nếu chưa có
+    const lastMilestoneKey = milestones[milestones.length - 1]?.key;
+    if (currentStatus !== lastMilestoneKey) {
+        if (standardOrder.includes(lastMilestoneKey) && standardOrder.includes(currentStatus) && currentStatus > lastMilestoneKey) {
+            const startIdx = standardOrder.indexOf(lastMilestoneKey);
+            const endIdx = standardOrder.indexOf(currentStatus);
+            for (let i = startIdx + 1; i < endIdx; i++) {
+                const intermediateKey = standardOrder[i];
+                if (!milestones.some((m) => m.key === intermediateKey)) {
+                    milestones.push({ key: intermediateKey, timestamp: Date.now() });
+                }
             }
-
-            return {
-                ...step,
-                timestamp: tsMap?.[step.key] ?? null,
-                state: state,
-                tone: getStatusTone(step.key)
-            };
+        }
+        milestones.push({
+            key: currentStatus,
+            timestamp: Date.now(),
+            isException: currentStatus >= ORDER_STATUS_ORDINALS.DA_HUY
         });
+    }
+
+    // Map các milestones thành steps hoàn chỉnh
+    let hadDeliveryException = false;
+
+    return milestones.map((m, index) => {
+        const isLast = index === milestones.length - 1;
+        const config = STEP_CONFIG[m.key] || {
+            key: m.key,
+            label: getStatusLabel(m.key),
+            icon: CircleCheckIcon,
+            note: ''
+        };
+
+        let label = config.label;
+
+        // Nếu trước đó đã từng có Giao thất bại hoặc Khách không nhận và hiện tại lại là Đang giao
+        if (m.key === ORDER_STATUS_ORDINALS.DANG_GIAO && hadDeliveryException) {
+            label = 'Giao lại';
+        }
+
+        if (m.key === ORDER_STATUS_ORDINALS.GIAO_THAT_BAI || m.key === ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN) {
+            hadDeliveryException = true;
+        }
+
+        const isException = m.isException || (m.key >= ORDER_STATUS_ORDINALS.DA_HUY && m.key <= ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN);
+
+        return {
+            key: m.key,
+            uniqueKey: `${m.key}-${index}`,
+            label,
+            icon: config.icon,
+            note: config.note,
+            timestamp: m.timestamp || null,
+            state: isLast ? 'active' : 'done',
+            tone: getStatusTone(m.key),
+            isException
+        };
+    });
 });
 
 const openStatusDialog = () => {
@@ -1022,17 +1122,21 @@ onMounted(() => {
                 <transition-group name="timeline-anim">
                     <div
                         v-for="(step, index) in timelineSteps"
-                        :key="step.key"
+                        :key="step.uniqueKey || (step.key + '-' + index)"
                         class="timeline-step"
-                        :class="[step.state, step.state === 'active' ? 'text-' + step.tone : 'text-slate-400']"
+                        :class="[
+                            step.state,
+                            step.isException ? ('step-exception step-exception-' + step.key) : '',
+                            step.state === 'active' ? 'text-' + step.tone : 'text-slate-400'
+                        ]"
                     >
                         <div class="node-section">
-                            <div class="node" :class="step.state">
+                            <div class="node" :class="[step.state, step.isException ? ('node-exception node-exception-' + step.key) : '']">
                                 <component :is="getStepIcon(step)" size="22" />
                             </div>
                         </div>
-                        <div class="timeline-info">
-                            <div class="text-body-2 mb-1">{{ step.label }}</div>
+                        <div class="timeline-info text-center">
+                            <div class="text-body-2 mb-1 font-weight-medium">{{ step.label }}</div>
                         </div>
                     </div>
                 </transition-group>
@@ -2199,6 +2303,43 @@ onMounted(() => {
     color: #1e257c !important;
     box-shadow: 0 0 0 4px rgba(30, 37, 124, 0.15);
     animation: timeline-pulse 2s infinite;
+}
+
+/* Exception Nodes (Giao thất bại / Khách không nhận / Đã hủy) */
+.timeline-step .node.node-exception {
+    transition: all 0.3s ease;
+}
+
+.timeline-step.done .node.node-exception-7,
+.timeline-step.done .node-exception-7 {
+    background: #d97706 !important;
+    border-color: #d97706 !important;
+    color: #ffffff !important;
+}
+
+.timeline-step.active .node.node-exception-7,
+.timeline-step.active .node-exception-7 {
+    border-color: #d97706 !important;
+    color: #d97706 !important;
+    box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.25) !important;
+}
+
+.timeline-step.done .node.node-exception-8,
+.timeline-step.done .node-exception-8,
+.timeline-step.done .node.node-exception-5,
+.timeline-step.done .node-exception-5 {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: #ffffff !important;
+}
+
+.timeline-step.active .node.node-exception-8,
+.timeline-step.active .node-exception-8,
+.timeline-step.active .node.node-exception-5,
+.timeline-step.active .node-exception-5 {
+    border-color: #dc2626 !important;
+    color: #dc2626 !important;
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.25) !important;
 }
 
 @keyframes timeline-pulse {

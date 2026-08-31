@@ -124,6 +124,10 @@ export const useNotificationStore = defineStore('notification', {
                     const banHangStore = useBanHangStore();
                     banHangStore.updateProductStock(message.id, message.soLuongTon);
                 });
+                import('@/stores/cartStore').then(({ useCartStore }) => {
+                    const cartStore = useCartStore();
+                    cartStore.syncWithBackend();
+                });
                 window.dispatchEvent(
                     new CustomEvent('product-stock-update', {
                         detail: {
