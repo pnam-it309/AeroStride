@@ -272,7 +272,7 @@ onMounted(async () => {
             @refresh="onRefresh"
         >
             <v-col cols="12" sm="6" md="7" lg="8" class="filter-cell pb-1">
-                <div class="filter-field-label">Tìm kiếm đánh giá</div>
+                <div class="filter-field-label">Tìm kiếm</div>
                 <v-text-field
                     v-model="filters.keyword"
                     placeholder="Tìm theo tên khách hàng, SĐT, tên sản phẩm, nội dung..."

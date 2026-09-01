@@ -229,7 +229,7 @@ onMounted(() => {
         <div class="filter-shell">
             <AdminFilter title="Bộ lọc ca làm" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" md="6" class="filter-cell">
-                    <div class="filter-field-label">Tìm kiếm tên ca</div>
+                    <div class="filter-field-label">Tìm kiếm</div>
                     <v-text-field
                         v-model="filters.search"
                         placeholder="Nhập tên ca..."

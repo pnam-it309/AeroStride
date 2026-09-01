@@ -310,7 +310,7 @@ onMounted(() => {
                         </v-tab>
                         <v-tab value="giao-ca" class="text-none px-4 font-weight-bold">
                             <v-icon start size="18">mdi-calendar-clock</v-icon>
-                            Lịch sử ca làm
+                            Lịch sử bàn giao ca
                         </v-tab>
                     </v-tabs>
                 </div>
