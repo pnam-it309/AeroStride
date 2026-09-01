@@ -1714,14 +1714,14 @@ onMounted(async () => {
                     >
                         <template #headers>
                             <tr>
-                                <th class="header-cell text-center" style="width: 60px">STT</th>
-                                <th class="header-cell text-center" style="width: 120px">Mã SP</th>
-                                <th class="header-cell text-center" style="width: 140px">Mã SKU</th>
-                                <th class="header-cell text-left">Tên sản phẩm</th>
-                                <th class="header-cell text-center" style="width: 130px">Thương hiệu</th>
-                                <th class="header-cell text-center" style="width: 120px">Màu sắc</th>
-                                <th class="header-cell text-center" style="width: 100px">Kích thước</th>
-                                <th class="header-cell text-center cursor-pointer select-none" style="width: 130px" @click="toggleSoldSort">
+                                <th class="header-cell text-center" style="width: 50px">STT</th>
+                                <th class="header-cell text-center" style="width: 110px">Mã SP</th>
+                                <th class="header-cell text-center" style="width: 190px; min-width: 170px">Mã SKU</th>
+                                <th class="header-cell text-left" style="width: 220px; max-width: 240px">Tên sản phẩm</th>
+                                <th class="header-cell text-center" style="width: 120px">Thương hiệu</th>
+                                <th class="header-cell text-center" style="width: 110px">Màu sắc</th>
+                                <th class="header-cell text-center" style="width: 90px">Kích thước</th>
+                                <th class="header-cell text-center cursor-pointer select-none" style="width: 120px" @click="toggleSoldSort">
                                     <div class="d-inline-flex align-center justify-center ga-1 font-weight-bold">
                                         <span>Đã bán</span>
                                         <v-icon size="16" :color="(!productSortBy || productSortBy === 'bestSelling' || productSortBy === 'slowSelling') ? 'primary' : 'slate-400'">
@@ -1732,7 +1732,7 @@ onMounted(async () => {
                                         {{ productSortBy === 'bestSelling' ? 'Sắp xếp: Đã bán cao nhất (Bấm để đổi sang thấp nhất)' : (productSortBy === 'slowSelling' ? 'Sắp xếp: Đã bán thấp nhất (Bấm để đổi sang cao nhất)' : 'Bấm để sắp xếp theo Đã bán') }}
                                     </v-tooltip>
                                 </th>
-                                <th class="header-cell text-center cursor-pointer select-none" style="width: 150px" @click="toggleRevenueSort">
+                                <th class="header-cell text-center cursor-pointer select-none" style="width: 140px" @click="toggleRevenueSort">
                                     <div class="d-inline-flex align-center justify-center ga-1 font-weight-bold">
                                         <span>Doanh thu</span>
                                         <v-icon size="16" :color="productSortBy && productSortBy.startsWith('revenue') ? 'primary' : 'slate-400'">
@@ -1750,10 +1750,10 @@ onMounted(async () => {
                             <tr class="data-row" :key="`${item.maSku || item.maSanPham}-${index}`">
                                 <td class="data-cell text-center font-weight-medium text-slate-500">{{ (productPage - 1) * productPageSize + index + 1 }}</td>
                                 <td class="data-cell text-center font-mono font-weight-bold text-primary">{{ item.maSanPham || '--' }}</td>
-                                <td class="data-cell text-center font-mono font-weight-semibold text-slate-700">{{ item.maSku || '--' }}</td>
-                                <td class="data-cell text-left">
-                                    <div class="product-name-cell" style="justify-content: flex-start; text-align: left">
-                                        <span class="font-weight-medium" style="color: #1e293b">{{ item.name }}</span>
+                                <td class="data-cell text-center font-mono font-weight-semibold text-slate-700" style="white-space: nowrap; min-width: 170px">{{ item.maSku || '--' }}</td>
+                                <td class="data-cell text-left" style="max-width: 240px">
+                                    <div class="product-name-cell" style="justify-content: flex-start; text-align: left; max-width: 230px">
+                                        <span class="font-weight-medium text-truncate d-block" style="color: #1e293b; max-width: 220px" :title="item.name">{{ item.name }}</span>
                                         <small style="color: #64748b; font-size: 11px">{{ isFallbackYearData ? 'Dữ liệu năm ' + selectedYear : 'Thời gian chọn' }}</small>
                                     </div>
                                 </td>
