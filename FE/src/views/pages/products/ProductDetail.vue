@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import MainFooter from '@/components/shared/MainFooter.vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import PromotionBar from '@/components/shared/PromotionBar.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
@@ -1357,6 +1358,9 @@ const toggleFavorite = () => {
                 </div>
             </v-card>
         </v-dialog>
+
+        <!-- Main Footer -->
+        <MainFooter />
     </div>
 </template>
 

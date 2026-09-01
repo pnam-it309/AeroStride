@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import MainFooter from '@/components/shared/MainFooter.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 
 import { dichVuDatHang } from '@/services/public/dichVuDatHang';
@@ -443,6 +444,9 @@ const goToDetail = (id) => {
                 </div>
             </div>
         </v-container>
+
+        <!-- Main Footer -->
+        <MainFooter class="mt-12" />
 
         <CustomerChat />
 

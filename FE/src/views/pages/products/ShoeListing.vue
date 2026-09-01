@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import MainFooter from '@/components/shared/MainFooter.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 import { useSeoMeta } from '@/composables/useSeoMeta';
@@ -520,8 +521,17 @@ const closeMobileFilter = () => {
                 <!-- Right Products Grid -->
                 <v-col cols="12" md="9" lg="10">
                     <v-row v-if="products.length > 0" class="products-list-row">
-                        <v-col v-for="p in products" :key="p.id" cols="6" sm="4" md="4" lg="3" class="product-col-item">
-                            <div class="product-item-card" @click="goToDetail(p.id)">
+                        <v-col
+                            v-for="(p, index) in products"
+                            :key="p.id"
+                            cols="6"
+                            sm="4"
+                            md="4"
+                            lg="3"
+                            class="product-col-item"
+                            :style="{ '--item-idx': index }"
+                        >
+                            <div class="product-item-card animate-product-pop" @click="goToDetail(p.id)">
                                 <div class="card-image-wrapper">
                                     <img
                                         :src="getImageUrl(p)"
@@ -666,6 +676,9 @@ const closeMobileFilter = () => {
                 </transition>
             </div>
         </transition>
+
+        <!-- Main Footer -->
+        <MainFooter />
 
         <!-- Customer Chat Overlay -->
         <CustomerChat />
@@ -963,6 +976,27 @@ const closeMobileFilter = () => {
     }
 }
 
+/* ── Product Card Pop-In Appearance Animation ── */
+@keyframes productCardPopIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(24px);
+    }
+    60% {
+        opacity: 0.95;
+        transform: scale(1.03) translateY(-4px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.animate-product-pop {
+    animation: productCardPopIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--item-idx, 0) * 40ms);
+}
+
 .product-item-card {
     background: #ffffff;
     border-radius: 18px;
@@ -972,19 +1006,26 @@ const closeMobileFilter = () => {
     min-height: 300px;
     height: auto;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01);
-    border: 1px solid rgba(229, 235, 245, 0.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(229, 235, 245, 0.6);
     display: flex;
     flex-direction: column;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, border-color 0.35s ease;
     margin: 0 auto;
 
     &:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 15px 30px rgba(41, 98, 255, 0.05);
-        border-color: rgba(41, 98, 255, 0.12);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 18px 36px rgba(41, 98, 255, 0.12);
+        border-color: rgba(41, 98, 255, 0.25);
 
-        .card-shoe-img { transform: scale(1.05) rotate(-2deg); }
+        .card-image-wrapper {
+            transform: scale(1.03);
+            box-shadow: 0 8px 20px rgba(41, 98, 255, 0.1);
+        }
+
+        .card-shoe-img {
+            transform: scale(1.1) rotate(-2deg);
+        }
     }
 
     @media (max-width: 768px) {
@@ -1002,6 +1043,7 @@ const closeMobileFilter = () => {
     position: relative;
     overflow: hidden;
     display: block;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
 
     @media (max-width: 768px) {
         height: 130px;
@@ -1018,7 +1060,7 @@ const closeMobileFilter = () => {
     width: 100% !important; height: 100% !important;
     object-fit: cover;
     display: block;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .badge-label-new {

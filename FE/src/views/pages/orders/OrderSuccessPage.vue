@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import MainFooter from '@/components/shared/MainFooter.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 
 import { dichVuDatHang } from '@/services/public/dichVuDatHang';
@@ -127,6 +128,9 @@ onMounted(async () => {
                 </v-btn>
             </div>
         </div>
+
+        <!-- Main Footer -->
+        <MainFooter />
 
         <CustomerChat />
     </div>

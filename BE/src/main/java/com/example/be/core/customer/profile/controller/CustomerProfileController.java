@@ -101,6 +101,30 @@ public class CustomerProfileController {
         if (request.getHinhAnh() != null && !request.getHinhAnh().isEmpty()) {
             khachHang.setHinhAnh(request.getHinhAnh());
         }
+
+        if (request.getTinh() != null || request.getThanhPho() != null || request.getPhuongXa() != null || request.getDiaChiChiTiet() != null) {
+            java.util.List<DiaChi> diaChis = diaChiRepository.findByKhachHangId(khachHang.getId());
+            Optional<DiaChi> defaultDiaChi = diaChis.stream().filter(dc -> Boolean.TRUE.equals(dc.getLaMacDinh())).findFirst();
+            if (defaultDiaChi.isEmpty() && !diaChis.isEmpty()) {
+                defaultDiaChi = Optional.of(diaChis.get(0));
+            }
+            DiaChi dc = defaultDiaChi.orElseGet(() -> {
+                DiaChi newDc = DiaChi.builder()
+                        .maDiaChi("DC" + System.currentTimeMillis())
+                        .khachHang(khachHang)
+                        .laMacDinh(true)
+                        .build();
+                return newDc;
+            });
+            dc.setTenNguoiNhan(khachHang.getTen());
+            dc.setSdtNguoiNhan(khachHang.getSdt());
+            if (request.getTinh() != null) dc.setTinh(request.getTinh());
+            if (request.getThanhPho() != null) dc.setThanhPho(request.getThanhPho());
+            if (request.getPhuongXa() != null) dc.setPhuongXa(request.getPhuongXa());
+            if (request.getDiaChiChiTiet() != null) dc.setDiaChiChiTiet(request.getDiaChiChiTiet());
+            DiaChi saved = diaChiRepository.save(dc);
+            khachHang.setDiaChi(saved);
+        }
         
         khachHangRepository.save(khachHang);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật hồ sơ thành công"));

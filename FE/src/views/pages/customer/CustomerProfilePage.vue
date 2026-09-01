@@ -1,23 +1,42 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import MainFooter from '@/components/shared/MainFooter.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { dichVuKhachHang } from '@/services/public/dichVuKhachHang';
+import { dichVuFile } from '@/services/core/dichVuFile';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/ui';
 import { PATH } from '@/router/routePaths';
-
 import { useNotifications } from '@/services/notificationService';
+import { useLocation } from '@/composables/useLocation';
+import defaultAvatarUrl from '@/assets/images/profile/default-avatar.svg';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const uiStore = useUIStore();
 const { addNotification } = useNotifications();
+
 const loading = ref(true);
 const isEditing = ref(false);
 const passwordDialog = ref(false);
 const passwordFormRef = ref(null);
+const profileFormRef = ref(null);
+const avatarFileInput = ref(null);
+const avatarPreview = ref('');
+
+// Location Composable for Province / District / Ward comboboxes
+const {
+    provinces,
+    districts,
+    wards,
+    loadingLocations,
+    fetchProvinces,
+    fetchDistricts,
+    fetchWards,
+    cleanName
+} = useLocation({ allowFallback: true });
 
 const profileInfo = ref({
     tenTaiKhoan: '',
@@ -29,11 +48,11 @@ const profileInfo = ref({
     hinhAnh: ''
 });
 
-const defaultAddress = ref({
-    diaChiChiTiet: '',
-    phuongXa: '',
-    quanHuyen: '',
-    tinhThanh: ''
+const addressForm = ref({
+    tinh: null,
+    thanhPho: null,
+    phuongXa: null,
+    diaChiChiTiet: ''
 });
 
 const passwordData = ref({
@@ -42,9 +61,7 @@ const passwordData = ref({
     xacNhanMatKhau: ''
 });
 
-import defaultAvatarUrl from '@/assets/images/profile/default-avatar.svg';
 const phoneRegex = /^0[3|5|7|8|9][0-9]{8}$/;
-const profileFormRef = ref(null);
 
 const nameRules = [
     (v) => !isEditing.value || !!v?.trim() || 'Vui lòng nhập họ và tên',
@@ -60,6 +77,36 @@ const passwordRules = [
     (v) => (v && v.length <= 50) || 'Mật khẩu tối đa 50 ký tự'
 ];
 
+const currentAvatarUrl = computed(() => {
+    if (avatarPreview.value) return avatarPreview.value;
+    const v = profileInfo.value.hinhAnh;
+    if (!v) return defaultAvatarUrl;
+    if (/^(https?:)?\/\//i.test(v) || v.startsWith('data:') || v.startsWith('blob:')) return v;
+    return dichVuFile.layUrlFile(v.replace(/^\/+/, ''));
+});
+
+// Watchers for address cascade
+watch(
+    () => addressForm.value.tinh,
+    (newVal, oldVal) => {
+        if (oldVal !== undefined && isEditing.value) {
+            addressForm.value.thanhPho = null;
+            addressForm.value.phuongXa = null;
+        }
+        if (newVal) fetchDistricts(newVal);
+    }
+);
+
+watch(
+    () => addressForm.value.thanhPho,
+    (newVal, oldVal) => {
+        if (oldVal !== undefined && isEditing.value) {
+            addressForm.value.phuongXa = null;
+        }
+        if (newVal) fetchWards(newVal);
+    }
+);
+
 const fetchProfile = async () => {
     if (!authStore.isLoggedIn) {
         router.push(PATH.LOGIN);
@@ -67,6 +114,7 @@ const fetchProfile = async () => {
     }
 
     try {
+        await fetchProvinces();
         const res = await dichVuKhachHang.layThongTinCaNhan();
         if (res.success && res.data) {
             const data = res.data;
@@ -79,11 +127,42 @@ const fetchProfile = async () => {
                 gioiTinh: data.gioiTinh !== undefined && data.gioiTinh !== null ? data.gioiTinh : true,
                 hinhAnh: data.hinhAnh || ''
             };
-            defaultAddress.value = {
-                diaChiChiTiet: data.diaChiChiTiet || '',
-                phuongXa: data.phuongXa || '',
-                quanHuyen: data.quanHuyen || '',
-                tinhThanh: data.tinhThanh || ''
+
+            // Map address codes / names
+            let matchedProvinceCode = null;
+            let matchedDistrictCode = null;
+            let matchedWardCode = null;
+
+            if (data.tinhThanh) {
+                const prov = provinces.value.find(
+                    (p) => cleanName(p.name) === cleanName(data.tinhThanh) || String(p.code) === String(data.tinhThanh)
+                );
+                if (prov) {
+                    matchedProvinceCode = prov.code;
+                    await fetchDistricts(prov.code);
+                    if (data.quanHuyen) {
+                        const dist = districts.value.find(
+                            (d) => cleanName(d.name) === cleanName(data.quanHuyen) || String(d.code) === String(data.quanHuyen)
+                        );
+                        if (dist) {
+                            matchedDistrictCode = dist.code;
+                            await fetchWards(dist.code);
+                            if (data.phuongXa) {
+                                const w = wards.value.find(
+                                    (x) => cleanName(x.name) === cleanName(data.phuongXa) || String(x.code) === String(data.phuongXa)
+                                );
+                                if (w) matchedWardCode = w.code;
+                            }
+                        }
+                    }
+                }
+            }
+
+            addressForm.value = {
+                tinh: matchedProvinceCode,
+                thanhPho: matchedDistrictCode,
+                phuongXa: matchedWardCode,
+                diaChiChiTiet: data.diaChiChiTiet || ''
             };
         }
     } catch (error) {
@@ -93,16 +172,60 @@ const fetchProfile = async () => {
     }
 };
 
-const fullAddress = () => {
-    if (!defaultAddress.value) return 'Chưa thiết lập địa chỉ';
+const fullAddressDisplay = computed(() => {
+    const provObj = provinces.value.find((p) => p.code === addressForm.value.tinh || String(p.code) === String(addressForm.value.tinh));
+    const distObj = districts.value.find((d) => d.code === addressForm.value.thanhPho || String(d.code) === String(addressForm.value.thanhPho));
+    const wardObj = wards.value.find((w) => w.code === addressForm.value.phuongXa || String(w.code) === String(addressForm.value.phuongXa));
+
     const parts = [
-        defaultAddress.value.diaChiChiTiet,
-        defaultAddress.value.phuongXa,
-        defaultAddress.value.quanHuyen,
-        defaultAddress.value.tinhThanh
+        addressForm.value.diaChiChiTiet,
+        wardObj ? wardObj.name : '',
+        distObj ? distObj.name : '',
+        provObj ? provObj.name : ''
     ].filter((p) => p && p.trim() !== '');
 
     return parts.length > 0 ? parts.join(', ') : 'Chưa cập nhật địa chỉ';
+});
+
+const triggerAvatarPick = () => {
+    if (avatarFileInput.value) {
+        avatarFileInput.value.click();
+    }
+};
+
+const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn file hình ảnh hợp lệ (PNG, JPG, JPEG).', color: 'error' });
+        return;
+    }
+
+    try {
+        const compressed = await dichVuFile.nenAnh(file, 800, 800, 0.85);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            avatarPreview.value = e.target.result;
+            profileInfo.value.hinhAnh = e.target.result;
+        };
+        reader.readAsDataURL(compressed);
+        addNotification({ title: 'Thành công', subtitle: 'Đã chọn ảnh đại diện mới. Bấm "Lưu thay đổi" để cập nhật.', color: 'info' });
+    } catch (e) {
+        console.error('Lỗi nén ảnh avatar:', e);
+    }
+};
+
+const startEditing = async () => {
+    isEditing.value = true;
+    if (provinces.value.length === 0) {
+        await fetchProvinces();
+    }
+};
+
+const cancelEditing = async () => {
+    isEditing.value = false;
+    avatarPreview.value = '';
+    await fetchProfile();
 };
 
 const submitUpdateProfile = async () => {
@@ -112,16 +235,27 @@ const submitUpdateProfile = async () => {
     }
 
     try {
-        uiStore.showLoading('Đang cập nhật...');
+        uiStore.showLoading('Đang cập nhật hồ sơ...');
+
+        const provObj = provinces.value.find((p) => p.code === addressForm.value.tinh || String(p.code) === String(addressForm.value.tinh));
+        const distObj = districts.value.find((d) => d.code === addressForm.value.thanhPho || String(d.code) === String(addressForm.value.thanhPho));
+        const wardObj = wards.value.find((w) => w.code === addressForm.value.phuongXa || String(w.code) === String(addressForm.value.phuongXa));
+
         await dichVuKhachHang.capNhatHoSo({
             ten: profileInfo.value.ten?.trim(),
             sdt: profileInfo.value.sdt?.trim(),
             ngaySinh: profileInfo.value.ngaySinh || null,
             gioiTinh: profileInfo.value.gioiTinh,
-            hinhAnh: profileInfo.value.hinhAnh
+            hinhAnh: profileInfo.value.hinhAnh,
+            tinh: provObj ? provObj.name : null,
+            thanhPho: distObj ? distObj.name : null,
+            phuongXa: wardObj ? wardObj.name : null,
+            diaChiChiTiet: addressForm.value.diaChiChiTiet?.trim() || null
         });
+
         addNotification({ title: 'Thành công', subtitle: 'Cập nhật hồ sơ thành công', color: 'success' });
         isEditing.value = false;
+        avatarPreview.value = '';
         await fetchProfile();
     } catch (error) {
         addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Lỗi cập nhật hồ sơ', color: 'error' });
@@ -147,11 +281,11 @@ const submitChangePassword = async () => {
     try {
         uiStore.showLoading('Đang đổi mật khẩu...');
         await dichVuKhachHang.doiMatKhau(passwordData.value);
-        uiStore.showSnackbar('Đổi mật khẩu thành công', 'success');
+        addNotification({ title: 'Thành công', subtitle: 'Đổi mật khẩu thành công', color: 'success' });
         passwordDialog.value = false;
         passwordData.value = { matKhauCu: '', matKhauMoi: '', xacNhanMatKhau: '' };
     } catch (error) {
-        uiStore.showSnackbar(error.response?.data?.message || 'Lỗi đổi mật khẩu', 'error');
+        addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Lỗi đổi mật khẩu', color: 'error' });
     } finally {
         uiStore.hideLoading();
     }
@@ -163,37 +297,49 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="profile-page bg-grey-lighten-4 min-vh-100 pb-12">
+    <div class="customer-profile-page bg-slate-50 min-h-screen">
         <MainHeader />
-        <div class="header-spacing" style="height: 104px"></div>
 
-        <v-container style="max-width: 1200px">
-            <!-- Breadcrumb -->
-            <div class="d-flex align-center mb-8">
-                <router-link to="/" class="breadcrumb-link">Trang chủ</router-link>
-                <v-icon size="16" class="mx-2 text-grey">mdi-chevron-right</v-icon>
-                <span class="text-body-1 font-weight-bold text-blue-darken-4">Hồ sơ của tôi</span>
+        <v-container class="py-10">
+            <!-- Breadcrumbs -->
+            <div class="d-flex align-center text-body-2 text-grey-darken-1 mb-8">
+                <span class="cursor-pointer hover:text-blue-darken-4 font-weight-medium" @click="router.push(PATH.LANDING)">Trang chủ</span>
+                <v-icon size="16" class="mx-2">mdi-chevron-right</v-icon>
+                <span class="font-weight-bold text-blue-darken-4">Tài khoản của tôi</span>
             </div>
 
             <v-row>
                 <!-- Sidebar Menu -->
                 <v-col cols="12" md="3">
                     <v-card class="profile-card rounded-xl text-center pa-6" elevation="0">
-                        <div class="d-flex justify-center mb-4">
-                            <v-avatar size="100" color="grey-lighten-4" class="elevation-2">
-                                <v-img
-                                    v-if="profileInfo.hinhAnh || defaultAvatarUrl"
-                                    :src="profileInfo.hinhAnh || defaultAvatarUrl"
-                                    cover
-                                ></v-img>
-                                <span v-else class="text-h3 font-weight-bold text-blue-darken-4">
-                                    {{ profileInfo.tenTaiKhoan ? profileInfo.tenTaiKhoan.charAt(0).toUpperCase() : 'N' }}
-                                </span>
-                            </v-avatar>
+                        <div class="d-flex flex-column align-center justify-center mb-4 position-relative">
+                            <div class="avatar-container position-relative">
+                                <v-avatar size="110" color="grey-lighten-4" class="elevation-3 cursor-pointer" @click="triggerAvatarPick">
+                                    <v-img :src="currentAvatarUrl" cover></v-img>
+                                </v-avatar>
+                                <v-btn
+                                    icon
+                                    size="small"
+                                    color="blue-darken-4"
+                                    class="avatar-camera-btn elevation-2"
+                                    @click="triggerAvatarPick"
+                                >
+                                    <v-icon size="16" color="white">mdi-camera</v-icon>
+                                    <v-tooltip activator="parent" location="top">Đổi ảnh đại diện</v-tooltip>
+                                </v-btn>
+                            </div>
+                            <input
+                                ref="avatarFileInput"
+                                type="file"
+                                accept="image/*"
+                                class="d-none"
+                                @change="handleAvatarChange"
+                            />
                         </div>
-                        <div class="mb-6 border-bottom">
-                            <h3 class="text-h5 font-weight-black text-blue-darken-4 mb-1">{{ profileInfo.tenTaiKhoan || 'Người dùng' }}</h3>
-                            <p class="text-body-2 text-grey-darken-1">{{ profileInfo.email || 'Chưa cập nhật Email' }}</p>
+
+                        <div class="mb-6 border-bottom pb-4">
+                            <h3 class="text-h5 font-weight-black text-blue-darken-4 mb-1">{{ profileInfo.ten || profileInfo.tenTaiKhoan || 'Khách hàng' }}</h3>
+                            <p class="text-body-2 text-grey-darken-1 mb-0">{{ profileInfo.email || 'Chưa cập nhật Email' }}</p>
                         </div>
 
                         <v-list class="bg-transparent" density="compact" nav>
@@ -219,7 +365,7 @@ onMounted(() => {
                             <v-list-item
                                 prepend-icon="mdi-logout"
                                 title="Đăng xuất"
-                                class="rounded-lg mt-4 text-red-darken-2"
+                                class="rounded-lg mt-4 text-red-darken-2 font-weight-bold"
                                 @click="handleLogout"
                             ></v-list-item>
                         </v-list>
@@ -228,40 +374,42 @@ onMounted(() => {
 
                 <!-- Profile Content -->
                 <v-col cols="12" md="9">
-                    <v-card class="profile-card rounded-xl pa-10" elevation="0">
-                        <div class="d-flex align-center justify-space-between mb-8 pb-6 border-bottom">
+                    <v-card class="profile-card rounded-xl pa-8 pa-md-10" elevation="0">
+                        <div class="d-flex align-center justify-space-between mb-6 pb-6 border-bottom flex-wrap ga-3">
                             <div>
-                                <h2 class="text-h4 font-weight-black text-blue-darken-4 mb-2">Hồ sơ cá nhân</h2>
-                                <p class="text-body-1 text-grey-darken-1 mb-0">Quản lý thông tin bảo mật cho tài khoản của bạn</p>
+                                <h2 class="text-h4 font-weight-black text-blue-darken-4 mb-1">Hồ sơ cá nhân</h2>
+                                <p class="text-body-2 text-grey-darken-1 mb-0">Quản lý thông tin hồ sơ và địa chỉ giao nhận</p>
                             </div>
-                            <div class="d-flex align-center ga-4">
+                            <div class="d-flex align-center ga-3">
                                 <v-btn
                                     v-if="!isEditing"
                                     color="blue-darken-4"
-                                    size="x-large"
+                                    size="large"
                                     rounded="pill"
-                                    class="text-none font-weight-bold elevation-3"
-                                    @click="isEditing = true"
+                                    class="text-none font-weight-bold elevation-2 px-6"
+                                    @click="startEditing"
                                 >
+                                    <v-icon start size="18">mdi-account-edit-outline</v-icon>
                                     Cập nhật hồ sơ
                                 </v-btn>
                                 <template v-else>
                                     <v-btn
                                         color="grey-lighten-1"
-                                        size="x-large"
+                                        size="large"
                                         rounded="pill"
-                                        class="text-none font-weight-bold"
-                                        @click="isEditing = false"
+                                        class="text-none font-weight-bold px-5"
+                                        @click="cancelEditing"
                                     >
                                         Hủy
                                     </v-btn>
                                     <v-btn
                                         color="blue-darken-4"
-                                        size="x-large"
+                                        size="large"
                                         rounded="pill"
-                                        class="text-none font-weight-bold elevation-3"
+                                        class="text-none font-weight-bold elevation-2 px-6"
                                         @click="submitUpdateProfile"
                                     >
+                                        <v-icon start size="18">mdi-check</v-icon>
                                         Lưu thay đổi
                                     </v-btn>
                                 </template>
@@ -272,74 +420,90 @@ onMounted(() => {
                             <v-progress-circular indeterminate color="blue-darken-4" size="48"></v-progress-circular>
                         </div>
 
-                        <v-form ref="profileFormRef" v-else class="mt-8" :readonly="!isEditing">
-                            <v-row class="ma-n3">
-                                <v-col cols="12" sm="6" class="pa-3">
-                                    <label class="text-body-1 font-weight-bold text-blue-darken-4 mb-2 d-block">Tên đăng nhập</label>
+                        <v-form ref="profileFormRef" v-else class="mt-4" :readonly="!isEditing">
+                            <v-row>
+                                <!-- Tên tài khoản -->
+                                <v-col cols="12" sm="6" class="py-2">
+                                    <label class="text-subtitle-2 font-weight-bold text-blue-darken-4 mb-2 d-block">Tên đăng nhập</label>
                                     <v-text-field
                                         v-model="profileInfo.tenTaiKhoan"
                                         variant="outlined"
-                                        prepend-inner-icon="mdi-account"
+                                        density="comfortable"
+                                        prepend-inner-icon="mdi-account-circle-outline"
                                         hide-details="auto"
                                         class="profile-input"
                                         readonly
-                                        maxlength="50"
                                     ></v-text-field>
                                 </v-col>
-                                <v-col cols="12" sm="6" class="pa-3">
-                                    <label class="text-body-1 font-weight-bold text-blue-darken-4 mb-2 d-block">Họ và Tên</label>
+
+                                <!-- Họ và Tên -->
+                                <v-col cols="12" sm="6" class="py-2">
+                                    <label class="text-subtitle-2 font-weight-bold text-blue-darken-4 mb-2 d-block">Họ và Tên *</label>
                                     <v-text-field
                                         v-model="profileInfo.ten"
                                         variant="outlined"
-                                        prepend-inner-icon="mdi-card-account-details"
+                                        density="comfortable"
+                                        prepend-inner-icon="mdi-card-account-details-outline"
                                         color="blue-darken-4"
                                         hide-details="auto"
                                         class="profile-input"
                                         maxlength="100"
-                                        counter="100"
+                                        :readonly="!isEditing"
                                         :rules="nameRules"
                                     ></v-text-field>
                                 </v-col>
-                                <v-col cols="12" sm="6" class="pa-3">
-                                    <label class="text-body-1 font-weight-bold text-blue-darken-4 mb-2 d-block">Email</label>
+
+                                <!-- Email -->
+                                <v-col cols="12" sm="6" class="py-2">
+                                    <label class="text-subtitle-2 font-weight-bold text-blue-darken-4 mb-2 d-block">Email</label>
                                     <v-text-field
                                         v-model="profileInfo.email"
                                         variant="outlined"
-                                        prepend-inner-icon="mdi-email"
+                                        density="comfortable"
+                                        prepend-inner-icon="mdi-email-outline"
                                         hide-details="auto"
                                         class="profile-input"
                                         readonly
-                                        maxlength="100"
                                     ></v-text-field>
                                 </v-col>
-                                <v-col cols="12" sm="6" class="pa-3">
-                                    <label class="text-body-1 font-weight-bold text-blue-darken-4 mb-2 d-block">Số điện thoại</label>
+
+                                <!-- Số điện thoại -->
+                                <v-col cols="12" sm="6" class="py-2">
+                                    <label class="text-subtitle-2 font-weight-bold text-blue-darken-4 mb-2 d-block">Số điện thoại *</label>
                                     <v-text-field
                                         v-model="profileInfo.sdt"
                                         variant="outlined"
-                                        prepend-inner-icon="mdi-phone"
+                                        density="comfortable"
+                                        prepend-inner-icon="mdi-phone-outline"
                                         color="blue-darken-4"
                                         hide-details="auto"
                                         class="profile-input"
                                         maxlength="10"
-                                        counter="10"
+                                        :readonly="!isEditing"
                                         :rules="phoneRules"
+                                        @input="(e) => { profileInfo.sdt = String(e.target.value || '').replace(/\D/g, '').slice(0, 10); }"
                                     ></v-text-field>
                                 </v-col>
-                                <v-col cols="12" sm="6" class="pa-3">
-                                    <label class="text-body-1 font-weight-bold text-blue-darken-4 mb-2 d-block">Ngày sinh</label>
+
+                                <!-- Ngày sinh -->
+                                <v-col cols="12" sm="6" class="py-2">
+                                    <label class="text-subtitle-2 font-weight-bold text-blue-darken-4 mb-2 d-block">Ngày sinh</label>
                                     <v-text-field
                                         v-model="profileInfo.ngaySinh"
                                         type="date"
                                         variant="outlined"
-                                        prepend-inner-icon="mdi-calendar"
+                                        density="comfortable"
+                                        prepend-inner-icon="mdi-calendar-month-outline"
                                         color="blue-darken-4"
                                         hide-details="auto"
                                         class="profile-input"
+                                        :readonly="!isEditing"
                                     ></v-text-field>
                                 </v-col>
-                                <v-col cols="12" sm="6" class="pa-3">
-                                    <label class="text-body-1 font-weight-bold text-blue-darken-4 mb-2 d-block">Giới tính</label>
+
+                                <!-- Giới tính -->
+                                <v-col cols="12" sm="6" class="py-2">
+                                    <label class="text-subtitle-2 font-weight-bold text-blue-darken-4 mb-2 d-block">Giới tính</label>
                                     <v-select
                                         v-model="profileInfo.gioiTinh"
                                         :items="[
@@ -349,27 +513,110 @@ onMounted(() => {
                                         item-title="title"
                                         item-value="value"
                                         variant="outlined"
+                                        density="comfortable"
                                         prepend-inner-icon="mdi-gender-male-female"
                                         color="blue-darken-4"
                                         hide-details="auto"
                                         class="profile-input"
+                                        :readonly="!isEditing"
                                     ></v-select>
                                 </v-col>
-                                <v-col cols="12" class="pa-3">
-                                    <label class="text-body-1 font-weight-bold text-blue-darken-4 mb-2 d-block">Địa chỉ mặc định</label>
-                                    <v-textarea
-                                        :model-value="fullAddress()"
-                                        variant="outlined"
-                                        prepend-inner-icon="mdi-map-marker"
-                                        color="blue-darken-4"
-                                        rows="3"
-                                        hide-details="auto"
-                                        auto-grow
-                                        class="profile-input"
-                                        readonly
-                                        maxlength="255"
-                                    ></v-textarea>
+
+                                <!-- ĐỊA CHỈ PHẦN -->
+                                <v-col cols="12" class="pt-4 pb-1">
+                                    <div class="text-subtitle-1 font-weight-black text-blue-darken-4 border-b pb-2">
+                                        <v-icon size="20" class="mr-1">mdi-map-marker-outline</v-icon>
+                                        Địa chỉ mặc định
+                                    </div>
                                 </v-col>
+
+                                <!-- Khi đang ở chế độ xem: hiển thị text đầy đủ -->
+                                <template v-if="!isEditing">
+                                    <v-col cols="12" class="py-2">
+                                        <v-textarea
+                                            :model-value="fullAddressDisplay"
+                                            variant="outlined"
+                                            density="comfortable"
+                                            prepend-inner-icon="mdi-home-outline"
+                                            rows="2"
+                                            hide-details="auto"
+                                            auto-grow
+                                            class="profile-input"
+                                            readonly
+                                        ></v-textarea>
+                                    </v-col>
+                                </template>
+
+                                <!-- Khi ở chế độ chỉnh sửa: hiển thị các combobox Tỉnh, Huyện, Xã, Chi tiết -->
+                                <template v-else>
+                                    <!-- Tỉnh / Thành phố -->
+                                    <v-col cols="12" sm="4" class="py-2">
+                                        <label class="text-caption font-weight-bold text-blue-darken-4 mb-1 d-block">Tỉnh / Thành phố</label>
+                                        <v-autocomplete
+                                            v-model="addressForm.tinh"
+                                            :items="provinces"
+                                            item-title="name"
+                                            item-value="code"
+                                            placeholder="Chọn Tỉnh/Thành phố"
+                                            variant="outlined"
+                                            density="comfortable"
+                                            hide-details
+                                            :loading="loadingLocations.provinces"
+                                            class="profile-input"
+                                        ></v-autocomplete>
+                                    </v-col>
+
+                                    <!-- Quận / Huyện -->
+                                    <v-col cols="12" sm="4" class="py-2">
+                                        <label class="text-caption font-weight-bold text-blue-darken-4 mb-1 d-block">Quận / Huyện</label>
+                                        <v-autocomplete
+                                            v-model="addressForm.thanhPho"
+                                            :items="districts"
+                                            item-title="name"
+                                            item-value="code"
+                                            placeholder="Chọn Quận/Huyện"
+                                            variant="outlined"
+                                            density="comfortable"
+                                            hide-details
+                                            :disabled="!addressForm.tinh"
+                                            :loading="loadingLocations.districts"
+                                            class="profile-input"
+                                        ></v-autocomplete>
+                                    </v-col>
+
+                                    <!-- Phường / Xã -->
+                                    <v-col cols="12" sm="4" class="py-2">
+                                        <label class="text-caption font-weight-bold text-blue-darken-4 mb-1 d-block">Phường / Xã</label>
+                                        <v-autocomplete
+                                            v-model="addressForm.phuongXa"
+                                            :items="wards"
+                                            item-title="name"
+                                            item-value="code"
+                                            placeholder="Chọn Phường/Xã"
+                                            variant="outlined"
+                                            density="comfortable"
+                                            hide-details
+                                            :disabled="!addressForm.thanhPho"
+                                            :loading="loadingLocations.wards"
+                                            class="profile-input"
+                                        ></v-autocomplete>
+                                    </v-col>
+
+                                    <!-- Địa chỉ chi tiết (Số nhà, tên đường...) -->
+                                    <v-col cols="12" class="py-2">
+                                        <label class="text-caption font-weight-bold text-blue-darken-4 mb-1 d-block">Địa chỉ chi tiết (Số nhà, tên đường, ngõ xóm...)</label>
+                                        <v-text-field
+                                            v-model="addressForm.diaChiChiTiet"
+                                            placeholder="VD: Số 123 Đường Nguyễn Trãi..."
+                                            variant="outlined"
+                                            density="comfortable"
+                                            prepend-inner-icon="mdi-home-outline"
+                                            hide-details
+                                            maxlength="255"
+                                            class="profile-input"
+                                        ></v-text-field>
+                                    </v-col>
+                                </template>
                             </v-row>
                         </v-form>
                     </v-card>
@@ -383,98 +630,90 @@ onMounted(() => {
                 <v-card-title class="text-h5 font-weight-bold text-center text-blue-darken-4 pt-4"> Đổi Mật Khẩu </v-card-title>
                 <v-card-text>
                     <v-form ref="passwordFormRef">
-                        <label class="text-body-2 font-weight-bold mb-2 d-block">Mật khẩu cũ</label>
+                        <label class="text-body-2 font-weight-bold text-blue-darken-4 mb-1 d-block">Mật khẩu hiện tại</label>
                         <v-text-field
                             v-model="passwordData.matKhauCu"
                             type="password"
                             variant="outlined"
                             density="comfortable"
+                            prepend-inner-icon="mdi-lock-outline"
                             color="blue-darken-4"
-                            maxlength="50"
+                            class="mb-3"
                             :rules="passwordRules"
                         ></v-text-field>
 
-                        <label class="text-body-2 font-weight-bold mb-2 d-block">Mật khẩu mới</label>
+                        <label class="text-body-2 font-weight-bold text-blue-darken-4 mb-1 d-block">Mật khẩu mới</label>
                         <v-text-field
                             v-model="passwordData.matKhauMoi"
                             type="password"
                             variant="outlined"
                             density="comfortable"
+                            prepend-inner-icon="mdi-lock-reset"
                             color="blue-darken-4"
-                            maxlength="50"
+                            class="mb-3"
                             :rules="passwordRules"
                         ></v-text-field>
 
-                        <label class="text-body-2 font-weight-bold mb-2 d-block">Xác nhận mật khẩu mới</label>
+                        <label class="text-body-2 font-weight-bold text-blue-darken-4 mb-1 d-block">Xác nhận mật khẩu mới</label>
                         <v-text-field
                             v-model="passwordData.xacNhanMatKhau"
                             type="password"
                             variant="outlined"
                             density="comfortable"
+                            prepend-inner-icon="mdi-lock-check-outline"
                             color="blue-darken-4"
-                            maxlength="50"
                             :rules="[
-                                (v) => !!v || 'Vui lòng xác nhận mật khẩu mới',
-                                (v) => v === passwordData.matKhauMoi || 'Xác nhận mật khẩu không khớp'
+                                ...passwordRules,
+                                (v) => v === passwordData.matKhauMoi || 'Mật khẩu xác nhận không khớp'
                             ]"
                         ></v-text-field>
                     </v-form>
                 </v-card-text>
-                <v-card-actions class="pb-6 justify-center">
-                    <v-btn color="grey-darken-1" variant="text" class="text-none px-6 rounded-pill" @click="passwordDialog = false"
-                        >Hủy</v-btn
-                    >
-                    <v-btn
-                        color="blue-darken-4"
-                        variant="flat"
-                        class="text-none px-8 rounded-pill font-weight-bold"
-                        @click="submitChangePassword"
-                        >Đổi mật khẩu</v-btn
-                    >
+                <v-card-actions class="pa-4 justify-end">
+                    <v-btn variant="text" color="grey-darken-1" class="text-none font-weight-bold" @click="passwordDialog = false">Hủy</v-btn>
+                    <v-btn color="blue-darken-4" variant="flat" class="text-none font-weight-bold px-5 rounded-pill" @click="submitChangePassword">Xác nhận đổi</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <!-- Main Footer -->
+        <MainFooter class="mt-12" />
 
         <CustomerChat />
     </div>
 </template>
 
-<style scoped lang="scss">
-.breadcrumb-link {
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #757575;
-
-    &:hover {
-        color: #0d47a1;
-    }
-}
-
-.border-bottom {
-    border-bottom: 2px solid #f0f0f0;
+<style scoped>
+.customer-profile-page {
+    font-family: inherit;
 }
 
 .profile-card {
-    border: 1px solid #e0e0e0;
-    background: #fff;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04) !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
 }
 
-/* Custom styling for inputs to make them look larger and softer */
-:deep(.profile-input .v-field) {
-    border-radius: 12px;
-    background: #fafafa;
-    border: 1px solid transparent;
-    transition: all 0.3s ease;
+.avatar-container {
+    display: inline-block;
 }
 
-:deep(.profile-input:hover .v-field) {
-    background: #fff;
-    border-color: #bbdefb;
+.avatar-camera-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    border-radius: 50% !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
 }
 
-:deep(.v-list-item) {
-    padding: 12px 16px;
+.profile-input :deep(.v-field) {
+    border-radius: 10px !important;
+    background-color: #f8fafc !important;
+}
+
+.profile-input :deep(.v-field--focused) {
+    background-color: #ffffff !important;
 }
 </style>

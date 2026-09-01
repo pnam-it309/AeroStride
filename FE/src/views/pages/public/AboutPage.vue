@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import MainFooter from '@/components/shared/MainFooter.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import { useSeoMeta } from '@/composables/useSeoMeta';
@@ -13,6 +14,32 @@ const router = useRouter();
 const { setSeoMeta } = useSeoMeta();
 
 const activeTab = ref('story');
+const currentSlide = ref(0);
+
+const heroSlides = [
+    {
+        image: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&q=80&w=1600',
+        badge: 'EST. 2024 • AEROSTRIDE VIỆT NAM',
+        title: 'BƯỚC CHÂN CỦA SỰ',
+        highlight: 'ĐAM MÊ & BỨT PHÁ',
+        desc: 'Hành trình mang lại chuẩn mực mua sắm giày thể thao chính hãng đỉnh cao, hiện đại và tràn đầy cảm hứng cho người Việt.'
+    },
+    {
+        image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=1600',
+        badge: 'CÔNG NGHỆ & TỐC ĐỘ',
+        title: 'TRẢI NGHIỆM ĐỈNH CAO TỪNG',
+        highlight: 'BƯỚC CHẠY',
+        desc: 'Đồng hành cùng hàng triệu vận động viên và người đam mê thể thao chinh phục mọi cung đường.'
+    },
+    {
+        image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=1600',
+        badge: '100% CHÍNH HÃNG',
+        title: 'THƯƠNG HIỆU QUỐC TẾ',
+        highlight: 'NIKE • ADIDAS • PUMA',
+        desc: 'Tuyển chọn khắt khe những mẫu giày thời thượng, bền bỉ và hỗ trợ tối đa cho bàn chân của bạn.'
+    }
+];
+
 const statsData = ref({
     totalProducts: 500,
     totalBrands: 12,
@@ -34,18 +61,47 @@ const fetchStatsFromApi = async () => {
 const milestones = [
     {
         year: '2024',
-        title: 'Khởi Đầu Đam Mê',
-        desc: 'AeroStride chính thức ra mắt cửa hàng đầu tiên tại Hà Nội với tầm nhìn mang lại những đôi giày thể thao chính hãng chất lượng cao nhất.'
+        period: 'Giai Đoạn Khởi Khởi Tạo',
+        title: 'Khởi Đầu Đam Mê & Khai Trương Showroom Đầu Tiên',
+        desc: 'AeroStride chính thức ra mắt showroom Flagship tại Hà Nội với tầm nhìn mang lại những đôi giày thể thao chính hãng chất lượng đỉnh cao cho người Việt.',
+        image: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&q=80&w=700',
+        badge: 'Cột mốc khởi sự',
+        icon: 'mdi-flag-variant-outline',
+        stats: '10.000+ Đôi giày trao tay',
+        tags: ['Hà Nội Flagship', '100% Chính Hãng', 'Đổi Trả 30 Ngày']
     },
     {
         year: '2025',
-        title: 'Bứt Phá Quy Mô',
-        desc: 'Mở rộng 20 chi nhánh trên các tỉnh thành lớn, ra mắt hệ thống mua sắm trực tuyến thông minh và dịch vụ CSKH 24/7.'
+        period: 'Giai Đoạn Tăng Tốc',
+        title: 'Bứt Phá Quy Mô & Hệ Thống Đa Kênh Toàn Quốc',
+        desc: 'Mở rộng 20 chi nhánh tại TP.HCM, Đà Nẵng, Hải Phòng. Ra mắt website thương mại điện tử thế hệ mới cùng dịch vụ giao hàng nhanh và hỗ trợ tư vấn 24/7.',
+        image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=700',
+        badge: 'Tăng trưởng vượt bậc',
+        icon: 'mdi-rocket-launch-outline',
+        stats: '20 Chi nhánh toàn quốc',
+        tags: ['Đa Kênh Omni-channel', 'Giao Nhanh 2H', '500.000+ Khách hàng']
     },
     {
         year: '2026',
-        title: 'Tiên Phong Công Nghệ AI',
-        desc: 'Tích hợp công nghệ tư vấn AI thông minh, mở rộng mạng lưới 50+ chi nhánh toàn quốc và đạt mốc 1.000.000+ khách hàng tin tưởng.'
+        period: 'Giai Đoạn Đột Phá',
+        title: 'Tiên Phong Công Nghệ AI & Hệ Sinh Thái Thể Thao',
+        desc: 'Tích hợp trợ lý AI thông minh tư vấn chọn giày theo dáng chân, mở rộng 50+ chi nhánh toàn quốc và đồng hành tài trợ hơn 15 giải chạy Marathon lớn.',
+        image: 'https://images.unsplash.com/photo-1519766304817-4f37bda74a29?auto=format&fit=crop&q=80&w=700',
+        badge: 'Công nghệ tiên phong',
+        icon: 'mdi-creation',
+        stats: '50+ Showroom & 1M+ Khách hàng',
+        tags: ['AeroStride AI Advisor', 'Đồng hành Marathon', 'Top 1 Nhà Phân Phối']
+    },
+    {
+        year: '2027+',
+        period: 'Tầm Nhìn Tương Lai',
+        title: 'Vươn Tầm Khu Vực & Xuất Khẩu Thương Hiệu Thể Thao',
+        desc: 'Mở rộng mạng lưới phân phối sang các quốc gia Đông Nam Á, hợp tác đồng hành cùng các vận động viên Olympic và ra mắt bộ sưu tập độc quyền AeroStride Signature.',
+        image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=700',
+        badge: 'Khát vọng vươn xa',
+        icon: 'mdi-earth',
+        stats: 'Mục tiêu vươn tầm Đông Nam Á',
+        tags: ['Thương Hiệu Việt Nam', 'Olympic 2028', 'Thời Trang Thể Thao Bền Vững']
     }
 ];
 
@@ -90,6 +146,18 @@ const teamMembers = [
         role: 'Head of Customer Success',
         image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400',
         quote: 'Sự hài lòng tuyệt đối của khách hàng là thước đo giá trị lớn nhất của AeroStride.'
+    },
+    {
+        name: 'Bùi Thị Yến',
+        role: 'Head of Marketing & Operations',
+        image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=400',
+        quote: 'Chiến lược truyền thông và sự gắn kết khách hàng là nhịp đập của AeroStride.'
+    },
+    {
+        name: 'Nguyễn Huy Đức',
+        role: 'Chief Technology Officer (CTO)',
+        image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=400',
+        quote: 'Ứng dụng công nghệ AI và trải nghiệm số vượt trội để phục vụ khách hàng tốt nhất.'
     }
 ];
 
@@ -119,48 +187,66 @@ onMounted(() => {
         <MainHeader />
 
         <main class="main-content">
-            <!-- Hero Banner -->
-            <section class="about-hero position-relative">
-                <div class="hero-overlay"></div>
-                <v-container class="position-relative z-index-2 text-center text-white py-16">
-                    <v-chip
-                        variant="outlined"
-                        size="small"
-                        class="font-weight-bold mb-4 tracking-wider"
-                        style="color: #ffffff !important; border-color: rgba(255, 255, 255, 0.4) !important;"
+            <!-- Hero Banner Slideshow -->
+            <section class="about-hero-carousel position-relative">
+                <v-carousel
+                    v-model="currentSlide"
+                    cycle
+                    :interval="4500"
+                    height="540"
+                    hide-delimiter-background
+                    show-arrows="hover"
+                    class="about-carousel"
+                >
+                    <v-carousel-item
+                        v-for="(slide, index) in heroSlides"
+                        :key="index"
+                        :src="slide.image"
+                        cover
                     >
-                        EST. 2024 &bull; AEROSTRIDE VIỆT NAM
-                    </v-chip>
-                    <h1 class="hero-title font-weight-black mb-4 animate-up">
-                        BƯỚC CHÂN CỦA SỰ <span class="text-gradient shimmer-effect">ĐAM MÊ & THÀNH CÔNG</span>
-                    </h1>
-                    <p class="hero-subtitle mb-8 max-w-700 mx-auto">
-                        Hành trình mang lại chuẩn mực mua sắm giày thể thao chính hãng đỉnh cao, hiện đại và tràn đầy cảm hứng cho người Việt.
-                    </p>
-                    <div class="d-flex justify-center flex-wrap ga-4">
-                        <v-btn
-                            color="primary"
-                            size="x-large"
-                            rounded="pill"
-                            class="font-weight-bold px-8 shadow-blue text-white"
-                            prepend-icon="mdi-arrow-down"
-                            @click="scrollToSection('story-section')"
-                        >
-                            Khám Phá Câu Chuyện
-                        </v-btn>
-                        <v-btn
-                            variant="outlined"
-                            size="x-large"
-                            rounded="pill"
-                            class="font-weight-bold px-8"
-                            style="color: #ffffff !important; border-color: rgba(255, 255, 255, 0.4) !important;"
-                            append-icon="mdi-shopping-outline"
-                            @click="goToProducts"
-                        >
-                            Xem Sản Phẩm
-                        </v-btn>
-                    </div>
-                </v-container>
+                        <div class="carousel-overlay d-flex align-center">
+                            <v-container class="text-center text-white py-12">
+                                <v-chip
+                                    variant="outlined"
+                                    size="small"
+                                    class="font-weight-bold mb-4 tracking-wider"
+                                    style="color: #ffffff !important; border-color: rgba(255, 255, 255, 0.5) !important; background: rgba(0,0,0,0.3);"
+                                >
+                                    {{ slide.badge }}
+                                </v-chip>
+                                <h1 class="hero-title font-weight-black mb-4 animate-up">
+                                    {{ slide.title }} <span class="text-gradient shimmer-effect">{{ slide.highlight }}</span>
+                                </h1>
+                                <p class="hero-subtitle mb-8 max-w-700 mx-auto">
+                                    {{ slide.desc }}
+                                </p>
+                                <div class="d-flex justify-center flex-wrap ga-4">
+                                    <v-btn
+                                        color="primary"
+                                        size="x-large"
+                                        rounded="pill"
+                                        class="font-weight-bold px-8 shadow-blue text-white"
+                                        prepend-icon="mdi-arrow-down"
+                                        @click="scrollToSection('story-section')"
+                                    >
+                                        Khám Phá Câu Chuyện
+                                    </v-btn>
+                                    <v-btn
+                                        variant="outlined"
+                                        size="x-large"
+                                        rounded="pill"
+                                        class="font-weight-bold px-8"
+                                        style="color: #ffffff !important; border-color: rgba(255, 255, 255, 0.6) !important; background: rgba(0,0,0,0.25);"
+                                        append-icon="mdi-shopping-outline"
+                                        @click="goToProducts"
+                                    >
+                                        Xem Sản Phẩm
+                                    </v-btn>
+                                </div>
+                            </v-container>
+                        </div>
+                    </v-carousel-item>
+                </v-carousel>
             </section>
 
             <!-- Quick Navigation Tabs -->
@@ -291,23 +377,86 @@ onMounted(() => {
                     <!-- Tab 3: Timeline -->
                     <div v-else-if="activeTab === 'timeline'" class="animate-fade-in">
                         <div class="text-center max-w-700 mx-auto mb-12">
-                            <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold mb-3">LỊCH SỬ</v-chip>
+                            <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold mb-3">LỊCH SỬ & TẦM NHÌN</v-chip>
                             <h2 class="text-h3 font-weight-black text-slate-900 mb-3">Hành Trình Phát Triển</h2>
+                            <p class="text-slate-600">Từ những bước đi đầu tiên đến hệ sinh thái giày thể thao chính hãng hàng đầu Việt Nam</p>
                         </div>
                         <v-row justify="center">
-                            <v-col cols="12" md="10">
-                                <v-timeline align="start" dot-color="primary">
+                            <v-col cols="12" lg="11">
+                                <v-timeline align="start" side="end" class="timeline-premium">
                                     <v-timeline-item
                                         v-for="(item, idx) in milestones"
                                         :key="idx"
                                         size="large"
+                                        dot-color="#1e257c"
+                                        fill-dot
+                                        class="timeline-item-premium mb-8"
                                     >
                                         <template #icon>
-                                            <div class="font-weight-black text-white text-caption">{{ item.year }}</div>
+                                            <div class="timeline-year-dot">
+                                                <v-icon size="20" color="white">{{ item.icon }}</v-icon>
+                                            </div>
                                         </template>
-                                        <v-card class="pa-6 rounded-xl elevation-2 border">
-                                            <div class="text-h6 font-weight-bold text-primary mb-2">{{ item.title }}</div>
-                                            <p class="text-slate-700 text-body-1 leading-relaxed mb-0">{{ item.desc }}</p>
+
+                                        <v-card class="timeline-card-premium rounded-2xl overflow-hidden elevation-3 border">
+                                            <v-row no-gutters>
+                                                <!-- Image Column -->
+                                                <v-col cols="12" md="4" class="position-relative">
+                                                    <v-img
+                                                        :src="item.image"
+                                                        height="100%"
+                                                        min-height="220"
+                                                        cover
+                                                        class="timeline-img"
+                                                    >
+                                                        <div class="img-gradient-overlay d-flex flex-column justify-space-between pa-4">
+                                                            <v-chip size="small" color="primary" variant="flat" class="font-weight-black elevation-2 align-self-start">
+                                                                NĂM {{ item.year }}
+                                                            </v-chip>
+                                                            <div class="timeline-stats-badge pa-2 rounded-lg text-caption font-weight-bold text-white">
+                                                                <v-icon size="14" class="mr-1" color="#38bdf8">mdi-trophy-outline</v-icon>
+                                                                {{ item.stats }}
+                                                            </div>
+                                                        </div>
+                                                    </v-img>
+                                                </v-col>
+
+                                                <!-- Content Column -->
+                                                <v-col cols="12" md="8" class="pa-6 d-flex flex-column justify-space-between">
+                                                    <div>
+                                                        <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
+                                                            <span class="text-caption font-weight-bold text-primary text-uppercase tracking-wider">
+                                                                {{ item.period }}
+                                                            </span>
+                                                            <v-chip size="x-small" variant="tonal" color="success" class="font-weight-bold">
+                                                                {{ item.badge }}
+                                                            </v-chip>
+                                                        </div>
+
+                                                        <h3 class="text-h5 font-weight-black text-slate-900 mb-3 leading-snug">
+                                                            {{ item.title }}
+                                                        </h3>
+
+                                                        <p class="text-slate-600 text-body-1 leading-relaxed mb-4">
+                                                            {{ item.desc }}
+                                                        </p>
+                                                    </div>
+
+                                                    <div class="d-flex flex-wrap ga-2 pt-2 border-t">
+                                                        <v-chip
+                                                            v-for="(tag, tIdx) in item.tags"
+                                                            :key="tIdx"
+                                                            size="small"
+                                                            variant="flat"
+                                                            color="grey-lighten-4"
+                                                            class="text-slate-700 font-weight-medium"
+                                                        >
+                                                            <v-icon start size="12" color="#1e257c">mdi-check-circle</v-icon>
+                                                            {{ tag }}
+                                                        </v-chip>
+                                                    </div>
+                                                </v-col>
+                                            </v-row>
                                         </v-card>
                                     </v-timeline-item>
                                 </v-timeline>
@@ -352,7 +501,7 @@ onMounted(() => {
                         </v-col>
                         <v-col cols="12" sm="3">
                             <div class="stat-num text-gradient-blue font-weight-black">{{ statsData.totalShowrooms }}+</div>
-                            <div class="stat-txt text-grey-lighten-1 font-weight-medium">Chi Nhánh Showroom</div>
+                            <div class="stat-txt text-grey-lighten-1 font-weight-medium">Chi Nhánh</div>
                         </v-col>
                         <v-col cols="12" sm="3">
                             <div class="stat-num text-gradient-blue font-weight-black">{{ statsData.satisfactionRate }}</div>
@@ -380,10 +529,7 @@ onMounted(() => {
             </section>
         </main>
 
-        <footer class="footer-landing py-10 text-center text-grey-darken-1 bg-white border-t">
-            <LogoClient class="mb-4 d-inline-block" style="max-width: 150px" />
-            <p>&copy; 2026 AeroStride All rights reserved.</p>
-        </footer>
+        <MainFooter />
 
         <CustomerChat />
     </div>
@@ -392,6 +538,17 @@ onMounted(() => {
 <style scoped lang="scss">
 .main-content {
     padding-top: 60px;
+}
+
+.about-hero-carousel {
+    overflow: hidden;
+}
+
+.carousel-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%);
+    backdrop-filter: blur(2px);
 }
 
 .about-hero {
@@ -484,5 +641,63 @@ onMounted(() => {
 
 .max-w-700 {
     max-width: 700px;
+}
+
+/* ── Timeline Premium Styles ── */
+.timeline-premium {
+    :deep(.v-timeline-divider__dot) {
+        background: #1e257c !important;
+        box-shadow: 0 0 0 6px rgba(30, 37, 124, 0.15);
+    }
+    :deep(.v-timeline-divider__line) {
+        background: linear-gradient(180deg, #1e257c 0%, #3b82f6 100%) !important;
+        width: 3px !important;
+    }
+}
+
+.timeline-year-dot {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e257c 0%, #2563eb 100%);
+    box-shadow: 0 4px 12px rgba(30, 37, 124, 0.4);
+}
+
+.timeline-card-premium {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &:hover {
+        transform: translateY(-6px) scale(1.01);
+        box-shadow: 0 20px 40px rgba(30, 37, 124, 0.12) !important;
+        border-color: #93c5fd;
+
+        .timeline-img :deep(img) {
+            transform: scale(1.08);
+        }
+    }
+}
+
+.timeline-img {
+    transition: transform 0.5s ease;
+    :deep(img) {
+        transition: transform 0.5s ease;
+    }
+}
+
+.img-gradient-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.3) 0%, rgba(15, 23, 42, 0.85) 100%);
+}
+
+.timeline-stats-badge {
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 </style>

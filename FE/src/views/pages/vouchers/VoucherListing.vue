@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import MainFooter from '@/components/shared/MainFooter.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { dichVuVoucher } from '@/services/public/dichVuVoucher';
 import { useToastStore } from '@/stores/toastStore';
@@ -179,6 +180,9 @@ onMounted(() => {
                 <v-btn color="black" class="mt-8 px-8" rounded="pill" to="/shoes">TIẾP TỤC MUA SẮM</v-btn>
             </div>
         </v-container>
+
+        <!-- Main Footer -->
+        <MainFooter />
 
         <CustomerChat />
     </div>

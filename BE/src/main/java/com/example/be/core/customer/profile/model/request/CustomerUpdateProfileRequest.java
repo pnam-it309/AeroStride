@@ -16,6 +16,14 @@ public class CustomerUpdateProfileRequest {
     private java.time.LocalDate ngaySinh;
 
     private Boolean gioiTinh;
+
+    private String tinh;
+
+    private String thanhPho;
+
+    private String phuongXa;
+
+    private String diaChiChiTiet;
     
     // Optional fields if user wants to update avatar link later
     private String hinhAnh;

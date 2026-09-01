@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import MainFooter from '@/components/shared/MainFooter.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 
 import { useCartStore } from '@/stores/cartStore';
@@ -1908,6 +1909,9 @@ onUnmounted(() => {
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <!-- Main Footer -->
+        <MainFooter class="mt-12" />
 
         <CustomerChat />
     </div>

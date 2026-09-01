@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import MainFooter from '@/components/shared/MainFooter.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
@@ -360,10 +361,7 @@ onMounted(() => {
             </v-container>
         </main>
 
-        <footer class="footer-landing py-10 text-center text-grey-darken-1 bg-white border-t">
-            <LogoClient class="mb-4 d-inline-block" style="max-width: 150px" />
-            <p>&copy; 2026 AeroStride All rights reserved.</p>
-        </footer>
+        <MainFooter />
 
         <CustomerChat />
     </div>

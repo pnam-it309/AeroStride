@@ -6,6 +6,7 @@ import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import defaultShoeImg from '@/assets/images/products/cat_speed.jpg';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import MainFooter from '@/components/shared/MainFooter.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 
 const router = useRouter();
@@ -203,6 +204,9 @@ const removeFavorite = (id, event) => {
                 </v-btn>
             </div>
         </v-container>
+
+        <!-- Main Footer -->
+        <MainFooter class="mt-12" />
 
         <CustomerChat />
     </div>

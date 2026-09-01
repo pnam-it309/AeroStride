@@ -5,6 +5,7 @@ import { PATH } from '@/router/routePaths';
 import Preloader from '@/components/common/Preloader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import MainFooter from '@/components/shared/MainFooter.vue';
 import FlashSaleSection from './sections/FlashSaleSection.vue';
 import { useLandingPage } from '@/composables/useLandingPage';
 import { useLandingCatalog } from '@/composables/useLandingCatalog';
@@ -475,12 +476,8 @@ const scrollToCategories = () => {
                 </div>
             </section>
 
-            <!-- 5. Footer (Mockup specification) -->
-            <footer class="footer-custom">
-                <span class="footer-text-content">
-                    AEROSTRIDE &nbsp;&bull;&nbsp; Giày thể thao chính hãng &bull; Hotline 1900 6868 &bull; support@aerostride.vn
-                </span>
-            </footer>
+            <!-- 5. Main Footer -->
+            <MainFooter />
         </div>
 
         <!-- Customer Chat Overlay -->

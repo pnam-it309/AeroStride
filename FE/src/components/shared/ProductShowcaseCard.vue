@@ -138,23 +138,23 @@ const originalPrice = computed(() => {
 .product-showcase-card {
     background: #ffffff;
     border-radius: 16px;
-    overflow: hidden;
     width: 220px;
     min-width: 220px;
     max-width: 220px;
     flex-shrink: 0;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    background: #ffffff;
     border: 1px solid #e2e8f0;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    animation: cardPopIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 
     &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(30, 37, 124, 0.12) !important;
-        border-color: #2563eb;
+        transform: translateY(-6px) scale(1.02);
+        box-shadow: 0 16px 32px -4px rgba(37, 99, 235, 0.12), 0 8px 16px -4px rgba(0, 0, 0, 0.04) !important;
+        border-color: #93c5fd;
 
         .product-image {
-            transform: scale(1.06);
+            transform: scale(1.1) rotate(-1.5deg);
         }
 
         .view-btn {
@@ -163,16 +163,28 @@ const originalPrice = computed(() => {
     }
 }
 
+@keyframes cardPopIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.85) translateY(16px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
 .visual-section {
     position: relative;
     height: 130px;
     overflow: hidden;
     background: #f8fafc;
+    transition: transform 0.3s ease;
 
     .product-image {
         height: 100%;
         width: 100%;
-        transition: transform 0.4s ease;
+        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .brand-tag {
