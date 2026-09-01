@@ -23,7 +23,8 @@ const props = defineProps({
     hideToolbar: { type: Boolean, default: false },
     totalCount: { type: Number, default: 0 },
     skeletonRows: { type: Number, default: 7 }, // số skeleton rows
-    maxHeight: { type: [String, Number], default: null }
+    maxHeight: { type: [String, Number], default: null },
+    centerTitle: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate', 'empty-action']);
@@ -41,7 +42,7 @@ const isFetchingMode = () =>
         <v-card class="admin-table-container elevation-0" elevation="0">
             <!-- Toolbar Area -->
             <div v-if="!hideToolbar" class="table-toolbar d-flex align-center justify-space-between px-3 py-2">
-                <div class="d-flex align-center">
+                <div :class="['d-flex align-center', centerTitle ? 'table-title-centered' : '']">
                     <LayoutGridIcon size="18" class="text-primary mr-2" />
                     <h3 class="text-subtitle-1 font-weight-bold text-black tracking-tight" style="font-size: 15px !important">{{ title }}</h3>
                 </div>

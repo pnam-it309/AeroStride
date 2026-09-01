@@ -37,7 +37,7 @@ const tableHeadersHoatDong = [
     { text: 'Người thực hiện', width: '180px', align: 'start' },
     { text: 'Hành động', width: '220px', align: 'start' },
     { text: 'Đối tượng', width: '280px', align: 'start' },
-    { text: 'Thời gian', width: '180px', align: 'center' }
+    { text: 'Thời gian', width: '180px', align: 'start' }
 ];
 
 const loadActivities = async () => {
@@ -75,12 +75,12 @@ const headersGiaoCa = [
     { text: 'STT', width: '50px', align: 'center' },
     { text: 'Nhân viên mở ca', width: '170px', align: 'start' },
     { text: 'Nhân viên nhận ca', width: '170px', align: 'start' },
-    { text: 'Thời gian ca', width: '230px', align: 'center' },
-    { text: 'Tiền ban đầu', width: '130px', align: 'end' },
-    { text: 'Doanh thu', width: '130px', align: 'end' },
-    { text: 'Tiền thực tế', width: '130px', align: 'end' },
-    { text: 'Chênh lệch', width: '130px', align: 'end' },
-    { text: 'Trạng thái', width: '120px', align: 'center' }
+    { text: 'Thời gian ca', width: '220px', align: 'start' },
+    { text: 'Tiền ban đầu', width: '130px', align: 'start' },
+    { text: 'Doanh thu', width: '130px', align: 'start' },
+    { text: 'Tiền thực tế', width: '130px', align: 'start' },
+    { text: 'Chênh lệch', width: '130px', align: 'start' },
+    { text: 'Trạng thái', width: '120px', align: 'start' }
 ];
 
 const fetchListGiaoCa = async () => {
@@ -135,6 +135,10 @@ const paginatedGiaoCaList = computed(() => {
 
 const getStatusChipClass = (status) => {
     return GIAO_CA_STATUS_CONFIG[status]?.chipClass || 'status-chip-default';
+};
+
+const getStatusIcon = (status) => {
+    return GIAO_CA_STATUS_CONFIG[status]?.icon || null;
 };
 
 const getStatusLabel = (status) => {
@@ -315,7 +319,7 @@ onMounted(() => {
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell text-center">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-                    <td class="data-cell">
+                    <td class="data-cell text-start">
                         <div class="d-flex align-center">
                             <v-avatar size="24" color="primary" class="mr-2 text-white text-caption">
                                 {{ item.nguoiThucHien ? item.nguoiThucHien.charAt(0) : '?' }}
@@ -323,11 +327,11 @@ onMounted(() => {
                             <span>{{ item.nguoiThucHien || 'Hệ thống' }}</span>
                         </div>
                     </td>
-                    <td class="data-cell">{{ item.hanhDong }}</td>
-                    <td class="data-cell">
+                    <td class="data-cell text-start">{{ item.hanhDong }}</td>
+                    <td class="data-cell text-start">
                         <v-chip size="x-small" variant="outlined">{{ item.doiTuong }}</v-chip>
                     </td>
-                    <td class="data-cell text-center text-slate-500 text-caption">{{ item.ngay }}</td>
+                    <td class="data-cell text-start text-slate-500 text-caption">{{ item.ngay }}</td>
                 </tr>
             </template>
 
@@ -419,8 +423,8 @@ onMounted(() => {
                         <span v-else class="text-slate-400 text-caption font-italic">Chưa bàn giao</span>
                     </td>
                     <!-- Thời gian ca (Mở ca - Chốt ca) -->
-                    <td class="data-cell text-center">
-                        <div class="d-flex flex-column align-center ga-0.5">
+                    <td class="data-cell text-start">
+                        <div class="d-flex flex-column ga-0.5">
                             <div class="text-slate-700 font-weight-medium text-caption">
                                 <span class="text-slate-400">Mở:</span> {{ formatDate(item.thoiGianMoCa || item.thoiGianVaoCa) }}
                             </div>
@@ -430,26 +434,29 @@ onMounted(() => {
                         </div>
                     </td>
                     <!-- Tiền ban đầu -->
-                    <td class="data-cell text-end font-mono font-weight-medium text-slate-700">
+                    <td class="data-cell text-start font-mono font-weight-medium text-slate-700">
                         {{ formatCurrency(item.tienBanDau || 0) }}
                     </td>
                     <!-- Doanh thu -->
-                    <td class="data-cell text-end font-mono font-weight-bold text-primary">
+                    <td class="data-cell text-start font-mono font-weight-bold text-primary">
                         {{ formatCurrency(item.tongDoanhThu || 0) }}
                     </td>
                     <!-- Tiền thực tế -->
-                    <td class="data-cell text-end font-mono font-weight-bold text-slate-800">
+                    <td class="data-cell text-start font-mono font-weight-bold text-slate-800">
                         {{ formatCurrency(item.tienThucTe || 0) }}
                     </td>
                     <!-- Chênh lệch -->
-                    <td class="data-cell text-end font-mono font-weight-bold">
+                    <td class="data-cell text-start font-mono font-weight-bold">
                         <span :class="Number(item.tienChenhLech || 0) < 0 ? 'text-error' : Number(item.tienChenhLech || 0) > 0 ? 'text-success' : 'text-slate-500'">
                             {{ formatCurrency(item.tienChenhLech || 0) }}
                         </span>
                     </td>
                     <!-- Trạng thái -->
-                    <td class="data-cell text-center">
+                    <td class="data-cell text-start">
                         <v-chip size="small" variant="flat" :class="['status-chip', getStatusChipClass(item.trangThai)]">
+                            <v-icon v-if="getStatusIcon(item.trangThai)" start size="13">
+                                {{ getStatusIcon(item.trangThai) }}
+                            </v-icon>
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>

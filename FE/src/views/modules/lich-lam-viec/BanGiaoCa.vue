@@ -6,6 +6,7 @@ import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import { useNotifications } from '@/services/notificationService';
 import { isManagementRole } from '@/constants/appConstants';
+import { GIAO_CA_STATUS, GIAO_CA_STATUS_CONFIG } from '@/constants/lichLamViecConstants';
 import { formatCurrency, formatDateTime, readMoneyInVietnameseWords, formatNumberWithDots, parseNumberFromDots } from '@/utils/formatters';
 import {
     BuildingStoreIcon,
@@ -325,10 +326,12 @@ const historyHeaders = [
 ];
 
 const getStatusBadge = (status) => {
-    if (status === 'OPEN') return { color: 'success', label: 'Đang hoạt động' };
-    if (status === 'PENDING') return { color: 'warning', label: 'Chờ nhận ca' };
-    if (status === 'CLOSED') return { color: 'info', label: 'Đã bàn giao' };
-    return { color: 'grey', label: status };
+    return GIAO_CA_STATUS_CONFIG[status] || {
+        label: status || '--',
+        color: 'grey',
+        chipClass: 'status-chip-default',
+        icon: 'mdi-help-circle-outline'
+    };
 };
 </script>
 
@@ -766,6 +769,7 @@ const getStatusBadge = (status) => {
         <!-- LỊCH SỬ BÀN GIAO CA -->
         <AdminTable
             title="Lịch Sử Bàn Giao Ca Gần Đây"
+            :center-title="true"
             :headers="historyHeaders"
             :items="listGiaoCaHistory"
             :loading="loading"
@@ -796,7 +800,14 @@ const getStatusBadge = (status) => {
                     </td>
                     <td class="data-cell font-weight-medium">{{ item.nhanVienNhanCaTen || 'Chưa bàn giao' }}</td>
                     <td class="data-cell text-center">
-                        <v-chip size="small" :color="getStatusBadge(item.trangThai).color" class="font-weight-bold" variant="flat">
+                        <v-chip
+                            size="small"
+                            variant="flat"
+                            :class="['status-chip', getStatusBadge(item.trangThai).chipClass]"
+                        >
+                            <v-icon v-if="getStatusBadge(item.trangThai).icon" start size="13">
+                                {{ getStatusBadge(item.trangThai).icon }}
+                            </v-icon>
                             {{ getStatusBadge(item.trangThai).label }}
                         </v-chip>
                     </td>

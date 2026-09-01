@@ -136,7 +136,7 @@ const calculateTotalHours = (item) => {
         if (m === 0) return `${h} giờ`;
         return `${h}h ${m}p`;
     }
-    const shift = shifts.value.find((s) => s.tenCa === item.ca);
+    const shift = rawShifts.value?.find((s) => s.tenCa === item.ca);
     if (shift && shift.gioBatDau && shift.gioKetThuc) {
         const [startH, startM] = shift.gioBatDau.split(':').map(Number);
         const [endH, endM] = shift.gioKetThuc.split(':').map(Number);
@@ -1163,12 +1163,12 @@ onMounted(() => {
         <!-- Shared Wrapper for View Mode -->
         <v-card class="admin-table-container elevation-0 flex-grow-1 overflow-hidden d-flex flex-column mb-0" elevation="0">
             <!-- Shared Toolbar -->
-            <div class="table-toolbar d-flex align-center justify-space-between pa-3 border-b">
-                <div class="d-flex align-center">
-                    <LayoutGridIcon size="20" class="text-primary mr-3" />
-                    <h3 class="text-h6 font-weight-bold text-black tracking-tight">Danh sách lịch làm việc</h3>
+            <div class="table-toolbar position-relative d-flex align-center justify-space-between pa-3 border-b">
+                <div class="table-title-centered d-flex align-center">
+                    <LayoutGridIcon size="20" class="text-primary mr-2" />
+                    <h3 class="text-h6 font-weight-bold text-black tracking-tight mb-0">Danh sách lịch làm việc</h3>
                 </div>
-                <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions ga-2">
+                <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions ga-2 ml-auto z-index-1">
                     <template v-if="canManageSchedule">
                         <v-btn prepend-icon="mdi-calendar-sync" variant="flat" class="admin-btn-orange" :disabled="loading" @click="openAutoScheduleDialog">
                             Xếp ca tự động
