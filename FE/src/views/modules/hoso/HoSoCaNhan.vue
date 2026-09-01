@@ -113,12 +113,42 @@ const initEditForm = (data) => {
     avatarPreview.value = '';
 };
 
-const startEditing = () => {
+const startEditing = async () => {
     saveMessage.value = { type: '', text: '' };
     initEditForm(profile.value);
     isEditing.value = true;
-    if (provinces.value.length === 0) {
-        fetchProvinces();
+    try {
+        if (provinces.value.length === 0) {
+            await fetchProvinces();
+        }
+        if (editForm.value.tinh) {
+            await fetchDistricts(editForm.value.tinh);
+        }
+        if (editForm.value.thanhPho) {
+            await fetchWards(editForm.value.thanhPho);
+        }
+    } catch (err) {
+        console.error('Lỗi nạp danh mục địa giới hành chính:', err);
+    }
+};
+
+const onProvinceChange = async (newProvince) => {
+    editForm.value.tinh = newProvince;
+    editForm.value.thanhPho = '';
+    editForm.value.phuongXa = '';
+    districts.value = [];
+    wards.value = [];
+    if (newProvince) {
+        await fetchDistricts(newProvince);
+    }
+};
+
+const onDistrictChange = async (newDistrict) => {
+    editForm.value.thanhPho = newDistrict;
+    editForm.value.phuongXa = '';
+    wards.value = [];
+    if (newDistrict) {
+        await fetchWards(newDistrict);
     }
 };
 
@@ -562,12 +592,12 @@ onMounted(() => {
                                             :items="provinces"
                                             item-title="name"
                                             item-value="name"
-                                            placeholder="Chọn Tỉnh / Thành"
+                                            placeholder="Chọn Tỉnh / Thành phố"
                                             variant="outlined"
                                             density="compact"
                                             hide-details="auto"
                                             rounded="lg"
-                                            @update:model-value="fetchDistricts(editForm.tinh)"
+                                            @update:model-value="onProvinceChange"
                                         />
                                     </div>
                                 </v-col>
@@ -585,7 +615,7 @@ onMounted(() => {
                                             hide-details="auto"
                                             rounded="lg"
                                             :disabled="!editForm.tinh"
-                                            @update:model-value="fetchWards(editForm.thanhPho)"
+                                            @update:model-value="onDistrictChange"
                                         />
                                     </div>
                                 </v-col>
@@ -606,12 +636,12 @@ onMounted(() => {
                                         />
                                     </div>
                                 </v-col>
-                                <v-col cols="12">
+                                <v-col cols="12" md="6">
                                     <div class="mb-3">
-                                        <label class="form-input-label">Địa chỉ chi tiết</label>
+                                        <label class="form-input-label">Địa chỉ chi tiết (Số nhà, đường phố)</label>
                                         <v-text-field
                                             v-model="editForm.diaChiChiTiet"
-                                            placeholder="Số nhà, tên đường..."
+                                            placeholder="VD: 556/8/28 Nguyễn An Ninh"
                                             variant="outlined"
                                             density="compact"
                                             hide-details="auto"
@@ -644,7 +674,7 @@ onMounted(() => {
                         </div>
                     </div>
 
-                    <!-- TAB 2: TÀI KHOẢN & ĐỔI MẬT KHẨU (Giao diện liền mạch, gọn gàng) -->
+                    <!-- TAB 2: TÀI KHOẢN & ĐỔI MẬT KHẨU (Giao diện cân bằng, cùng kích thước với Tab 1) -->
                     <div v-show="activeTab === 'account'" class="tab-content-panel">
                         <div class="d-flex align-center mb-4">
                             <div class="section-icon-box mr-3">
@@ -658,86 +688,109 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <div class="pa-5 rounded-xl border bg-white mt-1">
-                            <v-alert
-                                v-if="pwMessage.text"
-                                :type="pwMessage.type === 'success' ? 'success' : 'error'"
-                                variant="tonal"
-                                density="compact"
-                                class="mb-4 rounded-lg"
-                            >
-                                {{ pwMessage.text }}
-                            </v-alert>
+                        <v-alert
+                            v-if="pwMessage.text"
+                            :type="pwMessage.type === 'success' ? 'success' : 'error'"
+                            variant="tonal"
+                            density="compact"
+                            class="mb-4 rounded-lg"
+                        >
+                            {{ pwMessage.text }}
+                        </v-alert>
 
-                            <v-row dense>
-                                <v-col cols="12">
-                                    <div class="mb-3">
-                                        <label class="form-input-label">Mật khẩu hiện tại <span class="text-error">*</span></label>
-                                        <v-text-field
-                                            v-model="pwForm.matKhauCu"
-                                            :type="showOldPassword ? 'text' : 'password'"
-                                            placeholder="Nhập mật khẩu đang dùng"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details="auto"
-                                            rounded="lg"
-                                            prepend-inner-icon="mdi-lock-outline"
-                                            :append-inner-icon="showOldPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-                                            @click:append-inner="showOldPassword = !showOldPassword"
-                                        />
-                                    </div>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="mb-3">
-                                        <label class="form-input-label">Mật khẩu mới <span class="text-error">*</span></label>
-                                        <v-text-field
-                                            v-model="pwForm.matKhauMoi"
-                                            :type="showNewPassword ? 'text' : 'password'"
-                                            placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details="auto"
-                                            rounded="lg"
-                                            prepend-inner-icon="mdi-lock-plus-outline"
-                                            :append-inner-icon="showNewPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-                                            @click:append-inner="showNewPassword = !showNewPassword"
-                                        />
-                                    </div>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="mb-4">
-                                        <label class="form-input-label">Xác nhận mật khẩu mới <span class="text-error">*</span></label>
-                                        <v-text-field
-                                            v-model="pwForm.xacNhanMatKhau"
-                                            :type="showConfirmPassword ? 'text' : 'password'"
-                                            placeholder="Nhập lại mật khẩu mới"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details="auto"
-                                            rounded="lg"
-                                            prepend-inner-icon="mdi-lock-check-outline"
-                                            :append-inner-icon="showConfirmPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-                                            @click:append-inner="showConfirmPassword = !showConfirmPassword"
-                                        />
-                                    </div>
-                                </v-col>
-                            </v-row>
+                        <v-row dense class="ga-y-4">
+                            <!-- Cột Trái: Form Đổi Mật Khẩu -->
+                            <v-col cols="12" md="7">
+                                <div class="pa-5 rounded-xl border bg-white h-100 d-flex flex-column justify-space-between">
+                                    <div>
+                                        <div class="mb-3">
+                                            <label class="form-input-label">Mật khẩu hiện tại <span class="text-error">*</span></label>
+                                            <v-text-field
+                                                v-model="pwForm.matKhauCu"
+                                                :type="showOldPassword ? 'text' : 'password'"
+                                                placeholder="Nhập mật khẩu đang dùng"
+                                                variant="outlined"
+                                                density="compact"
+                                                hide-details="auto"
+                                                rounded="lg"
+                                                prepend-inner-icon="mdi-lock-outline"
+                                                :append-inner-icon="showOldPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                                                @click:append-inner="showOldPassword = !showOldPassword"
+                                            />
+                                        </div>
 
-                            <div class="d-flex justify-end mt-3">
-                                <v-btn
-                                    :loading="pwLoading"
-                                    color="primary"
-                                    variant="flat"
-                                    class="text-none font-weight-bold px-6 rounded-lg save-btn"
-                                    height="42"
-                                    style="background-color: #1e257c !important"
-                                    @click="handleChangePassword"
-                                >
-                                    <v-icon start size="18">mdi-content-save-check-outline</v-icon>
-                                    Cập nhật mật khẩu
-                                </v-btn>
-                            </div>
-                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-input-label">Mật khẩu mới <span class="text-error">*</span></label>
+                                            <v-text-field
+                                                v-model="pwForm.matKhauMoi"
+                                                :type="showNewPassword ? 'text' : 'password'"
+                                                placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                                                variant="outlined"
+                                                density="compact"
+                                                hide-details="auto"
+                                                rounded="lg"
+                                                prepend-inner-icon="mdi-lock-plus-outline"
+                                                :append-inner-icon="showNewPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                                                @click:append-inner="showNewPassword = !showNewPassword"
+                                            />
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label class="form-input-label">Xác nhận mật khẩu mới <span class="text-error">*</span></label>
+                                            <v-text-field
+                                                v-model="pwForm.xacNhanMatKhau"
+                                                :type="showConfirmPassword ? 'text' : 'password'"
+                                                placeholder="Nhập lại mật khẩu mới"
+                                                variant="outlined"
+                                                density="compact"
+                                                hide-details="auto"
+                                                rounded="lg"
+                                                prepend-inner-icon="mdi-lock-check-outline"
+                                                :append-inner-icon="showConfirmPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                                                @click:append-inner="showConfirmPassword = !showConfirmPassword"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-end pt-2 border-t">
+                                        <v-btn
+                                            :loading="pwLoading"
+                                            color="primary"
+                                            variant="flat"
+                                            class="text-none font-weight-bold px-6 rounded-lg save-btn"
+                                            height="42"
+                                            style="background-color: #1e257c !important"
+                                            @click="handleChangePassword"
+                                        >
+                                            <v-icon start size="18">mdi-content-save-check-outline</v-icon>
+                                            Cập nhật mật khẩu
+                                        </v-btn>
+                                    </div>
+                                </div>
+                            </v-col>
+
+                            <!-- Cột Phải: Hướng Dẫn Bảo Mật -->
+                            <v-col cols="12" md="5">
+                                <div class="pa-5 rounded-xl border bg-slate-50 h-100 d-flex flex-column justify-space-between">
+                                    <div>
+                                        <h4 class="text-subtitle-2 font-weight-bold text-slate-800 mb-3 d-flex align-center">
+                                            <v-icon color="#1e257c" size="18" class="mr-2">mdi-shield-alert-outline</v-icon>
+                                            Yêu cầu bảo mật mật khẩu
+                                        </h4>
+                                        <ul class="text-caption text-slate-600 pl-4 mb-4" style="line-height: 1.8;">
+                                            <li>Mật khẩu mới phải có tối thiểu <strong>6 ký tự</strong>.</li>
+                                            <li>Nên bao gồm cả chữ hoa, chữ thường và chữ số.</li>
+                                            <li>Không sử dụng thông tin dễ đoán như ngày sinh, số điện thoại.</li>
+                                            <li>Không chia sẻ thông tin đăng nhập với người khác.</li>
+                                        </ul>
+                                    </div>
+                                    <div class="pa-3 rounded-lg border bg-white text-caption text-slate-500 d-flex align-center">
+                                        <v-icon color="success" size="18" class="mr-2">mdi-check-decagram</v-icon>
+                                        Tài khoản được mã hóa bảo mật chuẩn SHA-256.
+                                    </div>
+                                </div>
+                            </v-col>
+                        </v-row>
                     </div>
                 </div>
             </v-card>
@@ -752,7 +805,8 @@ onMounted(() => {
 
 <style scoped>
 .hoso-container {
-    max-width: 980px;
+    max-width: 1000px;
+    width: 100%;
     margin: 0 auto;
 }
 
@@ -763,6 +817,8 @@ onMounted(() => {
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0;
+    min-height: 580px; /* Cố định chiều cao tổng thể để 2 tab không bị nhảy to nhỏ */
+    width: 100%;
 }
 
 /* HEADER BANNER */

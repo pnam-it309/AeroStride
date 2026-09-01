@@ -1,10 +1,10 @@
 <template>
     <div class="main-footer-wrapper">
-        <!-- 1. Brand Showcase Carousel Section (Seamless Infinite Loop from DB) -->
-        <section class="brand-showcase-section bg-slate-900 pt-10 pb-8 border-b border-slate-800">
+        <!-- 1. Brand Showcase Carousel Section (White background, no logo icon) -->
+        <section class="brand-showcase-section bg-white pt-10 pb-8 border-t border-b">
             <v-container fluid class="px-4 px-md-8">
                 <div class="text-center mb-6">
-                    <h2 class="brand-section-title font-weight-black text-white text-uppercase tracking-wider">
+                    <h2 class="brand-section-title font-weight-black text-slate-900 text-uppercase tracking-wider">
                         Các Thương Hiệu Có Tại AEROSTRIDE
                     </h2>
                     <div class="title-accent-bar mx-auto mt-2"></div>
@@ -39,13 +39,7 @@
                                         class="brand-bg-image"
                                         loading="lazy"
                                     />
-                                    <div class="brand-overlay d-flex flex-column justify-space-between align-center pa-3">
-                                        <!-- Brand Icon / Logo Badge -->
-                                        <div class="brand-logo-pill bg-white d-flex align-center justify-center pa-2 rounded-xl elevation-3 align-self-center mt-2">
-                                            <img v-if="brand.logo" :src="brand.logo" :alt="brand.name" class="brand-icon-img" />
-                                            <v-icon v-else size="24" color="#1e257c">mdi-shoe-sneaker</v-icon>
-                                        </div>
-
+                                    <div class="brand-overlay d-flex align-center justify-center pa-3">
                                         <!-- Brand Name Badge -->
                                         <span class="brand-name-badge">{{ brand.name }}</span>
                                     </div>
@@ -68,13 +62,7 @@
                                         class="brand-bg-image"
                                         loading="lazy"
                                     />
-                                    <div class="brand-overlay d-flex flex-column justify-space-between align-center pa-3">
-                                        <!-- Brand Icon / Logo Badge -->
-                                        <div class="brand-logo-pill bg-white d-flex align-center justify-center pa-2 rounded-xl elevation-3 align-self-center mt-2">
-                                            <img v-if="brand.logo" :src="brand.logo" :alt="brand.name" class="brand-icon-img" />
-                                            <v-icon v-else size="24" color="#1e257c">mdi-shoe-sneaker</v-icon>
-                                        </div>
-
+                                    <div class="brand-overlay d-flex align-center justify-center pa-3">
                                         <!-- Brand Name Badge -->
                                         <span class="brand-name-badge">{{ brand.name }}</span>
                                     </div>
@@ -86,14 +74,14 @@
             </v-container>
         </section>
 
-        <!-- 2. Dark Modern 4-Column Footer (Theo tone màu và phong cách Ảnh 2) -->
+        <!-- 2. Dark Modern 4-Column Footer (100% Tiếng Việt) -->
         <footer class="main-footer-body dark-footer py-14">
             <v-container>
                 <v-row class="ga-y-8 justify-space-between">
-                    <!-- Cột 1: ABOUT -->
+                    <!-- Cột 1: VỀ AEROSTRIDE -->
                     <v-col cols="12" sm="6" md="3" class="footer-col">
                         <h4 class="footer-col-header text-white font-weight-black mb-5 text-uppercase tracking-wider">
-                            ABOUT
+                            VỀ AEROSTRIDE
                         </h4>
                         <p class="footer-desc-text text-slate-400 mb-5 leading-relaxed">
                             <strong class="text-white">AeroStride</strong> là hệ thống phân phối giày thể thao chính hãng hàng đầu Việt Nam. Tận tâm mang đến trải nghiệm êm ái, bền bỉ và thời thượng cho mọi vận động viên và tín đồ thời trang.
@@ -108,10 +96,10 @@
                         </div>
                     </v-col>
 
-                    <!-- Cột 2: PRODUCTS -->
+                    <!-- Cột 2: SẢN PHẨM -->
                     <v-col cols="12" sm="6" md="3" class="footer-col">
                         <h4 class="footer-col-header text-white font-weight-black mb-5 text-uppercase tracking-wider">
-                            PRODUCTS
+                            SẢN PHẨM
                         </h4>
                         <ul class="footer-nav-list list-unstyled d-flex flex-column ga-2.5">
                             <li>
@@ -136,21 +124,21 @@
                             </li>
                             <li>
                                 <router-link :to="PATH.SHOES" class="footer-dark-link text-cyan-lighten-3 font-weight-bold">
-                                    Bộ Sưu Tập Giày Mới Nhất
+                                    Tất Cả Sản Phẩm Mới Nhất
                                 </router-link>
                             </li>
                         </ul>
                     </v-col>
 
-                    <!-- Cột 3: USEFUL LINKS -->
+                    <!-- Cột 3: DỊCH VỤ & HỖ TRỢ -->
                     <v-col cols="12" sm="6" md="3" class="footer-col">
                         <h4 class="footer-col-header text-white font-weight-black mb-5 text-uppercase tracking-wider">
-                            USEFUL LINKS
+                            DỊCH VỤ & HỖ TRỢ
                         </h4>
                         <ul class="footer-nav-list list-unstyled d-flex flex-column ga-2.5">
                             <li>
                                 <router-link :to="PATH.ORDERS" class="footer-dark-link">
-                                    Đơn hàng của bạn
+                                    Tra cứu đơn hàng của bạn
                                 </router-link>
                             </li>
                             <li>
@@ -165,7 +153,7 @@
                             </li>
                             <li>
                                 <router-link to="/help" class="footer-dark-link">
-                                    Chính sách bảo mật
+                                    Chính sách bảo mật thông tin
                                 </router-link>
                             </li>
                             <li>
@@ -176,10 +164,10 @@
                         </ul>
                     </v-col>
 
-                    <!-- Cột 4: CONTACT -->
+                    <!-- Cột 4: LIÊN HỆ -->
                     <v-col cols="12" sm="6" md="3" class="footer-col">
                         <h4 class="footer-col-header text-white font-weight-black mb-5 text-uppercase tracking-wider">
-                            CONTACT
+                            LIÊN HỆ
                         </h4>
                         <div class="d-flex flex-column ga-3 text-slate-400 footer-contact-block">
                             <div class="d-flex align-start ga-2.5">
@@ -196,7 +184,7 @@
                             </div>
                             <div class="d-flex align-center ga-2.5">
                                 <v-icon size="18" color="#38bdf8" class="flex-shrink-0">mdi-clock-time-four-outline</v-icon>
-                                <span>08:00 – 22:00 (Thứ 2 – CN)</span>
+                                <span>08:00 – 22:00 (Thứ 2 – Chủ Nhật)</span>
                             </div>
                         </div>
                     </v-col>
@@ -204,11 +192,11 @@
             </v-container>
         </footer>
 
-        <!-- 3. Bottom Copyright Bar (Đúng như ảnh 2) -->
+        <!-- 3. Bottom Copyright Bar (Tiếng Việt) -->
         <div class="footer-copyright-bar py-4 text-center border-t border-slate-800">
             <v-container class="pa-0">
                 <span class="copyright-text text-slate-400">
-                    © 2026 Copyright: <router-link to="/" class="text-white font-weight-bold text-decoration-none hover:text-cyan">AeroStride.vn</router-link>
+                    © 2026 Bản quyền thuộc về: <router-link to="/" class="text-white font-weight-bold text-decoration-none hover:text-cyan">AeroStride.vn</router-link> - Giày Thể Thao Chính Hãng Việt Nam
                 </span>
             </v-container>
         </div>
@@ -370,7 +358,7 @@ const onTouchEnd = () => {
 .title-accent-bar {
     width: 60px;
     height: 3px;
-    background: #38bdf8;
+    background: #1e257c;
     border-radius: 3px;
 }
 
@@ -427,16 +415,13 @@ const onTouchEnd = () => {
     overflow: hidden;
     position: relative;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.09);
+    border: 1px solid rgba(226, 232, 240, 0.8);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 
     &:hover {
         transform: translateY(-5px);
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.7);
-
-        .brand-logo-pill {
-            transform: scale(1.1);
-        }
+        box-shadow: 0 14px 28px rgba(30, 37, 124, 0.16);
     }
 
     @media (max-width: 600px) {
@@ -467,22 +452,7 @@ const onTouchEnd = () => {
 .brand-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%);
-}
-
-.brand-logo-pill {
-    width: 52px;
-    height: 52px;
-    background: #ffffff;
-    border-radius: 14px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    transition: transform 0.3s ease;
-}
-
-.brand-icon-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.75) 100%);
 }
 
 .brand-name-badge {

@@ -73,8 +73,14 @@ export function useLocation(options = {}) {
         }));
     };
 
-    const loadLocalDistricts = (provinceCode, provinceName) => {
-        const localList = LOCAL_DISTRICTS[provinceCode] || LOCAL_DISTRICTS[String(provinceCode)];
+    const loadLocalDistricts = (provinceCodeOrName, provinceNameFallback) => {
+        let pKey = String(provinceCodeOrName || '');
+        let matchedProvince = provinces.value.find((p) => String(p.code) === pKey || String(p.name) === pKey) ||
+                              LOCAL_PROVINCES.find((p) => String(p.code) === pKey || cleanName(p.name) === cleanName(pKey));
+
+        let localList = LOCAL_DISTRICTS[pKey] || (matchedProvince ? LOCAL_DISTRICTS[matchedProvince.code] : null);
+        const resolvedName = matchedProvince?.name || provinceNameFallback || pKey;
+
         if (localList && localList.length) {
             districts.value = localList.map((d) => ({
                 code: d.code,
@@ -82,7 +88,7 @@ export function useLocation(options = {}) {
                 source: 'LOCAL'
             }));
         } else {
-            districts.value = getFallbackDistricts(provinceName).map((d) => ({
+            districts.value = getFallbackDistricts(resolvedName).map((d) => ({
                 code: d.code,
                 name: d.name,
                 source: 'LOCAL'
@@ -90,8 +96,23 @@ export function useLocation(options = {}) {
         }
     };
 
-    const loadLocalWards = (districtCode, districtName) => {
-        const localList = LOCAL_WARDS[districtCode] || LOCAL_WARDS[String(districtCode)];
+    const loadLocalWards = (districtCodeOrName, districtNameFallback) => {
+        let dKey = String(districtCodeOrName || '');
+        let localList = LOCAL_WARDS[dKey];
+
+        if (!localList) {
+            for (const pKey in LOCAL_DISTRICTS) {
+                const found = LOCAL_DISTRICTS[pKey].find((d) => String(d.code) === dKey || cleanName(d.name) === cleanName(dKey) || d.name === dKey);
+                if (found) {
+                    localList = LOCAL_WARDS[found.code] || LOCAL_WARDS[String(found.code)];
+                    dKey = String(found.code);
+                    break;
+                }
+            }
+        }
+
+        const resolvedName = districtNameFallback || districtCodeOrName || '';
+
         if (localList && localList.length) {
             wards.value = localList.map((w) => ({
                 code: w.code,
@@ -99,7 +120,7 @@ export function useLocation(options = {}) {
                 source: 'LOCAL'
             }));
         } else {
-            wards.value = getFallbackWards(districtName).map((w) => ({
+            wards.value = getFallbackWards(resolvedName).map((w) => ({
                 code: w.code,
                 name: w.name,
                 source: 'LOCAL'
