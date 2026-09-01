@@ -21,6 +21,10 @@ app.directive('maska', vMaska);
 
 // Đăng ký AppDatePicker global
 import AppDatePicker from '@/components/common/AppDatePicker.vue';
+import { initRoutePreloader } from '@/utils/routePreloader';
 app.component('AppDatePicker', AppDatePicker);
 
 app.use(vuetify).mount('#app');
+
+// Kích hoạt preload các route và component khi trình duyệt rảnh
+initRoutePreloader();

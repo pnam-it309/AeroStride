@@ -13,10 +13,10 @@ const cities = ['Tất cả', 'Hà Nội', 'TP. Hồ Chí Minh', 'Đà Nẵng'];
 const stores = [
     {
         id: 1,
-        name: 'AeroStride Cầu Giấy',
+        name: 'AeroStride Nam Từ Liêm (Flagship Store)',
         city: 'Hà Nội',
-        address: '123 Đường Cầu Giấy, Phường Quan Hoa, Cầu Giấy, Hà Nội',
-        phone: '024 1234 5678',
+        address: '21A Lê Đức Thọ, Mỹ Đình 2, Nam Từ Liêm, Hà Nội',
+        phone: '0986 525 959',
         time: '08:00 - 22:00'
     },
     {

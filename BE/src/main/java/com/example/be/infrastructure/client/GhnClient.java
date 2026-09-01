@@ -83,7 +83,7 @@ public class GhnClient {
         body.put("width", packageWidth != null ? packageWidth : 15);
         body.put("height", packageHeight != null ? packageHeight : 10);
         body.put("insurance_value", insuranceValue != null ? insuranceValue : 0);
-        // Kho gửi mặc định là shop ở Trịnh Văn Bô; ưu tiên mã env, nếu thiếu thì resolve từ tên Hà Nội/Nam Từ Liêm/Xuân Phương.
+        // Kho gửi mặc định là shop ở 21A Lê Đức Thọ; ưu tiên mã env, nếu thiếu thì resolve từ tên Hà Nội/Nam Từ Liêm/Mỹ Đình 2.
         applySenderLocation(body);
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);

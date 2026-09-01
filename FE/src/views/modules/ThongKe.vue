@@ -726,11 +726,12 @@ const loadStatistics = async () => {
         const startOfYear = `${selectedYear.value}-01-01`;
         const endOfYear = `${selectedYear.value}-12-31`;
 
-        // Gọi API song song để giảm thời gian chờ
+        // Gọi tất cả API song song để nạp dữ liệu tức thì
         const [overview, dailyData, yearlyOverview] = await Promise.all([
             dichVuThongKe.layTongQuan(tuNgay, denNgay),
             dichVuThongKe.layDoanhThuTheoNgay(startOfYear, endOfYear),
-            dichVuThongKe.layTongQuan(startOfYear, endOfYear)
+            dichVuThongKe.layTongQuan(startOfYear, endOfYear),
+            fetchProductStats()
         ]);
 
         if (overview) {
@@ -980,9 +981,6 @@ const loadStatistics = async () => {
                 data: end3HourData.customers
             }
         ];
-
-        // Tải danh sách sản phẩm
-        await fetchProductStats();
     } catch (error) {
         console.error('Error loading statistics:', error);
     } finally {
@@ -1650,7 +1648,7 @@ onMounted(async () => {
                         <div class="d-flex align-center ga-3 flex-grow-1" style="max-width: 680px">
                             <v-text-field
                                 v-model="productSearchKeyword"
-                                placeholder="Tìm theo mã hoặc tên sản phẩm..."
+                                placeholder="Tìm theo mã SP, SKU hoặc tên sản phẩm..."
                                 density="compact"
                                 variant="outlined"
                                 hide-details
@@ -1681,22 +1679,6 @@ onMounted(async () => {
                         <div class="d-flex align-center ga-2 flex-wrap">
                             <v-btn
                                 variant="outlined"
-                                color="primary"
-                                class="rounded-lg text-none px-3 font-weight-bold"
-                                style="height: 38px"
-                                @click="toggleSoldSort"
-                            >
-                                <v-icon size="18" class="mr-1.5">
-                                    {{ productSortBy === 'bestSelling' ? 'mdi-sort-numeric-descending' : 'mdi-sort-numeric-ascending' }}
-                                </v-icon>
-                                {{ productSortBy === 'bestSelling' ? 'Đã bán: Cao nhất' : 'Đã bán: Thấp nhất' }}
-                                <v-tooltip activator="parent" location="top">
-                                    {{ productSortBy === 'bestSelling' ? 'Đang sắp xếp: Đã bán cao nhất (Bấm để đổi sang Thấp nhất)' : 'Đang sắp xếp: Đã bán thấp nhất (Bấm để đổi sang Cao nhất)' }}
-                                </v-tooltip>
-                            </v-btn>
-
-                            <v-btn
-                                variant="outlined"
                                 color="slate-600"
                                 class="rounded-lg"
                                 style="height: 38px; min-width: 38px; width: 38px; padding: 0"
@@ -1712,40 +1694,47 @@ onMounted(async () => {
                         hide-toolbar
                         :loading="productLoading"
                         :headers="[
-                            { text: 'STT', align: 'center', width: '80px' },
-                            { text: 'Mã sản phẩm', align: 'center', width: '140px' },
+                            { text: 'STT', align: 'center', width: '60px' },
+                            { text: 'Mã SP', align: 'center', width: '120px' },
+                            { text: 'Mã SKU', align: 'center', width: '140px' },
                             { text: 'Tên sản phẩm', align: 'start' },
-                            { text: 'Thương hiệu', align: 'center', width: '150px' },
-                            { text: 'Đã bán', align: 'center', width: '140px' },
-                            { text: 'Doanh thu', align: 'center', width: '160px' }
+                            { text: 'Thương hiệu', align: 'center', width: '130px' },
+                            { text: 'Màu sắc', align: 'center', width: '120px' },
+                            { text: 'Kích thước', align: 'center', width: '100px' },
+                            { text: 'Đã bán', align: 'center', width: '130px' },
+                            { text: 'Doanh thu', align: 'center', width: '150px' }
                         ]"
                         :items="productStats"
                     >
                         <template #headers>
                             <tr>
-                                <th class="header-cell text-center" style="width: 80px">STT</th>
-                                <th class="header-cell text-center" style="width: 140px">Mã sản phẩm</th>
+                                <th class="header-cell text-center" style="width: 60px">STT</th>
+                                <th class="header-cell text-center" style="width: 120px">Mã SP</th>
+                                <th class="header-cell text-center" style="width: 140px">Mã SKU</th>
                                 <th class="header-cell text-left">Tên sản phẩm</th>
-                                <th class="header-cell text-center" style="width: 150px">Thương hiệu</th>
-                                <th class="header-cell text-center cursor-pointer select-none" style="width: 140px" @click="toggleSoldSort">
+                                <th class="header-cell text-center" style="width: 130px">Thương hiệu</th>
+                                <th class="header-cell text-center" style="width: 120px">Màu sắc</th>
+                                <th class="header-cell text-center" style="width: 100px">Kích thước</th>
+                                <th class="header-cell text-center cursor-pointer select-none" style="width: 130px" @click="toggleSoldSort">
                                     <div class="d-inline-flex align-center justify-center ga-1 font-weight-bold">
                                         <span>Đã bán</span>
                                         <v-icon size="16" color="primary">
-                                            {{ productSortBy === 'bestSelling' ? 'mdi-arrow-down-bold' : 'mdi-arrow-up-bold' }}
+                                            {{ productSortBy === 'bestSelling' ? 'mdi-sort-numeric-descending' : 'mdi-sort-numeric-ascending' }}
                                         </v-icon>
                                     </div>
                                     <v-tooltip activator="parent" location="top">
                                         {{ productSortBy === 'bestSelling' ? 'Sắp xếp: Đã bán cao nhất (Bấm để đổi sang thấp nhất)' : 'Sắp xếp: Đã bán thấp nhất (Bấm để đổi sang cao nhất)' }}
                                     </v-tooltip>
                                 </th>
-                                <th class="header-cell text-center" style="width: 160px">Doanh thu</th>
+                                <th class="header-cell text-center" style="width: 150px">Doanh thu</th>
                             </tr>
                         </template>
 
                         <template #row="{ item, index }">
-                            <tr class="data-row" :key="`${item.maSanPham}-${item.name}`">
+                            <tr class="data-row" :key="`${item.maSku || item.maSanPham}-${index}`">
                                 <td class="data-cell text-center font-weight-medium text-slate-500">{{ (productPage - 1) * productPageSize + index + 1 }}</td>
                                 <td class="data-cell text-center font-mono font-weight-bold text-primary">{{ item.maSanPham || '--' }}</td>
+                                <td class="data-cell text-center font-mono font-weight-semibold text-slate-700">{{ item.maSku || '--' }}</td>
                                 <td class="data-cell text-left">
                                     <div class="product-name-cell" style="justify-content: flex-start; text-align: left">
                                         <span class="font-weight-medium" style="color: #1e293b">{{ item.name }}</span>
@@ -1757,7 +1746,7 @@ onMounted(async () => {
                                         class="brand-pill"
                                         style="
                                             display: inline-flex;
-                                            padding: 4px 10px;
+                                            padding: 3px 8px;
                                             background: #f8fafc;
                                             border: 1px solid #e2e8f0;
                                             border-radius: 6px;
@@ -1768,6 +1757,16 @@ onMounted(async () => {
                                     >
                                         {{ item.thuongHieu || '--' }}
                                     </span>
+                                </td>
+                                <td class="data-cell text-center">
+                                    <v-chip size="small" variant="tonal" color="slate-700" class="font-weight-medium">
+                                        {{ item.mauSac || '--' }}
+                                    </v-chip>
+                                </td>
+                                <td class="data-cell text-center">
+                                    <v-chip size="small" variant="outlined" color="primary" class="font-weight-bold">
+                                        {{ item.kichThuoc || '--' }}
+                                    </v-chip>
                                 </td>
                                 <td class="data-cell text-center font-weight-bold" style="color: #1e293b">{{ formatNumber(item.quantity) }}</td>
                                 <td class="data-cell text-center font-weight-bold" style="color: #e11d48">{{ formatCurrency(item.revenue) }}</td>

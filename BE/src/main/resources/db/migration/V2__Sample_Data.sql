@@ -7,7 +7,7 @@ ON DUPLICATE KEY UPDATE ma_phan_quyen = VALUES(ma_phan_quyen), ten_phan_quyen = 
 
 -- 2. Bảng Nhân Viên (nhan_vien)
 INSERT INTO nhan_vien (id, id_phan_quyen, ma_nhan_vien, ten_nhan_vien, email, sdt, ngay_sinh, gioi_tinh, ten_tai_khoan, mat_khau, hinh_anh,tinh,thanh_pho,phuong_xa,dia_chi_chi_tiet, xoa_mem, trang_thai, ngay_tao) VALUES
-('nv1', 'pq1', 'NV001', 'Hoàng Phương Nam', 'nickhunter3009@gmail.com', '0986525959', '1990-01-01', 1, 'admin', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'admin.jpg', 'Hà Nội', 'Quận Nam Từ Liêm', 'Mỹ Đình 2', '23 Lê Đức Thọ', 0, 0, 1711814400000),
+('nv1', 'pq1', 'NV001', 'Hoàng Phương Nam', 'nickhunter3009@gmail.com', '0986525959', '1990-01-01', 1, 'admin', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'admin.jpg', 'Hà Nội', 'Quận Nam Từ Liêm', 'Mỹ Đình 2', '21A Lê Đức Thọ', 0, 0, 1711814400000),
 ('nv2', 'pq1', 'NV002', 'Phí Thu Trang', 'phitrang082006@gmail.com', '0123456789', '1990-01-01', 0, 'admin1', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'admin.jpg', 'Hà Nội', 'Hà Nội', 'Phường Hàng Bạc', '12 Ngõ 23 Hàng Bạc', 0, 0, 1711814400000),
 ('nv3', 'pq1', 'NV003', 'Lê Thị Thu Huyền', 't818721@gmail.com', '0123456789', '1990-01-01', 0, 'admin2', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'admin.jpg', 'Hà Nội', 'Hà Nội', 'Phường Dịch Vọng', 'Số 45 Trần Thái Tông', 0, 0, 1711814400000),
 ('nv4', 'pq1', 'NV004', 'Nguyễn Huy Đức', 'nguyenhuyducbg19062002@gmail.com', '0123456789', '1990-01-01', 1, 'admin3', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'admin.jpg', 'Hồ Chí Minh', 'TP. Thủ Đức', 'Phường Linh Trung', '120 Võ Văn Ngân', 0, 0, 1711814400000),

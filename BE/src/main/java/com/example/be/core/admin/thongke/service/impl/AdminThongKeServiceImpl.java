@@ -235,10 +235,13 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         for (Object[] row : pageData.getContent()) {
             dtos.add(AdminThongKeResponse.SanPhamBanChay.builder()
                     .maSanPham(row[0] != null ? row[0].toString() : "")
-                    .name(row[1] != null ? row[1].toString() : "")
-                    .thuongHieu(row[2] != null ? row[2].toString() : "")
-                    .revenue(row[3] != null ? new BigDecimal(row[3].toString()) : BigDecimal.ZERO)
-                    .quantity(row[4] != null ? Long.parseLong(row[4].toString()) : 0L)
+                    .maSku(row[1] != null ? row[1].toString() : "")
+                    .name(row[2] != null ? row[2].toString() : "")
+                    .thuongHieu(row[3] != null ? row[3].toString() : "")
+                    .mauSac(row[4] != null ? row[4].toString() : "")
+                    .kichThuoc(row[5] != null ? row[5].toString() : "")
+                    .revenue(row[6] != null ? new BigDecimal(row[6].toString()) : BigDecimal.ZERO)
+                    .quantity(row[7] != null ? Long.parseLong(row[7].toString()) : 0L)
                     .growth(0.0)
                     .build());
         }

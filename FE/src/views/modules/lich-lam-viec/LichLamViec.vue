@@ -52,8 +52,26 @@ const toolbarTitle = computed(() => (mainTab.value === 'table' ? 'Bảng phân l
 const filters = ref({
     search: '',
     ca: 'Tất cả',
+    trangThai: 'Tất cả',
     ngay: null
 });
+
+const statusOptions = [
+    { title: 'Tất cả trạng thái', value: 'Tất cả' },
+    { title: 'Chờ xác nhận', value: 'CHO_XAC_NHAN' },
+    { title: 'Đã xác nhận', value: 'DA_XAC_NHAN' },
+    { title: 'Đã hủy', value: 'DA_HUY' }
+];
+
+const getScheduleStatusBadge = (status) => {
+    if (status === 'DA_XAC_NHAN') {
+        return { label: 'Đã xác nhận', color: 'success', icon: 'mdi-check-circle-outline' };
+    }
+    if (status === 'DA_HUY') {
+        return { label: 'Đã hủy', color: 'error', icon: 'mdi-close-circle-outline' };
+    }
+    return { label: 'Chờ xác nhận', color: 'warning', icon: 'mdi-clock-outline' };
+};
 
 // Add Dialog State
 const showAddDialog = ref(false);
@@ -91,11 +109,14 @@ const breadcrumbs = [
 const tableHeaders = computed(() => {
     const headers = [
         { text: 'STT', width: '60px', align: 'center' },
-        { text: 'Mã nhân viên', width: '140px', align: 'center' },
-        { text: 'Nhân viên', width: '150px', align: 'center' },
-        { text: 'Ca làm', width: '150px', align: 'center' },
-        { text: 'Thời gian', width: '150px', align: 'center' },
-        { text: 'Ngày làm', width: '150px', align: 'center' }
+        { text: 'Mã nhân viên', width: '130px', align: 'center' },
+        { text: 'Nhân viên', width: '160px', align: 'left' },
+        { text: 'Ca làm', width: '130px', align: 'center' },
+        { text: 'Thời gian ca', width: '130px', align: 'center' },
+        { text: 'Giờ vào', width: '110px', align: 'center' },
+        { text: 'Giờ ra', width: '110px', align: 'center' },
+        { text: 'Ngày làm', width: '120px', align: 'center' },
+        { text: 'Trạng thái', width: '140px', align: 'center' }
     ];
     if (canManageSchedule.value) {
         headers.push({ text: 'Thao tác', width: '100px', align: 'center' });
@@ -107,6 +128,11 @@ const tableHeaders = computed(() => {
 const filteredItems = computed(() => {
     if (!items.value) return [];
     let list = [...items.value];
+
+    // Filter by status
+    if (filters.value.trangThai && filters.value.trangThai !== 'Tất cả') {
+        list = list.filter((item) => item.trangThai === filters.value.trangThai);
+    }
 
     // Filter out schedules of admins/managers
     if (employeeOptions.value && employeeOptions.value.length > 0) {
@@ -341,6 +367,7 @@ const handleRefresh = async () => {
     isRefreshing.value = true;
     filters.value.search = '';
     filters.value.ca = 'Tất cả';
+    filters.value.trangThai = 'Tất cả';
     filters.value.ngay = null;
     currentMonth.value = new Date();
     pagination.value.page = 1;
@@ -1034,7 +1061,7 @@ onMounted(() => {
         <div class="mb-3"></div>
 
         <AdminFilter title="Bộ lọc" :isRefreshing="isRefreshing" @refresh="handleRefresh" class="mb-4">
-            <v-col cols="12" md="4" class="px-2">
+            <v-col cols="12" sm="6" md="4" class="px-2">
                 <div class="filter-field-label">Nhân viên</div>
                 <v-text-field
                     v-if="canManageSchedule"
@@ -1060,7 +1087,7 @@ onMounted(() => {
                     class="compact-input"
                 />
             </v-col>
-            <v-col cols="12" md="3" class="px-2">
+            <v-col cols="12" sm="6" md="4" class="px-2">
                 <div class="filter-field-label">Ca làm</div>
                 <v-select
                     v-model="filters.ca"
@@ -1072,7 +1099,7 @@ onMounted(() => {
                     @update:model-value="handleFilter"
                 />
             </v-col>
-            <v-col cols="12" md="3" class="px-2">
+            <v-col cols="12" sm="6" md="4" class="px-2">
                 <div class="filter-field-label">Ngày làm</div>
                 <AppDatePicker
                     :model-value="filters.ngay"
@@ -1138,6 +1165,36 @@ onMounted(() => {
 
             <!-- Table View Mode Content -->
             <div v-if="mainTab === 'table'" class="flex-grow-1 overflow-hidden d-flex flex-column" style="min-height: 0">
+                <!-- Status Tabs (Just like HoaDon.vue) -->
+                <div class="border-b bg-white px-3">
+                    <v-tabs
+                        v-model="filters.trangThai"
+                        bg-color="transparent"
+                        color="primary"
+                        show-arrows
+                        class="admin-tabs invoice-status-tabs"
+                        height="48"
+                        @update:model-value="handleFilter"
+                    >
+                        <v-tab value="Tất cả" class="text-none px-4 font-weight-bold tab-item">
+                            <v-icon start size="16">mdi-format-list-bulleted</v-icon>
+                            Tất cả
+                        </v-tab>
+                        <v-tab value="CHO_XAC_NHAN" class="text-none px-4 font-weight-bold tab-item">
+                            <v-icon start size="16">mdi-progress-clock</v-icon>
+                            Chờ xác nhận
+                        </v-tab>
+                        <v-tab value="DA_XAC_NHAN" class="text-none px-4 font-weight-bold tab-item">
+                            <v-icon start size="16">mdi-check-circle-outline</v-icon>
+                            Đã xác nhận
+                        </v-tab>
+                        <v-tab value="DA_HUY" class="text-none px-4 font-weight-bold tab-item">
+                            <v-icon start size="16">mdi-close-circle-outline</v-icon>
+                            Đã hủy
+                        </v-tab>
+                    </v-tabs>
+                </div>
+
                 <AdminTable
                     :hideToolbar="true"
                     :headers="tableHeaders"
@@ -1151,14 +1208,14 @@ onMounted(() => {
                             <!-- STT -->
                             <td class="data-cell text-center">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
                             <!-- Mã nhân viên -->
-                            <td class="data-cell text-center">
+                            <td class="data-cell text-center font-mono font-weight-bold text-primary">
                                 <div class="text-truncate" :title="item.maNhanVien || getEmployeeCode(item)">
                                     {{ item.maNhanVien || getEmployeeCode(item) }}
                                 </div>
                             </td>
                             <!-- Nhân viên -->
                             <td class="data-cell text-left px-4">
-                                <div class="text-slate-800 text-truncate" :title="item.nhanVien">{{ item.nhanVien }}</div>
+                                <div class="text-slate-800 font-weight-medium text-truncate" :title="item.nhanVien">{{ item.nhanVien }}</div>
                             </td>
                             <!-- Ca làm -->
                             <td class="data-cell text-center">
@@ -1166,13 +1223,41 @@ onMounted(() => {
                                     {{ item.ca }}
                                 </v-chip>
                             </td>
-                            <!-- Thời gian -->
+                            <!-- Thời gian ca -->
                             <td class="data-cell text-center">
-                                <span class="font-weight-medium text-slate-800">{{ getShiftTimeRange(item.ca) }}</span>
+                                <span class="font-weight-medium text-slate-700">{{ getShiftTimeRange(item.ca) }}</span>
+                            </td>
+                            <!-- Giờ vào -->
+                            <td class="data-cell text-center">
+                                <v-chip v-if="item.gioVao" size="small" variant="tonal" color="success" class="font-weight-bold">
+                                    <v-icon start size="12">mdi-login</v-icon>
+                                    {{ item.gioVao.substring(0, 5) }}
+                                </v-chip>
+                                <span v-else class="text-slate-400 font-weight-medium">--:--</span>
+                            </td>
+                            <!-- Giờ ra -->
+                            <td class="data-cell text-center">
+                                <v-chip v-if="item.gioRa" size="small" variant="tonal" color="info" class="font-weight-bold">
+                                    <v-icon start size="12">mdi-logout</v-icon>
+                                    {{ item.gioRa.substring(0, 5) }}
+                                </v-chip>
+                                <span v-else class="text-slate-400 font-weight-medium">--:--</span>
                             </td>
                             <!-- Ngày làm -->
                             <td class="data-cell text-center">
-                                <span class="text-slate-600">{{ formatDate(item.ngay) }}</span>
+                                <span class="text-slate-600 font-weight-medium">{{ formatDate(item.ngay) }}</span>
+                            </td>
+                            <!-- Trạng thái -->
+                            <td class="data-cell text-center">
+                                <v-chip
+                                    size="small"
+                                    :color="getScheduleStatusBadge(item.trangThai).color"
+                                    variant="flat"
+                                    class="font-weight-bold"
+                                >
+                                    <v-icon start size="14">{{ getScheduleStatusBadge(item.trangThai).icon }}</v-icon>
+                                    {{ getScheduleStatusBadge(item.trangThai).label }}
+                                </v-chip>
                             </td>
                             <!-- Thao tác (Chỉ hiển thị cho Quản trị viên/Admin) -->
                             <td v-if="canManageSchedule" class="data-cell action-cell">
@@ -1436,17 +1521,43 @@ onMounted(() => {
                         <table class="native-admin-table w-100">
                             <thead>
                                 <tr>
-                                    <th class="header-cell text-center" style="width: 70px; white-space: nowrap">STT</th>
-                                    <th class="header-cell text-center" style="width: 140px; white-space: nowrap">Mã NV</th>
-                                    <th class="header-cell">Họ tên</th>
-                                    <th v-if="canManageSchedule" class="header-cell text-center" style="width: 110px; white-space: nowrap">Thao tác</th>
+                                    <th class="header-cell text-center" style="width: 50px; white-space: nowrap">STT</th>
+                                    <th class="header-cell text-center" style="width: 120px; white-space: nowrap">Mã NV</th>
+                                    <th class="header-cell text-left">Họ tên</th>
+                                    <th class="header-cell text-center" style="width: 95px; white-space: nowrap">Giờ vào</th>
+                                    <th class="header-cell text-center" style="width: 95px; white-space: nowrap">Giờ ra</th>
+                                    <th class="header-cell text-center" style="width: 130px; white-space: nowrap">Trạng thái</th>
+                                    <th v-if="canManageSchedule" class="header-cell text-center" style="width: 80px; white-space: nowrap">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="(s, idx) in selectedCellSchedules" :key="s.id" class="data-row">
-                                    <td class="data-cell text-center">{{ idx + 1 }}</td>
-                                    <td class="data-cell text-center font-weight-bold">{{ s.maNhanVien || getEmployeeCode(s) }}</td>
-                                    <td class="data-cell">{{ s.nhanVien }}</td>
+                                    <td class="data-cell text-center font-weight-medium text-slate-500">{{ idx + 1 }}</td>
+                                    <td class="data-cell text-center font-mono font-weight-bold text-primary">{{ s.maNhanVien || getEmployeeCode(s) }}</td>
+                                    <td class="data-cell text-left font-weight-medium text-slate-800">{{ s.nhanVien }}</td>
+                                    <td class="data-cell text-center">
+                                        <v-chip v-if="s.gioVao" size="x-small" variant="tonal" color="success" class="font-weight-bold">
+                                            {{ s.gioVao.substring(0, 5) }}
+                                        </v-chip>
+                                        <span v-else class="text-slate-400">--:--</span>
+                                    </td>
+                                    <td class="data-cell text-center">
+                                        <v-chip v-if="s.gioRa" size="x-small" variant="tonal" color="info" class="font-weight-bold">
+                                            {{ s.gioRa.substring(0, 5) }}
+                                        </v-chip>
+                                        <span v-else class="text-slate-400">--:--</span>
+                                    </td>
+                                    <td class="data-cell text-center">
+                                        <v-chip
+                                            size="small"
+                                            :color="getScheduleStatusBadge(s.trangThai).color"
+                                            variant="flat"
+                                            class="font-weight-bold"
+                                        >
+                                            <v-icon start size="13">{{ getScheduleStatusBadge(s.trangThai).icon }}</v-icon>
+                                            {{ getScheduleStatusBadge(s.trangThai).label }}
+                                        </v-chip>
+                                    </td>
                                     <td v-if="canManageSchedule" class="data-cell action-cell text-center">
                                         <div class="action-controls justify-center">
                                             <v-btn
@@ -1464,7 +1575,7 @@ onMounted(() => {
                                 </tr>
                                 <TableEmptyState
                                     v-if="!selectedCellSchedules || selectedCellSchedules.length === 0"
-                                    :colspan="4"
+                                    :colspan="7"
                                     text="Chưa có nhân viên nào đăng ký ca này."
                                 />
                             </tbody>
@@ -1586,6 +1697,21 @@ onMounted(() => {
                                             : null)
                                 "
                                 placeholder="Chọn ngày làm"
+                            />
+                        </v-col>
+                        <v-col v-if="isEditSchedule" cols="12">
+                            <div class="filter-field-label">Trạng thái lịch làm</div>
+                            <v-select
+                                v-model="addForm.trangThai"
+                                :items="[
+                                    { title: 'Chờ xác nhận', value: 'CHO_XAC_NHAN' },
+                                    { title: 'Đã xác nhận', value: 'DA_XAC_NHAN' },
+                                    { title: 'Đã hủy', value: 'DA_HUY' }
+                                ]"
+                                placeholder="Chọn trạng thái"
+                                variant="outlined"
+                                density="compact"
+                                hide-details
                             />
                         </v-col>
                     </v-row>

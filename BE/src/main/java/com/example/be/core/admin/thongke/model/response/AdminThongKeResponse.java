@@ -86,8 +86,11 @@ public class AdminThongKeResponse {
     @Builder
     public static class SanPhamBanChay {
         private String maSanPham;
+        private String maSku;
         private String name;
         private String thuongHieu;
+        private String mauSac;
+        private String kichThuoc;
         private BigDecimal revenue;
         private Long quantity;
         private Double growth;

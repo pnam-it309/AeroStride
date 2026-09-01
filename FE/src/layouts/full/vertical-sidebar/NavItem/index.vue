@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import Icon from '../Icon.vue';
+import { preloadRoute } from '@/utils/routePreloader';
 
 const props = defineProps({ item: Object, level: { type: Number, default: 1 }, hideTitle: Boolean });
 const route = useRoute();
@@ -38,6 +39,7 @@ const isActive = computed(() => {
             :ripple="false"
             :disabled="item.disabled"
             :target="item.type === 'external' ? '_blank' : ''"
+            @mouseenter="item.to && preloadRoute(item.to)"
         >
             <!---If icon-->
             <template v-slot:prepend>

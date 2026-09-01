@@ -158,19 +158,25 @@ public interface AdminThongKeRepository extends HoaDonRepository,
 
     @Query(value = """
            SELECT sp.ma_san_pham AS ma,
+                  COALESCE(ctsp.ma_chi_tiet_san_pham, '--') AS maSku,
                   sp.ten_san_pham AS ten,
                   COALESCE(th.ten_thuong_hieu, 'Khác') AS thuongHieu,
+                  COALESCE(ms.ten_mau_sac, 'N/A') AS mauSac,
+                  COALESCE(kt.gia_tri_kich_thuoc, COALESCE(kt.ten_kich_thuoc, 'N/A')) AS kichThuoc,
                   COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong * hdct.don_gia ELSE 0 END), 0) AS doanhThu,
                   COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong ELSE 0 END), 0) AS soLuongBan
-           FROM san_pham sp
+           FROM chi_tiet_san_pham ctsp
+           INNER JOIN san_pham sp ON ctsp.id_san_pham = sp.id
            LEFT JOIN thuong_hieu th ON sp.id_thuong_hieu = th.id
-           LEFT JOIN chi_tiet_san_pham ctsp ON ctsp.id_san_pham = sp.id AND (ctsp.xoa_mem = false OR ctsp.xoa_mem IS NULL)
+           LEFT JOIN mau_sac ms ON ctsp.id_mau_sac = ms.id
+           LEFT JOIN kich_thuoc kt ON ctsp.id_kich_thuoc = kt.id
            LEFT JOIN hoa_don_chi_tiet hdct ON hdct.id_chi_tiet_san_pham = ctsp.id
            LEFT JOIN hoa_don hd ON hdct.id_hoa_don = hd.id AND hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
            WHERE (sp.xoa_mem = false OR sp.xoa_mem IS NULL)
+             AND (ctsp.xoa_mem = false OR ctsp.xoa_mem IS NULL)
              AND (:thuongHieuId IS NULL OR :thuongHieuId = '' OR sp.id_thuong_hieu = :thuongHieuId)
-             AND (:keyword IS NULL OR :keyword = '' OR LOWER(sp.ma_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')))
-           GROUP BY sp.id, sp.ma_san_pham, sp.ten_san_pham, th.ten_thuong_hieu
+             AND (:keyword IS NULL OR :keyword = '' OR LOWER(sp.ma_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(ctsp.ma_chi_tiet_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')))
+           GROUP BY ctsp.id, sp.ma_san_pham, ctsp.ma_chi_tiet_san_pham, sp.ten_san_pham, th.ten_thuong_hieu, ms.ten_mau_sac, kt.gia_tri_kich_thuoc, kt.ten_kich_thuoc
            ORDER BY 
                CASE WHEN :sortBy = 'revenueDesc' THEN COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong * hdct.don_gia ELSE 0 END), 0) END DESC,
                CASE WHEN :sortBy = 'revenueAsc' THEN COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong * hdct.don_gia ELSE 0 END), 0) END ASC,
@@ -178,11 +184,13 @@ public interface AdminThongKeRepository extends HoaDonRepository,
                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong ELSE 0 END), 0) DESC
            """,
            countQuery = """
-           SELECT COUNT(sp.id)
-           FROM san_pham sp
+           SELECT COUNT(ctsp.id)
+           FROM chi_tiet_san_pham ctsp
+           INNER JOIN san_pham sp ON ctsp.id_san_pham = sp.id
            WHERE (sp.xoa_mem = false OR sp.xoa_mem IS NULL)
+             AND (ctsp.xoa_mem = false OR ctsp.xoa_mem IS NULL)
              AND (:thuongHieuId IS NULL OR :thuongHieuId = '' OR sp.id_thuong_hieu = :thuongHieuId)
-             AND (:keyword IS NULL OR :keyword = '' OR LOWER(sp.ma_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')))
+             AND (:keyword IS NULL OR :keyword = '' OR LOWER(sp.ma_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(ctsp.ma_chi_tiet_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')))
            """,
            nativeQuery = true)
     org.springframework.data.domain.Page<Object[]> getProductStatistics(

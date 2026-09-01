@@ -120,7 +120,7 @@ onMounted(() => {
                                 <v-icon size="32" color="primary">mdi-map-marker</v-icon>
                             </div>
                             <h3 class="text-h6 font-weight-bold text-slate-900 mb-2">Trụ Sở Chính</h3>
-                            <p class="text-body-2 text-slate-600 mb-0">23 Lê Đức Thọ, Quận Nam Từ Liêm<br />Thủ đô Hà Nội, Việt Nam</p>
+                            <p class="text-body-2 text-slate-600 mb-0">21A Lê Đức Thọ, Mỹ Đình 2<br />Nam Từ Liêm, Hà Nội</p>
                         </v-card>
                     </v-col>
                     <v-col cols="12" sm="6" md="3">
