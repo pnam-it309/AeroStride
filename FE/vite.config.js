@@ -9,7 +9,6 @@ function optimizeTablerIcons() {
     return {
         name: 'optimize-tabler-icons',
         enforce: 'pre',
-        apply: 'build', // Only run in build to prevent dev server reloads
         transform(code, id) {
             if (id.includes('node_modules')) return null;
             if (code.includes('vue-tabler-icons')) {
@@ -87,7 +86,8 @@ export default defineConfig(({ mode }) => {
                 'date-fns',
                 '@google/model-viewer',
                 'vue3-perfect-scrollbar',
-                'vue-tabler-icons'
+                '@stomp/stompjs',
+                'sockjs-client'
             ]
         },
         build: {
