@@ -26,7 +26,7 @@ import {
 } from 'vue-tabler-icons';
 import { AdminConfirm, AdminBreadcrumbs, AdminTable, AdminPagination, AdminFilter } from '@/components/common';
 import SafeProductImage from '../san-pham/components/SafeProductImage.vue';
-import { formatCurrency, formatDate } from '@/utils/formatters';
+import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
 import { getOrderStatusMeta, getOrderStatusOrdinal } from '@/utils/orderStatus';
 import { ORDER_STATUS, ORDER_STATUS_ORDINALS } from '@/constants/hoaDonConstants';
 
@@ -1149,20 +1149,59 @@ onMounted(() => {
             <v-col cols="12" lg="6" class="d-flex flex-column ga-4">
                 <!-- 0. Invoice Info -->
                 <v-card elevation="0" class="premium-card mb-0 bg-white flex-grow-0">
-                    <div class="card-title pa-4 border-b d-flex align-center bg-slate-50">
-                        <v-icon size="20" class="mr-3 text-primary">mdi-information-outline</v-icon>
-                        <span class="text-slate-800">Thông tin hóa đơn</span>
+                    <div class="card-title pa-4 border-b d-flex align-center justify-space-between bg-slate-50">
+                        <div class="d-flex align-center">
+                            <v-icon size="20" class="mr-3 text-primary">mdi-information-outline</v-icon>
+                            <span class="text-slate-800">Thông tin hóa đơn</span>
+                        </div>
+                        <v-chip size="small" variant="tonal" color="primary" class="font-weight-bold">
+                            #{{ order.maHoaDon || order.ma || 'HĐ' }}
+                        </v-chip>
                     </div>
                     <v-card-text class="pa-4">
-                        <v-row align="center">
-                            <v-col cols="4" class="text-body-2 text-slate-500 font-weight-medium"> Tạo lúc </v-col>
-                            <v-col cols="8">
+                        <v-row align="center" class="mb-2">
+                            <v-col cols="12" sm="4" class="text-body-2 text-slate-500 font-weight-medium">
+                                <v-icon size="16" class="mr-1 text-slate-400">mdi-calendar-clock</v-icon> Thời gian tạo
+                            </v-col>
+                            <v-col cols="12" sm="8">
+                                <div
+                                    class="text-body-2 text-slate-700 pa-2 bg-slate-50 rounded-lg d-flex justify-space-between align-center border font-weight-medium"
+                                    style="border-color: #f1f5f9 !important"
+                                >
+                                    <span>{{ order.ngayTao ? formatDateTime(order.ngayTao) : 'Chưa có thông tin' }}</span>
+                                    <v-icon size="16" class="text-primary">mdi-clock-outline</v-icon>
+                                </div>
+                            </v-col>
+                        </v-row>
+
+                        <v-row align="center" class="mb-2">
+                            <v-col cols="12" sm="4" class="text-body-2 text-slate-500 font-weight-medium">
+                                <v-icon size="16" class="mr-1 text-slate-400">mdi-cash-check</v-icon> Thời gian thanh toán
+                            </v-col>
+                            <v-col cols="12" sm="8">
+                                <div
+                                    class="text-body-2 pa-2 rounded-lg d-flex justify-space-between align-center border font-weight-medium"
+                                    :class="order.ngayThanhToan ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-200'"
+                                >
+                                    <span>{{ order.ngayThanhToan ? formatDateTime(order.ngayThanhToan) : (order.trangThai === 'HOAN_THANH' && order.ngayTao ? formatDateTime(order.ngayTao) : 'Chưa thanh toán') }}</span>
+                                    <v-icon size="16" :class="order.ngayThanhToan || order.trangThai === 'HOAN_THANH' ? 'text-emerald-600' : 'text-slate-400'">
+                                        {{ order.ngayThanhToan || order.trangThai === 'HOAN_THANH' ? 'mdi-check-circle-outline' : 'mdi-clock-alert-outline' }}
+                                    </v-icon>
+                                </div>
+                            </v-col>
+                        </v-row>
+
+                        <v-row v-if="order.ngayCapNhat || order.ngaySua" align="center">
+                            <v-col cols="12" sm="4" class="text-body-2 text-slate-500 font-weight-medium">
+                                <v-icon size="16" class="mr-1 text-slate-400">mdi-update</v-icon> Cập nhật lần cuối
+                            </v-col>
+                            <v-col cols="12" sm="8">
                                 <div
                                     class="text-body-2 text-slate-600 pa-2 bg-slate-50 rounded-lg d-flex justify-space-between align-center border"
                                     style="border-color: #f1f5f9 !important"
                                 >
-                                    <span>{{ order.ngayTao ? formatDate(order.ngayTao) : '' }}</span>
-                                    <v-icon size="16" class="text-slate-400">mdi-calendar-blank-outline</v-icon>
+                                    <span>{{ formatDateTime(order.ngayCapNhat || order.ngaySua) }}</span>
+                                    <v-icon size="16" class="text-slate-400">mdi-history</v-icon>
                                 </div>
                             </v-col>
                         </v-row>
