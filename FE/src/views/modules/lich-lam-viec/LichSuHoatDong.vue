@@ -206,10 +206,10 @@ onMounted(() => {
         <div class="mb-2"></div>
 
         <div class="filter-top invoice-filter-shell mb-3">
-            <AdminFilter title="Bộ lọc lịch sử" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
+            <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <template v-if="activeTab === 'hoat-dong'">
                     <v-col cols="12" md="7" class="filter-cell">
-                        <div class="filter-field-label">Tìm kiếm hoạt động</div>
+                        <div class="filter-field-label">Tìm kiếm</div>
                         <v-text-field
                             v-model="filters.search"
                             placeholder="Nhập từ khóa tìm kiếm (người thực hiện, hành động)..."
@@ -241,7 +241,7 @@ onMounted(() => {
 
                 <template v-else>
                     <v-col cols="12" md="4" class="filter-cell">
-                        <div class="filter-field-label">Tìm kiếm nhân viên</div>
+                        <div class="filter-field-label">Tìm kiếm</div>
                         <v-text-field
                             v-model="filters.search"
                             placeholder="Nhập mã nhân viên hoặc tên..."

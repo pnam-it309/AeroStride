@@ -16,7 +16,7 @@ public interface AdminCuocHoiThoaiRepository extends CuocHoiThoaiRepository, Jpa
 
     List<CuocHoiThoai> findByTrangThaiHoiThoaiIn(List<CuocHoiThoai.TrangThaiHoiThoai> statuses);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"khachHang", "nhanVien", "nhanVienNhan", "danhSachTinNhan"})
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"khachHang", "nhanVien", "nhanVienNhan"})
     @Query("SELECT c FROM CuocHoiThoai c ORDER BY c.ngayCapNhat DESC")
     List<CuocHoiThoai> findAllWithDetails();
 

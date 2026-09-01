@@ -802,9 +802,9 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="filter-shell">
-            <AdminFilter title="Bộ lọc nâng cao" @refresh="resetFilters" :loading="loading">
+            <AdminFilter title="Bộ lọc" @refresh="resetFilters" :loading="loading">
                 <v-col cols="12" md="3">
-                    <div class="filter-field-label">Tìm kiếm nhanh</div>
+                    <div class="filter-field-label">Tìm kiếm</div>
                     <v-text-field
                         v-model="filters.keyword"
                         placeholder="Mã SKU, màu, size..."

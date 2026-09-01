@@ -64,18 +64,6 @@ const toggleDetailPanel = () => {
 const isEditingNote = ref(false);
 const customerNotes = ref({});
 
-// Load notes initially
-onMounted(() => {
-    try {
-        const stored = localStorage.getItem('chat_customer_notes');
-        if (stored) {
-            customerNotes.value = JSON.parse(stored);
-        }
-    } catch (e) {
-        console.error('Lỗi khi đọc notes từ localStorage:', e);
-    }
-});
-
 const activeNote = computed({
     get: () => {
         if (!activeChat.value) return '';

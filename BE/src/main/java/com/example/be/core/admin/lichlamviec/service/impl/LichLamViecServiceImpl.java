@@ -99,7 +99,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                         .ca(l.getCaLam() != null ? l.getCaLam().getTenCa() : "N/A")
                         .caId(l.getCaLam() != null ? l.getCaLam().getId() : null)
                         .ngay(l.getNgayLam() != null ? l.getNgayLam().format(dateFormatter) : "")
-                        .trangThai(l.getTrangThaiLich() != null ? l.getTrangThaiLich().name() : "N/A")
+                        .trangThai(resolveTrangThaiString(l.getTrangThaiLich()))
                         .tangCa(l.getTangCa() != null ? l.getTangCa() : false)
                         .gioBatDauTangCa(l.getGioBatDauTangCa() != null ? l.getGioBatDauTangCa().format(timeFormatter) : null)
                         .gioKetThucTangCa(l.getGioKetThucTangCa() != null ? l.getGioKetThucTangCa().format(timeFormatter) : null)
@@ -111,6 +111,15 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                 .collect(Collectors.toList());
     }
 
+    private String resolveTrangThaiString(LichLamViec.TrangThaiLichLamViec status) {
+        if (status == null) return "CHUA_VAO_CA";
+        return switch (status) {
+            case DUNG_GIO, DA_XAC_NHAN -> "DUNG_GIO";
+            case DI_MUON -> "DI_MUON";
+            case CHUA_VAO_CA, CHO_XAC_NHAN, DA_HUY -> "CHUA_VAO_CA";
+        };
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<CaLamResponse> getAllShifts() {
@@ -118,8 +127,8 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                 .map(c -> CaLamResponse.builder()
                         .id(c.getId())
                         .tenCa(c.getTenCa())
-                        .gioBatDau(c.getGioBatDau().format(timeFormatter))
-                        .gioKetThuc(c.getGioKetThuc().format(timeFormatter))
+                        .gioBatDau(c.getGioBatDau() != null ? c.getGioBatDau().format(timeFormatter) : "")
+                        .gioKetThuc(c.getGioKetThuc() != null ? c.getGioKetThuc().format(timeFormatter) : "")
                         .moTa(c.getMoTa())
                         .build())
                 .collect(Collectors.toList());

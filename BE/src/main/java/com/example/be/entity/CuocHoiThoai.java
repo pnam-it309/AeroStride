@@ -53,6 +53,7 @@ public class CuocHoiThoai extends PrimaryEntity {
 
     @OneToMany(mappedBy = "cuocHoiThoai", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("ngayTao ASC")
+    @org.hibernate.annotations.BatchSize(size = 50)
     @Builder.Default
     private List<TinNhan> danhSachTinNhan = new ArrayList<>();
 

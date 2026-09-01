@@ -76,16 +76,6 @@ public class AdminChatServiceImpl implements AdminChatService {
             return (hinhAnh != null && !hinhAnh.trim().isEmpty()) ? hinhAnh : DEFAULT_AVATAR;
         }
 
-        if (c.getMaPhien() != null && c.getMaPhien().startsWith("user_")) {
-            String username = c.getMaPhien().substring(5);
-            var kh = khachHangRepository.findByTenTaiKhoan(username)
-                    .or(() -> khachHangRepository.findFirstByEmailIgnoreCase(username))
-                    .orElse(null);
-            if (kh != null && kh.getHinhAnh() != null && !kh.getHinhAnh().trim().isEmpty()) {
-                return kh.getHinhAnh();
-            }
-        }
-        
         if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
             NhanVien partner = null;
             if (c.getNhanVien() != null && c.getNhanVien().getTenTaiKhoan().equals(currentUsername)) {
@@ -125,20 +115,7 @@ public class AdminChatServiceImpl implements AdminChatService {
 
         // Tự động giải mã tên khách hàng nếu mã phiên là user_
         if (c.getMaPhien() != null && c.getMaPhien().startsWith("user_")) {
-            String username = c.getMaPhien().substring(5);
-            var khOpt = khachHangRepository.findByTenTaiKhoan(username)
-                    .or(() -> khachHangRepository.findFirstByEmailIgnoreCase(username));
-            if (khOpt.isPresent()) {
-                var kh = khOpt.get();
-                c.setKhachHang(kh);
-                conversationRepository.save(c);
-                String fullName = kh.getTen();
-                if (fullName != null && !fullName.trim().isEmpty()) return fullName.trim();
-                String uName = kh.getTenTaiKhoan();
-                if (uName != null && !uName.trim().isEmpty()) return uName.trim();
-                return kh.getEmail() != null ? kh.getEmail() : "Khách hàng";
-            }
-            return username;
+            return c.getMaPhien().substring(5);
         }
         
         if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {

@@ -1084,9 +1084,9 @@ onMounted(() => {
 
         <div class="mb-3"></div>
 
-        <AdminFilter title="Bộ lọc lịch làm việc" :isRefreshing="isRefreshing" @refresh="handleRefresh" class="mb-4">
+        <AdminFilter title="Bộ lọc" :isRefreshing="isRefreshing" @refresh="handleRefresh" class="mb-4">
             <v-col cols="12" sm="6" md="3" class="px-2 filter-cell">
-                <div class="filter-field-label">Nhân viên</div>
+                <div class="filter-field-label">Tìm kiếm</div>
                 <v-text-field
                     v-if="canManageSchedule"
                     v-model="filters.search"

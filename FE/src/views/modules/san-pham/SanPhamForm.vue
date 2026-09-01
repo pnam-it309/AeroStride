@@ -3068,9 +3068,9 @@ const handleSave = async () => {
                         </template>
 
                         <div v-if="variantItems.length > 0 && isEditMode" class="variant-filter-container mt-6">
-                            <AdminFilter title="Bộ lọc nâng cao" @refresh="resetVariantTableFilters" :loading="loading">
+                            <AdminFilter title="Bộ lọc" @refresh="resetVariantTableFilters" :loading="loading">
                                 <v-col cols="12" sm="3">
-                                    <div class="variant-filter-label">Tìm kiếm nhanh</div>
+                                    <div class="variant-filter-label">Tìm kiếm</div>
                                     <v-text-field
                                         v-model="variantTableFilters.keyword"
                                         placeholder="Mã SKU, màu, size..."

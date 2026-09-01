@@ -53,6 +53,9 @@ public class LichLamViec extends PrimaryEntity {
     public enum TrangThaiLichLamViec {
         DUNG_GIO,
         DI_MUON,
-        CHUA_VAO_CA
+        CHUA_VAO_CA,
+        CHO_XAC_NHAN,
+        DA_XAC_NHAN,
+        DA_HUY
     }
 }

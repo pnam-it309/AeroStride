@@ -16,9 +16,9 @@ const handleSearch = () => emit('search');
 
 <template>
     <div class="filter-shell">
-        <AdminFilter title="Bộ lọc thuộc tính" :loading="loading" @refresh="handleRefresh">
+        <AdminFilter title="Bộ lọc" :loading="loading" @refresh="handleRefresh">
             <v-col cols="12" md="5" class="py-1">
-                <div class="filter-field-label">Tìm kiếm nhanh</div>
+                <div class="filter-field-label">Tìm kiếm</div>
                 <v-text-field
                     :model-value="searchQuery"
                     @update:model-value="emit('update:searchQuery', $event)"
