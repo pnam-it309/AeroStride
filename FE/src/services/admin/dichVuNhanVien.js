@@ -80,9 +80,17 @@ export const dichVuNhanVien = {
         return response.data.data;
     },
 
-    // Lấy thông tin cá nhân
-    async layThongTinCaNhan() {
+    _cachedStaffMe: null,
+
+    // Lấy thông tin cá nhân (có cache)
+    async layThongTinCaNhan(forceRefresh = false) {
+        if (!forceRefresh && this._cachedStaffMe) {
+            return this._cachedStaffMe;
+        }
         const response = await api.get(`${API_ADMIN.NHAN_VIEN}/me`);
-        return response.data.data;
+        if (response.data?.data) {
+            this._cachedStaffMe = response.data.data;
+        }
+        return response.data?.data;
     }
 };

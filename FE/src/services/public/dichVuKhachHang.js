@@ -1,10 +1,18 @@
 import apiService from '../apiService';
 
 export const dichVuKhachHang = {
-    // Lấy thông tin cá nhân của khách hàng đang đăng nhập
-    layThongTinCaNhan: async () => {
+    _cachedCustomerProfile: null,
+
+    // Lấy thông tin cá nhân của khách hàng đang đăng nhập (có cache tránh gọi lại)
+    layThongTinCaNhan: async (forceRefresh = false) => {
+        if (!forceRefresh && dichVuKhachHang._cachedCustomerProfile) {
+            return dichVuKhachHang._cachedCustomerProfile;
+        }
         try {
             const response = await apiService.get('/customer/profile/me');
+            if (response.data) {
+                dichVuKhachHang._cachedCustomerProfile = response.data;
+            }
             return response.data;
         } catch (error) {
             throw error;
@@ -13,8 +21,12 @@ export const dichVuKhachHang = {
 
     // Cập nhật thông tin cá nhân
     capNhatHoSo: async (data) => {
+        dichVuKhachHang._cachedCustomerProfile = null;
         try {
             const response = await apiService.put('/customer/profile/update', data);
+            if (response.data) {
+                dichVuKhachHang._cachedCustomerProfile = response.data;
+            }
             return response.data;
         } catch (error) {
             throw error;

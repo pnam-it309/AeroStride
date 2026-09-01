@@ -1075,27 +1075,36 @@ watch(
     }
 );
 
-// Tải lại danh sách voucher khi đổi hóa đơn hoặc khách hàng
+// Tải lại danh sách voucher khi đổi hóa đơn hoặc khách hàng (có debounce để không giật lag)
 const voucherRealtimeKey = computed(() => {
     const order = selectedOrder.value;
     if (!order?.id) return '';
     return `${order.id}|${order.idKhachHang || ''}`;
 });
 
+let voucherDebounceTimer = null;
 watch(
     voucherRealtimeKey,
-    async (key) => {
-        if (key) await refreshBestVoucher();
+    (key) => {
+        if (!key) return;
+        if (voucherDebounceTimer) clearTimeout(voucherDebounceTimer);
+        voucherDebounceTimer = setTimeout(async () => {
+            await refreshBestVoucher();
+        }, 250);
     },
     { flush: 'post' }
 );
 
-// Watch for order changes to fetch product suggestions
+// Watch for order changes to fetch product suggestions (có debounce tránh bắn API liên tục khi sửa số lượng)
+let suggestionDebounceTimer = null;
 watch(
     () => [selectedOrder.value?.id, selectedOrder.value?.tongTien],
     ([id, total]) => {
+        if (suggestionDebounceTimer) clearTimeout(suggestionDebounceTimer);
         if (id && total > 0) {
-            fetchProductSuggestions();
+            suggestionDebounceTimer = setTimeout(() => {
+                fetchProductSuggestions();
+            }, 350);
         } else {
             productSuggestions.value = [];
             showProductSuggestions.value = false;

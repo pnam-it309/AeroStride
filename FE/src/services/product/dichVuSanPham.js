@@ -28,14 +28,21 @@ export const dichVuSanPham = {
         return response.data.data;
     },
 
-    // Lấy options cho form sản phẩm
-    async layOptionsForm() {
+    _cachedFormOptions: null,
+
+    // Lấy options cho form sản phẩm (có cache)
+    async layOptionsForm(forceRefresh = false) {
+        if (!forceRefresh && this._cachedFormOptions) {
+            return this._cachedFormOptions;
+        }
         try {
             const response = await api.get(`${API_ADMIN.SAN_PHAM}/form-options`);
+            if (response.data?.data) {
+                this._cachedFormOptions = response.data.data;
+            }
             return response.data.data;
         } catch (error) {
             console.error('Error loading form options:', error);
-            // Fallback empty data structure in case of error
             return {
                 thuongHieus: [],
                 xuatXus: [],

@@ -50,8 +50,12 @@ export const dichVuXacThuc = {
         return response.data;
     },
 
+    // Bộ nhớ đệm profile nhân viên (tránh gọi /me lặp lại nhiều lần)
+    _cachedProfile: null,
+
     // Đăng xuất
     async dangXuat() {
+        this._cachedProfile = null;
         try {
             await api.post(API_AUTH.LOGOUT);
         } catch (error) {
@@ -69,15 +73,30 @@ export const dichVuXacThuc = {
         return userStr ? JSON.parse(userStr) : null;
     },
 
-    // Lấy hồ sơ nhân viên đang đăng nhập (tên, chức vụ, email...) từ backend
-    async layThongTinCaNhan() {
+    // Lấy hồ sơ nhân viên đang đăng nhập (tự động cache để tránh gọi lặp lại)
+    async layThongTinCaNhan(forceRefresh = false) {
+        if (!forceRefresh && this._cachedProfile) {
+            return this._cachedProfile;
+        }
         const response = await api.get(API_AUTH.ME);
-        return response.data.data;
+        if (response.data?.data) {
+            this._cachedProfile = response.data.data;
+        }
+        return response.data?.data;
+    },
+
+    // Xóa cache profile thủ công
+    xoaCacheProfile() {
+        this._cachedProfile = null;
     },
 
     // Cập nhật thông tin cá nhân nhân viên đang đăng nhập
     async capNhatThongTin(payload) {
+        this._cachedProfile = null;
         const response = await api.put(`${API_AUTH.BASE}/profile`, payload);
+        if (response.data?.data) {
+            this._cachedProfile = response.data.data;
+        }
         return response.data;
     },
 

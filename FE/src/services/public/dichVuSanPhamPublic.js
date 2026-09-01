@@ -8,20 +8,42 @@ const resolveImg = (v) => {
     return dichVuFile.layUrlFile(v.replace(/^\/+/, ''));
 };
 
+let cachedFilters = null;
+const productDetailCache = new Map();
+
 export const dichVuSanPhamPublic = {
     async layDanhSachSanPham(params) {
         const response = await api.get('/customer/san-pham/hien-thi', { params });
         return response.data?.data ?? response.data ?? {};
     },
 
-    async layBoLoc() {
+    async layBoLoc(forceRefresh = false) {
+        if (!forceRefresh && cachedFilters) {
+            return cachedFilters;
+        }
         const response = await api.get('/customer/san-pham/filters');
-        return response.data?.data ?? response.data ?? {};
+        const res = response.data?.data ?? response.data ?? {};
+        if (res && Object.keys(res).length > 0) {
+            cachedFilters = res;
+        }
+        return res;
     },
 
-    async layChiTietSanPham(id) {
+    async layChiTietSanPham(id, forceRefresh = false) {
+        if (!forceRefresh && productDetailCache.has(id)) {
+            return productDetailCache.get(id);
+        }
         const response = await api.get(`/customer/san-pham/detail/${id}`);
-        return response.data?.data ?? response.data ?? {};
+        const res = response.data?.data ?? response.data ?? {};
+        if (res && res.id) {
+            productDetailCache.set(id, res);
+        }
+        return res;
+    },
+
+    xoaCache() {
+        cachedFilters = null;
+        productDetailCache.clear();
     },
 
     async timKiemNhanh(keyword, size = 6) {
