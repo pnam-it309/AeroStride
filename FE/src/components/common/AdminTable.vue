@@ -22,7 +22,8 @@ const props = defineProps({
     selectable: { type: Boolean, default: false },
     hideToolbar: { type: Boolean, default: false },
     totalCount: { type: Number, default: 0 },
-    skeletonRows: { type: Number, default: 7 } // số skeleton rows
+    skeletonRows: { type: Number, default: 7 }, // số skeleton rows
+    maxHeight: { type: [String, Number], default: null }
 });
 
 const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate', 'empty-action']);
@@ -92,7 +93,10 @@ const isFetchingMode = () =>
             </div>
 
             <!-- Main Table -->
-            <div class="table-wrapper position-relative">
+            <div
+                class="table-wrapper position-relative"
+                :style="maxHeight ? { maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight } : undefined"
+            >
                 <!-- Top Progress Bar khi pagination/filter (fetching mode) -->
                 <v-progress-linear
                     v-if="isFetchingMode()"

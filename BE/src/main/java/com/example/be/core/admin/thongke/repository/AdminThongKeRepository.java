@@ -168,18 +168,20 @@ public interface AdminThongKeRepository extends HoaDonRepository,
            LEFT JOIN hoa_don_chi_tiet hdct ON hdct.id_chi_tiet_san_pham = ctsp.id
            LEFT JOIN hoa_don hd ON hdct.id_hoa_don = hd.id AND hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
            WHERE (sp.xoa_mem = false OR sp.xoa_mem IS NULL)
+             AND (:thuongHieuId IS NULL OR :thuongHieuId = '' OR sp.id_thuong_hieu = :thuongHieuId)
              AND (:keyword IS NULL OR :keyword = '' OR LOWER(sp.ma_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')))
            GROUP BY sp.id, sp.ma_san_pham, sp.ten_san_pham, th.ten_thuong_hieu
            ORDER BY 
                CASE WHEN :sortBy = 'revenueDesc' THEN COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong * hdct.don_gia ELSE 0 END), 0) END DESC,
                CASE WHEN :sortBy = 'revenueAsc' THEN COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong * hdct.don_gia ELSE 0 END), 0) END ASC,
-               CASE WHEN :sortBy IN ('slowSelling', 'leastSelling') THEN COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong ELSE 0 END), 0) END ASC,
+               CASE WHEN :sortBy IN ('slowSelling', 'leastSelling', 'quantityAsc') THEN COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong ELSE 0 END), 0) END ASC,
                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong ELSE 0 END), 0) DESC
            """,
            countQuery = """
            SELECT COUNT(sp.id)
            FROM san_pham sp
            WHERE (sp.xoa_mem = false OR sp.xoa_mem IS NULL)
+             AND (:thuongHieuId IS NULL OR :thuongHieuId = '' OR sp.id_thuong_hieu = :thuongHieuId)
              AND (:keyword IS NULL OR :keyword = '' OR LOWER(sp.ma_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')))
            """,
            nativeQuery = true)
@@ -187,6 +189,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             @Param("tuNgay") Long tuNgay,
             @Param("denNgay") Long denNgay,
             @Param("keyword") String keyword,
+            @Param("thuongHieuId") String thuongHieuId,
             @Param("sortBy") String sortBy,
             org.springframework.data.domain.Pageable pageable);
 

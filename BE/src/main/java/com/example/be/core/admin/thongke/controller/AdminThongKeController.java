@@ -52,11 +52,12 @@ public class AdminThongKeController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String thuongHieuId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "bestSelling") String sortBy) {
-        log.info("Fetching product statistics from {} to {}, keyword: {}, page: {}, size: {}, sortBy: {}", tuNgay, denNgay, keyword, page, size, sortBy);
-        return ResponseEntity.ok(ApiResponse.success(adminThongKeService.getProductStatistics(tuNgay, denNgay, keyword, page, size, sortBy)));
+        log.info("Fetching product statistics from {} to {}, keyword: {}, brand: {}, page: {}, size: {}, sortBy: {}", tuNgay, denNgay, keyword, thuongHieuId, page, size, sortBy);
+        return ResponseEntity.ok(ApiResponse.success(adminThongKeService.getProductStatistics(tuNgay, denNgay, keyword, thuongHieuId, page, size, sortBy)));
     }
 
     @GetMapping(RoutesConstant.EXPORT_EXCEL)

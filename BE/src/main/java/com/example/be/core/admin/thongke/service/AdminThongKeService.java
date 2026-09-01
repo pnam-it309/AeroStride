@@ -10,6 +10,6 @@ public interface AdminThongKeService {
     List<AdminThongKeResponse.DoanhThuNgay> getDoanhThuTheoNgay(LocalDate tuNgay, LocalDate denNgay);
     List<AdminThongKeResponse.DonHangGanDay> getDonHangGanDay(int limit);
     com.example.be.core.common.dto.PageResponse<AdminThongKeResponse.SanPhamBanChay> getProductStatistics(
-            LocalDate tuNgay, LocalDate denNgay, String keyword, int page, int size, String sortBy);
+            LocalDate tuNgay, LocalDate denNgay, String keyword, String thuongHieuId, int page, int size, String sortBy);
     byte[] exportExcelBaoCao(LocalDate tuNgay, LocalDate denNgay);
 }

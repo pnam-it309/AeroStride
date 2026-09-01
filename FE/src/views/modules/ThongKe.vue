@@ -5,6 +5,7 @@ import AppDatePicker from '@/components/common/AppDatePicker.vue';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
 import { dichVuThongKe } from '@/services/admin/dichVuThongKe';
 import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
+import { dichVuThuongHieu } from '@/services/product/dichVuThuocTinh';
 import apexchart from 'vue3-apexcharts';
 
 const loading = ref(true);
@@ -410,21 +411,29 @@ const getPercent = (value, total, symbol = '↑') => {
 
 const productStats = ref([]);
 const productSearchKeyword = ref('');
+const productBrandId = ref(null);
+const brandOptions = ref([]);
 const productSortBy = ref('bestSelling');
 const productPage = ref(1);
+const productPageSize = ref(10);
 const productPageSizeOptions = [
     { title: '10 dòng', value: 10 },
-    { title: '20 dòng', value: 20 }
-];
-const productSortOptions = [
-    { title: 'Bán chạy nhất', value: 'bestSelling', icon: 'mdi-fire', iconColor: '#ef4444' },
-    { title: 'Bán chậm / Không bán chạy', value: 'slowSelling', icon: 'mdi-trending-down', iconColor: '#64748b' },
-    { title: 'Doanh thu cao nhất', value: 'revenueDesc', icon: 'mdi-cash-multiple', iconColor: '#10b981' },
-    { title: 'Doanh thu thấp nhất', value: 'revenueAsc', icon: 'mdi-cash-minus', iconColor: '#f59e0b' }
+    { title: '20 dòng', value: 20 },
+    { title: '50 dòng', value: 50 }
 ];
 
-const setProductSort = (val) => {
-    productSortBy.value = val;
+const loadBrands = async () => {
+    try {
+        const res = await dichVuThuongHieu.layThuongHieu({ size: 100 });
+        const list = Array.isArray(res?.content) ? res.content : Array.isArray(res) ? res : [];
+        brandOptions.value = list.map((b) => ({ title: b.ten || b.tenThuongHieu, value: b.id }));
+    } catch (e) {
+        console.error('Error loading brands in ThongKe:', e);
+    }
+};
+
+const toggleSoldSort = () => {
+    productSortBy.value = productSortBy.value === 'bestSelling' ? 'slowSelling' : 'bestSelling';
     productPage.value = 1;
     fetchProductStats();
 };
@@ -669,6 +678,7 @@ const fetchProductStats = async () => {
             tuNgay: tuNgay || undefined,
             denNgay: denNgay || undefined,
             keyword: productSearchKeyword.value || undefined,
+            thuongHieuId: productBrandId.value || undefined,
             page: productPage.value - 1,
             size: productPageSize.value,
             sortBy: productSortBy.value
@@ -677,14 +687,13 @@ const fetchProductStats = async () => {
         let list = Array.isArray(response?.content) ? response.content : [];
         const hasSoldProducts = list.some((item) => Number(item.quantity || 0) > 0 || Number(item.revenue || 0) > 0);
 
-        // Nếu trong khoảng ngày/tháng được chọn không có dữ liệu bán, tự động fallback hiển thị theo năm đã chọn
-        if (!hasSoldProducts && (tuNgay || denNgay) && selectedYear.value) {
+        // Nếu trong khoảng ngày/tháng được chọn không có dữ liệu bán và không lọc thương hiệu/từ khóa, fallback năm
+        if (!hasSoldProducts && (tuNgay || denNgay) && selectedYear.value && !productBrandId.value && !productSearchKeyword.value) {
             const startOfYear = `${selectedYear.value}-01-01`;
             const endOfYear = `${selectedYear.value}-12-31`;
             const fallbackResponse = await dichVuThongKe.layThongKeSanPham({
                 tuNgay: startOfYear,
                 denNgay: endOfYear,
-                keyword: productSearchKeyword.value || undefined,
                 page: productPage.value - 1,
                 size: productPageSize.value,
                 sortBy: productSortBy.value
@@ -1114,6 +1123,7 @@ const refreshProductFilters = () => {
 const resetProductFilters = () => {
     if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
     productSearchKeyword.value = '';
+    productBrandId.value = null;
     productSortBy.value = 'bestSelling';
     productPage.value = 1;
     fetchProductStats();
@@ -1228,8 +1238,8 @@ const exportExcelStatistics = async () => {
     }
 };
 
-onMounted(() => {
-    loadStatistics();
+onMounted(async () => {
+    await Promise.all([loadStatistics(), loadBrands()]);
 });
 </script>
 <template>
@@ -1636,8 +1646,8 @@ onMounted(() => {
                     <v-progress-circular indeterminate color="primary" />
                 </div>
                 <div v-else class="product-table-section">
-                    <div class="product-filter-bar d-flex flex-wrap align-center justify-space-between gap-3 mb-4 pa-2 bg-slate-50 rounded-lg border">
-                        <div class="d-flex align-center gap-2 flex-grow-1" style="max-width: 360px">
+                    <div class="product-filter-bar d-flex flex-wrap align-center justify-space-between ga-3 mb-4 pa-2 bg-slate-50 rounded-lg border">
+                        <div class="d-flex align-center ga-3 flex-grow-1" style="max-width: 680px">
                             <v-text-field
                                 v-model="productSearchKeyword"
                                 placeholder="Tìm theo mã hoặc tên sản phẩm..."
@@ -1651,31 +1661,51 @@ onMounted(() => {
                                 @input="onSearchInput"
                                 @click:clear="onSearchClear"
                             ></v-text-field>
+
+                            <v-select
+                                v-model="productBrandId"
+                                :items="[
+                                    { title: 'Tất cả thương hiệu', value: null },
+                                    ...brandOptions
+                                ]"
+                                density="compact"
+                                variant="outlined"
+                                hide-details
+                                bg-color="white"
+                                placeholder="Thương hiệu"
+                                class="compact-input"
+                                style="min-width: 200px; max-width: 240px"
+                                @update:model-value="() => { productPage = 1; fetchProductStats(); }"
+                            ></v-select>
                         </div>
-                        <div class="d-flex align-center gap-2 flex-wrap">
-                            <span class="text-caption font-weight-bold text-slate-600 mr-1">Bộ lọc:</span>
+                        <div class="d-flex align-center ga-2 flex-wrap">
                             <v-btn
-                                v-for="opt in productSortOptions"
-                                :key="opt.value"
-                                size="small"
-                                variant="flat"
-                                :color="productSortBy === opt.value ? 'primary' : 'white'"
-                                :class="productSortBy === opt.value ? 'text-white font-weight-bold shadow-sm' : 'text-slate-700 font-weight-medium border'"
-                                class="rounded-pill text-none px-3"
-                                style="text-transform: none !important"
-                                @click="setProductSort(opt.value)"
+                                variant="outlined"
+                                color="primary"
+                                class="rounded-lg text-none px-3 font-weight-bold"
+                                style="height: 38px"
+                                @click="toggleSoldSort"
                             >
-                                <v-icon size="15" class="mr-1" :color="productSortBy === opt.value ? 'white' : opt.iconColor">{{ opt.icon }}</v-icon>
-                                {{ opt.title }}
+                                <v-icon size="18" class="mr-1.5">
+                                    {{ productSortBy === 'bestSelling' ? 'mdi-sort-numeric-descending' : 'mdi-sort-numeric-ascending' }}
+                                </v-icon>
+                                {{ productSortBy === 'bestSelling' ? 'Đã bán: Cao nhất' : 'Đã bán: Thấp nhất' }}
+                                <v-tooltip activator="parent" location="top">
+                                    {{ productSortBy === 'bestSelling' ? 'Đang sắp xếp: Đã bán cao nhất (Bấm để đổi sang Thấp nhất)' : 'Đang sắp xếp: Đã bán thấp nhất (Bấm để đổi sang Cao nhất)' }}
+                                </v-tooltip>
                             </v-btn>
+
                             <v-btn
-                                icon="mdi-refresh"
-                                size="small"
-                                variant="text"
+                                variant="outlined"
                                 color="slate-600"
+                                class="rounded-lg"
+                                style="height: 38px; min-width: 38px; width: 38px; padding: 0"
                                 @click="resetProductFilters"
                                 title="Làm mới bộ lọc"
-                            />
+                            >
+                                <v-icon size="18">mdi-refresh</v-icon>
+                                <v-tooltip activator="parent" location="top">Làm mới bộ lọc</v-tooltip>
+                            </v-btn>
                         </div>
                     </div>
                     <AdminTable
@@ -1683,25 +1713,46 @@ onMounted(() => {
                         :loading="productLoading"
                         :headers="[
                             { text: 'STT', align: 'center', width: '80px' },
-                            { text: 'Mã sản phẩm', align: 'center' },
+                            { text: 'Mã sản phẩm', align: 'center', width: '140px' },
                             { text: 'Tên sản phẩm', align: 'start' },
-                            { text: 'Thương hiệu', align: 'center' },
-                            { text: 'Đã bán', align: 'center' },
-                            { text: 'Doanh thu', align: 'center' }
+                            { text: 'Thương hiệu', align: 'center', width: '150px' },
+                            { text: 'Đã bán', align: 'center', width: '140px' },
+                            { text: 'Doanh thu', align: 'center', width: '160px' }
                         ]"
                         :items="productStats"
                     >
+                        <template #headers>
+                            <tr>
+                                <th class="header-cell text-center" style="width: 80px">STT</th>
+                                <th class="header-cell text-center" style="width: 140px">Mã sản phẩm</th>
+                                <th class="header-cell text-left">Tên sản phẩm</th>
+                                <th class="header-cell text-center" style="width: 150px">Thương hiệu</th>
+                                <th class="header-cell text-center cursor-pointer select-none" style="width: 140px" @click="toggleSoldSort">
+                                    <div class="d-inline-flex align-center justify-center ga-1 font-weight-bold">
+                                        <span>Đã bán</span>
+                                        <v-icon size="16" color="primary">
+                                            {{ productSortBy === 'bestSelling' ? 'mdi-arrow-down-bold' : 'mdi-arrow-up-bold' }}
+                                        </v-icon>
+                                    </div>
+                                    <v-tooltip activator="parent" location="top">
+                                        {{ productSortBy === 'bestSelling' ? 'Sắp xếp: Đã bán cao nhất (Bấm để đổi sang thấp nhất)' : 'Sắp xếp: Đã bán thấp nhất (Bấm để đổi sang cao nhất)' }}
+                                    </v-tooltip>
+                                </th>
+                                <th class="header-cell text-center" style="width: 160px">Doanh thu</th>
+                            </tr>
+                        </template>
+
                         <template #row="{ item, index }">
                             <tr class="data-row" :key="`${item.maSanPham}-${item.name}`">
-                                <td class="data-cell">{{ (productPage - 1) * productPageSize + index + 1 }}</td>
-                                <td class="data-cell">{{ item.maSanPham || '--' }}</td>
+                                <td class="data-cell text-center font-weight-medium text-slate-500">{{ (productPage - 1) * productPageSize + index + 1 }}</td>
+                                <td class="data-cell text-center font-mono font-weight-bold text-primary">{{ item.maSanPham || '--' }}</td>
                                 <td class="data-cell text-left">
                                     <div class="product-name-cell" style="justify-content: flex-start; text-align: left">
                                         <span class="font-weight-medium" style="color: #1e293b">{{ item.name }}</span>
                                         <small style="color: #64748b; font-size: 11px">{{ isFallbackYearData ? 'Dữ liệu năm ' + selectedYear : 'Thời gian chọn' }}</small>
                                     </div>
                                 </td>
-                                <td class="data-cell">
+                                <td class="data-cell text-center">
                                     <span
                                         class="brand-pill"
                                         style="
@@ -1718,8 +1769,8 @@ onMounted(() => {
                                         {{ item.thuongHieu || '--' }}
                                     </span>
                                 </td>
-                                <td class="data-cell font-weight-medium" style="color: #1e293b">{{ formatNumber(item.quantity) }}</td>
-                                <td class="data-cell font-weight-bold" style="color: #e11d48">{{ formatCurrency(item.revenue) }}</td>
+                                <td class="data-cell text-center font-weight-bold" style="color: #1e293b">{{ formatNumber(item.quantity) }}</td>
+                                <td class="data-cell text-center font-weight-bold" style="color: #e11d48">{{ formatCurrency(item.revenue) }}</td>
                             </tr>
                         </template>
 

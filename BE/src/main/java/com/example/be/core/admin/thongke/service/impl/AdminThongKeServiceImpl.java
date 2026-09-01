@@ -219,16 +219,17 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
 
     @Override
     public com.example.be.core.common.dto.PageResponse<AdminThongKeResponse.SanPhamBanChay> getProductStatistics(
-            LocalDate tuNgay, LocalDate denNgay, String keyword, int page, int size, String sortBy) {
+            LocalDate tuNgay, LocalDate denNgay, String keyword, String thuongHieuId, int page, int size, String sortBy) {
 
         Long tuNgayMs = AccountUtils.parseDateToLong(tuNgay != null ? tuNgay.toString() : null, false);
         Long denNgayMs = AccountUtils.parseDateToLong(denNgay != null ? denNgay.toString() : null, true);
         String kw = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+        String brandId = (thuongHieuId == null || thuongHieuId.trim().isEmpty()) ? null : thuongHieuId.trim();
         String sort = (sortBy == null || sortBy.trim().isEmpty()) ? "bestSelling" : sortBy.trim();
 
         // Pass unsorted pageable to prevent Spring Data from appending unknown sort aliases to countQuery
         org.springframework.data.domain.Pageable pageable = PageRequest.of(page, size);
-        org.springframework.data.domain.Page<Object[]> pageData = thongKeRepository.getProductStatistics(tuNgayMs, denNgayMs, kw, sort, pageable);
+        org.springframework.data.domain.Page<Object[]> pageData = thongKeRepository.getProductStatistics(tuNgayMs, denNgayMs, kw, brandId, sort, pageable);
 
         List<AdminThongKeResponse.SanPhamBanChay> dtos = new ArrayList<>();
         for (Object[] row : pageData.getContent()) {
