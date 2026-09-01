@@ -98,9 +98,6 @@ public class AdminSanPhamMapper {
                             .findFirst()
                             .orElse(null));
         }
-        if ((variantImg == null || variantImg.isBlank()) && variant.getSanPham() != null) {
-            variantImg = variant.getSanPham().getHinhAnh();
-        }
 
         return ProductVariantResponse.builder()
                 .id(variant.getId())

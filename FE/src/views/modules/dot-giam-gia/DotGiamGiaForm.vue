@@ -430,33 +430,19 @@ const calculateDiscountedPrice = (originalPrice) => {
     return originalPrice * (1 - (form.value.soTienGiam || 0) / 100);
 };
 
-const toggleBottomSelection = (id) => {
-    const index = bottomTableSelection.value.indexOf(id);
-    if (index === -1) bottomTableSelection.value.push(id);
-    else bottomTableSelection.value.splice(index, 1);
-};
-
 const toggleAllBottomSelection = () => {
-    const allIds = filteredSelectedDetails.value.map((p) => p.id);
-    const allSelected = allIds.length > 0 && allIds.every((id) => bottomTableSelection.value.includes(id));
-    if (allSelected) {
-        bottomTableSelection.value = bottomTableSelection.value.filter((id) => !allIds.includes(id));
-    } else {
-        const newIds = allIds.filter((id) => !bottomTableSelection.value.includes(id));
-        bottomTableSelection.value.push(...newIds);
-    }
-};
-
-const removeBulkSelected = () => {
+    const allSelected = filteredSelectedDetails.value.length > 0 && filteredSelectedDetails.value.every((p) => isVariantSelected(p.id));
     const newMap = new Map(selectedVariantsMap.value);
-    bottomTableSelection.value.forEach((id) => newMap.delete(id));
+    if (allSelected) {
+        filteredSelectedDetails.value.forEach((v) => newMap.delete(v.id));
+    } else {
+        filteredSelectedDetails.value.forEach((v) => newMap.set(v.id, normalizeVariant(v)));
+    }
     selectedVariantsMap.value = newMap;
-    bottomTableSelection.value = [];
 };
 
 const removeAllSelected = () => {
     selectedVariantsMap.value = new Map();
-    bottomTableSelection.value = [];
 };
 
 // --- PHẦN 3: FORM CONFIG VÀ LƯU DỮ LIỆU ---
@@ -1013,20 +999,9 @@ onMounted(init);
                             </span>
                             <v-spacer></v-spacer>
                             <v-btn
-                                v-if="bottomTableSelection.length > 0"
-                                variant="flat"
-                                color="primary"
-                                class="mr-2"
-                                prepend-icon="mdi-trash-can-outline"
-                                size="small"
-                                @click="removeBulkSelected"
-                                style="height: 36px; text-transform: none"
-                            >
-                                Xóa đã chọn ({{ bottomTableSelection.length }})
-                            </v-btn>
-                            <v-btn
+                                v-if="!isDetailView && selectedVariantsIds.length > 0"
                                 variant="outlined"
-                                color="primary"
+                                color="error"
                                 prepend-icon="mdi-trash-can-outline"
                                 @click="removeAllSelected"
                                 style="height: 36px; text-transform: none; border-width: 1px"
@@ -1148,9 +1123,10 @@ onMounted(init);
                                                     hide-details
                                                     :model-value="
                                                         filteredSelectedDetails.length > 0 &&
-                                                        filteredSelectedDetails.every((p) => bottomTableSelection.includes(p.id))
+                                                        filteredSelectedDetails.every((p) => isVariantSelected(p.id))
                                                     "
                                                     @change="toggleAllBottomSelection"
+                                                    :readonly="isDetailView"
                                                 ></v-checkbox-btn>
                                             </div>
                                         </th>
@@ -1163,6 +1139,7 @@ onMounted(init);
                                         <th class="header-cell text-center text-no-wrap">Chất liệu</th>
                                         <th class="header-cell text-center text-no-wrap">Kích cỡ</th>
                                         <th class="header-cell text-center text-no-wrap">Màu sắc</th>
+                                        <th v-if="!isDetailView" class="header-cell text-center text-no-wrap" style="width: 70px">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody v-if="filteredSelectedDetails.length > 0">
@@ -1177,8 +1154,9 @@ onMounted(init);
                                                     color="primary"
                                                     hide-details
                                                     density="compact"
-                                                    :model-value="bottomTableSelection.includes(item.id)"
-                                                    @update:model-value="toggleBottomSelection(item.id)"
+                                                    :model-value="isVariantSelected(item.id)"
+                                                    @update:model-value="toggleVariantSelection(item)"
+                                                    :readonly="isDetailView"
                                                 ></v-checkbox-btn>
                                             </div>
                                         </td>
@@ -1227,6 +1205,20 @@ onMounted(init);
                                                 ></div>
                                                 <span>{{ item.color }}</span>
                                             </div>
+                                        </td>
+                                        <td v-if="!isDetailView" class="data-cell text-center">
+                                            <v-btn
+                                                icon
+                                                variant="text"
+                                                size="small"
+                                                color="error"
+                                                density="compact"
+                                                class="action-icon-btn"
+                                                @click="toggleVariantSelection(item)"
+                                            >
+                                                <v-icon size="18">mdi-trash-can-outline</v-icon>
+                                                <v-tooltip activator="parent" location="top" text="Bỏ chọn biến thể này" />
+                                            </v-btn>
                                         </td>
                                     </tr>
                                 </tbody>

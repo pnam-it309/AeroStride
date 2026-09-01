@@ -1064,6 +1064,7 @@ const endHourlyChartKey = ref(0);
 const areaChartKey = ref(0);
 const statusBarChartKey = ref(0);
 const donutChartKey = ref(0);
+const donutChartSeries = ref([]);
 
 const hasValidDonutData = computed(() => {
     const total = donutChartSeries.value.reduce((sum, value) => sum + Number(value || 0), 0);
