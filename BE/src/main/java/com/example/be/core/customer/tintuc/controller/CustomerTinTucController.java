@@ -43,7 +43,7 @@ public class CustomerTinTucController {
                         <p>Những gam màu nhẹ nhàng như xanh sage, hồng phấn, kết hợp chi tiết xám bạc kim loại mang lại nét tương phản đầy thu hút. Không chỉ xuất hiện trên sàn diễn thời trang, các phối màu này đã phủ sóng toàn bộ các giải chạy lớn.</p>
                         <h3>2. Đế giày dạng Bọt khí siêu nhẹ (Ultra Foam)</h3>
                         <p>Công nghệ đế bọt mật độ kép mới giúp hoàn trả lực tốt hơn 35% so với thế hệ tiền nhiệm, giảm tối đa chấn thương cho cổ chân khi vận động cường độ cao.</p>
-                        <p>Hãy đến ngay showroom AeroStride gần nhất để trải nghiệm bộ sưu tập retro mới nhất mùa hè này!</p>
+                        <p>Hãy đến ngay cửa hàng AeroStride gần nhất để trải nghiệm bộ sưu tập retro mới nhất mùa hè này!</p>
                         """)
                 .comments(new ArrayList<>(List.of(
                         new CustomerTinTucResponse.BinhLuanResponse("Minh Anh", "Phối màu retro đẹp xuất sắc, vừa làm đôi Pegasus màu này tuần trước!", "16/07/2026")
@@ -52,7 +52,7 @@ public class CustomerTinTucController {
 
         articles.put("2", CustomerTinTucResponse.builder()
                 .id("2")
-                .title("Khai trương showroom flagship thứ 50 của AeroStride tại Đà Nẵng")
+                .title("Khai trương cửa hàng flagship thứ 50 của AeroStride tại Đà Nẵng")
                 .category("Sự kiện")
                 .image("https://images.unsplash.com/photo-1497215842964-222b430dc094?auto=format&fit=crop&q=80&w=800")
                 .date("02 Thg 07, 2026")
@@ -60,7 +60,7 @@ public class CustomerTinTucController {
                 .likes(254)
                 .excerpt("Sự kiện đánh dấu cột mốc quan trọng trong quá trình phủ sóng toàn quốc với không gian trải nghiệm AI độc đáo.")
                 .content("""
-                        <p>AeroStride chính thức khai trương Showroom Flagship rộng hơn 500m² tại trung tâm TP. Đà Nẵng. Đây là cửa hàng đầu tiên tại miền Trung tích hợp công nghệ AI quét bàn chân 3D tự động khuyến nghị mẫu giày vừa vặn tuyệt đối.</p>
+                        <p>AeroStride chính thức khai trương Cửa hàng Flagship rộng hơn 500m² tại trung tâm TP. Đà Nẵng. Đây là chi nhánh đầu tiên tại miền Trung tích hợp công nghệ AI quét bàn chân 3D tự động khuyến nghị mẫu giày vừa vặn tuyệt đối.</p>
                         <p>Trong tuần lễ khai trương, hàng trăm quà tặng độc quyền và ưu đãi giảm 30% toàn bộ sản phẩm đang chờ đón các runner và tín đồ thời trang.</p>
                         """)
                 .comments(new ArrayList<>(List.of(

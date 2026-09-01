@@ -88,7 +88,7 @@ public class AiToolsConfig {
         return sb.toString();
     }
 
-    @Tool(description = "Truy xuất các chính sách của cửa hàng AeroStride bao gồm: chính sách giao hàng (shipping), bảo hành (warranty), đổi trả (return), địa chỉ showroom, giờ mở cửa, số điện thoại hotline, thông tin thanh toán, và hướng dẫn chọn size. HÃY GỌI HÀM NÀY NẾU KHÁCH HỎI VỀ CÁC VẤN ĐỀ TRÊN.")
+    @Tool(description = "Truy xuất các chính sách của cửa hàng AeroStride bao gồm: chính sách giao hàng (shipping), bảo hành (warranty), đổi trả (return), địa chỉ cửa hàng, giờ mở cửa, số điện thoại hotline, thông tin thanh toán, và hướng dẫn chọn size. HÃY GỌI HÀM NÀY NẾU KHÁCH HỎI VỀ CÁC VẤN ĐỀ TRÊN.")
     public String getStorePolicies() {
         log.info("AI gọi hàm getStorePolicies để lấy thông tin chính sách.");
         return AiChatPrompts.STORE_POLICIES_CONTEXT;

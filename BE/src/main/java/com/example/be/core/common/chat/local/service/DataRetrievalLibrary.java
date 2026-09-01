@@ -465,7 +465,7 @@ public class DataRetrievalLibrary {
             if (list.isEmpty()) {
                 return "Dạ hiện tại hệ thống chưa cập nhật danh sách size giày ạ.";
             }
-            StringBuilder sb = new StringBuilder("Bảng size giày đang sẵn có tại các showroom AeroStride:\n");
+            StringBuilder sb = new StringBuilder("Bảng size giày đang sẵn có tại hệ thống cửa hàng AeroStride:\n");
             for (KichThuoc item : list) {
                 sb.append(" - 👟 **Size ").append(item.getTen()).append("** (Mã: ").append(item.getMa()).append(")");
                 if (item.getGiaTriKichThuoc() != null) {

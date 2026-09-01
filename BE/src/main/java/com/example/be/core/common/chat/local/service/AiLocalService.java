@@ -142,10 +142,10 @@ public class AiLocalService {
             return enrichResponse(policy, null, List.of("Chính sách đổi trả trong 7 ngày", "Hình thức thanh toán", "Xem các mẫu giày bán chạy"));
         }
 
-        // 1.6. Địa chỉ Showroom / Cửa hàng / Giờ mở cửa
+        // 1.6. Địa chỉ Cửa hàng / Giờ mở cửa
         if (lower.contains("địa chỉ") || lower.contains("ở đâu") || lower.contains("showroom") || lower.contains("cửa hàng") || lower.contains("chi nhánh") || lower.contains("mở cửa")) {
             String policy = "Thông tin hệ thống cửa hàng AeroStride:\n\n" +
-                    "• Showroom chính: 123 Đường Cầu Giấy, Quận Cầu Giấy, Hà Nội.\n" +
+                    "• Cửa hàng chính: 123 Đường Cầu Giấy, Quận Cầu Giấy, Hà Nội.\n" +
                     "• Giờ mở cửa: 08:30 – 22:00 hàng ngày (kể cả Thứ 7, Chủ Nhật và các ngày lễ).\n" +
                     "• Hotline hỗ trợ 24/7: 1900 88xx.\n\n" +
                     "AeroStride luôn sẵn sàng đón tiếp quý khách ghé trải nghiệm trực tiếp ạ!";

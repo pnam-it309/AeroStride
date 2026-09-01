@@ -144,7 +144,7 @@
                         <div class="d-flex flex-column ga-4 footer-text-large text-slate-700">
                             <div class="d-flex align-start ga-3 leading-relaxed">
                                 <v-icon size="22" color="#1e257c" class="flex-shrink-0 mt-1">mdi-map-marker-radius</v-icon>
-                                <span><strong class="text-slate-900">Showroom & Trụ sở:</strong> 21A Lê Đức Thọ, Phường Mỹ Đình 2, Quận Nam Từ Liêm, Hà Nội</span>
+                                <span><strong class="text-slate-900">Trụ sở & Cửa hàng chính:</strong> 21A Lê Đức Thọ, Phường Mỹ Đình 2, Quận Nam Từ Liêm, Hà Nội</span>
                             </div>
                             <div class="d-flex align-center ga-3">
                                 <v-icon size="22" color="#1e257c" class="flex-shrink-0">mdi-phone-in-talk</v-icon>

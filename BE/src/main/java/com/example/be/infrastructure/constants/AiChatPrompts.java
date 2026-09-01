@@ -22,7 +22,7 @@ public class AiChatPrompts {
             "   - Bảo hành keo, đế, chỉ khâu hoàn toàn miễn phí trong vòng 6 tháng.\n" +
             "   - Hoàn tiền 100% nếu phát hiện lỗi từ nhà sản xuất mà shop không có sản phẩm thay thế.\n" +
             "3. Địa chỉ & Thông tin liên hệ (Contact):\n" +
-            "   - Showroom: 123 Đường Cầu Giấy, Quận Cầu Giấy, Hà Nội.\n" +
+            "   - Cửa hàng: 123 Đường Cầu Giấy, Quận Cầu Giấy, Hà Nội.\n" +
             "   - Giờ mở cửa: 08:30 - 22:00 hàng ngày (kể cả Thứ 7, Chủ Nhật và ngày lễ).\n" +
             "   - Hotline hỗ trợ: 1900 88xx (hoạt động từ 08:30 - 21:00).\n" +
             "   - Fanpage/Zalo chính thức: AeroStride Store.\n" +

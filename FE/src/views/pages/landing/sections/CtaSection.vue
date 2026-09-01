@@ -19,7 +19,7 @@ const props = defineProps({ active: Boolean, warm: Boolean });
                 >
                     KHÁM PHÁ CÁC MẪU GIÀY
                 </v-btn>
-                <p class="mt-8 text-h6 opacity-60">Ghé thăm showroom hoặc săn voucher giảm giá ngay hôm nay!</p>
+                <p class="mt-8 text-h6 opacity-60">Ghé thăm cửa hàng hoặc săn voucher giảm giá ngay hôm nay!</p>
             </v-container>
         </template>
     </section>

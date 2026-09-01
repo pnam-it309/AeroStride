@@ -43,7 +43,7 @@ const heroSlides = [
 const statsData = ref({
     totalProducts: 500,
     totalBrands: 12,
-    totalShowrooms: 50,
+    totalStores: 50,
     satisfactionRate: '99.8%'
 });
 
@@ -62,8 +62,8 @@ const milestones = [
     {
         year: '2024',
         period: 'Giai Đoạn Khởi Khởi Tạo',
-        title: 'Khởi Đầu Đam Mê & Khai Trương Showroom Đầu Tiên',
-        desc: 'AeroStride chính thức ra mắt showroom Flagship tại Hà Nội với tầm nhìn mang lại những đôi giày thể thao chính hãng chất lượng đỉnh cao cho người Việt.',
+        title: 'Khởi Đầu Đam Mê & Khai Trương Cửa Hàng Đầu Tiên',
+        desc: 'AeroStride chính thức ra mắt cửa hàng Flagship tại Hà Nội với tầm nhìn mang lại những đôi giày thể thao chính hãng chất lượng đỉnh cao cho người Việt.',
         image: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&q=80&w=700',
         badge: 'Cột mốc khởi sự',
         icon: 'mdi-flag-variant-outline',
@@ -89,7 +89,7 @@ const milestones = [
         image: 'https://images.unsplash.com/photo-1519766304817-4f37bda74a29?auto=format&fit=crop&q=80&w=700',
         badge: 'Công nghệ tiên phong',
         icon: 'mdi-creation',
-        stats: '50+ Showroom & 1M+ Khách hàng',
+        stats: '50+ Cửa Hàng & 1M+ Khách hàng',
         tags: ['AeroStride AI Advisor', 'Đồng hành Marathon', 'Top 1 Nhà Phân Phối']
     },
     {
@@ -542,8 +542,8 @@ onMounted(() => {
                             <div class="stat-txt text-grey-lighten-1 font-weight-medium">Thương Hiệu Đối Tác</div>
                         </v-col>
                         <v-col cols="12" sm="3">
-                            <div class="stat-num text-gradient-blue font-weight-black">{{ statsData.totalShowrooms }}+</div>
-                            <div class="stat-txt text-grey-lighten-1 font-weight-medium">Chi Nhánh</div>
+                            <div class="stat-num text-gradient-blue font-weight-black">{{ statsData.totalStores }}+</div>
+                            <div class="stat-txt text-grey-lighten-1 font-weight-medium">Cửa Hàng Toàn Quốc</div>
                         </v-col>
                         <v-col cols="12" sm="3">
                             <div class="stat-num text-gradient-blue font-weight-black">{{ statsData.satisfactionRate }}</div>

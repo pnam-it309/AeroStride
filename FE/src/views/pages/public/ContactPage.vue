@@ -45,8 +45,8 @@ const faqs = ref([
         a: 'AeroStride hỗ trợ đổi size hoặc đổi mẫu hoàn toàn miễn phí trong 30 ngày kể từ ngày nhận hàng (sản phẩm còn nguyên tem mác, nguyên hộp và chưa qua sử dụng).'
     },
     {
-        q: 'Tôi có thể đến xem và thử trực tiếp tại showroom không?',
-        a: 'Bạn hoàn toàn có thể ghé bất kỳ showroom nào trong hệ thống 50+ chi nhánh AeroStride trên toàn quốc để xem và mang thử sản phẩm.'
+        q: 'Tôi có thể đến xem và thử trực tiếp tại cửa hàng không?',
+        a: 'Bạn hoàn toàn có thể ghé bất kỳ chi nhánh nào trong hệ thống 50+ cửa hàng AeroStride trên toàn quốc để xem và mang thử sản phẩm.'
     }
 ]);
 

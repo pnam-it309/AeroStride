@@ -30,7 +30,7 @@ public class CustomerGioiThieuController {
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalProducts", totalProducts > 0 ? totalProducts : 500);
         stats.put("totalBrands", totalBrands > 0 ? totalBrands : 12);
-        stats.put("totalShowrooms", 50);
+        stats.put("totalStores", 50);
         stats.put("satisfactionRate", "99.8%");
 
         return ResponseEntity.ok(ApiResponse.success(stats, "Lấy chỉ số thống kê thành công"));

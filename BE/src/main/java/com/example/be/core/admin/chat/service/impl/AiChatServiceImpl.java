@@ -219,9 +219,9 @@ public class AiChatServiceImpl implements AiChatService {
             
             // Đính kèm các câu hỏi gợi ý phù hợp trong lúc chờ nhân viên hỗ trợ
             List<String> waitingSuggs = List.of(
-                "Xem giờ mở cửa của showroom",
+                "Xem giờ mở cửa của cửa hàng",
                 "Chính sách bảo hành và đổi trả",
-                "Xem địa chỉ showroom AeroStride"
+                "Xem địa chỉ cửa hàng AeroStride"
             );
             
             try {
