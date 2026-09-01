@@ -52,13 +52,26 @@ const loadActivities = async () => {
             }
         });
         if (response?.data?.success) {
-            items.value = response.data.data.content || [];
-            pagination.value.totalElements = response.data.data.totalElements || 0;
-            pagination.value.totalPages = response.data.data.totalPages || 0;
+            const rawData = response.data.data;
+            if (rawData && Array.isArray(rawData.content)) {
+                items.value = rawData.content;
+                pagination.value.totalElements = rawData.totalElements ?? rawData.content.length;
+                pagination.value.totalPages = rawData.totalPages ?? Math.ceil(pagination.value.totalElements / pagination.value.size);
+            } else if (Array.isArray(rawData)) {
+                items.value = rawData;
+                pagination.value.totalElements = rawData.length;
+                pagination.value.totalPages = Math.ceil(rawData.length / pagination.value.size) || 1;
+            } else {
+                items.value = [];
+                pagination.value.totalElements = 0;
+                pagination.value.totalPages = 0;
+            }
         }
     } catch (error) {
         console.error('Error fetching activities:', error);
         items.value = [];
+        pagination.value.totalElements = 0;
+        pagination.value.totalPages = 0;
     } finally {
         loading.value = false;
     }
@@ -479,8 +492,5 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.admin-module-page {
-    background-color: #f8fafc;
-    min-height: 100vh;
-}
+/* Scoped styles removed in favor of global _admin-table.scss */
 </style>
