@@ -2527,7 +2527,7 @@ const handleVnPayCallbackFromUrl = async () => {
                     cols="12"
                     md="5"
                     lg="4"
-                    class="h-100 d-flex flex-column ga-4 pl-md-2 mt-4 mt-md-0 overflow-y-auto"
+                    class="h-100 d-flex flex-column ga-4 pl-md-2 pr-md-2 mt-4 mt-md-0 overflow-y-auto"
                     style="min-height: 0"
                 >
                     <!-- Khách hàng và Nhận hàng Card -->

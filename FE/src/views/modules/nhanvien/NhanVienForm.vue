@@ -129,9 +129,57 @@ watch(
     }
 );
 
+// Tự động phân tích địa chỉ từ chuỗi text (CCCD) và chọn combobox Tỉnh / Quận / Phường
+const applyAddressToForm = async (rawAddress) => {
+    if (!rawAddress) return;
+    try {
+        if (!provinces.value || provinces.value.length === 0) {
+            await fetchProvinces();
+        }
+        const parts = rawAddress.split(',').map((p) => p.trim()).filter(Boolean);
+
+        if (parts.length >= 3) {
+            const pName = parts[parts.length - 1];
+            const dName = parts[parts.length - 2];
+            const wName = parts[parts.length - 3];
+            const detail = parts.slice(0, parts.length - 3).join(', ');
+
+            employeeForm.value.diaChiChiTiet = detail || parts[0] || rawAddress;
+
+            const province = provinces.value.find(
+                (p) => cleanName(p.name) === cleanName(pName) || p.name.includes(pName) || pName.includes(p.name)
+            );
+            if (province) {
+                employeeForm.value.tinh = province.code;
+                await fetchDistricts(province.code);
+
+                const district = districts.value.find(
+                    (d) => cleanName(d.name) === cleanName(dName) || d.name.includes(dName) || dName.includes(d.name)
+                );
+                if (district) {
+                    employeeForm.value.thanhPho = district.code;
+                    await fetchWards(district.code);
+
+                    const ward = wards.value.find(
+                        (w) => cleanName(w.name) === cleanName(wName) || w.name.includes(wName) || wName.includes(w.name)
+                    );
+                    if (ward) {
+                        employeeForm.value.phuongXa = ward.code;
+                    }
+                }
+            }
+        } else {
+            employeeForm.value.diaChiChiTiet = rawAddress;
+        }
+    } catch (e) {
+        console.error('Lỗi khi tự động điền địa chỉ từ CCCD:', e);
+        employeeForm.value.diaChiChiTiet = rawAddress;
+    }
+};
+
 // Quét QR CCCD
 const showQR = ref(false);
-function onDetectQR(detectedCodes) {
+async function onDetectQR(detectedCodes) {
     if (!detectedCodes || detectedCodes.length === 0) return;
     const result = detectedCodes[0].rawValue;
 
@@ -141,10 +189,15 @@ function onDetectQR(detectedCodes) {
         employeeForm.value.ten = info.ten;
         employeeForm.value.ngaySinh = info.ngaySinh;
         if (info.sdt) employeeForm.value.sdt = info.sdt;
-        employeeForm.value.diaChiChiTiet = info.diaChi;
-        // Không gán info.ma vào employeeForm.value.ma theo yêu cầu
-        // Nếu có giới tính
         if (typeof info.gioiTinh === 'boolean') employeeForm.value.gioiTinh = info.gioiTinh;
+
+        // Tự động phân tích và điền vào các combobox Tỉnh, Quận, Phường
+        if (info.diaChi) {
+            await applyAddressToForm(info.diaChi);
+        } else {
+            employeeForm.value.diaChiChiTiet = '';
+        }
+
         addNotification({ title: 'Thành công', subtitle: 'Đã quét và điền thông tin từ CCCD', color: 'success' });
     } else {
         addNotification({ title: 'Lỗi', subtitle: 'Không nhận diện được dữ liệu QR', color: 'error' });

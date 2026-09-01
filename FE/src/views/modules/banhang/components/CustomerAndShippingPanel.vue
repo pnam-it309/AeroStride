@@ -14,7 +14,7 @@
                     </span>
                 </div>
 
-                <div class="d-flex align-center ga-1.5">
+                <div class="d-flex align-center ga-2">
                     <v-btn
                         size="x-small"
                         variant="tonal"
@@ -32,7 +32,7 @@
                         icon
                         size="x-small"
                         variant="outlined"
-                        class="navy-clear-btn flex-shrink-0"
+                        class="navy-clear-btn flex-shrink-0 ml-1"
                         @click="$emit('remove-customer')"
                     >
                         <v-icon size="15" color="#64748b">mdi-close</v-icon>
@@ -894,13 +894,15 @@ watch(
         margin-top 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     opacity: 1;
     margin-top: 12px;
-    overflow: hidden;
+    padding: 2px;
+    box-sizing: border-box;
 }
 .shipping-wrapper > .pos-navy-card {
     min-height: 0;
 }
 .expand-shipping-enter-active,
 .expand-shipping-leave-active {
+    overflow: hidden;
     transition:
         grid-template-rows 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
         opacity 0.25s ease-out,
@@ -911,5 +913,7 @@ watch(
     grid-template-rows: 0fr !important;
     opacity: 0 !important;
     margin-top: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
 }
 </style>
