@@ -148,16 +148,7 @@ const loadProductsToSelect = async (page = 1) => {
                 variants: cached || []
             };
         });
-
-        // Tải biến thể ngầm (non-blocking) để trạng thái checkbox cập nhật mà không làm đơ/chậm khi chuyển trang
-        Promise.all(
-            productsList.value.map(async (p) => {
-                if (!variantsCache.value.has(p.id)) {
-                    const variants = await loadProductVariants(p);
-                    p.variants = variants;
-                }
-            })
-        );
+        // Biến thể chỉ tải khi user expand sản phẩm (on-demand) để tránh N+1 API calls
     } catch (e) {
         console.error('Lỗi khi tải danh sách sản phẩm:', e);
         productsList.value = [];
@@ -468,15 +459,36 @@ const form = ref({
 const init = async () => {
     uiStore.startProgress();
     try {
-        const productLoadPromise = loadProductsToSelect(1);
-
-        const [maxPrice, brandData, colorData, sizeData, materialData] = await Promise.all([
+        // Chạy TẤT CẢ promise song song tối đa (không chờ tuần tự)
+        const promises = [
+            loadProductsToSelect(1),
             dichVuSanPham.layGiaLonNhat().catch(() => 6500000),
             dichVuThuongHieu.layThuongHieu({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => []),
             dichVuMauSac.layMauSac({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => []),
             dichVuKichThuoc.layKichThuoc({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => []),
             dichVuChatLieu.layChatLieu({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => [])
-        ]);
+        ];
+
+        // Nếu mode Edit/Detail: thêm 2 promise vào batch
+        if (isEditMode.value || isDetailView.value) {
+            promises.push(
+                dichVuDotGiamGia.layChiTietDotGiamGia(route.params.id),
+                dichVuDotGiamGia.layDanhSachBienTheApDung(route.params.id).catch(() => [])
+            );
+        } else {
+            promises.push(
+                generateRandomCode('DotGiamGia').catch(() => 'DGG' + Date.now().toString().slice(-6))
+            );
+        }
+
+        const results = await Promise.all(promises);
+
+        // Phân tích kết quả: [0]=productLoad(void), [1]=maxPrice, [2-5]=attributes
+        const maxPrice = results[1];
+        const brandData = results[2];
+        const colorData = results[3];
+        const sizeData = results[4];
+        const materialData = results[5];
 
         if (maxPrice !== undefined && maxPrice !== null) {
             dynamicMaxPrice.value = Math.max(maxPrice, 50000);
@@ -489,10 +501,8 @@ const init = async () => {
         materials.value = (materialData?.content || materialData || []).map((m) => m.ten);
 
         if (isEditMode.value || isDetailView.value) {
-            const [data, applied] = await Promise.all([
-                dichVuDotGiamGia.layChiTietDotGiamGia(route.params.id),
-                dichVuDotGiamGia.layDanhSachBienTheApDung(route.params.id).catch(() => [])
-            ]);
+            const data = results[6];
+            const applied = results[7];
 
             form.value = {
                 ...data,
@@ -508,14 +518,8 @@ const init = async () => {
             });
             selectedVariantsMap.value = newMap;
         } else {
-            try {
-                form.value.ma = await generateRandomCode('DotGiamGia');
-            } catch (e) {
-                console.error('Lỗi khi lấy mã', e);
-            }
+            form.value.ma = results[6] || ('DGG' + Date.now().toString().slice(-6));
         }
-
-        await productLoadPromise;
     } catch (e) {
         console.error('Error during init:', e);
         addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.LOAD_DATA, color: 'error' });

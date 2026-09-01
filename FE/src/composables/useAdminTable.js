@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue';
+import { ref, watch, onActivated } from 'vue';
 
 /**
  * Composable để quản lý trạng thái bảng Admin (Pagination, Filters, Loading)
@@ -135,6 +135,16 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
             }
         }
     };
+
+    // Khi component được keep-alive reactivate (quay lại từ form thêm/sửa),
+    // tự động reload dữ liệu mới nhất mà không cần F5
+    let hasBeenMounted = false;
+    onActivated(() => {
+        if (hasBeenMounted) {
+            loadData();
+        }
+        hasBeenMounted = true;
+    });
 
     watch(
         () => [pagination.value.page, pagination.value.size],

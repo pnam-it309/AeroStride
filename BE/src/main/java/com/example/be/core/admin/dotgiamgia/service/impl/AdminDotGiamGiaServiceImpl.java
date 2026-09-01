@@ -210,12 +210,26 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductVariantResponse> getAppliedVariants(String campaignId) {
-        List<ChiTietSanPham> variants = chiTietDotGiamGiaRepo.findByDotGiamGiaId(campaignId)
-                .stream()
+        // EntityGraph đã JOIN sẵn chiTietSanPham + sanPham + thuongHieu + chatLieu + mauSac + kichThuoc
+        List<ChiTietDotGiamGia> relations = chiTietDotGiamGiaRepo.findByDotGiamGiaId(campaignId);
+        List<ChiTietSanPham> variants = relations.stream()
                 .map(ChiTietDotGiamGia::getChiTietSanPham)
                 .filter(v -> v != null && !Boolean.TRUE.equals(v.getXoaMem()))
                 .toList();
-        return mapVariants(variants);
+        if (variants.isEmpty()) return List.of();
+
+        // Gán discount relations đã có sẵn (từ EntityGraph), không cần query thêm
+        java.util.Map<String, List<ChiTietDotGiamGia>> relationMap = relations.stream()
+                .filter(rel -> rel.getChiTietSanPham() != null)
+                .collect(java.util.stream.Collectors.groupingBy(
+                        rel -> rel.getChiTietSanPham().getId()
+                ));
+
+        // Map trực tiếp mà KHÔNG query ảnh (FE chỉ cần info cơ bản cho bảng applied)
+        return variants.stream().map(v -> {
+            v.setChiTietDotGiamGias(new java.util.LinkedHashSet<>(relationMap.getOrDefault(v.getId(), java.util.Collections.emptyList())));
+            return mapper.toVariantResponse(v, java.util.Collections.emptyList());
+        }).toList();
     }
 
     private List<ProductVariantResponse> mapVariants(List<ChiTietSanPham> variants) {
