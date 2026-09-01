@@ -256,16 +256,16 @@ onMounted(() => {
         >
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
+                    <td class="data-cell text-center">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
                     <td class="data-cell font-weight-bold text-center">
                         <v-chip size="small" variant="flat" :class="['shift-chip', getShiftChipClass(item.tenCa)]">
                             {{ item.tenCa }}
                         </v-chip>
                     </td>
-                    <td class="data-cell">{{ item.gioBatDau }}</td>
-                    <td class="data-cell">{{ item.gioKetThuc }}</td>
-                    <td class="data-cell text-truncate" style="max-width: 300px">{{ item.moTa }}</td>
-                    <td class="data-cell action-cell">
+                    <td class="data-cell text-center font-mono">{{ item.gioBatDau }}</td>
+                    <td class="data-cell text-center font-mono">{{ item.gioKetThuc }}</td>
+                    <td class="data-cell text-center text-slate-600">{{ item.moTa || '---' }}</td>
+                    <td class="data-cell action-cell text-center">
                         <div class="action-controls">
                             <v-btn variant="text" color="primary" class="action-icon-btn" size="small" @click="openEditDialog(item)">
                                 <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />

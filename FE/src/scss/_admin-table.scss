@@ -50,15 +50,9 @@
 
 .native-admin-table {
     width: 100%;
-    min-height: 100%;
-    height: 100%;
     table-layout: fixed;
     border-collapse: separate;
     border-spacing: 0;
-
-    tbody {
-        height: 100%;
-    }
 
     .header-cell {
         position: sticky;
@@ -84,14 +78,13 @@
         border-bottom: 1px solid #f1f5f9;
         background: white;
         text-align: center;
-        min-height: 52px;
+        height: 52px !important;
         line-height: 1.4 !important;
         box-sizing: border-box;
     }
 
     .empty-state {
         width: 100% !important;
-        height: 100% !important;
         text-align: center !important;
         border-bottom: none !important;
     }

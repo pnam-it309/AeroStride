@@ -290,6 +290,7 @@ onMounted(() => {
             title="Lịch sử hoạt động hệ thống"
             :headers="tableHeadersHoatDong"
             :items="items"
+            :total-count="pagination.totalElements"
             :loading="loading"
             :show-add-button="false"
         >
@@ -353,6 +354,7 @@ onMounted(() => {
             title="Lịch sử ca làm nhân viên"
             :headers="headersGiaoCa"
             :items="paginatedGiaoCaList"
+            :total-count="filteredGiaoCaList.length"
             :loading="loading"
             :show-add-button="false"
         >

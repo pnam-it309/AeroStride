@@ -689,8 +689,8 @@ onMounted(async () => {
                                     hide-details="auto"
                                 ></v-select>
                             </v-col>
-                            <v-col cols="12" md="4">
-                                <div class="field-label">Tỉnh / Thành phố *</div>
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Tỉnh / Thành phố <span class="text-error">*</span></div>
                                 <v-select
                                     v-model="employeeForm.tinh"
                                     :readonly="isDetailView"
@@ -704,8 +704,8 @@ onMounted(async () => {
                                     :loading="loadingLocations.provinces"
                                 ></v-select>
                             </v-col>
-                            <v-col cols="12" md="4">
-                                <div class="field-label">Quận / Huyện *</div>
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Quận / Huyện <span class="text-error">*</span></div>
                                 <v-select
                                     v-model="employeeForm.thanhPho"
                                     :readonly="isDetailView"
@@ -720,8 +720,8 @@ onMounted(async () => {
                                     :disabled="isDetailView || !employeeForm.tinh"
                                 ></v-select>
                             </v-col>
-                            <v-col cols="12" md="4">
-                                <div class="field-label">Phường / Xã *</div>
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Phường / Xã <span class="text-error">*</span></div>
                                 <v-select
                                     v-model="employeeForm.phuongXa"
                                     :readonly="isDetailView"
