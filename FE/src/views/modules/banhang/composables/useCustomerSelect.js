@@ -43,6 +43,19 @@ export function useCustomerSelect(selectedOrder, updateOrderInList, refreshBestV
 
     const selectCustomer = async (customer) => {
         if (!customer?.id || !selectedOrder.value?.id) return;
+        customerForm.value = {
+            ten: customer.ten || customer.hoTen || customer.tenKhachHang || '',
+            sdt: customer.sdt || customer.soDienThoai || '',
+            email: customer.email || '',
+            gioiTinh:
+                customer.gioiTinh === true || customer.gioiTinh === 1 || customer.gioiTinh === 'Nam'
+                    ? 'Nam'
+                    : customer.gioiTinh === false || customer.gioiTinh === 0 || customer.gioiTinh === 'Nữ'
+                      ? 'Nữ'
+                      : 'Khác',
+            ngaySinh: customer.ngaySinh || '',
+            tongDonHang: customer.tongDonHang || 0
+        };
         try {
             const updated = await dichVuDonHang.setKhachHang(selectedOrder.value.id, customer.id);
             updateOrderInList(updated);

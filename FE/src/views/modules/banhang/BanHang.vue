@@ -1065,7 +1065,6 @@ const syncRecipientFromCustomer = async (customer, addrRes = []) => {
         shippingFeeSource.value = '';
     }
 };
-
 // Keep recipient name/phone aligned with the selected customer while staff edits the customer card.
 watch(
     () => [customerForm.value.ten, customerForm.value.sdt],
@@ -1106,17 +1105,34 @@ watch(
 
 // Watch selected customer id and fetch full details to populate the right column form
 watch(
-    () => selectedOrder.value?.idKhachHang,
-    async (newId) => {
+    () => [selectedOrder.value?.id, selectedOrder.value?.idKhachHang],
+    async ([orderId, newId]) => {
+        if (!orderId) {
+            customerForm.value = {
+                ten: '',
+                sdt: '',
+                email: '',
+                gioiTinh: 'Giới tính',
+                ngaySinh: '',
+                tongDonHang: 0
+            };
+            return;
+        }
+
         if (newId) {
             try {
                 const customer = await dichVuKhachHang.layChiTietKhachHang(newId);
                 if (customer) {
                     customerForm.value = {
-                        ten: customer.ten || '',
-                        sdt: customer.sdt || '',
-                        email: customer.email || '',
-                        gioiTinh: customer.gioiTinh === true ? 'Nam' : customer.gioiTinh === false ? 'Nữ' : 'Khác',
+                        ten: customer.ten || selectedOrder.value?.tenKhachHang || '',
+                        sdt: customer.sdt || selectedOrder.value?.sdtKhachHang || '',
+                        email: customer.email || selectedOrder.value?.emailKhachHang || '',
+                        gioiTinh:
+                            customer.gioiTinh === true || customer.gioiTinh === 1 || customer.gioiTinh === 'Nam'
+                                ? 'Nam'
+                                : customer.gioiTinh === false || customer.gioiTinh === 0 || customer.gioiTinh === 'Nữ'
+                                  ? 'Nữ'
+                                  : 'Khác',
                         ngaySinh: customer.ngaySinh || '',
                         tongDonHang: customer.tongDonHang || 0
                     };
@@ -1135,23 +1151,25 @@ watch(
                 console.error('Lấy chi tiết khách hàng thất bại', e);
             }
             customerForm.value = {
-                ten: selectedOrder.value.tenKhachHang || '',
-                sdt: selectedOrder.value.sdtKhachHang || '',
-                email: selectedOrder.value.emailKhachHang || '',
+                ten: selectedOrder.value?.tenKhachHang || '',
+                sdt: selectedOrder.value?.sdtKhachHang || '',
+                email: selectedOrder.value?.emailKhachHang || '',
                 gioiTinh: 'Giới tính',
                 ngaySinh: '',
                 tongDonHang: 0
             };
         } else {
             customerForm.value = {
-                ten: '',
-                sdt: '',
-                email: '',
+                ten: selectedOrder.value?.tenKhachHang || '',
+                sdt: selectedOrder.value?.sdtKhachHang || '',
+                email: selectedOrder.value?.emailKhachHang || '',
                 gioiTinh: 'Giới tính',
                 ngaySinh: '',
                 tongDonHang: 0
             };
-            resetRecipientAddress();
+            if (!selectedOrder.value?.tenKhachHang && !selectedOrder.value?.sdtKhachHang) {
+                resetRecipientAddress();
+            }
         }
     },
     { immediate: true }

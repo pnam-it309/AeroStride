@@ -438,6 +438,12 @@ const toggleSoldSort = () => {
     fetchProductStats();
 };
 
+const toggleRevenueSort = () => {
+    productSortBy.value = productSortBy.value === 'revenueDesc' ? 'revenueAsc' : 'revenueDesc';
+    productPage.value = 1;
+    fetchProductStats();
+};
+
 const monthlyRevenue = ref([]);
 
 // Cấu hình reactive cho ApexCharts
@@ -1718,15 +1724,25 @@ onMounted(async () => {
                                 <th class="header-cell text-center cursor-pointer select-none" style="width: 130px" @click="toggleSoldSort">
                                     <div class="d-inline-flex align-center justify-center ga-1 font-weight-bold">
                                         <span>Đã bán</span>
-                                        <v-icon size="16" color="primary">
-                                            {{ productSortBy === 'bestSelling' ? 'mdi-sort-numeric-descending' : 'mdi-sort-numeric-ascending' }}
+                                        <v-icon size="16" :color="(!productSortBy || productSortBy === 'bestSelling' || productSortBy === 'slowSelling') ? 'primary' : 'slate-400'">
+                                            {{ productSortBy === 'slowSelling' ? 'mdi-sort-numeric-ascending' : (productSortBy === 'bestSelling' ? 'mdi-sort-numeric-descending' : 'mdi-swap-vertical') }}
                                         </v-icon>
                                     </div>
                                     <v-tooltip activator="parent" location="top">
-                                        {{ productSortBy === 'bestSelling' ? 'Sắp xếp: Đã bán cao nhất (Bấm để đổi sang thấp nhất)' : 'Sắp xếp: Đã bán thấp nhất (Bấm để đổi sang cao nhất)' }}
+                                        {{ productSortBy === 'bestSelling' ? 'Sắp xếp: Đã bán cao nhất (Bấm để đổi sang thấp nhất)' : (productSortBy === 'slowSelling' ? 'Sắp xếp: Đã bán thấp nhất (Bấm để đổi sang cao nhất)' : 'Bấm để sắp xếp theo Đã bán') }}
                                     </v-tooltip>
                                 </th>
-                                <th class="header-cell text-center" style="width: 150px">Doanh thu</th>
+                                <th class="header-cell text-center cursor-pointer select-none" style="width: 150px" @click="toggleRevenueSort">
+                                    <div class="d-inline-flex align-center justify-center ga-1 font-weight-bold">
+                                        <span>Doanh thu</span>
+                                        <v-icon size="16" :color="productSortBy && productSortBy.startsWith('revenue') ? 'primary' : 'slate-400'">
+                                            {{ productSortBy === 'revenueAsc' ? 'mdi-sort-numeric-ascending' : (productSortBy === 'revenueDesc' ? 'mdi-sort-numeric-descending' : 'mdi-swap-vertical') }}
+                                        </v-icon>
+                                    </div>
+                                    <v-tooltip activator="parent" location="top">
+                                        {{ productSortBy === 'revenueDesc' ? 'Sắp xếp: Doanh thu cao nhất (Bấm để đổi sang thấp nhất)' : (productSortBy === 'revenueAsc' ? 'Sắp xếp: Doanh thu thấp nhất (Bấm để đổi sang cao nhất)' : 'Bấm để sắp xếp theo Doanh thu') }}
+                                    </v-tooltip>
+                                </th>
                             </tr>
                         </template>
 

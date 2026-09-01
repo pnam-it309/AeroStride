@@ -583,6 +583,20 @@ watch(customerSearch, (newVal) => {
 const onSelectSuggestedCustomer = (c) => {
     customerSearch.value = '';
     showCustomerSuggestions.value = false;
+    customerForm.value = {
+        ten: c.ten || c.hoTen || c.tenKhachHang || '',
+        sdt: c.sdt || c.soDienThoai || '',
+        email: c.email || '',
+        gioiTinh:
+            c.gioiTinh === true || c.gioiTinh === 1 || c.gioiTinh === 'Nam'
+                ? 'Nam'
+                : c.gioiTinh === false || c.gioiTinh === 0 || c.gioiTinh === 'Nữ'
+                  ? 'Nữ'
+                  : 'Khác',
+        ngaySinh: c.ngaySinh || '',
+        tongDonHang: c.tongDonHang || 0
+    };
+    emit('update:customer-form', customerForm.value);
     emit('set-customer', c);
 };
 
@@ -649,8 +663,25 @@ const onWardChange = (val) => {
 };
 
 watch(
-    () => props.order?.id,
-    async (newOrderId, oldOrderId) => {
+    () => props.initialCustomerForm,
+    (newForm) => {
+        if (newForm) {
+            customerForm.value = {
+                ten: newForm.ten || '',
+                sdt: newForm.sdt || '',
+                email: newForm.email || '',
+                gioiTinh: newForm.gioiTinh || 'Giới tính',
+                ngaySinh: newForm.ngaySinh || '',
+                tongDonHang: newForm.tongDonHang || 0
+            };
+        }
+    },
+    { deep: true }
+);
+
+watch(
+    () => [props.order?.id, props.order?.idKhachHang],
+    async ([newOrderId, newKhId], [oldOrderId, oldKhId]) => {
         if (newOrderId && newOrderId !== oldOrderId) {
             currentOrderId.value = newOrderId;
             customerForm.value = { ...props.initialCustomerForm };
