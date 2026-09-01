@@ -145,6 +145,9 @@ const fetchFilters = async () => {
     }
 };
 
+const renderKey = ref(0);
+let debounceTimer = null;
+
 const fetchProducts = async () => {
     loading.value = true;
     try {
@@ -171,11 +174,19 @@ const fetchProducts = async () => {
         const response = await dichVuSanPhamPublic.layDanhSachSanPham(params);
         products.value = response?.content || [];
         totalElements.value = response?.totalElements || 0;
+        renderKey.value++;
     } catch (error) {
         console.error('Error fetching products:', error);
     } finally {
         loading.value = false;
     }
+};
+
+const debouncedFetchProducts = () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        fetchProducts();
+    }, 200);
 };
 
 const onPageChange = () => {
@@ -185,7 +196,7 @@ const onPageChange = () => {
 
 const handleFilterChange = () => {
     currentPage.value = 1;
-    fetchProducts();
+    debouncedFetchProducts();
 };
 
 const resetFilters = () => {
@@ -520,10 +531,10 @@ const closeMobileFilter = () => {
 
                 <!-- Right Products Grid -->
                 <v-col cols="12" md="9" lg="10">
-                    <v-row v-if="products.length > 0" class="products-list-row">
+                    <v-row v-if="products.length > 0" :key="'grid-' + renderKey" class="products-list-row">
                         <v-col
                             v-for="(p, index) in products"
-                            :key="p.id"
+                            :key="p.id + '-' + renderKey"
                             cols="6"
                             sm="4"
                             md="4"
@@ -976,25 +987,49 @@ const closeMobileFilter = () => {
     }
 }
 
-/* ── Product Card Pop-In Appearance Animation ── */
+/* ── Product Card Pop-In Appearance Animation (To rõ rệt & mượt mà) ── */
 @keyframes productCardPopIn {
     0% {
         opacity: 0;
-        transform: scale(0.8) translateY(24px);
+        transform: scale(0.55) translateY(36px);
+        filter: blur(2px);
     }
-    60% {
+    55% {
         opacity: 0.95;
-        transform: scale(1.03) translateY(-4px);
+        transform: scale(1.05) translateY(-6px);
+        filter: blur(0);
     }
     100% {
         opacity: 1;
         transform: scale(1) translateY(0);
+        filter: blur(0);
+    }
+}
+
+@keyframes imageBoxZoomIn {
+    0% {
+        opacity: 0.4;
+        transform: scale(0.68);
+    }
+    60% {
+        opacity: 1;
+        transform: scale(1.06);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
     }
 }
 
 .animate-product-pop {
-    animation: productCardPopIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-    animation-delay: calc(var(--item-idx, 0) * 40ms);
+    animation: productCardPopIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: calc(var(--item-idx, 0) * 45ms);
+    will-change: transform, opacity;
+
+    .card-image-wrapper {
+        animation: imageBoxZoomIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        animation-delay: calc(var(--item-idx, 0) * 45ms + 40ms);
+    }
 }
 
 .product-item-card {

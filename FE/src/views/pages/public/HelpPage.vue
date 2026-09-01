@@ -11,39 +11,65 @@ const searchQuery = ref('');
 
 const categories = [
     { icon: 'mdi-truck-delivery-outline', title: 'Vận chuyển & Giao nhận' },
-    { icon: 'mdi-credit-card-outline', title: 'Thanh toán' },
-    { icon: 'mdi-sync', title: 'Đổi trả & Hoàn tiền' },
-    { icon: 'mdi-shield-check-outline', title: 'Bảo hành' }
+    { icon: 'mdi-sync', title: 'Đổi trả 30 ngày' },
+    { icon: 'mdi-lock-shield-outline', title: 'Chính sách bảo mật' },
+    { icon: 'mdi-file-document-check-outline', title: 'Điều khoản dịch vụ' }
 ];
 
 const faqs = [
     {
-        title: 'Vận chuyển & Giao nhận',
+        title: 'Chính sách Đổi trả & Hoàn tiền (30 Ngày)',
         items: [
             {
-                q: 'Thời gian giao hàng là bao lâu?',
-                a: 'Đối với khu vực nội thành Hà Nội và TP.HCM, thời gian giao hàng thường từ 1-2 ngày làm việc. Với các tỉnh thành khác, thời gian từ 3-5 ngày làm việc tuỳ khu vực.'
+                q: 'Chính sách đổi trả của AeroStride như thế nào?',
+                a: 'AeroStride hỗ trợ đổi size, đổi mẫu hoặc hoàn tiền miễn phí trong vòng 30 ngày kể từ ngày nhận hàng với điều kiện sản phẩm còn nguyên tem mác, chưa qua sử dụng ngoài trời và có hộp đi kèm.'
             },
             {
-                q: 'Tôi có thể kiểm tra hàng trước khi thanh toán không?',
-                a: 'Có. AeroStride luôn khuyến khích khách hàng đồng kiểm cùng bưu tá trước khi thanh toán để đảm bảo sản phẩm đúng màu, đúng size và không bị lỗi.'
+                q: 'Quy trình đổi trả hàng diễn ra như thế nào?',
+                a: 'Quý khách vui lòng liên hệ hotline 0986 525 959 hoặc chat trực tiếp qua khung Zalo / Live Chat trên website. Shipper sẽ đến tận nơi nhận lại hàng và giao đôi mới cho quý khách.'
             },
             {
-                q: 'Phí vận chuyển được tính như thế nào?',
-                a: 'AeroStride miễn phí vận chuyển toàn quốc cho mọi đơn hàng có giá trị từ 1.000.000 VNĐ. Với đơn hàng dưới mức này, phí ship đồng giá là 30.000 VNĐ.'
+                q: 'Bao lâu thì tôi nhận được tiền hoàn?',
+                a: 'Sau khi cửa hàng nhận lại sản phẩm và kiểm tra hợp lệ, khoản tiền sẽ được hoàn về tài khoản ngân hàng hoặc ví điện tử của quý khách trong vòng 24 - 48 giờ làm việc.'
             }
         ]
     },
     {
-        title: 'Đổi trả & Hoàn tiền',
+        title: 'Chính sách Bảo mật Thông tin',
         items: [
             {
-                q: 'Chính sách đổi trả của AeroStride như thế nào?',
-                a: 'Bạn có thể đổi trả sản phẩm trong vòng 30 ngày kể từ ngày nhận hàng với điều kiện sản phẩm còn nguyên tem mác, chưa qua sử dụng và có đầy đủ hộp, phụ kiện đi kèm.'
+                q: 'Thông tin cá nhân của tôi được bảo mật như thế nào?',
+                a: 'AeroStride cam kết bảo mật tuyệt đối 100% dữ liệu cá nhân, số điện thoại, địa chỉ nhận hàng và lịch sử giao dịch của khách hàng theo tiêu chuẩn an toàn thông tin quốc tế. Chúng tôi không bao giờ chia sẻ thông tin cho bên thứ ba.'
             },
             {
-                q: 'Làm thế nào để yêu cầu đổi trả?',
-                a: 'Bạn vui lòng đăng nhập vào tài khoản, vào mục "Đơn hàng của tôi", chọn đơn hàng cần đổi trả và bấm nút "Yêu cầu đổi/trả". Hệ thống sẽ hướng dẫn chi tiết.'
+                q: 'Bảo mật thanh toán trực tuyến qua VNPay ra sao?',
+                a: 'Mọi giao dịch thanh toán online được mã hóa chuẩn SSL 256-bit qua cổng thanh toán VNPay được Ngân hàng Nhà nước cấp phép, đảm bảo an toàn tuyệt đối cho tài khoản của quý khách.'
+            }
+        ]
+    },
+    {
+        title: 'Điều khoản Dịch vụ & Cam kết',
+        items: [
+            {
+                q: 'Cam kết hàng chính hãng tại AeroStride',
+                a: '100% sản phẩm giày thể thao tại AeroStride (Nike, Adidas, Puma, Mizuno, Asics...) đều được nhập khẩu chính ngạch với đầy đủ hóa đơn, tem chống hàng giả và bảo hành chính hãng trọn đời đối với keo dán và đế giày.'
+            },
+            {
+                q: 'Quyền lợi khi mua sắm tại AeroStride',
+                a: 'Quý khách được đồng kiểm hàng trước khi thanh toán (mở hộp xem giày, thử size), tích điểm thành viên nhận voucher giảm giá và được hỗ trợ đổi trả linh hoạt 30 ngày.'
+            }
+        ]
+    },
+    {
+        title: 'Vận chuyển & Giao nhận Toàn Quốc',
+        items: [
+            {
+                q: 'Thời gian giao hàng là bao lâu?',
+                a: 'Đối với khu vực nội thành Hà Nội và TP.HCM, thời gian giao hàng hỏa tốc trong 2H hoặc 24H. Đối với các tỉnh thành khác trên toàn quốc từ 2 - 3 ngày làm việc.'
+            },
+            {
+                q: 'Phí vận chuyển được tính như thế nào?',
+                a: 'AeroStride miễn phí vận chuyển toàn quốc cho mọi đơn hàng có giá trị từ 500.000 VNĐ. Với đơn hàng dưới mức này, phí vận chuyển đồng giá ưu đãi là 30.000 VNĐ.'
             }
         ]
     }

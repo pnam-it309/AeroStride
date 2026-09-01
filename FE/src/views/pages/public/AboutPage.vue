@@ -128,38 +128,49 @@ const coreValues = [
     }
 ];
 
-const teamMembers = [
+const teamMembers = ref([
     {
         name: 'Hoàng Phương Nam',
-        role: 'Founder & CEO',
-        image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400',
-        quote: 'Mỗi đôi giày là một bước tiến đưa bạn vượt qua giới hạn của chính mình.'
+        role: 'Nhà Sáng Lập & Tổng Giám Đốc (CEO)',
+        image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600',
+        quote: 'Mỗi bước chạy của khách hàng là động lực để AeroStride hoàn thiện và vươn xa.'
     },
     {
         name: 'Phí Thu Trang',
-        role: 'Co-Founder & Product Director',
-        image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400',
-        quote: 'Chúng tôi tỉ mỉ lựa chọn từng mẫu thiết kế đạt tiêu chuẩn êm ái và thẩm mỹ cao nhất.'
+        role: 'Giám Đốc Điều Hành & Vận Hành (COO)',
+        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600',
+        quote: 'Tối ưu vận hành và trải nghiệm mua sắm hoàn hảo là kim chỉ nam trong mọi hành động.'
     },
     {
         name: 'Lê Thị Thu Huyền',
-        role: 'Head of Customer Success',
-        image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400',
+        role: 'Giám Đốc Trải Nghiệm Khách Hàng (CXO)',
+        image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600',
         quote: 'Sự hài lòng tuyệt đối của khách hàng là thước đo giá trị lớn nhất của AeroStride.'
     },
     {
         name: 'Bùi Thị Yến',
-        role: 'Head of Marketing & Operations',
-        image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=400',
+        role: 'Giám Đốc Marketing & Phát Triển (CMO)',
+        image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=600',
         quote: 'Chiến lược truyền thông và sự gắn kết khách hàng là nhịp đập của AeroStride.'
     },
     {
         name: 'Nguyễn Huy Đức',
-        role: 'Chief Technology Officer (CTO)',
-        image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=400',
+        role: 'Giám Đốc Công Nghệ (CTO)',
+        image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=600',
         quote: 'Ứng dụng công nghệ AI và trải nghiệm số vượt trội để phục vụ khách hàng tốt nhất.'
     }
-];
+]);
+
+const fetchLeadershipTeam = async () => {
+    try {
+        const res = await dichVuGioiThieu.layDanhSachLanhDao();
+        if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+            teamMembers.value = res.data;
+        }
+    } catch (e) {
+        console.error('Lỗi lấy danh sách ban lãnh đạo:', e);
+    }
+};
 
 const goToProducts = () => {
     router.push(PATH.SHOES);
@@ -464,25 +475,56 @@ onMounted(() => {
                         </v-row>
                     </div>
 
-                    <!-- Tab 4: Team -->
+                    <!-- Tab 4: Team (Dàn hàng ngang 5 Quản lý từ DB) -->
                     <div v-else-if="activeTab === 'team'" class="animate-fade-in">
                         <div class="text-center max-w-700 mx-auto mb-12">
-                            <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold mb-3">CON NGƯỜI</v-chip>
-                            <h2 class="text-h3 font-weight-black text-slate-900 mb-3">Đội Ngũ Ban Lãnh Đạo</h2>
-                            <p class="text-slate-600">Những người kiến tạo nên hành trình tuyệt vời của AeroStride</p>
+                            <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold mb-3">BAN LÃNH ĐẠO</v-chip>
+                            <h2 class="text-h3 font-weight-black text-slate-900 mb-3">Đội Ngũ Quản Lý & Lãnh Đạo</h2>
+                            <p class="text-slate-600">Đội ngũ quản trị viên và lãnh đạo kiến tạo nên trải nghiệm thể thao hàng đầu tại AeroStride</p>
                         </div>
-                        <v-row>
-                            <v-col cols="12" md="4" v-for="(member, idx) in teamMembers" :key="idx">
-                                <v-card class="h-100 rounded-xl overflow-hidden elevation-3 border">
-                                    <v-img :src="member.image" height="280" cover></v-img>
-                                    <v-card-text class="pa-6">
-                                        <h3 class="text-h6 font-weight-bold text-slate-900 mb-1">{{ member.name }}</h3>
-                                        <div class="text-caption font-weight-bold text-primary mb-4">{{ member.role }}</div>
-                                        <p class="text-body-2 text-slate-600 italic">"{{ member.quote }}"</p>
+
+                        <!-- Horizontal Row of Team Members -->
+                        <div class="team-horizontal-container">
+                            <div class="team-scroll-track d-flex flex-nowrap ga-5 overflow-x-auto pb-6 pt-2 px-1">
+                                <v-card
+                                    v-for="(member, idx) in teamMembers"
+                                    :key="idx"
+                                    class="team-card-horizontal flex-shrink-0 rounded-2xl overflow-hidden elevation-2 border bg-white"
+                                >
+                                    <div class="team-img-wrapper position-relative">
+                                        <v-img :src="member.image" height="230" cover class="team-avatar-img">
+                                            <template #placeholder>
+                                                <div class="d-flex align-center justify-center fill-height bg-grey-lighten-3">
+                                                    <v-progress-circular indeterminate color="primary" size="24"></v-progress-circular>
+                                                </div>
+                                            </template>
+                                        </v-img>
+                                        <div class="team-avatar-overlay d-flex align-end pa-3">
+                                            <v-chip size="x-small" color="#1e257c" variant="flat" class="font-weight-black text-white elevation-2">
+                                                QUẢN LÝ #0{{ idx + 1 }}
+                                            </v-chip>
+                                        </div>
+                                    </div>
+
+                                    <v-card-text class="pa-5 d-flex flex-column justify-space-between team-card-body">
+                                        <div>
+                                            <h3 class="text-subtitle-1 font-weight-black text-slate-900 mb-1 leading-snug">{{ member.name }}</h3>
+                                            <div class="text-caption font-weight-bold text-primary mb-3">{{ member.role }}</div>
+                                            <p class="text-caption text-slate-600 italic line-clamp-3 mb-0">"{{ member.quote }}"</p>
+                                        </div>
+
+                                        <div v-if="member.email || member.sdt" class="mt-3 pt-3 border-t text-caption text-slate-500 d-flex flex-column ga-1">
+                                            <span v-if="member.email" class="text-truncate d-flex align-center">
+                                                <v-icon size="13" class="mr-1" color="#1e257c">mdi-email-outline</v-icon>{{ member.email }}
+                                            </span>
+                                            <span v-if="member.sdt" class="d-flex align-center">
+                                                <v-icon size="13" class="mr-1" color="#1e257c">mdi-phone-outline</v-icon>{{ member.sdt }}
+                                            </span>
+                                        </div>
                                     </v-card-text>
                                 </v-card>
-                            </v-col>
-                        </v-row>
+                            </div>
+                        </div>
                     </div>
                 </v-container>
             </section>
@@ -699,5 +741,55 @@ onMounted(() => {
     background: rgba(15, 23, 42, 0.75);
     backdrop-filter: blur(4px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ── Horizontal Team Card Styles ── */
+.team-horizontal-container {
+    width: 100%;
+}
+
+.team-scroll-track {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+    &::-webkit-scrollbar {
+        height: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+}
+
+.team-card-horizontal {
+    width: 245px;
+    min-width: 245px;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 18px 36px rgba(30, 37, 124, 0.12) !important;
+        border-color: #93c5fd;
+
+        .team-avatar-img :deep(img) {
+            transform: scale(1.08);
+        }
+    }
+}
+
+.team-avatar-img {
+    transition: transform 0.4s ease;
+    :deep(img) {
+        transition: transform 0.4s ease;
+    }
+}
+
+.team-avatar-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(15, 23, 42, 0.7) 100%);
+}
+
+.team-card-body {
+    min-height: 180px;
 }
 </style>

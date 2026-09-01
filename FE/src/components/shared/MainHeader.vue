@@ -480,15 +480,12 @@ onUnmounted(() => {
 .logo-wrap {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
 }
 
 :deep(.header-logo) {
-    .logo-img {
-        max-width: 150px;
-        max-height: 52px;
-        height: auto;
-        object-fit: contain;
-    }
+    display: inline-flex;
+    align-items: center;
 }
 
 /* ── Desktop Nav Links ────────────────────────────────────────────── */

@@ -126,39 +126,45 @@ export const router = createRouter({
         },
         {
             path: '/gioi-thieu',
+            alias: ['/about', '/ve-chung-toi'],
             name: 'GioiThieu',
             component: () => import('@/views/pages/public/AboutPage.vue'),
             meta: { seoTitle: 'Giới Thiệu' }
         },
         {
             path: '/tin-tuc',
+            alias: ['/news'],
             name: 'TinTuc',
             component: () => import('@/views/pages/public/NewsPage.vue'),
             meta: { seoTitle: 'Tin Tức' }
         },
         {
             path: '/tin-tuc/:id',
+            alias: ['/news/:id'],
             name: 'NewsDetail',
             component: () => import('@/views/pages/public/NewsDetailPage.vue'),
             meta: { seoTitle: 'Chi Tiết Tin Tức' }
         },
         {
             path: '/lien-he',
+            alias: ['/contact', '/ho-tro'],
             name: 'LienHe',
             component: () => import('@/views/pages/public/ContactPage.vue'),
             meta: { seoTitle: 'Liên Hệ' }
         },
         {
             path: '/he-thong-cua-hang',
+            alias: ['/stores', '/store-locator', '/cua-hang'],
             name: 'HeThongCuaHang',
             component: () => import('@/views/pages/public/StoreLocatorPage.vue'),
             meta: { seoTitle: 'Hệ Thống Cửa Hàng' }
         },
         {
             path: '/tro-giup',
+            alias: ['/help', '/chinh-sach', '/chinh-sach-doi-tra', '/chinh-sach-bao-mat', '/dieu-khoan-dich-vu', '/faq'],
             name: 'TroGiup',
             component: () => import('@/views/pages/public/HelpPage.vue'),
-            meta: { seoTitle: 'Trợ Giúp' }
+            meta: { seoTitle: 'Trợ Giúp & Chính Sách' }
         },
         {
             ...MainRoutes,
