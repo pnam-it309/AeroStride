@@ -68,12 +68,8 @@ const fetchProfile = async () => {
     }
 };
 
-watch(
-    () => router.currentRoute.value.path,
-    () => {
-        fetchProfile();
-    }
-);
+// Tối ưu: Chỉ gọi fetchProfile khi mounted và khi nhận sự kiện profile-updated (tránh gọi lại liên tục trên mọi lần đổi route)
+
 
 onMounted(() => {
     fetchProfile();
