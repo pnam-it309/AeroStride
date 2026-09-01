@@ -8,9 +8,12 @@ import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/ui';
 import { PATH } from '@/router/routePaths';
 
+import { useNotifications } from '@/services/notificationService';
+
 const router = useRouter();
 const authStore = useAuthStore();
 const uiStore = useUIStore();
+const { addNotification } = useNotifications();
 const loading = ref(true);
 const isEditing = ref(false);
 const passwordDialog = ref(false);
@@ -21,7 +24,16 @@ const profileInfo = ref({
     email: '',
     ten: '',
     sdt: '',
+    ngaySinh: '',
+    gioiTinh: true,
     hinhAnh: ''
+});
+
+const defaultAddress = ref({
+    diaChiChiTiet: '',
+    phuongXa: '',
+    quanHuyen: '',
+    tinhThanh: ''
 });
 
 const passwordData = ref({
@@ -63,6 +75,8 @@ const fetchProfile = async () => {
                 email: data.email || '',
                 ten: data.ten || '',
                 sdt: data.sdt || '',
+                ngaySinh: data.ngaySinh || '',
+                gioiTinh: data.gioiTinh !== undefined && data.gioiTinh !== null ? data.gioiTinh : true,
                 hinhAnh: data.hinhAnh || ''
             };
             defaultAddress.value = {
@@ -102,16 +116,28 @@ const submitUpdateProfile = async () => {
         await dichVuKhachHang.capNhatHoSo({
             ten: profileInfo.value.ten?.trim(),
             sdt: profileInfo.value.sdt?.trim(),
+            ngaySinh: profileInfo.value.ngaySinh || null,
+            gioiTinh: profileInfo.value.gioiTinh,
             hinhAnh: profileInfo.value.hinhAnh
         });
-        uiStore.showSnackbar('Cập nhật hồ sơ thành công', 'success');
+        addNotification({ title: 'Thành công', subtitle: 'Cập nhật hồ sơ thành công', color: 'success' });
         isEditing.value = false;
         await fetchProfile();
     } catch (error) {
-        uiStore.showSnackbar(error.response?.data?.message || 'Lỗi cập nhật', 'error');
+        addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Lỗi cập nhật hồ sơ', color: 'error' });
     } finally {
         uiStore.hideLoading();
     }
+};
+
+const handleLogout = async () => {
+    await authStore.logout();
+    addNotification({
+        title: 'Đăng xuất',
+        subtitle: 'Bạn đã đăng xuất tài khoản thành công.',
+        color: 'info'
+    });
+    router.push(PATH.LANDING);
 };
 
 const submitChangePassword = async () => {
@@ -194,7 +220,7 @@ onMounted(() => {
                                 prepend-icon="mdi-logout"
                                 title="Đăng xuất"
                                 class="rounded-lg mt-4 text-red-darken-2"
-                                @click="router.push(PATH.LOGOUT)"
+                                @click="handleLogout"
                             ></v-list-item>
                         </v-list>
                     </v-card>
@@ -299,6 +325,35 @@ onMounted(() => {
                                         counter="10"
                                         :rules="phoneRules"
                                     ></v-text-field>
+                                </v-col>
+                                <v-col cols="12" sm="6" class="pa-3">
+                                    <label class="text-body-1 font-weight-bold text-blue-darken-4 mb-2 d-block">Ngày sinh</label>
+                                    <v-text-field
+                                        v-model="profileInfo.ngaySinh"
+                                        type="date"
+                                        variant="outlined"
+                                        prepend-inner-icon="mdi-calendar"
+                                        color="blue-darken-4"
+                                        hide-details="auto"
+                                        class="profile-input"
+                                    ></v-text-field>
+                                </v-col>
+                                <v-col cols="12" sm="6" class="pa-3">
+                                    <label class="text-body-1 font-weight-bold text-blue-darken-4 mb-2 d-block">Giới tính</label>
+                                    <v-select
+                                        v-model="profileInfo.gioiTinh"
+                                        :items="[
+                                            { title: 'Nam', value: true },
+                                            { title: 'Nữ', value: false }
+                                        ]"
+                                        item-title="title"
+                                        item-value="value"
+                                        variant="outlined"
+                                        prepend-inner-icon="mdi-gender-male-female"
+                                        color="blue-darken-4"
+                                        hide-details="auto"
+                                        class="profile-input"
+                                    ></v-select>
                                 </v-col>
                                 <v-col cols="12" class="pa-3">
                                     <label class="text-body-1 font-weight-bold text-blue-darken-4 mb-2 d-block">Địa chỉ mặc định</label>

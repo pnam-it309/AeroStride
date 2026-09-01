@@ -110,6 +110,8 @@ public class AuthController {
                 .email(email)
                 .sdt(sdt)
                 .matKhau(passwordEncoder.encode(request.getMatKhau()))
+                .ngaySinh(request.getNgaySinh())
+                .gioiTinh(request.getGioiTinh() != null ? request.getGioiTinh() : true)
                 .xoaMem(false)
                 .build();
         khachHang.setTen(request.getTen());

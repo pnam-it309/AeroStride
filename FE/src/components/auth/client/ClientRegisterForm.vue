@@ -26,6 +26,8 @@ const form = ref({
     tenTaiKhoan: '',
     email: '',
     sdt: '',
+    ngaySinh: '',
+    gioiTinh: true,
     matKhau: '',
     xacNhanMatKhau: ''
 });
@@ -44,7 +46,7 @@ const handleRegister = async () => {
         !form.value.matKhau ||
         !form.value.xacNhanMatKhau
     ) {
-        errorMessage.value = 'Vui lòng điền đầy đủ thông tin';
+        errorMessage.value = 'Vui lòng điền đầy đủ thông tin bắt buộc';
         return;
     }
 
@@ -69,6 +71,8 @@ const handleRegister = async () => {
             tenTaiKhoan: form.value.tenTaiKhoan,
             email: form.value.email,
             sdt: form.value.sdt,
+            ngaySinh: form.value.ngaySinh || null,
+            gioiTinh: form.value.gioiTinh,
             matKhau: form.value.matKhau
         });
 
@@ -111,7 +115,7 @@ const handleRegister = async () => {
                 <!-- Họ và tên -->
                 <v-col cols="12" class="pb-2">
                     <div class="input-wrapper">
-                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Họ và tên </v-label>
+                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Họ và tên * </v-label>
                         <v-text-field
                             v-model="form.ten"
                             variant="outlined"
@@ -128,7 +132,7 @@ const handleRegister = async () => {
                 <!-- Tên tài khoản -->
                 <v-col cols="12" class="py-2">
                     <div class="input-wrapper">
-                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Tên tài khoản </v-label>
+                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Tên tài khoản * </v-label>
                         <v-text-field
                             v-model="form.tenTaiKhoan"
                             variant="outlined"
@@ -145,7 +149,7 @@ const handleRegister = async () => {
                 <!-- Email -->
                 <v-col cols="12" md="6" class="py-2 pr-md-2">
                     <div class="input-wrapper">
-                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Email </v-label>
+                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Email * </v-label>
                         <v-text-field
                             v-model="form.email"
                             variant="outlined"
@@ -163,7 +167,7 @@ const handleRegister = async () => {
                 <!-- Số điện thoại -->
                 <v-col cols="12" md="6" class="py-2 pl-md-2">
                     <div class="input-wrapper">
-                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Số điện thoại </v-label>
+                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Số điện thoại * </v-label>
                         <v-text-field
                             v-model="form.sdt"
                             variant="outlined"
@@ -172,6 +176,45 @@ const handleRegister = async () => {
                             color="blue-darken-3"
                             placeholder="0912 345 678"
                             prepend-inner-icon="mdi-phone-outline"
+                            :disabled="loading"
+                        />
+                    </div>
+                </v-col>
+
+                <!-- Ngày sinh -->
+                <v-col cols="12" md="6" class="py-2 pr-md-2">
+                    <div class="input-wrapper">
+                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Ngày sinh </v-label>
+                        <v-text-field
+                            v-model="form.ngaySinh"
+                            type="date"
+                            variant="outlined"
+                            class="modern-input"
+                            hide-details
+                            color="blue-darken-3"
+                            prepend-inner-icon="mdi-calendar"
+                            :disabled="loading"
+                        />
+                    </div>
+                </v-col>
+
+                <!-- Giới tính -->
+                <v-col cols="12" md="6" class="py-2 pl-md-2">
+                    <div class="input-wrapper">
+                        <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3"> Giới tính </v-label>
+                        <v-select
+                            v-model="form.gioiTinh"
+                            :items="[
+                                { title: 'Nam', value: true },
+                                { title: 'Nữ', value: false }
+                            ]"
+                            item-title="title"
+                            item-value="value"
+                            variant="outlined"
+                            class="modern-input"
+                            hide-details
+                            color="blue-darken-3"
+                            prepend-inner-icon="mdi-gender-male-female"
                             :disabled="loading"
                         />
                     </div>

@@ -12,6 +12,10 @@ public class CustomerUpdateProfileRequest {
 
     @NotBlank(message = "Số điện thoại không được để trống")
     private String sdt;
+
+    private java.time.LocalDate ngaySinh;
+
+    private Boolean gioiTinh;
     
     // Optional fields if user wants to update avatar link later
     private String hinhAnh;

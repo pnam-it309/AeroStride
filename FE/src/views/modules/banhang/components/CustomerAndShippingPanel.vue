@@ -236,21 +236,21 @@
                                 maxlength="100"
                                 autocomplete="off"
                                 class="navy-input-field flex-grow-1"
+                                style="width: 50%"
                                 @input="emitShippingChange"
                             />
-                            <div style="width: 170px; flex: none">
-                                <v-text-field
-                                    v-model="recipientPhone"
-                                    placeholder="SĐT người nhận"
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                    maxlength="10"
-                                    autocomplete="off"
-                                    class="navy-input-field"
-                                    @input="(e) => { recipientPhone = String(e.target.value || '').replace(/\D/g, '').slice(0, 10); emitShippingChange(); }"
-                                />
-                            </div>
+                            <v-text-field
+                                v-model="recipientPhone"
+                                placeholder="SĐT người nhận"
+                                variant="outlined"
+                                density="compact"
+                                hide-details
+                                maxlength="10"
+                                autocomplete="off"
+                                class="navy-input-field flex-grow-1"
+                                style="width: 50%"
+                                @input="(e) => { recipientPhone = String(e.target.value || '').replace(/\D/g, '').slice(0, 10); emitShippingChange(); }"
+                            />
                         </div>
 
                         <v-text-field

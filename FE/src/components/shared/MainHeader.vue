@@ -29,6 +29,7 @@ const handleFavoriteClick = () => {
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 const handleLogout = async () => {
     await authStore.logout();
+    toastStore.showToast('Bạn đã đăng xuất tài khoản thành công.', 'info');
     router.push('/');
 };
 

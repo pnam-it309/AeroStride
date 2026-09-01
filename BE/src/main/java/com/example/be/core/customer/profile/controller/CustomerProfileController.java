@@ -48,6 +48,8 @@ public class CustomerProfileController {
                 .email(khachHang.getEmail())
                 .ten(khachHang.getTen())
                 .sdt(khachHang.getSdt())
+                .ngaySinh(khachHang.getNgaySinh())
+                .gioiTinh(khachHang.getGioiTinh())
                 .hinhAnh(khachHang.getHinhAnh());
 
         java.util.List<DiaChi> diaChis = diaChiRepository.findByKhachHangId(khachHang.getId());
@@ -90,6 +92,12 @@ public class CustomerProfileController {
 
         khachHang.setTen(request.getTen());
         khachHang.setSdt(request.getSdt());
+        if (request.getNgaySinh() != null) {
+            khachHang.setNgaySinh(request.getNgaySinh());
+        }
+        if (request.getGioiTinh() != null) {
+            khachHang.setGioiTinh(request.getGioiTinh());
+        }
         if (request.getHinhAnh() != null && !request.getHinhAnh().isEmpty()) {
             khachHang.setHinhAnh(request.getHinhAnh());
         }

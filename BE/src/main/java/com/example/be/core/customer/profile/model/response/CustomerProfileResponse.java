@@ -13,6 +13,8 @@ public class CustomerProfileResponse {
     private String email;
     private String ten;
     private String sdt;
+    private java.time.LocalDate ngaySinh;
+    private Boolean gioiTinh;
     private String diaChiChiTiet;
     private String phuongXa;
     private String quanHuyen;
