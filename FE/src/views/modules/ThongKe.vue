@@ -6,8 +6,10 @@ import { formatCurrency, formatNumber } from '@/utils/formatters';
 import { dichVuThongKe } from '@/services/admin/dichVuThongKe';
 import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
 import { dichVuThuongHieu } from '@/services/product/dichVuThuocTinh';
+import { useToastStore } from '@/stores/toastStore';
 import apexchart from 'vue3-apexcharts';
 
+const toastStore = useToastStore();
 const loading = ref(true);
 
 const padDatePart = (value) => String(value).padStart(2, '0');
@@ -31,7 +33,7 @@ const onStartDateChange = (val) => {
         endDate.value = startDate.value;
     }
     if (startDate.value && endDate.value) {
-        loadStatistics();
+        refreshAllData(false);
     }
 };
 
@@ -41,7 +43,7 @@ const onEndDateChange = (val) => {
         startDate.value = endDate.value;
     }
     if (startDate.value && endDate.value) {
-        loadStatistics();
+        refreshAllData(false);
     }
 };
 
@@ -987,8 +989,32 @@ const loadStatistics = async () => {
                 data: end3HourData.customers
             }
         ];
+
+        // Tự động làm mới key để ApexCharts vẽ lại ngay tức thì không cần reload
+        startHourlyChartKey.value += 1;
+        endHourlyChartKey.value += 1;
+        areaChartKey.value += 1;
+        statusBarChartKey.value += 1;
+        donutChartKey.value += 1;
     } catch (error) {
         console.error('Error loading statistics:', error);
+    } finally {
+        loading.value = false;
+    }
+};
+
+const refreshAllData = async (showToast = true) => {
+    loading.value = true;
+    try {
+        await Promise.all([loadStatistics(), loadBrands()]);
+        if (showToast) {
+            toastStore.showToast('Cập nhật dữ liệu thống kê thành công!', 'success');
+        }
+    } catch (e) {
+        console.error('Error refreshing all statistics:', e);
+        if (showToast) {
+            toastStore.showToast('Có lỗi xảy ra khi cập nhật dữ liệu!', 'error');
+        }
     } finally {
         loading.value = false;
     }
@@ -1033,7 +1059,10 @@ const statusBarSeries = computed(() => [
     }
 ]);
 
-const donutChartSeries = ref([]);
+const startHourlyChartKey = ref(0);
+const endHourlyChartKey = ref(0);
+const areaChartKey = ref(0);
+const statusBarChartKey = ref(0);
 const donutChartKey = ref(0);
 
 const hasValidDonutData = computed(() => {
@@ -1282,7 +1311,7 @@ onMounted(async () => {
                         class="stats-refresh-btn px-6"
                         height="40"
                         :loading="loading"
-                        @click="loadStatistics"
+                        @click="() => refreshAllData(true)"
                     >
                         <v-icon start size="18">mdi-refresh</v-icon>
                         Cập nhật dữ liệu
@@ -1329,7 +1358,7 @@ onMounted(async () => {
                         <div v-if="loading" class="panel-loader panel-loader-tall">
                             <v-progress-circular indeterminate color="primary" />
                         </div>
-                        <apexchart v-else type="line" height="280" :options="startHourlyChartOptions" :series="startHourlyChartSeries" />
+                        <apexchart v-else :key="startHourlyChartKey" type="line" height="280" :options="startHourlyChartOptions" :series="startHourlyChartSeries" />
                     </div>
                 </section>
 
@@ -1357,7 +1386,7 @@ onMounted(async () => {
                         <div v-if="loading" class="panel-loader panel-loader-tall">
                             <v-progress-circular indeterminate color="primary" />
                         </div>
-                        <apexchart v-else type="line" height="280" :options="endHourlyChartOptions" :series="endHourlyChartSeries" />
+                        <apexchart v-else :key="endHourlyChartKey" type="line" height="280" :options="endHourlyChartOptions" :series="endHourlyChartSeries" />
                     </div>
                 </section>
             </div>
@@ -1383,7 +1412,7 @@ onMounted(async () => {
                         <div v-if="loading" class="panel-loader panel-loader-tall">
                             <v-progress-circular indeterminate color="primary" />
                         </div>
-                        <apexchart v-else type="line" height="310" :options="areaChartOptions" :series="areaChartSeries" />
+                        <apexchart v-else :key="areaChartKey" type="line" height="310" :options="areaChartOptions" :series="areaChartSeries" />
                     </div>
                 </section>
 
@@ -1409,6 +1438,7 @@ onMounted(async () => {
                                 </article>
                             </div>
                             <apexchart
+                                :key="statusBarChartKey"
                                 class="status-bar-chart"
                                 type="bar"
                                 height="320"

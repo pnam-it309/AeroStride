@@ -5,7 +5,8 @@ import AppDatePicker from '@/components/common/AppDatePicker.vue';
 import apiService from '@/services/apiService';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
-import { formatDateTime, formatCurrency } from '@/utils/formatters';
+import { GIAO_CA_STATUS, GIAO_CA_STATUS_CONFIG, GIAO_CA_STATUS_OPTIONS } from '@/constants/lichLamViecConstants';
+import { formatDateTime } from '@/utils/formatters';
 
 const activeTab = ref('hoat-dong');
 const loading = ref(false);
@@ -13,12 +14,13 @@ const isRefreshing = ref(false);
 
 const breadcrumbs = [
     { title: 'Quản lý lịch', disabled: false, href: '#' },
-    { title: 'Lịch sử hoạt động', disabled: true }
+    { title: 'Lịch sử hoạt động & ca làm', disabled: true }
 ];
 
 const filters = ref({
     search: '',
-    ngay: null
+    ngay: null,
+    trangThai: null
 });
 
 // ==================== TAB 1: LỊCH SỬ HOẠT ĐỘNG ====================
@@ -62,7 +64,7 @@ const loadActivities = async () => {
     }
 };
 
-// ==================== TAB 2: LỊCH SỬ GIAO CA ====================
+// ==================== TAB 2: LỊCH SỬ GIAO CA / CA LÀM ====================
 const listGiaoCa = ref([]);
 const paginationGiaoCa = ref({
     page: 1,
@@ -70,16 +72,13 @@ const paginationGiaoCa = ref({
 });
 
 const headersGiaoCa = [
-    { text: 'Mã ca', align: 'center', width: '90px' },
-    { text: 'Nhân viên mở', align: 'start' },
-    { text: 'Trạng thái', align: 'center', width: '120px' },
-    { text: 'Thời gian mở', align: 'center', width: '160px' },
-    { text: 'Thời gian chốt', align: 'center', width: '160px' },
-    { text: 'Tiền mặt đầu ca', align: 'end', width: '140px' },
-    { text: 'Doanh thu ca', align: 'end', width: '140px' },
-    { text: 'Tiền mặt chốt ca', align: 'end', width: '140px' },
-    { text: 'Chênh lệch', align: 'end', width: '140px' },
-    { text: 'Người nhận ca', align: 'start' }
+    { text: 'STT', width: '60px', align: 'center' },
+    { text: 'Mã nhân viên', width: '130px', align: 'center' },
+    { text: 'Nhân viên', width: '180px', align: 'start' },
+    { text: 'Thời gian mở ca', width: '180px', align: 'center' },
+    { text: 'Thời gian chốt ca', width: '180px', align: 'center' },
+    { text: 'Thời gian làm việc', width: '160px', align: 'center' },
+    { text: 'Trạng thái', width: '130px', align: 'center' }
 ];
 
 const fetchListGiaoCa = async () => {
@@ -100,16 +99,18 @@ const filteredGiaoCaList = computed(() => {
     const search = filters.value.search?.toLowerCase()?.trim();
     if (search) {
         list = list.filter((item) => {
-            const ma = (item.maGiaoCa || item.id || '').toLowerCase();
-            const nv = (item.nhanVienTen || '').toLowerCase();
-            const nvNhan = (item.nhanVienNhanCaTen || '').toLowerCase();
-            return ma.includes(search) || nv.includes(search) || nvNhan.includes(search);
+            const maNv = (item.maNhanVien || item.maNhanVienTrongCa || '').toLowerCase();
+            const nv = (item.nhanVienTen || item.tenNhanVienTrongCa || '').toLowerCase();
+            return maNv.includes(search) || nv.includes(search);
         });
+    }
+    if (filters.value.trangThai) {
+        list = list.filter((item) => item.trangThai === filters.value.trangThai);
     }
     if (filters.value.ngay) {
         const filterDateStr = filters.value.ngay;
         list = list.filter((item) => {
-            const ts = item.thoiGianMoCa;
+            const ts = item.thoiGianMoCa || item.thoiGianVaoCa;
             if (!ts) return false;
             const dateStr = new Date(ts).toISOString().substr(0, 10);
             return dateStr === filterDateStr;
@@ -129,15 +130,11 @@ const paginatedGiaoCaList = computed(() => {
 });
 
 const getStatusColor = (status) => {
-    if (status === 'OPEN') return 'success';
-    if (status === 'CLOSED') return 'grey';
-    return 'primary';
+    return GIAO_CA_STATUS_CONFIG[status]?.color || 'primary';
 };
 
 const getStatusLabel = (status) => {
-    if (status === 'OPEN') return 'Đang mở';
-    if (status === 'CLOSED') return 'Đã chốt';
-    return status || '--';
+    return GIAO_CA_STATUS_CONFIG[status]?.label || status || '--';
 };
 
 const formatDate = (dateNum) => {
@@ -145,21 +142,25 @@ const formatDate = (dateNum) => {
     return formatDateTime(dateNum);
 };
 
-const getChenhLech = (item) => {
-    const expected = (item.tienBanDau || 0) + (item.tongDoanhThu || 0);
-    return (item.tienThucTe || 0) - expected;
-};
+const formatDuration = (start, end) => {
+    if (!start) return '--';
+    const startTime = typeof start === 'number' ? start : new Date(start).getTime();
+    const endTime = end ? (typeof end === 'number' ? end : new Date(end).getTime()) : Date.now();
+    if (isNaN(startTime) || isNaN(endTime) || endTime < startTime) return '--';
 
-const getChenhLechColor = (val) => {
-    if (val > 0) return 'text-info';
-    if (val < 0) return 'text-error';
-    return 'text-success';
+    const diffMinutes = Math.floor((endTime - startTime) / (1000 * 60));
+    const hours = Math.floor(diffMinutes / 60);
+    const minutes = diffMinutes % 60;
+
+    if (hours === 0) return `${minutes} phút`;
+    if (minutes === 0) return `${hours} giờ`;
+    return `${hours} giờ ${minutes} phút`;
 };
 
 // ==================== SHARED HANDLERS ====================
 const handleRefresh = async () => {
     isRefreshing.value = true;
-    filters.value = { search: '', ngay: null };
+    filters.value = { search: '', ngay: null, trangThai: null };
     if (activeTab.value === 'hoat-dong') {
         pagination.value.page = 1;
         await loadActivities();
@@ -198,35 +199,80 @@ onMounted(() => {
 
         <div class="filter-top invoice-filter-shell mb-3">
             <AdminFilter title="Bộ lọc lịch sử" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                <v-col cols="12" md="6" class="filter-cell">
-                    <div class="filter-field-label">Tìm kiếm</div>
-                    <v-text-field
-                        v-model="filters.search"
-                        placeholder="Nhập từ khóa tìm kiếm..."
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        clearable
-                        prepend-inner-icon="mdi-magnify"
-                        @input="handleFilter"
-                    />
-                </v-col>
-                <v-col cols="12" md="4" class="filter-cell">
-                    <div class="filter-field-label">Lọc theo ngày</div>
-                    <AppDatePicker
-                        :model-value="filters.ngay"
-                        @update:model-value="
-                            (val) => {
-                                filters.ngay = val
-                                    ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10)
-                                    : null;
-                                handleFilter();
-                            }
-                        "
-                        placeholder="Chọn ngày"
-                        clearable
-                    />
-                </v-col>
+                <template v-if="activeTab === 'hoat-dong'">
+                    <v-col cols="12" md="6" class="filter-cell">
+                        <div class="filter-field-label">Tìm kiếm hoạt động</div>
+                        <v-text-field
+                            v-model="filters.search"
+                            placeholder="Nhập từ khóa tìm kiếm (người thực hiện, hành động)..."
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                            clearable
+                            prepend-inner-icon="mdi-magnify"
+                            @input="handleFilter"
+                        />
+                    </v-col>
+                    <v-col cols="12" md="6" class="filter-cell">
+                        <div class="filter-field-label">Lọc theo ngày</div>
+                        <AppDatePicker
+                            :model-value="filters.ngay"
+                            @update:model-value="
+                                (val) => {
+                                    filters.ngay = val
+                                        ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10)
+                                        : null;
+                                    handleFilter();
+                                }
+                            "
+                            placeholder="Chọn ngày"
+                            clearable
+                        />
+                    </v-col>
+                </template>
+
+                <template v-else>
+                    <v-col cols="12" md="4" class="filter-cell">
+                        <div class="filter-field-label">Tìm kiếm nhân viên</div>
+                        <v-text-field
+                            v-model="filters.search"
+                            placeholder="Nhập mã nhân viên hoặc tên..."
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                            clearable
+                            prepend-inner-icon="mdi-magnify"
+                            @input="handleFilter"
+                        />
+                    </v-col>
+                    <v-col cols="12" md="4" class="filter-cell">
+                        <div class="filter-field-label">Trạng thái ca</div>
+                        <v-select
+                            v-model="filters.trangThai"
+                            :items="GIAO_CA_STATUS_OPTIONS"
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                            @update:model-value="handleFilter"
+                        />
+                    </v-col>
+                    <v-col cols="12" md="4" class="filter-cell">
+                        <div class="filter-field-label">Lọc theo ngày</div>
+                        <AppDatePicker
+                            :model-value="filters.ngay"
+                            @update:model-value="
+                                (val) => {
+                                    filters.ngay = val
+                                        ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10)
+                                        : null;
+                                    handleFilter();
+                                }
+                            "
+                            placeholder="Chọn ngày"
+                            clearable
+                        />
+                    </v-col>
+                </template>
             </AdminFilter>
         </div>
 
@@ -255,8 +301,8 @@ onMounted(() => {
                             Lịch sử hoạt động
                         </v-tab>
                         <v-tab value="giao-ca" class="text-none px-4 font-weight-bold">
-                            <v-icon start size="18">mdi-cash-register</v-icon>
-                            Lịch sử giao ca
+                            <v-icon start size="18">mdi-calendar-clock</v-icon>
+                            Lịch sử ca làm
                         </v-tab>
                     </v-tabs>
                 </div>
@@ -293,10 +339,10 @@ onMounted(() => {
             </template>
         </AdminTable>
 
-        <!-- TAB 2: LỊCH SỬ GIAO CA -->
+        <!-- TAB 2: LỊCH SỬ CA LÀM / GIAO CA -->
         <AdminTable
             v-else-if="activeTab === 'giao-ca'"
-            title="Lịch sử giao ca nhân viên"
+            title="Lịch sử ca làm nhân viên"
             :headers="headersGiaoCa"
             :items="paginatedGiaoCaList"
             :loading="loading"
@@ -318,33 +364,49 @@ onMounted(() => {
                             Lịch sử hoạt động
                         </v-tab>
                         <v-tab value="giao-ca" class="text-none px-4 font-weight-bold">
-                            <v-icon start size="18">mdi-cash-register</v-icon>
-                            Lịch sử giao ca
+                            <v-icon start size="18">mdi-calendar-clock</v-icon>
+                            Lịch sử ca làm
                         </v-tab>
                     </v-tabs>
                 </div>
             </template>
 
-            <template #row="{ item }">
+            <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center">#{{ item.id }}</td>
-                    <td class="data-cell font-weight-medium">{{ item.nhanVienTen || 'N/A' }}</td>
+                    <td class="data-cell text-center font-weight-medium text-slate-500">
+                        {{ (paginationGiaoCa.page - 1) * paginationGiaoCa.size + index + 1 }}
+                    </td>
+                    <td class="data-cell text-center">
+                        <span class="font-weight-bold text-primary font-mono text-body-2">
+                            {{ item.maNhanVien || item.maNhanVienTrongCa || '--' }}
+                        </span>
+                    </td>
+                    <td class="data-cell">
+                        <div class="d-flex align-center">
+                            <v-avatar size="26" color="primary-lighten-5" class="mr-2 border">
+                                <span class="font-weight-bold text-primary text-caption">
+                                    {{ (item.nhanVienTen || item.tenNhanVienTrongCa || '?').charAt(0).toUpperCase() }}
+                                </span>
+                            </v-avatar>
+                            <span class="font-weight-bold text-slate-800 text-body-2">
+                                {{ item.nhanVienTen || item.tenNhanVienTrongCa || 'N/A' }}
+                            </span>
+                        </div>
+                    </td>
+                    <td class="data-cell text-center text-slate-700 font-weight-medium">
+                        {{ formatDate(item.thoiGianMoCa || item.thoiGianVaoCa) }}
+                    </td>
+                    <td class="data-cell text-center text-slate-700 font-weight-medium">
+                        {{ (item.thoiGianChotCa || item.thoiGianRaCa) ? formatDate(item.thoiGianChotCa || item.thoiGianRaCa) : '--' }}
+                    </td>
+                    <td class="data-cell text-center font-weight-bold text-slate-800">
+                        {{ formatDuration(item.thoiGianMoCa || item.thoiGianVaoCa, item.thoiGianChotCa || item.thoiGianRaCa) }}
+                    </td>
                     <td class="data-cell text-center">
                         <v-chip size="small" :color="getStatusColor(item.trangThai)" class="font-weight-bold" variant="flat">
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
-                    <td class="data-cell text-center text-slate-500">{{ formatDate(item.thoiGianMoCa) }}</td>
-                    <td class="data-cell text-center text-slate-500">{{ formatDate(item.thoiGianChotCa) }}</td>
-                    <td class="data-cell text-right">{{ formatCurrency(item.tienBanDau) }}</td>
-                    <td class="data-cell text-right text-success font-weight-bold">{{ formatCurrency(item.tongDoanhThu) }}</td>
-                    <td class="data-cell text-right">{{ formatCurrency(item.tienThucTe) }}</td>
-                    <td class="data-cell text-right">
-                        <span :class="['font-weight-bold', getChenhLechColor(getChenhLech(item))]">
-                            {{ getChenhLech(item) > 0 ? '+' : '' }}{{ formatCurrency(getChenhLech(item)) }}
-                        </span>
-                    </td>
-                    <td class="data-cell font-weight-medium">{{ item.nhanVienNhanCaTen || '--' }}</td>
                 </tr>
             </template>
 

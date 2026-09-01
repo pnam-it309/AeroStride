@@ -12,8 +12,10 @@ public class AdminGiaoCaResponse {
     private String id;
     private String maGiaoCa;
     private String nhanVienTrongCaId;
+    private String maNhanVienTrongCa;
     private String tenNhanVienTrongCa;
     private String nhanVienNhanCaId;
+    private String maNhanVienNhanCa;
     private String tenNhanVienNhanCa;
     private Long thoiGianVaoCa;
     private Long thoiGianRaCa;
@@ -34,6 +36,10 @@ public class AdminGiaoCaResponse {
 
     public String getNhanVienTen() {
         return tenNhanVienTrongCa;
+    }
+
+    public String getMaNhanVien() {
+        return maNhanVienTrongCa;
     }
 
     public String getNhanVienNhanCaTen() {

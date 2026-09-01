@@ -13,6 +13,7 @@ import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
 import { useRoleAccess } from '@/composables/useRoleAccess';
 import { isManagementRole } from '@/constants/appConstants';
+import { LICH_LAM_VIEC_STATUS, LICH_LAM_VIEC_STATUS_CONFIG, LICH_LAM_VIEC_STATUS_OPTIONS } from '@/constants/lichLamViecConstants';
 
 const router = useRouter();
 const { addNotification } = useNotifications();
@@ -56,21 +57,15 @@ const filters = ref({
     ngay: null
 });
 
-const statusOptions = [
-    { title: 'Tất cả trạng thái', value: 'Tất cả' },
-    { title: 'Chờ xác nhận', value: 'CHO_XAC_NHAN' },
-    { title: 'Đã xác nhận', value: 'DA_XAC_NHAN' },
-    { title: 'Đã hủy', value: 'DA_HUY' }
-];
+const statusOptions = LICH_LAM_VIEC_STATUS_OPTIONS;
+const formStatusOptions = LICH_LAM_VIEC_STATUS_OPTIONS.filter((o) => o.value !== 'Tất cả');
 
 const getScheduleStatusBadge = (status) => {
-    if (status === 'DA_XAC_NHAN') {
-        return { label: 'Đã xác nhận', color: 'success', icon: 'mdi-check-circle-outline' };
-    }
-    if (status === 'DA_HUY') {
-        return { label: 'Đã hủy', color: 'error', icon: 'mdi-close-circle-outline' };
-    }
-    return { label: 'Chờ xác nhận', color: 'warning', icon: 'mdi-clock-outline' };
+    return LICH_LAM_VIEC_STATUS_CONFIG[status] || {
+        label: status || 'Chưa vào ca',
+        color: 'grey',
+        icon: 'mdi-clock-outline'
+    };
 };
 
 // Add Dialog State
@@ -90,7 +85,7 @@ const addForm = ref({
     nhanVien: [],
     ca: [],
     ngay: new Date().toISOString().substr(0, 10),
-    trangThai: 'CHO_XAC_NHAN'
+    trangThai: LICH_LAM_VIEC_STATUS.CHUA_VAO_CA
 });
 
 // Import Preview State
@@ -823,7 +818,7 @@ const swapEmployeeList = computed(() => {
             let hasShift = false;
             let currentShiftName = '';
             let scheduleId = null;
-            let trangThai = 'CHO_XAC_NHAN';
+            let trangThai = LICH_LAM_VIEC_STATUS.CHUA_VAO_CA;
             if (empSchedule) {
                 statusText = `Đang làm ca: ${empSchedule.ca}`;
                 hasShift = true;
@@ -926,7 +921,7 @@ const handleAddForCellAndShift = (dateStr, shiftName) => {
     addForm.value.nhanVien = [];
     addForm.value.ca = [shiftName];
     addForm.value.ngay = dateStr;
-    addForm.value.trangThai = 'CHO_XAC_NHAN';
+    addForm.value.trangThai = LICH_LAM_VIEC_STATUS.CHUA_VAO_CA;
     showCellDetailDialog.value = false;
     showAddDialog.value = true;
 };
@@ -1060,8 +1055,8 @@ onMounted(() => {
 
         <div class="mb-3"></div>
 
-        <AdminFilter title="Bộ lọc" :isRefreshing="isRefreshing" @refresh="handleRefresh" class="mb-4">
-            <v-col cols="12" sm="6" md="4" class="px-2">
+        <AdminFilter title="Bộ lọc lịch làm việc" :isRefreshing="isRefreshing" @refresh="handleRefresh" class="mb-4">
+            <v-col cols="12" sm="6" md="3" class="px-2 filter-cell">
                 <div class="filter-field-label">Nhân viên</div>
                 <v-text-field
                     v-if="canManageSchedule"
@@ -1087,7 +1082,7 @@ onMounted(() => {
                     class="compact-input"
                 />
             </v-col>
-            <v-col cols="12" sm="6" md="4" class="px-2">
+            <v-col cols="12" sm="6" md="3" class="px-2 filter-cell">
                 <div class="filter-field-label">Ca làm</div>
                 <v-select
                     v-model="filters.ca"
@@ -1099,7 +1094,19 @@ onMounted(() => {
                     @update:model-value="handleFilter"
                 />
             </v-col>
-            <v-col cols="12" sm="6" md="4" class="px-2">
+            <v-col cols="12" sm="6" md="3" class="px-2 filter-cell">
+                <div class="filter-field-label">Trạng thái</div>
+                <v-select
+                    v-model="filters.trangThai"
+                    :items="statusOptions"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    class="compact-input"
+                    @update:model-value="handleFilter"
+                />
+            </v-col>
+            <v-col cols="12" sm="6" md="3" class="px-2 filter-cell">
                 <div class="filter-field-label">Ngày làm</div>
                 <AppDatePicker
                     :model-value="filters.ngay"
@@ -1165,36 +1172,6 @@ onMounted(() => {
 
             <!-- Table View Mode Content -->
             <div v-if="mainTab === 'table'" class="flex-grow-1 overflow-hidden d-flex flex-column" style="min-height: 0">
-                <!-- Status Tabs (Just like HoaDon.vue) -->
-                <div class="border-b bg-white px-3">
-                    <v-tabs
-                        v-model="filters.trangThai"
-                        bg-color="transparent"
-                        color="primary"
-                        show-arrows
-                        class="admin-tabs invoice-status-tabs"
-                        height="48"
-                        @update:model-value="handleFilter"
-                    >
-                        <v-tab value="Tất cả" class="text-none px-4 font-weight-bold tab-item">
-                            <v-icon start size="16">mdi-format-list-bulleted</v-icon>
-                            Tất cả
-                        </v-tab>
-                        <v-tab value="CHO_XAC_NHAN" class="text-none px-4 font-weight-bold tab-item">
-                            <v-icon start size="16">mdi-progress-clock</v-icon>
-                            Chờ xác nhận
-                        </v-tab>
-                        <v-tab value="DA_XAC_NHAN" class="text-none px-4 font-weight-bold tab-item">
-                            <v-icon start size="16">mdi-check-circle-outline</v-icon>
-                            Đã xác nhận
-                        </v-tab>
-                        <v-tab value="DA_HUY" class="text-none px-4 font-weight-bold tab-item">
-                            <v-icon start size="16">mdi-close-circle-outline</v-icon>
-                            Đã hủy
-                        </v-tab>
-                    </v-tabs>
-                </div>
-
                 <AdminTable
                     :hideToolbar="true"
                     :headers="tableHeaders"
@@ -1703,11 +1680,7 @@ onMounted(() => {
                             <div class="filter-field-label">Trạng thái lịch làm</div>
                             <v-select
                                 v-model="addForm.trangThai"
-                                :items="[
-                                    { title: 'Chờ xác nhận', value: 'CHO_XAC_NHAN' },
-                                    { title: 'Đã xác nhận', value: 'DA_XAC_NHAN' },
-                                    { title: 'Đã hủy', value: 'DA_HUY' }
-                                ]"
+                                :items="formStatusOptions"
                                 placeholder="Chọn trạng thái"
                                 variant="outlined"
                                 density="compact"
