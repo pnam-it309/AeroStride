@@ -62,6 +62,26 @@ const showReviewModal = ref(false);
 const newReview = ref({ rating: 5, comment: '' });
 const submittingReview = ref(false);
 
+// State cho xem chi tiết ảnh / Lightbox modal
+const showImageLightbox = ref(false);
+const lightboxIndex = ref(0);
+
+const openImageLightbox = (index = activeSlide.value) => {
+    if (!allImages.value || allImages.value.length === 0) return;
+    lightboxIndex.value = typeof index === 'number' ? index : activeSlide.value;
+    showImageLightbox.value = true;
+};
+
+const nextLightboxImage = () => {
+    if (allImages.value.length <= 1) return;
+    lightboxIndex.value = (lightboxIndex.value + 1) % allImages.value.length;
+};
+
+const prevLightboxImage = () => {
+    if (allImages.value.length <= 1) return;
+    lightboxIndex.value = (lightboxIndex.value - 1 + allImages.value.length) % allImages.value.length;
+};
+
 const handleWriteReview = () => {
     if (!authStore.isLoggedIn) {
         toastStore.showToast('Vui lòng đăng nhập để đánh giá sản phẩm', 'warning');
@@ -720,12 +740,25 @@ const toggleFavorite = () => {
         <v-container class="mt-2 mt-md-6" v-if="product">
             <v-row>
                 <!-- Left: Image Gallery -->
-                <v-col cols="12" md="6" lg="5" class="image-gallery">
+                <v-col cols="12" md="6" lg="6" class="image-gallery">
                     <div class="product-gallery-wrapper">
-                        <!-- Main Image Box -->
+                        <!-- Main Image Box (Vuông & To) -->
                         <div
-                            class="rounded-xl bg-grey-lighten-4 mb-4 elevation-1 position-relative overflow-hidden main-image-box-custom"
+                            class="rounded-2xl bg-grey-lighten-4 mb-4 elevation-1 position-relative overflow-hidden main-image-box-custom"
                         >
+                            <!-- Floating Zoom Button -->
+                            <v-btn
+                                icon
+                                variant="flat"
+                                color="white"
+                                class="position-absolute zoom-floating-btn"
+                                title="Phóng to xem chi tiết ảnh"
+                                @click.stop="openImageLightbox(activeSlide)"
+                            >
+                                <v-icon color="#1e257c" size="20">mdi-magnify-plus-outline</v-icon>
+                                <v-tooltip activator="parent" location="bottom">Bấm để phóng to ảnh</v-tooltip>
+                            </v-btn>
+
                             <!-- Floating Favorite Button -->
                             <v-btn
                                 icon
@@ -741,7 +774,14 @@ const toggleFavorite = () => {
 
                             <template v-if="allImages.length > 0">
                                 <v-carousel v-model="activeSlide" cycle interval="4000" hide-delimiters show-arrows="hover" height="100%">
-                                    <v-carousel-item v-for="(img, i) in allImages" :key="i" :src="img.duongDanAnh" cover>
+                                    <v-carousel-item
+                                        v-for="(img, i) in allImages"
+                                        :key="i"
+                                        :src="img.duongDanAnh"
+                                        cover
+                                        class="cursor-pointer"
+                                        @click="openImageLightbox(i)"
+                                    >
                                         <template #placeholder>
                                             <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
                                                 <v-progress-circular indeterminate color="#1e257c"></v-progress-circular>
@@ -762,72 +802,67 @@ const toggleFavorite = () => {
                             </template>
                         </div>
 
-                        <!-- Multi-Slot Thumbnail Strip -->
+                        <!-- Multi-Slot Thumbnail Strip (To lên ~20px) -->
                         <div class="thumbnail-strip-section mb-4">
-                            <div class="d-flex align-center justify-space-between mb-2">
+                            <div class="d-flex align-center justify-space-between mb-3">
                                 <span class="text-caption font-weight-bold" style="color: #1e257c">
-                                    <v-icon size="14" class="mr-1" style="color: #1e257c">mdi-view-grid-outline</v-icon>
+                                    <v-icon size="15" class="mr-1" style="color: #1e257c">mdi-view-grid-outline</v-icon>
                                     Bộ sưu tập hình ảnh ({{ allImages.length }} hình ảnh)
+                                </span>
+                                <span class="text-caption text-slate-500 font-weight-medium">
+                                    <v-icon size="13" class="mr-0.5">mdi-cursor-default-click-outline</v-icon>
+                                    Bấm vào ảnh để xem chi tiết
                                 </span>
                             </div>
 
-                            <v-row class="g-2">
+                            <div class="d-flex flex-wrap align-center ga-3 thumbnail-strip-container">
                                 <template v-if="allImages.length > 0">
-                                    <v-col v-for="(img, i) in allImages" :key="'img-' + i" cols="3" sm="2" class="mb-2">
-                                        <v-card
-                                            class="rounded-lg overflow-hidden"
-                                            :elevation="activeSlide === i ? 4 : 0"
-                                            :style="
-                                                activeSlide === i
-                                                    ? 'border: 2px solid #1e257c; box-shadow: 0 4px 10px rgba(30, 37, 124, 0.25);'
-                                                    : 'border: 1px solid #e2e8f0; cursor: pointer;'
-                                            "
-                                            @click="activeSlide = i"
+                                    <v-card
+                                        v-for="(img, i) in allImages"
+                                        :key="'img-' + i"
+                                        class="thumbnail-card rounded-xl overflow-hidden position-relative"
+                                        :elevation="activeSlide === i ? 3 : 0"
+                                        :class="{ 'thumbnail-active': activeSlide === i }"
+                                        @click="activeSlide = i"
+                                    >
+                                        <v-img
+                                            :src="img.thumbnailUrl || img.duongDanAnh"
+                                            cover
+                                            class="w-100 h-100"
+                                            loading="eager"
+                                            decoding="async"
                                         >
-                                            <v-img
-                                                :src="img.thumbnailUrl || img.duongDanAnh"
-                                                cover
-                                                class="aspect-square"
-                                                loading="eager"
-                                                decoding="async"
-                                            >
-                                                <template #placeholder>
-                                                    <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
-                                                        <v-icon size="18" color="grey">mdi-image-outline</v-icon>
-                                                    </div>
-                                                </template>
-                                            </v-img>
-                                        </v-card>
-                                    </v-col>
+                                            <template #placeholder>
+                                                <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
+                                                    <v-icon size="18" color="grey">mdi-image-outline</v-icon>
+                                                </div>
+                                            </template>
+                                        </v-img>
+                                        <v-tooltip activator="parent" location="top">Xem ảnh {{ i + 1 }}</v-tooltip>
+                                    </v-card>
                                 </template>
 
                                 <template v-if="allImages.length < 4">
-                                    <v-col
+                                    <v-card
                                         v-for="(angleLabel, idx) in placeholderAngles.slice(allImages.length)"
                                         :key="'angle-' + idx"
-                                        cols="3"
-                                        sm="2"
-                                        class="mb-2"
+                                        class="placeholder-card rounded-xl bg-grey-lighten-5 overflow-hidden d-flex flex-column align-center justify-center text-center pa-1"
+                                        style="opacity: 0.85"
                                     >
-                                        <v-card
-                                            class="rounded-lg bg-grey-lighten-5 overflow-hidden d-flex flex-column align-center justify-center aspect-square text-center pa-1"
-                                            style="border: 1px dashed #cbd5e1; opacity: 0.85"
-                                        >
-                                            <v-icon color="#1e257c" size="20" class="mb-1">mdi-camera-outline</v-icon>
-                                            <span style="font-size: 0.65rem; color: #64748b; font-weight: 600; line-height: 1">{{
-                                                angleLabel
-                                            }}</span>
-                                        </v-card>
-                                    </v-col>
+                                        <v-icon color="#1e257c" size="22" class="mb-1">mdi-camera-outline</v-icon>
+                                        <span style="font-size: 0.7rem; color: #64748b; font-weight: 600; line-height: 1.1">{{
+                                            angleLabel
+                                        }}</span>
+                                    </v-card>
                                 </template>
-                            </v-row>
+                            </div>
                         </div>
                     </div>
                 </v-col>
 
                 <!-- Right: Product Info -->
-                <v-col cols="12" md="6" lg="7">
-                    <div class="sticky-info-panel px-md-8">
+                <v-col cols="12" md="6" lg="6">
+                    <div class="sticky-info-panel px-md-6">
                         <!-- Brand tag above the title -->
                         <div class="product-brand-tag text-uppercase mb-2">
                             {{ product.tenThuongHieu || 'AEROSTRIDE' }}
@@ -1251,6 +1286,77 @@ const toggleFavorite = () => {
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <!-- Image Detail / Lightbox Modal -->
+        <v-dialog v-model="showImageLightbox" max-width="1000" class="image-lightbox-dialog">
+            <v-card class="bg-slate-950 text-white rounded-2xl overflow-hidden elevation-24 position-relative">
+                <!-- Header Toolbar -->
+                <div class="d-flex align-center justify-space-between px-4 py-3 bg-slate-900 border-b border-slate-800">
+                    <div class="d-flex align-center ga-2">
+                        <v-icon color="#60a5fa" size="22">mdi-image-search-outline</v-icon>
+                        <span class="text-subtitle-2 font-weight-bold text-white text-truncate" style="max-width: 500px">
+                            {{ product?.tenSanPham || 'Chi tiết hình ảnh' }}
+                        </span>
+                        <v-chip size="x-small" color="primary" variant="flat" class="font-weight-bold ml-2">
+                            {{ lightboxIndex + 1 }} / {{ allImages.length }}
+                        </v-chip>
+                    </div>
+                    <v-btn icon="mdi-close" variant="text" color="white" size="small" @click="showImageLightbox = false"></v-btn>
+                </div>
+
+                <!-- Main Preview Area -->
+                <div class="position-relative d-flex align-center justify-center bg-black pa-4" style="min-height: 520px; max-height: 72vh">
+                    <v-img
+                        v-if="allImages[lightboxIndex]"
+                        :src="allImages[lightboxIndex].duongDanAnh"
+                        contain
+                        max-height="68vh"
+                        class="w-100 rounded-lg"
+                    >
+                        <template #placeholder>
+                            <div class="d-flex align-center justify-center fill-height">
+                                <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                            </div>
+                        </template>
+                    </v-img>
+
+                    <!-- Prev/Next Controls -->
+                    <template v-if="allImages.length > 1">
+                        <v-btn
+                            icon="mdi-chevron-left"
+                            variant="flat"
+                            color="rgba(15, 23, 42, 0.75)"
+                            class="position-absolute text-white"
+                            style="left: 16px; top: 50%; transform: translateY(-50%)"
+                            size="large"
+                            @click="prevLightboxImage"
+                        ></v-btn>
+                        <v-btn
+                            icon="mdi-chevron-right"
+                            variant="flat"
+                            color="rgba(15, 23, 42, 0.75)"
+                            class="position-absolute text-white"
+                            style="right: 16px; top: 50%; transform: translateY(-50%)"
+                            size="large"
+                            @click="nextLightboxImage"
+                        ></v-btn>
+                    </template>
+                </div>
+
+                <!-- Footer Strip of Thumbnails -->
+                <div v-if="allImages.length > 1" class="px-4 py-3 bg-slate-900 border-t border-slate-800 d-flex justify-center ga-3 overflow-x-auto">
+                    <div
+                        v-for="(img, idx) in allImages"
+                        :key="'lb-thumb-' + idx"
+                        class="lightbox-thumb-item rounded-lg overflow-hidden cursor-pointer"
+                        :class="{ 'lightbox-thumb-active': lightboxIndex === idx }"
+                        @click="lightboxIndex = idx"
+                    >
+                        <v-img :src="img.thumbnailUrl || img.duongDanAnh" cover width="64" height="64"></v-img>
+                    </div>
+                </div>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
@@ -1369,30 +1475,97 @@ const toggleFavorite = () => {
 }
 
 .main-image-box-custom {
-    aspect-ratio: 1;
-    max-height: 440px;
-    border: 1px solid #e2e8f0;
+    aspect-ratio: 1 / 1 !important;
     width: 100%;
+    min-height: 400px;
+    max-height: 580px;
+    border: 1px solid #e2e8f0;
     margin: 0 auto;
+    cursor: pointer;
+    background: #f8fafc;
 }
 
 @media (max-width: 960px) {
     .main-image-box-custom {
-        max-height: 300px !important;
-        aspect-ratio: 4 / 3 !important;
+        min-height: 340px !important;
+        max-height: 480px !important;
+        aspect-ratio: 1 / 1 !important;
     }
     .sticky-info-panel {
         position: relative;
         top: 0;
         padding: 0;
-        margin-top: 16px !important;
+        margin-top: 24px !important;
     }
 }
 
 @media (max-width: 600px) {
     .main-image-box-custom {
-        max-height: 230px !important;
-        aspect-ratio: 4 / 3 !important;
+        min-height: 280px !important;
+        max-height: 360px !important;
+        aspect-ratio: 1 / 1 !important;
+    }
+}
+
+.zoom-floating-btn {
+    top: 16px;
+    right: 68px;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 50% !important;
+    width: 44px !important;
+    height: 44px !important;
+    transition: all 0.2s ease;
+
+    &:hover {
+        transform: scale(1.08);
+        box-shadow: 0 6px 16px rgba(30, 37, 124, 0.2) !important;
+    }
+}
+
+.thumbnail-card {
+    width: 84px;
+    height: 84px;
+    aspect-ratio: 1;
+    border: 2px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    background: #ffffff;
+
+    &:hover {
+        border-color: #1e257c;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(30, 37, 124, 0.18) !important;
+    }
+
+    &.thumbnail-active {
+        border-color: #1e257c !important;
+        box-shadow: 0 4px 14px rgba(30, 37, 124, 0.3) !important;
+    }
+}
+
+.placeholder-card {
+    width: 84px;
+    height: 84px;
+    aspect-ratio: 1;
+    border: 1.5px dashed #cbd5e1;
+    flex-shrink: 0;
+}
+
+.lightbox-thumb-item {
+    border: 2px solid transparent;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+
+    &:hover {
+        opacity: 0.9;
+    }
+
+    &.lightbox-thumb-active {
+        border-color: #60a5fa !important;
+        opacity: 1 !important;
+        transform: scale(1.05);
     }
 }
 
