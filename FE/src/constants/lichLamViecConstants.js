@@ -52,9 +52,27 @@ export const GIAO_CA_STATUS_CONFIG = {
     },
     [GIAO_CA_STATUS.CLOSED]: {
         label: 'Đã chốt',
-        color: 'grey',
+        color: 'primary',
         icon: 'mdi-lock-outline',
-        chipClass: 'status-chip-default'
+        chipClass: 'status-chip-confirmed'
+    },
+    'DANG_MO': {
+        label: 'Đang mở',
+        color: 'success',
+        icon: 'mdi-lock-open-outline',
+        chipClass: 'status-chip-active'
+    },
+    'DA_CHOT': {
+        label: 'Đã chốt',
+        color: 'primary',
+        icon: 'mdi-lock-outline',
+        chipClass: 'status-chip-confirmed'
+    },
+    'PENDING': {
+        label: 'Chờ nhận ca',
+        color: 'warning',
+        icon: 'mdi-clock-outline',
+        chipClass: 'status-chip-pending'
     }
 };
 

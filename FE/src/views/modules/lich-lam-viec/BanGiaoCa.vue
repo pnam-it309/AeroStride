@@ -769,7 +769,6 @@ const getStatusBadge = (status) => {
         <!-- LỊCH SỬ BÀN GIAO CA -->
         <AdminTable
             title="Lịch Sử Bàn Giao Ca Gần Đây"
-            :center-title="true"
             :headers="historyHeaders"
             :items="listGiaoCaHistory"
             :loading="loading"

@@ -110,16 +110,6 @@
     min-height: 50px !important;
     border-bottom: 1px solid #f1f5f9;
     flex-shrink: 0 !important;
-    position: relative;
-}
-
-.table-title-centered {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    z-index: 1;
 }
 
 .table-top {

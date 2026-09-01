@@ -208,7 +208,7 @@ onMounted(() => {
         <div class="filter-top invoice-filter-shell mb-3">
             <AdminFilter title="Bộ lọc lịch sử" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <template v-if="activeTab === 'hoat-dong'">
-                    <v-col cols="12" md="6" class="filter-cell">
+                    <v-col cols="12" md="7" class="filter-cell">
                         <div class="filter-field-label">Tìm kiếm hoạt động</div>
                         <v-text-field
                             v-model="filters.search"
@@ -221,7 +221,7 @@ onMounted(() => {
                             @input="handleFilter"
                         />
                     </v-col>
-                    <v-col cols="12" md="6" class="filter-cell">
+                    <v-col cols="12" md="4" class="filter-cell">
                         <div class="filter-field-label">Lọc theo ngày</div>
                         <AppDatePicker
                             :model-value="filters.ngay"
@@ -253,7 +253,7 @@ onMounted(() => {
                             @input="handleFilter"
                         />
                     </v-col>
-                    <v-col cols="12" md="4" class="filter-cell">
+                    <v-col cols="12" md="3" class="filter-cell">
                         <div class="filter-field-label">Trạng thái ca</div>
                         <v-select
                             v-model="filters.trangThai"
@@ -373,7 +373,7 @@ onMounted(() => {
                         </v-tab>
                         <v-tab value="giao-ca" class="text-none px-4 font-weight-bold">
                             <v-icon start size="18">mdi-calendar-clock</v-icon>
-                            Lịch sử ca làm
+                            Lịch sử bàn giao ca
                         </v-tab>
                     </v-tabs>
                 </div>

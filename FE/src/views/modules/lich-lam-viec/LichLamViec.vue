@@ -205,21 +205,14 @@ const filteredItems = computed(() => {
     });
 });
 
-// Filtered items specifically for the main schedule table view (restricted to the target month)
+// Filtered items specifically for the main schedule table view
 const tableFilteredItems = computed(() => {
-    // Determine the target YYYY-MM
-    let targetYearMonth = '';
-    if (filters.value.ngay) {
-        targetYearMonth = filters.value.ngay.substring(0, 7);
-    } else {
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        targetYearMonth = `${yyyy}-${mm}`;
+    if (!filters.value.ngay) {
+        return filteredItems.value;
     }
-
+    const targetYearMonth = filters.value.ngay.substring(0, 7);
     return filteredItems.value.filter((item) => {
-        return item.ngay && item.ngay.startsWith(targetYearMonth);
+        return item.ngay && (item.ngay === filters.value.ngay || item.ngay.startsWith(targetYearMonth));
     });
 });
 
@@ -384,7 +377,7 @@ const saveSchedule = async () => {
                 color: 'success'
             });
             showAddDialog.value = false;
-            loadData();
+            await loadData();
         }
     } catch (error) {
         console.error('Save error:', error);
@@ -462,7 +455,7 @@ const confirmImport = async () => {
         if (response.data.success) {
             alert(response.data.data);
             showImportPreview.value = false;
-            loadData();
+            await loadData();
         }
     } catch (error) {
         console.error('Error confirming import:', error);
@@ -1163,12 +1156,12 @@ onMounted(() => {
         <!-- Shared Wrapper for View Mode -->
         <v-card class="admin-table-container elevation-0 flex-grow-1 overflow-hidden d-flex flex-column mb-0" elevation="0">
             <!-- Shared Toolbar -->
-            <div class="table-toolbar position-relative d-flex align-center justify-space-between pa-3 border-b">
-                <div class="table-title-centered d-flex align-center">
+            <div class="table-toolbar d-flex align-center justify-space-between pa-3 border-b">
+                <div class="d-flex align-center">
                     <LayoutGridIcon size="20" class="text-primary mr-2" />
                     <h3 class="text-h6 font-weight-bold text-black tracking-tight mb-0">Danh sách lịch làm việc</h3>
                 </div>
-                <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions ga-2 ml-auto z-index-1">
+                <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions ga-2">
                     <template v-if="canManageSchedule">
                         <v-btn prepend-icon="mdi-calendar-sync" variant="flat" class="admin-btn-orange" :disabled="loading" @click="openAutoScheduleDialog">
                             Xếp ca tự động

@@ -246,7 +246,6 @@ onMounted(() => {
 
         <AdminTable
             title="Danh mục các ca làm việc"
-            :center-title="true"
             :headers="tableHeaders"
             :items="paginatedItems"
             :loading="loading"

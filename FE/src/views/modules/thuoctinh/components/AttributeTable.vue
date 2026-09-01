@@ -31,7 +31,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
 </script>
 
 <template>
-    <div class="d-flex flex-column w-100">
+    <div class="admin-table-main-root flex-grow-1 min-h-0">
         <AdminTable
             :title="title"
             :addButtonText="`Tạo mới`"
@@ -40,7 +40,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
             :total-count="pagination.totalElements"
             :loading="loading"
             @add="emit('add', $event)"
-            class="all-center-table"
+            class="all-center-table flex-grow-1 min-h-0"
         >
             <template #top>
                 <v-tabs
