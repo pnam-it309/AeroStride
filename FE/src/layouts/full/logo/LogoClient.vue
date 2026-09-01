@@ -20,9 +20,8 @@ defineProps({
             <div class="logo-img-box">
                 <img :src="logo" alt="AeroStride Logo" class="logo-img" />
             </div>
-            <div v-if="!hideText" class="logo-text-block d-flex flex-column justify-center">
+            <div v-if="!hideText" class="logo-text-block d-flex align-center">
                 <span class="brand-text-italic">AEROSTRIDE</span>
-                <span class="brand-subtext" :class="{ 'text-grey-lighten-2': dark }">SPORT & SNEAKERS</span>
             </div>
         </RouterLink>
     </div>
@@ -39,21 +38,21 @@ defineProps({
     transition: transform 0.25s ease;
 
     &:hover {
-        transform: translateY(-1px) scale(1.02);
+        transform: translateY(-1px) scale(1.03);
 
         .brand-text-italic {
-            filter: drop-shadow(0 2px 8px rgba(37, 99, 235, 0.4));
+            filter: drop-shadow(0 2px 10px rgba(37, 99, 235, 0.5));
         }
 
         .logo-img {
-            transform: scale(1.05);
+            transform: scale(1.06);
         }
     }
 }
 
 .logo-img-box {
-    width: 50px;
-    height: 50px;
+    width: 62px;
+    height: 62px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -75,43 +74,30 @@ defineProps({
     line-height: 1;
 }
 
-/* Chữ AEROSTRIDE in nghiêng hiệu ứng chữ xanh rực rỡ */
+/* Chữ AEROSTRIDE in nghiêng hiệu ứng chữ xanh rực rỡ phóng to */
 .brand-text-italic {
-    font-size: 1.65rem;
+    font-size: 2.15rem;
     font-weight: 900;
     font-style: italic;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     font-family: 'Outfit', 'Inter', sans-serif;
     background: linear-gradient(135deg, #1e257c 0%, #2563eb 50%, #38bdf8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: block;
-    line-height: 1.1;
-    text-shadow: 0 2px 10px rgba(37, 99, 235, 0.15);
+    line-height: 1;
+    text-shadow: 0 2px 12px rgba(37, 99, 235, 0.2);
     transition: filter 0.3s ease;
-}
-
-.brand-subtext {
-    font-size: 0.65rem;
-    font-weight: 800;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: #64748b;
-    margin-top: 2px;
-    display: block;
 }
 
 @media (max-width: 600px) {
     .logo-img-box {
-        width: 42px;
-        height: 42px;
+        width: 48px;
+        height: 48px;
     }
     .brand-text-italic {
-        font-size: 1.35rem;
-    }
-    .brand-subtext {
-        font-size: 0.55rem;
+        font-size: 1.6rem;
     }
 }
 </style>

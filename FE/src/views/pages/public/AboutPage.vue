@@ -409,7 +409,7 @@ onMounted(() => {
                                             </div>
                                         </template>
 
-                                        <v-card class="timeline-card-premium rounded-2xl overflow-hidden elevation-3 border">
+                                         <v-card class="timeline-card-premium rounded-2xl overflow-hidden elevation-3 border">
                                             <v-row no-gutters>
                                                 <!-- Image Column -->
                                                 <v-col cols="12" md="4" class="position-relative">
@@ -421,11 +421,11 @@ onMounted(() => {
                                                         class="timeline-img"
                                                     >
                                                         <div class="img-gradient-overlay d-flex flex-column justify-space-between pa-4">
-                                                            <v-chip size="small" color="primary" variant="flat" class="font-weight-black elevation-2 align-self-start">
+                                                            <v-chip size="small" color="#1e257c" variant="flat" class="font-weight-black elevation-2 align-self-start text-white">
                                                                 NĂM {{ item.year }}
                                                             </v-chip>
-                                                            <div class="timeline-stats-badge pa-2 rounded-lg text-caption font-weight-bold text-white">
-                                                                <v-icon size="14" class="mr-1" color="#38bdf8">mdi-trophy-outline</v-icon>
+                                                            <div class="timeline-stats-badge pa-2.5 rounded-lg text-caption font-weight-bold text-white elevation-2">
+                                                                <v-icon size="15" class="mr-1" color="#67e8f9">mdi-trophy-outline</v-icon>
                                                                 {{ item.stats }}
                                                             </div>
                                                         </div>
@@ -433,13 +433,13 @@ onMounted(() => {
                                                 </v-col>
 
                                                 <!-- Content Column -->
-                                                <v-col cols="12" md="8" class="pa-6 d-flex flex-column justify-space-between">
+                                                <v-col cols="12" md="8" class="pa-6 d-flex flex-column justify-space-between bg-white">
                                                     <div>
                                                         <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
                                                             <span class="text-caption font-weight-bold text-primary text-uppercase tracking-wider">
                                                                 {{ item.period }}
                                                             </span>
-                                                            <v-chip size="x-small" variant="tonal" color="success" class="font-weight-bold">
+                                                            <v-chip size="x-small" variant="flat" color="blue-lighten-4" class="font-weight-bold text-blue-darken-4">
                                                                 {{ item.badge }}
                                                             </v-chip>
                                                         </div>
@@ -459,7 +459,7 @@ onMounted(() => {
                                                             :key="tIdx"
                                                             size="small"
                                                             variant="flat"
-                                                            color="grey-lighten-4"
+                                                            color="blue-grey-lighten-5"
                                                             class="text-slate-700 font-weight-medium"
                                                         >
                                                             <v-icon start size="12" color="#1e257c">mdi-check-circle</v-icon>
@@ -475,7 +475,7 @@ onMounted(() => {
                         </v-row>
                     </div>
 
-                    <!-- Tab 4: Team (Dàn hàng ngang 5 Quản lý từ DB) -->
+                    <!-- Tab 4: Team (Bố cục 5 cột vừa vặn, không bị kéo ngang) -->
                     <div v-else-if="activeTab === 'team'" class="animate-fade-in">
                         <div class="text-center max-w-700 mx-auto mb-12">
                             <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold mb-3">BAN LÃNH ĐẠO</v-chip>
@@ -483,47 +483,54 @@ onMounted(() => {
                             <p class="text-slate-600">Đội ngũ quản trị viên và lãnh đạo kiến tạo nên trải nghiệm thể thao hàng đầu tại AeroStride</p>
                         </div>
 
-                        <!-- Horizontal Row of Team Members -->
-                        <div class="team-horizontal-container">
-                            <div class="team-scroll-track d-flex flex-nowrap ga-5 overflow-x-auto pb-6 pt-2 px-1">
-                                <v-card
+                        <!-- 5 Balanced Columns Grid -->
+                        <div class="team-grid-container">
+                            <v-row justify="center" class="ga-y-6">
+                                <v-col
                                     v-for="(member, idx) in teamMembers"
                                     :key="idx"
-                                    class="team-card-horizontal flex-shrink-0 rounded-2xl overflow-hidden elevation-2 border bg-white"
+                                    cols="12"
+                                    sm="6"
+                                    md="4"
+                                    class="team-col-5"
                                 >
-                                    <div class="team-img-wrapper position-relative">
-                                        <v-img :src="member.image" height="230" cover class="team-avatar-img">
-                                            <template #placeholder>
-                                                <div class="d-flex align-center justify-center fill-height bg-grey-lighten-3">
-                                                    <v-progress-circular indeterminate color="primary" size="24"></v-progress-circular>
-                                                </div>
-                                            </template>
-                                        </v-img>
-                                        <div class="team-avatar-overlay d-flex align-end pa-3">
-                                            <v-chip size="x-small" color="#1e257c" variant="flat" class="font-weight-black text-white elevation-2">
-                                                QUẢN LÝ #0{{ idx + 1 }}
-                                            </v-chip>
-                                        </div>
-                                    </div>
-
-                                    <v-card-text class="pa-5 d-flex flex-column justify-space-between team-card-body">
-                                        <div>
-                                            <h3 class="text-subtitle-1 font-weight-black text-slate-900 mb-1 leading-snug">{{ member.name }}</h3>
-                                            <div class="text-caption font-weight-bold text-primary mb-3">{{ member.role }}</div>
-                                            <p class="text-caption text-slate-600 italic line-clamp-3 mb-0">"{{ member.quote }}"</p>
+                                    <v-card
+                                        class="team-card-balanced h-100 rounded-2xl overflow-hidden elevation-3 border bg-white d-flex flex-column"
+                                    >
+                                        <div class="team-img-wrapper position-relative">
+                                            <v-img :src="member.image" height="220" cover class="team-avatar-img">
+                                                <template #placeholder>
+                                                    <div class="d-flex align-center justify-center fill-height bg-grey-lighten-3">
+                                                        <v-progress-circular indeterminate color="primary" size="24"></v-progress-circular>
+                                                    </div>
+                                                </template>
+                                            </v-img>
+                                            <div class="team-avatar-overlay d-flex align-end pa-3">
+                                                <v-chip size="x-small" color="#1e257c" variant="flat" class="font-weight-black text-white elevation-2">
+                                                    QUẢN LÝ #0{{ idx + 1 }}
+                                                </v-chip>
+                                            </div>
                                         </div>
 
-                                        <div v-if="member.email || member.sdt" class="mt-3 pt-3 border-t text-caption text-slate-500 d-flex flex-column ga-1">
-                                            <span v-if="member.email" class="text-truncate d-flex align-center">
-                                                <v-icon size="13" class="mr-1" color="#1e257c">mdi-email-outline</v-icon>{{ member.email }}
-                                            </span>
-                                            <span v-if="member.sdt" class="d-flex align-center">
-                                                <v-icon size="13" class="mr-1" color="#1e257c">mdi-phone-outline</v-icon>{{ member.sdt }}
-                                            </span>
-                                        </div>
-                                    </v-card-text>
-                                </v-card>
-                            </div>
+                                        <v-card-text class="pa-4 d-flex flex-column justify-space-between flex-grow-1">
+                                            <div>
+                                                <h3 class="text-subtitle-1 font-weight-black text-slate-900 mb-1 leading-snug">{{ member.name }}</h3>
+                                                <div class="text-caption font-weight-bold text-primary mb-2 line-clamp-1">{{ member.role }}</div>
+                                                <p class="text-caption text-slate-600 italic line-clamp-3 mb-0">"{{ member.quote }}"</p>
+                                            </div>
+
+                                            <div v-if="member.email || member.sdt" class="mt-3 pt-2 border-t text-caption text-slate-500 d-flex flex-column ga-1">
+                                                <span v-if="member.email" class="text-truncate d-flex align-center" style="font-size: 11px;">
+                                                    <v-icon size="12" class="mr-1" color="#1e257c">mdi-email-outline</v-icon>{{ member.email }}
+                                                </span>
+                                                <span v-if="member.sdt" class="d-flex align-center" style="font-size: 11px;">
+                                                    <v-icon size="12" class="mr-1" color="#1e257c">mdi-phone-outline</v-icon>{{ member.sdt }}
+                                                </span>
+                                            </div>
+                                        </v-card-text>
+                                    </v-card>
+                                </v-col>
+                            </v-row>
                         </div>
                     </div>
                 </v-container>
@@ -734,40 +741,34 @@ onMounted(() => {
 .img-gradient-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.3) 0%, rgba(15, 23, 42, 0.85) 100%);
+    background: linear-gradient(180deg, rgba(30, 37, 124, 0.15) 0%, rgba(30, 37, 124, 0.85) 100%);
 }
 
 .timeline-stats-badge {
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(30, 37, 124, 0.9) 0%, rgba(37, 99, 235, 0.9) 100%);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(147, 197, 253, 0.5);
+    box-shadow: 0 4px 12px rgba(30, 37, 124, 0.3);
 }
 
-/* ── Horizontal Team Card Styles ── */
-.team-horizontal-container {
+/* ── 5 Balanced Team Grid Styles (Không bị kéo ngang) ── */
+.team-grid-container {
     width: 100%;
 }
 
-.team-scroll-track {
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
-    &::-webkit-scrollbar {
-        height: 6px;
-    }
-    &::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 4px;
+@media (min-width: 1200px) {
+    .team-col-5 {
+        flex: 0 0 20% !important;
+        max-width: 20% !important;
     }
 }
 
-.team-card-horizontal {
-    width: 245px;
-    min-width: 245px;
+.team-card-balanced {
     transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 
     &:hover {
         transform: translateY(-8px);
-        box-shadow: 0 18px 36px rgba(30, 37, 124, 0.12) !important;
+        box-shadow: 0 20px 40px rgba(30, 37, 124, 0.15) !important;
         border-color: #93c5fd;
 
         .team-avatar-img :deep(img) {
@@ -786,10 +787,6 @@ onMounted(() => {
 .team-avatar-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, transparent 50%, rgba(15, 23, 42, 0.7) 100%);
-}
-
-.team-card-body {
-    min-height: 180px;
+    background: linear-gradient(180deg, transparent 40%, rgba(30, 37, 124, 0.75) 100%);
 }
 </style>

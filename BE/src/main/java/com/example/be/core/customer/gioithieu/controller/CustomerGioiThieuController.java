@@ -96,17 +96,33 @@ public class CustomerGioiThieuController {
         var brands = thuongHieuRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "ten"));
 
         Map<String, String> defaultBrandImages = new HashMap<>();
-        defaultBrandImages.put("NIKE", "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&q=80&w=500");
-        defaultBrandImages.put("ADIDAS", "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?auto=format&fit=crop&q=80&w=500");
-        defaultBrandImages.put("PUMA", "https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&q=80&w=500");
-        defaultBrandImages.put("KAMITO", "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=500");
-        defaultBrandImages.put("MIZUNO", "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&q=80&w=500");
-        defaultBrandImages.put("ASICS", "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=500");
-        defaultBrandImages.put("MOLTEN", "https://images.unsplash.com/photo-1519766304817-4f37bda74a29?auto=format&fit=crop&q=80&w=500");
-        defaultBrandImages.put("DONG LUC", "https://images.unsplash.com/photo-1579338559194-a162d19bf842?auto=format&fit=crop&q=80&w=500");
-        defaultBrandImages.put("ĐỘNG LỰC", "https://images.unsplash.com/photo-1579338559194-a162d19bf842?auto=format&fit=crop&q=80&w=500");
+        defaultBrandImages.put("NIKE", "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=600");
+        defaultBrandImages.put("ADIDAS", "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?auto=format&fit=crop&q=80&w=600");
+        defaultBrandImages.put("PUMA", "https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&q=80&w=600");
+        defaultBrandImages.put("NEW BALANCE", "https://images.unsplash.com/photo-1539185441755-769473a23570?auto=format&fit=crop&q=80&w=600");
+        defaultBrandImages.put("CONVERSE", "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=600");
+        defaultBrandImages.put("KAMITO", "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&q=80&w=600");
+        defaultBrandImages.put("MIZUNO", "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&q=80&w=600");
+        defaultBrandImages.put("ASICS", "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=600");
+        defaultBrandImages.put("MOLTEN", "https://images.unsplash.com/photo-1519766304817-4f37bda74a29?auto=format&fit=crop&q=80&w=600");
+        defaultBrandImages.put("DONG LUC", "https://images.unsplash.com/photo-1579338559194-a162d19bf842?auto=format&fit=crop&q=80&w=600");
+        defaultBrandImages.put("ĐỘNG LỰC", "https://images.unsplash.com/photo-1579338559194-a162d19bf842?auto=format&fit=crop&q=80&w=600");
 
-        String genericShoeImg = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=500";
+        Map<String, String> defaultBrandLogos = new HashMap<>();
+        defaultBrandLogos.put("NIKE", "https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg");
+        defaultBrandLogos.put("ADIDAS", "https://upload.wikimedia.org/wikipedia/commons/2/20/Adidas_Logo.svg");
+        defaultBrandLogos.put("PUMA", "https://upload.wikimedia.org/wikipedia/en/d/dc/Puma_complete_logo.svg");
+        defaultBrandLogos.put("NEW BALANCE", "https://upload.wikimedia.org/wikipedia/commons/e/ea/New_Balance_logo.svg");
+        defaultBrandLogos.put("CONVERSE", "https://upload.wikimedia.org/wikipedia/commons/3/30/Converse_logo.svg");
+        defaultBrandLogos.put("MIZUNO", "https://upload.wikimedia.org/wikipedia/commons/c/c9/Mizuno_logo.svg");
+        defaultBrandLogos.put("ASICS", "https://upload.wikimedia.org/wikipedia/commons/b/b1/Asics_Logo.svg");
+        defaultBrandLogos.put("KAMITO", "https://kamito.vn/images/logo.png");
+        defaultBrandLogos.put("MOLTEN", "https://upload.wikimedia.org/wikipedia/commons/8/87/Molten_Corporation_logo.svg");
+        defaultBrandLogos.put("DONG LUC", "https://dongluc.vn/images/logo.png");
+        defaultBrandLogos.put("ĐỘNG LỰC", "https://dongluc.vn/images/logo.png");
+
+        String genericShoeImg = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=600";
+        String genericLogo = "https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg";
 
         java.util.List<Map<String, Object>> result = new java.util.ArrayList<>();
         for (var b : brands) {
@@ -119,7 +135,10 @@ public class CustomerGioiThieuController {
 
             String upperName = b.getTen() != null ? b.getTen().toUpperCase().trim() : "";
             String imgUrl = defaultBrandImages.getOrDefault(upperName, genericShoeImg);
+            String logoUrl = defaultBrandLogos.getOrDefault(upperName, genericLogo);
+
             map.put("image", imgUrl);
+            map.put("logo", logoUrl);
 
             result.add(map);
         }

@@ -1,13 +1,13 @@
 <template>
     <div class="main-footer-wrapper">
-        <!-- 1. Brand Showcase Carousel Section (Seamless Infinite Loop) -->
-        <section class="brand-showcase-section bg-white pt-12 pb-8 border-t">
+        <!-- 1. Brand Showcase Carousel Section (Seamless Infinite Loop from DB) -->
+        <section class="brand-showcase-section bg-slate-900 pt-10 pb-8 border-b border-slate-800">
             <v-container fluid class="px-4 px-md-8">
-                <div class="text-center mb-8">
-                    <h2 class="brand-section-title font-weight-black text-slate-900 text-uppercase tracking-wider">
+                <div class="text-center mb-6">
+                    <h2 class="brand-section-title font-weight-black text-white text-uppercase tracking-wider">
                         Các Thương Hiệu Có Tại AEROSTRIDE
                     </h2>
-                    <div class="title-accent-bar mx-auto mt-3"></div>
+                    <div class="title-accent-bar mx-auto mt-2"></div>
                 </div>
 
                 <!-- Infinite Draggable Brand Carousel -->
@@ -39,7 +39,14 @@
                                         class="brand-bg-image"
                                         loading="lazy"
                                     />
-                                    <div class="brand-overlay">
+                                    <div class="brand-overlay d-flex flex-column justify-space-between align-center pa-3">
+                                        <!-- Brand Icon / Logo Badge -->
+                                        <div class="brand-logo-pill bg-white d-flex align-center justify-center pa-2 rounded-xl elevation-3 align-self-center mt-2">
+                                            <img v-if="brand.logo" :src="brand.logo" :alt="brand.name" class="brand-icon-img" />
+                                            <v-icon v-else size="24" color="#1e257c">mdi-shoe-sneaker</v-icon>
+                                        </div>
+
+                                        <!-- Brand Name Badge -->
                                         <span class="brand-name-badge">{{ brand.name }}</span>
                                     </div>
                                 </div>
@@ -61,7 +68,14 @@
                                         class="brand-bg-image"
                                         loading="lazy"
                                     />
-                                    <div class="brand-overlay">
+                                    <div class="brand-overlay d-flex flex-column justify-space-between align-center pa-3">
+                                        <!-- Brand Icon / Logo Badge -->
+                                        <div class="brand-logo-pill bg-white d-flex align-center justify-center pa-2 rounded-xl elevation-3 align-self-center mt-2">
+                                            <img v-if="brand.logo" :src="brand.logo" :alt="brand.name" class="brand-icon-img" />
+                                            <v-icon v-else size="24" color="#1e257c">mdi-shoe-sneaker</v-icon>
+                                        </div>
+
+                                        <!-- Brand Name Badge -->
                                         <span class="brand-name-badge">{{ brand.name }}</span>
                                     </div>
                                 </div>
@@ -72,91 +86,117 @@
             </v-container>
         </section>
 
-        <!-- 2. Clean Modern 3-Column Footer (Phóng to chữ & Giãn dòng thoáng đãng) -->
-        <footer class="main-footer-body bg-white text-slate-800 border-t py-16">
+        <!-- 2. Dark Modern 4-Column Footer (Theo tone màu và phong cách Ảnh 2) -->
+        <footer class="main-footer-body dark-footer py-14">
             <v-container>
-                <v-row class="ga-y-10 justify-space-between">
-                    <!-- Cột 1: Thông Tin Cửa Hàng -->
-                    <v-col cols="12" sm="6" md="4" class="footer-col">
-                        <h3 class="footer-col-title font-weight-black text-slate-900 mb-5">
-                            Thông Tin Cửa Hàng
-                        </h3>
-                        <p class="footer-text-large leading-loose text-slate-600 mb-6">
-                            <strong class="text-slate-900 font-weight-bold">AEROSTRIDE</strong> - Hệ thống phân phối giày thể thao chính hãng hàng đầu Việt Nam. Giờ mở cửa: <strong class="text-slate-900">8:00 - 22:00</strong> tất cả các ngày trong tuần (Thứ 2 - Chủ Nhật).
+                <v-row class="ga-y-8 justify-space-between">
+                    <!-- Cột 1: ABOUT -->
+                    <v-col cols="12" sm="6" md="3" class="footer-col">
+                        <h4 class="footer-col-header text-white font-weight-black mb-5 text-uppercase tracking-wider">
+                            ABOUT
+                        </h4>
+                        <p class="footer-desc-text text-slate-400 mb-5 leading-relaxed">
+                            <strong class="text-white">AeroStride</strong> là hệ thống phân phối giày thể thao chính hãng hàng đầu Việt Nam. Tận tâm mang đến trải nghiệm êm ái, bền bỉ và thời thượng cho mọi vận động viên và tín đồ thời trang.
                         </p>
-                        
-                        <!-- Logo with italic blue gradient brand name -->
-                        <div class="footer-brand-badge-box d-flex align-center ga-3 pa-3 rounded-xl border bg-slate-50">
-                            <div class="logo-box flex-shrink-0">
-                                <img src="@/assets/images/logos/logoclient.jpg" alt="AeroStride" class="footer-logo-img" />
-                            </div>
-                            <div class="d-flex flex-column">
-                                <span class="footer-brand-name-italic">AEROSTRIDE</span>
-                                <span class="footer-brand-sub">AUTHENTIC SPORT SHOES</span>
-                            </div>
+                        <div class="d-flex align-center ga-2">
+                            <v-chip size="small" color="#38bdf8" variant="outlined" class="font-weight-bold">
+                                100% CHÍNH HÃNG
+                            </v-chip>
+                            <v-chip size="small" color="#38bdf8" variant="outlined" class="font-weight-bold">
+                                ĐỔI TRẢ 30 NGÀY
+                            </v-chip>
                         </div>
                     </v-col>
 
-                    <!-- Cột 2: Dịch Vụ Khách Hàng -->
+                    <!-- Cột 2: PRODUCTS -->
                     <v-col cols="12" sm="6" md="3" class="footer-col">
-                        <h3 class="footer-col-title font-weight-black text-slate-900 mb-5">
-                            Dịch Vụ Khách Hàng
-                        </h3>
-                        <ul class="footer-nav-list list-unstyled d-flex flex-column ga-3">
+                        <h4 class="footer-col-header text-white font-weight-black mb-5 text-uppercase tracking-wider">
+                            PRODUCTS
+                        </h4>
+                        <ul class="footer-nav-list list-unstyled d-flex flex-column ga-2.5">
                             <li>
-                                <router-link :to="PATH.SHOES" class="footer-nav-link footer-text-large">
-                                    <v-icon size="14" class="mr-2" color="#1e257c">mdi-chevron-right</v-icon>Tìm kiếm sản phẩm
+                                <router-link :to="{ path: PATH.SHOES, query: { keyword: 'Chạy Bộ' } }" class="footer-dark-link">
+                                    Giày Chạy Bộ Nam / Nữ
                                 </router-link>
                             </li>
                             <li>
-                                <router-link to="/about" class="footer-nav-link footer-text-large">
-                                    <v-icon size="14" class="mr-2" color="#1e257c">mdi-chevron-right</v-icon>Giới thiệu về chúng tôi
+                                <router-link :to="{ path: PATH.SHOES, query: { keyword: 'Sneaker' } }" class="footer-dark-link">
+                                    Giày Sneaker Thể Thao
                                 </router-link>
                             </li>
                             <li>
-                                <router-link to="/help" class="footer-nav-link footer-text-large">
-                                    <v-icon size="14" class="mr-2" color="#1e257c">mdi-chevron-right</v-icon>Chính sách đổi trả 30 ngày
+                                <router-link :to="{ path: PATH.SHOES, query: { keyword: 'Bóng Đá' } }" class="footer-dark-link">
+                                    Giày Bóng Đá & Futsal
                                 </router-link>
                             </li>
                             <li>
-                                <router-link to="/help" class="footer-nav-link footer-text-large">
-                                    <v-icon size="14" class="mr-2" color="#1e257c">mdi-chevron-right</v-icon>Chính sách bảo mật
+                                <router-link :to="{ path: PATH.SHOES, query: { keyword: 'Cầu Lông' } }" class="footer-dark-link">
+                                    Giày Cầu Lông & Tennis
                                 </router-link>
                             </li>
                             <li>
-                                <router-link to="/help" class="footer-nav-link footer-text-large">
-                                    <v-icon size="14" class="mr-2" color="#1e257c">mdi-chevron-right</v-icon>Điều khoản dịch vụ
-                                </router-link>
-                            </li>
-                            <li>
-                                <router-link to="/contact" class="footer-nav-link footer-text-large">
-                                    <v-icon size="14" class="mr-2" color="#1e257c">mdi-chevron-right</v-icon>Liên hệ & Hỗ trợ CSKH
+                                <router-link :to="PATH.SHOES" class="footer-dark-link text-cyan-lighten-3 font-weight-bold">
+                                    Bộ Sưu Tập Giày Mới Nhất
                                 </router-link>
                             </li>
                         </ul>
                     </v-col>
 
-                    <!-- Cột 3: Thông Tin Liên Hệ -->
-                    <v-col cols="12" sm="12" md="5" class="footer-col">
-                        <h3 class="footer-col-title font-weight-black text-slate-900 mb-5">
-                            Thông Tin Liên Hệ
-                        </h3>
-                        <div class="d-flex flex-column ga-4 footer-text-large text-slate-700">
-                            <div class="d-flex align-start ga-3 leading-relaxed">
-                                <v-icon size="22" color="#1e257c" class="flex-shrink-0 mt-1">mdi-map-marker-radius</v-icon>
-                                <span><strong class="text-slate-900">Trụ sở & Cửa hàng chính:</strong> 21A Lê Đức Thọ, Phường Mỹ Đình 2, Quận Nam Từ Liêm, Hà Nội</span>
+                    <!-- Cột 3: USEFUL LINKS -->
+                    <v-col cols="12" sm="6" md="3" class="footer-col">
+                        <h4 class="footer-col-header text-white font-weight-black mb-5 text-uppercase tracking-wider">
+                            USEFUL LINKS
+                        </h4>
+                        <ul class="footer-nav-list list-unstyled d-flex flex-column ga-2.5">
+                            <li>
+                                <router-link :to="PATH.ORDERS" class="footer-dark-link">
+                                    Đơn hàng của bạn
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link to="/about" class="footer-dark-link">
+                                    Giới thiệu về chúng tôi
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link to="/help" class="footer-dark-link">
+                                    Chính sách đổi trả 30 ngày
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link to="/help" class="footer-dark-link">
+                                    Chính sách bảo mật
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link to="/help" class="footer-dark-link">
+                                    Điều khoản dịch vụ & FAQ
+                                </router-link>
+                            </li>
+                        </ul>
+                    </v-col>
+
+                    <!-- Cột 4: CONTACT -->
+                    <v-col cols="12" sm="6" md="3" class="footer-col">
+                        <h4 class="footer-col-header text-white font-weight-black mb-5 text-uppercase tracking-wider">
+                            CONTACT
+                        </h4>
+                        <div class="d-flex flex-column ga-3 text-slate-400 footer-contact-block">
+                            <div class="d-flex align-start ga-2.5">
+                                <v-icon size="18" color="#38bdf8" class="flex-shrink-0 mt-0.5">mdi-map-marker-outline</v-icon>
+                                <span class="text-slate-300">21A Lê Đức Thọ, Mỹ Đình 2, Nam Từ Liêm, Hà Nội</span>
                             </div>
-                            <div class="d-flex align-center ga-3">
-                                <v-icon size="22" color="#1e257c" class="flex-shrink-0">mdi-phone-in-talk</v-icon>
-                                <span>Hotline tư vấn: <a href="tel:0986525959" class="text-primary font-weight-black hover:underline">0986 525 959</a></span>
+                            <div class="d-flex align-center ga-2.5">
+                                <v-icon size="18" color="#38bdf8" class="flex-shrink-0">mdi-email-outline</v-icon>
+                                <a href="mailto:support@aerostride.vn" class="footer-dark-link">support@aerostride.vn</a>
                             </div>
-                            <div class="d-flex align-center ga-3">
-                                <v-icon size="22" color="#1e257c" class="flex-shrink-0">mdi-cellphone-message</v-icon>
-                                <span>Zalo CSKH 24/7: <strong class="text-slate-900 font-weight-bold">0986 525 959</strong></span>
+                            <div class="d-flex align-center ga-2.5">
+                                <v-icon size="18" color="#38bdf8" class="flex-shrink-0">mdi-phone-outline</v-icon>
+                                <a href="tel:0986525959" class="text-white font-weight-bold hover:text-cyan">0986 525 959</a>
                             </div>
-                            <div class="d-flex align-center ga-3">
-                                <v-icon size="22" color="#1e257c" class="flex-shrink-0">mdi-email-fast-outline</v-icon>
-                                <span>Email tiếp nhận: <a href="mailto:support@aerostride.vn" class="text-slate-800 hover:text-primary font-weight-medium">support@aerostride.vn</a></span>
+                            <div class="d-flex align-center ga-2.5">
+                                <v-icon size="18" color="#38bdf8" class="flex-shrink-0">mdi-clock-time-four-outline</v-icon>
+                                <span>08:00 – 22:00 (Thứ 2 – CN)</span>
                             </div>
                         </div>
                     </v-col>
@@ -164,10 +204,12 @@
             </v-container>
         </footer>
 
-        <!-- 3. Bottom Bar -->
-        <div class="footer-copyright-bar bg-slate-100 py-4 text-center text-body-2 text-slate-600 border-t">
-            <v-container>
-                © 2026 <strong class="text-slate-900">AEROSTRIDE</strong>. Tất cả quyền được bảo lưu. Giày Thể Thao Chính Hãng Việt Nam.
+        <!-- 3. Bottom Copyright Bar (Đúng như ảnh 2) -->
+        <div class="footer-copyright-bar py-4 text-center border-t border-slate-800">
+            <v-container class="pa-0">
+                <span class="copyright-text text-slate-400">
+                    © 2026 Copyright: <router-link to="/" class="text-white font-weight-bold text-decoration-none hover:text-cyan">AeroStride.vn</router-link>
+                </span>
             </v-container>
         </div>
     </div>
@@ -316,19 +358,19 @@ const onTouchEnd = () => {
 
 <style scoped lang="scss">
 .main-footer-wrapper {
-    font-family: inherit;
+    font-family: 'Inter', sans-serif;
 }
 
 /* ── Brand Section ── */
 .brand-section-title {
-    font-size: clamp(1.35rem, 2.5vw, 1.95rem);
-    letter-spacing: 0.06em;
+    font-size: clamp(1.2rem, 2.2vw, 1.7rem);
+    letter-spacing: 0.08em;
 }
 
 .title-accent-bar {
-    width: 70px;
-    height: 4px;
-    background: #1e257c;
+    width: 60px;
+    height: 3px;
+    background: #38bdf8;
     border-radius: 3px;
 }
 
@@ -343,7 +385,7 @@ const onTouchEnd = () => {
     &::-webkit-scrollbar {
         display: none;
     }
-    padding: 10px 0;
+    padding: 6px 0;
 
     &:active {
         cursor: grabbing;
@@ -360,7 +402,7 @@ const onTouchEnd = () => {
     gap: 18px;
     padding-right: 18px;
     flex-shrink: 0;
-    animation: seamlessScroll 25s linear infinite;
+    animation: seamlessScroll 55s linear infinite; /* Chạy chậm lại, êm ái hơn */
     will-change: transform;
 
     &.is-paused {
@@ -385,12 +427,16 @@ const onTouchEnd = () => {
     overflow: hidden;
     position: relative;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 
     &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
+        transform: translateY(-5px);
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.7);
+
+        .brand-logo-pill {
+            transform: scale(1.1);
+        }
     }
 
     @media (max-width: 600px) {
@@ -421,11 +467,22 @@ const onTouchEnd = () => {
 .brand-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.75) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%);
+}
+
+.brand-logo-pill {
+    width: 52px;
+    height: 52px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.brand-icon-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .brand-name-badge {
@@ -434,23 +491,29 @@ const onTouchEnd = () => {
     font-weight: 900;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
     border: 2px solid rgba(255, 255, 255, 0.85);
     padding: 6px 16px;
     border-radius: 8px;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(2px);
 }
 
-/* ── Footer 3 Columns (Phóng to & Giãn dòng thoáng) ── */
-.footer-col-title {
-    font-size: 1.25rem;
-    letter-spacing: -0.01em;
+/* ── Dark Footer Body (Tone màu thanh lịch theo Ảnh 2) ── */
+.dark-footer {
+    background-color: #1e222b; /* Tone màu than tối như Ảnh 2 */
 }
 
-.footer-text-large {
-    font-size: 1.02rem; /* Phóng to chữ */
-    line-height: 1.85; /* Giãn dòng thoáng đãng */
+.footer-col-header {
+    font-size: 0.98rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #ffffff;
+}
+
+.footer-desc-text {
+    font-size: 0.92rem;
+    line-height: 1.75;
 }
 
 .footer-nav-list {
@@ -458,55 +521,30 @@ const onTouchEnd = () => {
     margin-bottom: 0;
 }
 
-.footer-nav-link {
-    color: #475569;
+.footer-dark-link {
+    color: #94a3b8;
     text-decoration: none;
+    font-size: 0.92rem;
     transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
+    display: inline-block;
 
     &:hover {
-        color: #1e257c !important;
-        transform: translateX(4px);
+        color: #ffffff !important;
+        transform: translateX(3px);
     }
 }
 
-/* Footer Logo Badge Box */
-.footer-brand-badge-box {
-    border-color: #e2e8f0;
+.footer-contact-block {
+    font-size: 0.92rem;
+    line-height: 1.7;
 }
 
-.logo-box {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* ── Copyright Bar (Đậm hơn đúng như Ảnh 2) ── */
+.footer-copyright-bar {
+    background-color: #13161c; /* Tone màu tối hơn cho copyright bar */
 }
 
-.footer-logo-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    mix-blend-mode: multiply;
-}
-
-.footer-brand-name-italic {
-    font-size: 1.35rem;
-    font-weight: 900;
-    font-style: italic;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    background: linear-gradient(135deg, #1e257c 0%, #2563eb 60%, #38bdf8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    line-height: 1.1;
-}
-
-.footer-brand-sub {
-    font-size: 0.65rem;
-    font-weight: 800;
-    letter-spacing: 0.15em;
-    color: #64748b;
+.copyright-text {
+    font-size: 0.88rem;
 }
 </style>
