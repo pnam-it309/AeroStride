@@ -13,17 +13,20 @@ export const LICH_LAM_VIEC_STATUS_CONFIG = {
     [LICH_LAM_VIEC_STATUS.DUNG_GIO]: {
         label: 'Đúng giờ',
         color: 'success',
-        icon: 'mdi-check-circle-outline'
+        icon: 'mdi-check-circle-outline',
+        chipClass: 'status-chip-active'
     },
     [LICH_LAM_VIEC_STATUS.DI_MUON]: {
         label: 'Đi muộn',
         color: 'error',
-        icon: 'mdi-clock-alert-outline'
+        icon: 'mdi-clock-alert-outline',
+        chipClass: 'status-chip-cancelled'
     },
     [LICH_LAM_VIEC_STATUS.CHUA_VAO_CA]: {
         label: 'Chưa vào ca',
         color: 'grey',
-        icon: 'mdi-clock-outline'
+        icon: 'mdi-clock-outline',
+        chipClass: 'status-chip-default'
     }
 };
 
@@ -44,12 +47,14 @@ export const GIAO_CA_STATUS_CONFIG = {
     [GIAO_CA_STATUS.OPEN]: {
         label: 'Đang mở',
         color: 'success',
-        icon: 'mdi-lock-open-outline'
+        icon: 'mdi-lock-open-outline',
+        chipClass: 'status-chip-active'
     },
     [GIAO_CA_STATUS.CLOSED]: {
         label: 'Đã chốt',
         color: 'grey',
-        icon: 'mdi-lock-outline'
+        icon: 'mdi-lock-outline',
+        chipClass: 'status-chip-default'
     }
 };
 

@@ -6,7 +6,7 @@ import apiService from '@/services/apiService';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
 import { GIAO_CA_STATUS, GIAO_CA_STATUS_CONFIG, GIAO_CA_STATUS_OPTIONS } from '@/constants/lichLamViecConstants';
-import { formatDateTime } from '@/utils/formatters';
+import { formatDateTime, formatCurrency } from '@/utils/formatters';
 
 const activeTab = ref('hoat-dong');
 const loading = ref(false);
@@ -72,13 +72,15 @@ const paginationGiaoCa = ref({
 });
 
 const headersGiaoCa = [
-    { text: 'STT', width: '60px', align: 'center' },
-    { text: 'Mã nhân viên', width: '130px', align: 'center' },
-    { text: 'Nhân viên', width: '180px', align: 'start' },
-    { text: 'Thời gian mở ca', width: '180px', align: 'center' },
-    { text: 'Thời gian chốt ca', width: '180px', align: 'center' },
-    { text: 'Thời gian làm việc', width: '160px', align: 'center' },
-    { text: 'Trạng thái', width: '130px', align: 'center' }
+    { text: 'STT', width: '50px', align: 'center' },
+    { text: 'Nhân viên mở ca', width: '170px', align: 'start' },
+    { text: 'Nhân viên nhận ca', width: '170px', align: 'start' },
+    { text: 'Thời gian ca', width: '230px', align: 'center' },
+    { text: 'Tiền ban đầu', width: '130px', align: 'end' },
+    { text: 'Doanh thu', width: '130px', align: 'end' },
+    { text: 'Tiền thực tế', width: '130px', align: 'end' },
+    { text: 'Chênh lệch', width: '130px', align: 'end' },
+    { text: 'Trạng thái', width: '120px', align: 'center' }
 ];
 
 const fetchListGiaoCa = async () => {
@@ -99,9 +101,11 @@ const filteredGiaoCaList = computed(() => {
     const search = filters.value.search?.toLowerCase()?.trim();
     if (search) {
         list = list.filter((item) => {
-            const maNv = (item.maNhanVien || item.maNhanVienTrongCa || '').toLowerCase();
-            const nv = (item.nhanVienTen || item.tenNhanVienTrongCa || '').toLowerCase();
-            return maNv.includes(search) || nv.includes(search);
+            const nvTrong = (item.nhanVienTen || item.tenNhanVienTrongCa || '').toLowerCase();
+            const maNvTrong = (item.maNhanVien || item.maNhanVienTrongCa || '').toLowerCase();
+            const nvNhan = (item.nhanVienNhanCaTen || item.tenNhanVienNhanCa || '').toLowerCase();
+            const maNvNhan = (item.maNhanVienNhanCa || '').toLowerCase();
+            return nvTrong.includes(search) || maNvTrong.includes(search) || nvNhan.includes(search) || maNvNhan.includes(search);
         });
     }
     if (filters.value.trangThai) {
@@ -129,8 +133,8 @@ const paginatedGiaoCaList = computed(() => {
     return filteredGiaoCaList.value.slice(start, end);
 });
 
-const getStatusColor = (status) => {
-    return GIAO_CA_STATUS_CONFIG[status]?.color || 'primary';
+const getStatusChipClass = (status) => {
+    return GIAO_CA_STATUS_CONFIG[status]?.chipClass || 'status-chip-default';
 };
 
 const getStatusLabel = (status) => {
@@ -373,14 +377,11 @@ onMounted(() => {
 
             <template #row="{ item, index }">
                 <tr class="data-row">
+                    <!-- STT -->
                     <td class="data-cell text-center font-weight-medium text-slate-500">
                         {{ (paginationGiaoCa.page - 1) * paginationGiaoCa.size + index + 1 }}
                     </td>
-                    <td class="data-cell text-center">
-                        <span class="font-weight-bold text-primary font-mono text-body-2">
-                            {{ item.maNhanVien || item.maNhanVienTrongCa || '--' }}
-                        </span>
-                    </td>
+                    <!-- Nhân viên mở ca -->
                     <td class="data-cell">
                         <div class="d-flex align-center">
                             <v-avatar size="26" color="primary-lighten-5" class="mr-2 border">
@@ -388,22 +389,67 @@ onMounted(() => {
                                     {{ (item.nhanVienTen || item.tenNhanVienTrongCa || '?').charAt(0).toUpperCase() }}
                                 </span>
                             </v-avatar>
-                            <span class="font-weight-bold text-slate-800 text-body-2">
-                                {{ item.nhanVienTen || item.tenNhanVienTrongCa || 'N/A' }}
-                            </span>
+                            <div>
+                                <div class="font-weight-bold text-slate-800 text-body-2">
+                                    {{ item.nhanVienTen || item.tenNhanVienTrongCa || 'N/A' }}
+                                </div>
+                                <div v-if="item.maNhanVien || item.maNhanVienTrongCa" class="text-caption text-slate-400 font-mono">
+                                    {{ item.maNhanVien || item.maNhanVienTrongCa }}
+                                </div>
+                            </div>
                         </div>
                     </td>
-                    <td class="data-cell text-center text-slate-700 font-weight-medium">
-                        {{ formatDate(item.thoiGianMoCa || item.thoiGianVaoCa) }}
+                    <!-- Nhân viên nhận ca -->
+                    <td class="data-cell">
+                        <div v-if="item.nhanVienNhanCaTen || item.tenNhanVienNhanCa" class="d-flex align-center">
+                            <v-avatar size="26" color="emerald-lighten-5" class="mr-2 border">
+                                <span class="font-weight-bold text-emerald-darken-2 text-caption">
+                                    {{ (item.nhanVienNhanCaTen || item.tenNhanVienNhanCa).charAt(0).toUpperCase() }}
+                                </span>
+                            </v-avatar>
+                            <div>
+                                <div class="font-weight-bold text-slate-800 text-body-2">
+                                    {{ item.nhanVienNhanCaTen || item.tenNhanVienNhanCa }}
+                                </div>
+                                <div v-if="item.maNhanVienNhanCa" class="text-caption text-slate-400 font-mono">
+                                    {{ item.maNhanVienNhanCa }}
+                                </div>
+                            </div>
+                        </div>
+                        <span v-else class="text-slate-400 text-caption font-italic">Chưa bàn giao</span>
                     </td>
-                    <td class="data-cell text-center text-slate-700 font-weight-medium">
-                        {{ (item.thoiGianChotCa || item.thoiGianRaCa) ? formatDate(item.thoiGianChotCa || item.thoiGianRaCa) : '--' }}
-                    </td>
-                    <td class="data-cell text-center font-weight-bold text-slate-800">
-                        {{ formatDuration(item.thoiGianMoCa || item.thoiGianVaoCa, item.thoiGianChotCa || item.thoiGianRaCa) }}
-                    </td>
+                    <!-- Thời gian ca (Mở ca - Chốt ca) -->
                     <td class="data-cell text-center">
-                        <v-chip size="small" :color="getStatusColor(item.trangThai)" class="font-weight-bold" variant="flat">
+                        <div class="d-flex flex-column align-center ga-0.5">
+                            <div class="text-slate-700 font-weight-medium text-caption">
+                                <span class="text-slate-400">Mở:</span> {{ formatDate(item.thoiGianMoCa || item.thoiGianVaoCa) }}
+                            </div>
+                            <div class="text-slate-700 font-weight-medium text-caption">
+                                <span class="text-slate-400">Chốt:</span> {{ (item.thoiGianChotCa || item.thoiGianRaCa) ? formatDate(item.thoiGianChotCa || item.thoiGianRaCa) : '--:--' }}
+                            </div>
+                        </div>
+                    </td>
+                    <!-- Tiền ban đầu -->
+                    <td class="data-cell text-end font-mono font-weight-medium text-slate-700">
+                        {{ formatCurrency(item.tienBanDau || 0) }}
+                    </td>
+                    <!-- Doanh thu -->
+                    <td class="data-cell text-end font-mono font-weight-bold text-primary">
+                        {{ formatCurrency(item.tongDoanhThu || 0) }}
+                    </td>
+                    <!-- Tiền thực tế -->
+                    <td class="data-cell text-end font-mono font-weight-bold text-slate-800">
+                        {{ formatCurrency(item.tienThucTe || 0) }}
+                    </td>
+                    <!-- Chênh lệch -->
+                    <td class="data-cell text-end font-mono font-weight-bold">
+                        <span :class="Number(item.tienChenhLech || 0) < 0 ? 'text-error' : Number(item.tienChenhLech || 0) > 0 ? 'text-success' : 'text-slate-500'">
+                            {{ formatCurrency(item.tienChenhLech || 0) }}
+                        </span>
+                    </td>
+                    <!-- Trạng thái -->
+                    <td class="data-cell text-center">
+                        <v-chip size="small" variant="flat" :class="['status-chip', getStatusChipClass(item.trangThai)]">
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>

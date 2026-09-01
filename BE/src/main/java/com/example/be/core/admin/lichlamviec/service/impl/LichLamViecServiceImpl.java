@@ -105,6 +105,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                         .gioKetThucTangCa(l.getGioKetThucTangCa() != null ? l.getGioKetThucTangCa().format(timeFormatter) : null)
                         .gioVao(l.getGioVao() != null ? l.getGioVao().format(timeFormatter) : null)
                         .gioRa(l.getGioRa() != null ? l.getGioRa().format(timeFormatter) : null)
+                        .tongSoGio(calculateTotalHours(l))
                         .ghiChu(l.getGhiChu())
                         .build())
                 .collect(Collectors.toList());
@@ -171,7 +172,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         String trangThaiStr = request.getTrangThai();
 
         LocalDate ngayLam = LocalDate.parse(ngayStr);
-        LichLamViec.TrangThaiLichLamViec trangThai = LichLamViec.TrangThaiLichLamViec.CHO_XAC_NHAN;
+        LichLamViec.TrangThaiLichLamViec trangThai = LichLamViec.TrangThaiLichLamViec.CHUA_VAO_CA;
         if (trangThaiStr != null) {
             try {
                 trangThai = LichLamViec.TrangThaiLichLamViec.valueOf(trangThaiStr);
@@ -306,7 +307,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                         .nhanVien(assignedEmployee)
                         .caLam(shift)
                         .ngayLam(day)
-                        .trangThaiLich(LichLamViec.TrangThaiLichLamViec.CHO_XAC_NHAN)
+                        .trangThaiLich(LichLamViec.TrangThaiLichLamViec.CHUA_VAO_CA)
                         .tangCa(false)
                         .build();
 
@@ -492,7 +493,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                         .nhanVien(nv)
                         .caLam(caLam)
                         .ngayLam(ngayLam)
-                        .trangThaiLich(LichLamViec.TrangThaiLichLamViec.DA_XAC_NHAN)
+                        .trangThaiLich(LichLamViec.TrangThaiLichLamViec.CHUA_VAO_CA)
                         .build();
                 lichLamViecRepository.save(schedule);
 
@@ -572,7 +573,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                 .nhanVien(matchedEmployee)
                 .ngayLam(today)
                 .gioVao(nowTime)
-                .trangThaiLich(LichLamViec.TrangThaiLichLamViec.CHO_XAC_NHAN)
+                .trangThaiLich(LichLamViec.TrangThaiLichLamViec.DUNG_GIO)
                 .ghiChu("Chấm công tự động qua khuôn mặt")
                 .build();
             lichLamViecRepository.save(schedule);
@@ -603,7 +604,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         LichLamViec schedule = LichLamViec.builder()
                 .nhanVien(nv)
                 .ngayLam(ngayLam)
-                .trangThaiLich(LichLamViec.TrangThaiLichLamViec.CHO_XAC_NHAN)
+                .trangThaiLich(LichLamViec.TrangThaiLichLamViec.DUNG_GIO)
                 .build();
 
         if (request.getGioVao() != null && !request.getGioVao().isEmpty()) {
@@ -783,5 +784,31 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                 .doiTuong("Ca " + caLam.getTenCa())
                 .build();
         lichSuHoatDongRepository.save(activity);
+    }
+
+    private String calculateTotalHours(LichLamViec l) {
+        if (l.getGioVao() != null && l.getGioRa() != null) {
+            long minutes = java.time.Duration.between(l.getGioVao(), l.getGioRa()).toMinutes();
+            if (minutes < 0) {
+                minutes += 24 * 60;
+            }
+            long h = minutes / 60;
+            long m = minutes % 60;
+            if (h == 0) return m + " phút";
+            if (m == 0) return h + " giờ";
+            return h + "h " + m + "p";
+        }
+        if (l.getCaLam() != null && l.getCaLam().getGioBatDau() != null && l.getCaLam().getGioKetThuc() != null) {
+            long minutes = java.time.Duration.between(l.getCaLam().getGioBatDau(), l.getCaLam().getGioKetThuc()).toMinutes();
+            if (minutes < 0) {
+                minutes += 24 * 60;
+            }
+            long h = minutes / 60;
+            long m = minutes % 60;
+            if (h == 0) return m + " phút";
+            if (m == 0) return h + " giờ";
+            return h + "h " + m + "p";
+        }
+        return "--";
     }
 }

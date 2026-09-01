@@ -27,5 +27,8 @@ public interface AdminLichLamViecRepository extends LichLamViecRepository, JpaSp
     List<LichLamViec> findByNgayLamBetween(LocalDate start, LocalDate end);
 
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"nhanVien", "caLam"})
+    List<LichLamViec> findByNhanVienIdAndNgayLam(String nhanVienId, LocalDate ngayLam);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"nhanVien", "caLam"})
     java.util.Optional<LichLamViec> findFirstByNhanVienIdAndNgayLamAndGioVaoIsNotNullAndGioRaIsNull(String nhanVienId, LocalDate ngayLam);
 }

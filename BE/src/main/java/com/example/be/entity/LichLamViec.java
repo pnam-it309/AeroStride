@@ -51,8 +51,8 @@ public class LichLamViec extends PrimaryEntity {
     private LocalTime gioKetThucTangCa;
 
     public enum TrangThaiLichLamViec {
-        CHO_XAC_NHAN,
-        DA_XAC_NHAN,
-        DA_HUY
+        DUNG_GIO,
+        DI_MUON,
+        CHUA_VAO_CA
     }
 }

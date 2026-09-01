@@ -106,18 +106,54 @@ const tableHeaders = computed(() => {
         { text: 'STT', width: '60px', align: 'center' },
         { text: 'Mã nhân viên', width: '130px', align: 'center' },
         { text: 'Nhân viên', width: '160px', align: 'left' },
-        { text: 'Ca làm', width: '130px', align: 'center' },
+        { text: 'Ca làm', width: '120px', align: 'center' },
         { text: 'Thời gian ca', width: '130px', align: 'center' },
-        { text: 'Giờ vào', width: '110px', align: 'center' },
-        { text: 'Giờ ra', width: '110px', align: 'center' },
+        { text: 'Giờ vào', width: '100px', align: 'center' },
+        { text: 'Giờ ra', width: '100px', align: 'center' },
+        { text: 'Tổng số giờ', width: '120px', align: 'center' },
         { text: 'Ngày làm', width: '120px', align: 'center' },
-        { text: 'Trạng thái', width: '140px', align: 'center' }
+        { text: 'Trạng thái', width: '130px', align: 'center' }
     ];
     if (canManageSchedule.value) {
         headers.push({ text: 'Thao tác', width: '100px', align: 'center' });
     }
     return headers;
 });
+
+const calculateTotalHours = (item) => {
+    if (item.gioVao && item.gioRa) {
+        const [inH, inM] = item.gioVao.split(':').map(Number);
+        const [outH, outM] = item.gioRa.split(':').map(Number);
+        let startMinutes = inH * 60 + (inM || 0);
+        let endMinutes = outH * 60 + (outM || 0);
+        if (endMinutes < startMinutes) {
+            endMinutes += 24 * 60;
+        }
+        const diffMinutes = endMinutes - startMinutes;
+        const h = Math.floor(diffMinutes / 60);
+        const m = diffMinutes % 60;
+        if (h === 0) return `${m} phút`;
+        if (m === 0) return `${h} giờ`;
+        return `${h}h ${m}p`;
+    }
+    const shift = shifts.value.find((s) => s.tenCa === item.ca);
+    if (shift && shift.gioBatDau && shift.gioKetThuc) {
+        const [startH, startM] = shift.gioBatDau.split(':').map(Number);
+        const [endH, endM] = shift.gioKetThuc.split(':').map(Number);
+        let startMinutes = startH * 60 + (startM || 0);
+        let endMinutes = endH * 60 + (endM || 0);
+        if (endMinutes < startMinutes) {
+            endMinutes += 24 * 60;
+        }
+        const diffMinutes = endMinutes - startMinutes;
+        const h = Math.floor(diffMinutes / 60);
+        const m = diffMinutes % 60;
+        if (h === 0) return `${m} phút`;
+        if (m === 0) return `${h} giờ`;
+        return `${h}h ${m}p`;
+    }
+    return '--';
+};
 
 // Computed property for filtering schedules
 const filteredItems = computed(() => {
@@ -1082,7 +1118,7 @@ onMounted(() => {
                     class="compact-input"
                 />
             </v-col>
-            <v-col cols="12" sm="6" md="3" class="px-2 filter-cell">
+            <v-col cols="12" sm="6" md="2" class="px-2 filter-cell">
                 <div class="filter-field-label">Ca làm</div>
                 <v-select
                     v-model="filters.ca"
@@ -1220,6 +1256,10 @@ onMounted(() => {
                                 </v-chip>
                                 <span v-else class="text-slate-400 font-weight-medium">--:--</span>
                             </td>
+                            <!-- Tổng số giờ -->
+                            <td class="data-cell text-center font-weight-bold text-slate-800">
+                                {{ item.tongSoGio || calculateTotalHours(item) }}
+                            </td>
                             <!-- Ngày làm -->
                             <td class="data-cell text-center">
                                 <span class="text-slate-600 font-weight-medium">{{ formatDate(item.ngay) }}</span>
@@ -1228,9 +1268,8 @@ onMounted(() => {
                             <td class="data-cell text-center">
                                 <v-chip
                                     size="small"
-                                    :color="getScheduleStatusBadge(item.trangThai).color"
                                     variant="flat"
-                                    class="font-weight-bold"
+                                    :class="['status-chip', getScheduleStatusBadge(item.trangThai).chipClass]"
                                 >
                                     <v-icon start size="14">{{ getScheduleStatusBadge(item.trangThai).icon }}</v-icon>
                                     {{ getScheduleStatusBadge(item.trangThai).label }}
@@ -1527,9 +1566,8 @@ onMounted(() => {
                                     <td class="data-cell text-center">
                                         <v-chip
                                             size="small"
-                                            :color="getScheduleStatusBadge(s.trangThai).color"
                                             variant="flat"
-                                            class="font-weight-bold"
+                                            :class="['status-chip', getScheduleStatusBadge(s.trangThai).chipClass]"
                                         >
                                             <v-icon start size="13">{{ getScheduleStatusBadge(s.trangThai).icon }}</v-icon>
                                             {{ getScheduleStatusBadge(s.trangThai).label }}

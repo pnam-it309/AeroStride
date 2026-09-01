@@ -21,5 +21,6 @@ public class LichLamViecResponse {
     private String gioKetThucTangCa;
     private String gioVao;
     private String gioRa;
+    private String tongSoGio;
     private String ghiChu;
 }

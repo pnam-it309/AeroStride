@@ -65,7 +65,7 @@ public class LichLamViecRowMapper implements ExcelRowMapper<LichLamViec> {
                 .nhanVien(nv)
                 .caLam(caLam)
                 .ngayLam(ngayLam)
-                .trangThaiLich(LichLamViec.TrangThaiLichLamViec.DA_XAC_NHAN)
+                .trangThaiLich(LichLamViec.TrangThaiLichLamViec.CHUA_VAO_CA)
                 .build();
     }
 

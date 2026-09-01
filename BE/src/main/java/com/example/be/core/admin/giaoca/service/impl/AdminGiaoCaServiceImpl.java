@@ -5,7 +5,9 @@ import com.example.be.core.admin.giaoca.model.request.AdminMoCaRequest;
 import com.example.be.core.admin.giaoca.model.response.AdminGiaoCaResponse;
 import com.example.be.core.admin.giaoca.repository.AdminGiaoCaRepository;
 import com.example.be.core.admin.giaoca.service.AdminGiaoCaService;
+import com.example.be.core.admin.lichlamviec.repository.AdminLichLamViecRepository;
 import com.example.be.entity.GiaoCa;
+import com.example.be.entity.LichLamViec;
 import com.example.be.entity.NhanVien;
 import com.example.be.repository.NhanVienRepository;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +34,9 @@ public class AdminGiaoCaServiceImpl implements AdminGiaoCaService {
 
     @Autowired
     private AdminHoaDonRepository hoaDonRepository;
+
+    @Autowired
+    private AdminLichLamViecRepository lichLamViecRepository;
 
     @Override
     @Transactional
@@ -51,6 +58,42 @@ public class AdminGiaoCaServiceImpl implements AdminGiaoCaService {
                 .build();
 
         giaoCa = giaoCaRepository.save(giaoCa);
+
+        // Tự động liên kết và cập nhật trạng thái/giờ vào của Lịch làm việc
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+        List<LichLamViec> schedules = lichLamViecRepository.findByNhanVienIdAndNgayLam(nhanVien.getId(), today);
+        boolean linked = false;
+        for (LichLamViec schedule : schedules) {
+            if (schedule.getGioVao() == null) {
+                schedule.setGioVao(now);
+                if (schedule.getCaLam() != null && schedule.getCaLam().getGioBatDau() != null) {
+                    LocalTime shiftStart = schedule.getCaLam().getGioBatDau();
+                    if (now.isAfter(shiftStart.plusMinutes(15))) {
+                        schedule.setTrangThaiLich(LichLamViec.TrangThaiLichLamViec.DI_MUON);
+                    } else {
+                        schedule.setTrangThaiLich(LichLamViec.TrangThaiLichLamViec.DUNG_GIO);
+                    }
+                } else {
+                    schedule.setTrangThaiLich(LichLamViec.TrangThaiLichLamViec.DUNG_GIO);
+                }
+                lichLamViecRepository.save(schedule);
+                linked = true;
+                break;
+            }
+        }
+
+        if (!linked && schedules.isEmpty()) {
+            LichLamViec newSchedule = LichLamViec.builder()
+                    .nhanVien(nhanVien)
+                    .ngayLam(today)
+                    .gioVao(now)
+                    .trangThaiLich(LichLamViec.TrangThaiLichLamViec.DUNG_GIO)
+                    .ghiChu("Tự động tạo khi mở ca")
+                    .build();
+            lichLamViecRepository.save(newSchedule);
+        }
+
         return mapToResponse(giaoCa);
     }
 
@@ -95,6 +138,19 @@ public class AdminGiaoCaServiceImpl implements AdminGiaoCaService {
         }
 
         giaoCa = giaoCaRepository.save(giaoCa);
+
+        // Tự động cập nhật giờ ra của Lịch làm việc
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+        List<LichLamViec> schedules = lichLamViecRepository.findByNhanVienIdAndNgayLam(nhanVien.getId(), today);
+        for (LichLamViec schedule : schedules) {
+            if (schedule.getGioVao() != null && schedule.getGioRa() == null) {
+                schedule.setGioRa(now);
+                lichLamViecRepository.save(schedule);
+                break;
+            }
+        }
+
         return mapToResponse(giaoCa);
     }
 
