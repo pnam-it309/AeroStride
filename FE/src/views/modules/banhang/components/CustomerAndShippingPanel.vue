@@ -704,6 +704,49 @@ watch(
 );
 
 watch(
+    () => props.initialShipping,
+    async (newShipping) => {
+        if (!newShipping || isApplyingAddressModal.value) return;
+
+        if (newShipping.name !== undefined && newShipping.name !== recipientName.value) {
+            recipientName.value = newShipping.name || '';
+        }
+        if (newShipping.phone !== undefined && newShipping.phone !== recipientPhone.value) {
+            recipientPhone.value = newShipping.phone || '';
+        }
+        if (newShipping.detail !== undefined && newShipping.detail !== recipientAddressDetail.value) {
+            recipientAddressDetail.value = newShipping.detail || '';
+        }
+
+        if (newShipping.province !== recipientProvince.value) {
+            recipientProvince.value = newShipping.province || null;
+            if (newShipping.province) {
+                if (provincesShip.value.length === 0) {
+                    await fetchProvincesShip();
+                }
+                await fetchDistrictsShip(newShipping.province);
+            } else {
+                districtsShip.value = [];
+            }
+        }
+
+        if (newShipping.district !== recipientDistrict.value) {
+            recipientDistrict.value = newShipping.district || null;
+            if (newShipping.district) {
+                await fetchWardsShip(newShipping.district);
+            } else {
+                wardsShip.value = [];
+            }
+        }
+
+        if (newShipping.ward !== recipientWard.value) {
+            recipientWard.value = newShipping.ward || null;
+        }
+    },
+    { deep: true }
+);
+
+watch(
     () => [props.order?.id, props.order?.idKhachHang],
     async ([newOrderId, newKhId], [oldOrderId, oldKhId]) => {
         if (newOrderId && newOrderId !== oldOrderId) {
@@ -717,6 +760,9 @@ watch(
             recipientWard.value = props.initialShipping?.ward || null;
 
             if (props.initialShipping?.province) {
+                if (provincesShip.value.length === 0) {
+                    await fetchProvincesShip();
+                }
                 await fetchDistrictsShip(props.initialShipping.province);
             }
             if (props.initialShipping?.district) {
