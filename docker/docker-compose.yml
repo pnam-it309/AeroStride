@@ -114,19 +114,21 @@ services:
         - VITE_API_URL=${VITE_API_URL}
         - VITE_WS_URL=${VITE_WS_URL}
         - VITE_APP_URL=${VITE_APP_URL}
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
         - FE_DEV_PORT=${FE_DEV_PORT}
         - NGINX_PORT=${NGINX_PORT}
     container_name: aerostride-fe
     <<: *common
     environment:
-      - BACKEND_HOST=aerostride-be
-      - BACKEND_PORT=${BACKEND_PORT}
-      - NGINX_PORT=${NGINX_PORT}
-      - SERVER_NAME=${SERVER_NAME}
-      - NGINX_ROOT=${NGINX_ROOT_FE}
-      - FE_DEV_PORT=${FE_DEV_PORT}
-      - CHOKIDAR_USEPOLLING=false
-      - WATCHPACK_POLLING=false
+        - BACKEND_HOST=aerostride-be
+        - BACKEND_PORT=${BACKEND_PORT}
+        - NGINX_PORT=${NGINX_PORT}
+        - SERVER_NAME=${SERVER_NAME}
+        - NGINX_ROOT=${NGINX_ROOT_FE}
+        - FE_DEV_PORT=${FE_DEV_PORT}
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+        - CHOKIDAR_USEPOLLING=false
+        - WATCHPACK_POLLING=false
     ports:
       - "${FE_PORTExternal}:${FE_INTERNAL_PORT}"
     volumes:

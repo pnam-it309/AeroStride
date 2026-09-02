@@ -32,9 +32,11 @@ ARG VITE_WS_URL
 # Vite leaves the literal placeholder in the markup when it is undefined, so an
 # absent value ships broken canonical/logo URLs to search engines.
 ARG VITE_APP_URL
+ARG VITE_GOOGLE_CLIENT_ID
 ENV VITE_API_URL=${VITE_API_URL:-/api/v1}
 ENV VITE_WS_URL=${VITE_WS_URL:-/ws}
 ENV VITE_APP_URL=${VITE_APP_URL:-https://aerostride.me}
+ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID:-165274553322-qnrdfe6veno65rhsimgrupor69rm9sg.apps.googleusercontent.com}
 ENV NODE_OPTIONS=--max-old-space-size=4096
 RUN npm run build
 
