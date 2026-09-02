@@ -15,10 +15,10 @@ public class AdminKhachHangRequest extends PageRequest {
     private String ma;
 
     @NotBlank(message = "Tên khách hàng không được để trống")
-    @jakarta.validation.constraints.Size(min = 3, max = 255, message = "Tên khách hàng phải từ 3 đến 255 ký tự")
+    @jakarta.validation.constraints.Size(min = 2, max = 255, message = "Tên khách hàng phải từ 2 đến 255 ký tự")
     @jakarta.validation.constraints.Pattern(
-        regexp = "^[a-zA-ZàáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠÂẦẤẨẪẬĂẰẮẲẴẶÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ\\s]+$",
-        message = "Tên khách hàng chỉ được chứa chữ cái và khoảng trắng"
+        regexp = "^[\\p{L}0-9\\s]+$",
+        message = "Tên khách hàng không được chứa ký tự đặc biệt"
     )
     private String ten;
 

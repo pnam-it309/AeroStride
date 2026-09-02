@@ -164,34 +164,67 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Thông tin nhân viên đang đăng nhập (cho header admin & trang hồ sơ). */
+    /** Thông tin người dùng đang đăng nhập (nhân viên hoặc khách hàng). */
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<CurrentUserResponse>> getCurrentUser(Authentication authentication) {
-        NhanVien nv = requireCurrentNhanVien(authentication);
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new UnauthorizedException("Bạn chưa đăng nhập");
+        }
+        String identifier = normalizeAuthenticationName(authentication.getName());
 
         String role = authentication.getAuthorities().isEmpty()
                 ? null
                 : authentication.getAuthorities().iterator().next().getAuthority();
 
-        CurrentUserResponse response = CurrentUserResponse.builder()
-                .id(nv.getId())
-                .tenTaiKhoan(nv.getTenTaiKhoan())
-                .ten(nv.getTen())
-                .chucVu(nv.getPhanQuyen() != null ? nv.getPhanQuyen().getTen() : null)
-                .role(role)
-                .ma(nv.getMa())
-                .email(nv.getEmail())
-                .sdt(nv.getSdt())
-                .hinhAnh(nv.getHinhAnh())
-                .gioiTinh(nv.getGioiTinh())
-                .ngaySinh(nv.getNgaySinh() != null ? nv.getNgaySinh().toString() : null)
-                .diaChiChiTiet(nv.getDiaChiChiTiet())
-                .phuongXa(nv.getPhuongXa())
-                .thanhPho(nv.getThanhPho())
-                .tinh(nv.getTinh())
-                .build();
+        // 1. Kiểm tra xem có phải nhân viên không
+        Optional<NhanVien> optionalNv = nhanVienRepository.findCurrentProfileByIdentifier(identifier);
+        if (optionalNv.isPresent()) {
+            NhanVien nv = optionalNv.get();
+            CurrentUserResponse response = CurrentUserResponse.builder()
+                    .id(nv.getId())
+                    .tenTaiKhoan(nv.getTenTaiKhoan())
+                    .ten(nv.getTen())
+                    .chucVu(nv.getPhanQuyen() != null ? nv.getPhanQuyen().getTen() : null)
+                    .role(role)
+                    .ma(nv.getMa())
+                    .email(nv.getEmail())
+                    .sdt(nv.getSdt())
+                    .hinhAnh(nv.getHinhAnh())
+                    .gioiTinh(nv.getGioiTinh())
+                    .ngaySinh(nv.getNgaySinh() != null ? nv.getNgaySinh().toString() : null)
+                    .diaChiChiTiet(nv.getDiaChiChiTiet())
+                    .phuongXa(nv.getPhuongXa())
+                    .thanhPho(nv.getThanhPho())
+                    .tinh(nv.getTinh())
+                    .build();
+            return ResponseEntity.ok(ApiResponse.success(response));
+        }
 
-        return ResponseEntity.ok(ApiResponse.success(response));
+        // 2. Nếu không phải nhân viên, kiểm tra xem có phải khách hàng không (đăng nhập thường hoặc Google)
+        Optional<KhachHang> optionalKh = khachHangRepository.findByTenTaiKhoan(identifier);
+        if (optionalKh.isEmpty()) {
+            optionalKh = khachHangRepository.findByEmail(identifier);
+        }
+        if (optionalKh.isPresent()) {
+            KhachHang kh = optionalKh.get();
+            CurrentUserResponse response = CurrentUserResponse.builder()
+                    .id(kh.getId())
+                    .tenTaiKhoan(kh.getTenTaiKhoan())
+                    .ten(kh.getTen())
+                    .chucVu("Khách hàng")
+                    .role(role != null ? role : "ROLE_CLIENT")
+                    .ma(kh.getMa())
+                    .email(kh.getEmail())
+                    .sdt(kh.getSdt())
+                    .hinhAnh(kh.getHinhAnh())
+                    .gioiTinh(kh.getGioiTinh())
+                    .ngaySinh(kh.getNgaySinh() != null ? kh.getNgaySinh().toString() : null)
+                    .build();
+            return ResponseEntity.ok(ApiResponse.success(response));
+        }
+
+        throw new UnauthorizedException("Không tìm thấy thông tin tài khoản");
     }
 
     /** Đổi mật khẩu của nhân viên đang đăng nhập. */

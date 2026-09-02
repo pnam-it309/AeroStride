@@ -304,7 +304,7 @@ const handleSave = () => {
         addNotification({ title: 'Lỗi', subtitle: 'Họ và tên không được vượt quá 100 ký tự', color: 'error' });
         return;
     }
-    if (!/^[\p{L}0-9\s]+$/u.test(rawName)) {
+    if (!/^[\p{L}0-9\s]+$/u.test(String(rawName).trim())) {
         addNotification({ title: 'Lỗi', subtitle: 'Họ và tên không được chứa ký tự đặc biệt', color: 'error' });
         return;
     }
@@ -319,7 +319,7 @@ const handleSave = () => {
         return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(String(email).trim())) {
         addNotification({ title: 'Lỗi', subtitle: 'Email không đúng định dạng', color: 'error' });
         return;
     }
@@ -330,7 +330,8 @@ const handleSave = () => {
         return;
     }
     const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
-    if (!phoneRegex.test(phone) || String(phone).length !== 10) {
+    const phoneClean = String(phone).trim();
+    if (!phoneRegex.test(phoneClean) || phoneClean.length !== 10) {
         addNotification({ title: 'Lỗi', subtitle: 'Số điện thoại không hợp lệ (gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09)', color: 'error' });
         return;
     }
@@ -379,7 +380,7 @@ const handleSave = () => {
     confirmDialog.value = {
         show: true,
         title: isEditMode.value ? 'Cập nhật nhân viên' : 'Thêm nhân viên mới',
-        message: `Xác nhận lưu thông tin nhân viên [${employeeForm.value.ten}]?`,
+        message: `Xác nhận lưu thông tin nhân viên [${String(employeeForm.value.ten || '').trim()}]?`,
         color: 'primary',
         action: async () => {
             saving.value = true;
@@ -393,15 +394,9 @@ const handleSave = () => {
                 const districtName = d ? d.name : employeeForm.value.thanhPhoName;
                 const wardName = w ? w.name : employeeForm.value.phuongXaName;
 
-                const addrParts = [employeeForm.value.diaChiChiTiet, wardName, districtName, provinceName].filter(
-                    (part) => part && String(part).trim() !== ''
-                );
-
-                const combinedAddress = addrParts.length > 0 ? addrParts.join(', ') : '';
-
                 const payload = {
-                    ma: employeeForm.value.ma,
-                    ten: employeeForm.value.ten ? employeeForm.value.ten.trim() : '',
+                    ma: employeeForm.value.ma ? employeeForm.value.ma.trim() : '',
+                    ten: employeeForm.value.ten ? employeeForm.value.ten.trim().replace(/\s+/g, ' ') : '',
                     email: employeeForm.value.email ? employeeForm.value.email.trim() : '',
                     sdt: employeeForm.value.sdt ? employeeForm.value.sdt.trim() : '',
                     tenTaiKhoan: employeeForm.value.tenTaiKhoan ? employeeForm.value.tenTaiKhoan.trim() : '',
@@ -411,8 +406,8 @@ const handleSave = () => {
                     tinh: provinceName || null,
                     thanhPho: districtName || null,
                     phuongXa: wardName || null,
-                    diaChiChiTiet: employeeForm.value.diaChiChiTiet ? employeeForm.value.diaChiChiTiet.trim() : null,
-                    hinhAnh: employeeForm.value.hinhAnh,
+                    diaChiChiTiet: employeeForm.value.diaChiChiTiet ? employeeForm.value.diaChiChiTiet.trim().replace(/\s+/g, ' ') : null,
+                    hinhAnh: employeeForm.value.hinhAnh ? employeeForm.value.hinhAnh.trim() : '',
                     idPhanQuyen: employeeForm.value.idPhanQuyen
                 };
                 if (isEditMode.value) {

@@ -32,10 +32,14 @@ export const useAuthStore = defineStore('auth', {
             if (!forceRefresh && this.userProfile) {
                 return this.userProfile;
             }
+            if (!this.accessToken && !sessionStorage.getItem('accessToken')) {
+                return null;
+            }
             try {
                 const profile = await dichVuXacThuc.layThongTinCaNhan(forceRefresh);
                 if (profile) {
                     this.userProfile = profile;
+                    sessionStorage.setItem('userProfile', JSON.stringify(profile));
                 }
                 return profile;
             } catch (e) {

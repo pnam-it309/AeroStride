@@ -273,18 +273,28 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     /** Applies mutable fields from request onto an existing entity (create + update). */
     private void applyEntityFields(KhachHang kh, AdminKhachHangRequest req) {
         if (req.getMa() != null && !req.getMa().isBlank()) {
-            kh.setMa(req.getMa());
+            kh.setMa(req.getMa().trim());
         }
-        kh.setTen(req.getTen());
-        kh.setEmail(req.getEmail());
+        if (req.getTen() != null) {
+            kh.setTen(req.getTen().trim().replaceAll("\\s+", " "));
+        }
+        if (req.getEmail() != null) {
+            kh.setEmail(req.getEmail().trim());
+        }
         if (req.getTenTaiKhoan() != null && !req.getTenTaiKhoan().isBlank()) {
-            kh.setTenTaiKhoan(req.getTenTaiKhoan());
+            kh.setTenTaiKhoan(req.getTenTaiKhoan().trim());
         }
         kh.setGioiTinh(req.getGioiTinh());
-        kh.setSdt(req.getSdt());
+        if (req.getSdt() != null) {
+            kh.setSdt(req.getSdt().trim());
+        }
         kh.setNgaySinh(req.getNgaySinh());
-        kh.setHinhAnh(req.getHinhAnh());
-        kh.setGhiChu(req.getGhiChu());
+        if (req.getHinhAnh() != null) {
+            kh.setHinhAnh(req.getHinhAnh().trim());
+        }
+        if (req.getGhiChu() != null) {
+            kh.setGhiChu(req.getGhiChu().trim());
+        }
     }
 
     /**
@@ -294,10 +304,10 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     private DiaChi resolveAddress(AdminKhachHangRequest request, KhachHang kh) {
         if (request.getTinh() != null && !request.getTinh().trim().isEmpty()) {
             DiaChi dc = new DiaChi();
-            dc.setTinh(request.getTinh());
-            dc.setThanhPho(request.getThanhPho());
-            dc.setPhuongXa(request.getPhuongXa());
-            dc.setDiaChiChiTiet(request.getDiaChiChiTiet());
+            dc.setTinh(request.getTinh().trim());
+            dc.setThanhPho(request.getThanhPho() != null ? request.getThanhPho().trim() : null);
+            dc.setPhuongXa(request.getPhuongXa() != null ? request.getPhuongXa().trim() : null);
+            dc.setDiaChiChiTiet(request.getDiaChiChiTiet() != null ? request.getDiaChiChiTiet().trim().replaceAll("\\s+", " ") : null);
             dc.setTenNguoiNhan(kh.getTen());
             dc.setSdtNguoiNhan(kh.getSdt());
             dc.setKhachHang(kh);

@@ -209,7 +209,13 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
 
     private void validateRequest(AdminPhieuGiamGiaRequest req) {
         if (req.getTen() != null) {
-            req.setTen(req.getTen().trim());
+            req.setTen(req.getTen().trim().replaceAll("\\s+", " "));
+        }
+        if (req.getMa() != null) {
+            req.setMa(req.getMa().trim());
+        }
+        if (req.getGhiChu() != null) {
+            req.setGhiChu(req.getGhiChu().trim());
         }
         if (req.getNgayBatDau() != null && req.getNgayKetThuc() != null) {
             if (req.getNgayBatDau() >= req.getNgayKetThuc()) {

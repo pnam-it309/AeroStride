@@ -633,7 +633,7 @@ const handleSave = () => {
 
                 const payload = {
                     ma: String(form.value.ma).trim(),
-                    ten: String(form.value.ten).trim(),
+                    ten: String(form.value.ten).trim().replace(/\s+/g, ' '),
                     moTa: form.value.moTa ? String(form.value.moTa).trim() : '',
                     loaiGiamGia: form.value.loaiGiamGia || 'PHAN_TRAM',
                     soTienGiam: Number(form.value.soTienGiam),

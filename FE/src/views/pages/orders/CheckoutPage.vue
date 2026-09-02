@@ -83,9 +83,9 @@ const checkOnlineOrderStatus = async (orderId) => {
         const phone = vnpayDialog.value.phone || shippingInfo.value.soDienThoai;
         let order = null;
         if (orderCode && phone) {
-            order = await dichVuDatHang.traCuuDonHang(orderCode, phone);
+            order = await dichVuDatHang.traCuuDonHang(orderCode, phone, { silent: true });
         } else {
-            order = await dichVuDatHang.layChiTietDonHang(orderId);
+            order = await dichVuDatHang.layChiTietDonHang(orderId, { silent: true });
         }
 
         if (order && (order.trangThai === 'XAC_NHAN' || order.trangThaiDisplay === 'Đã xác nhận')) {

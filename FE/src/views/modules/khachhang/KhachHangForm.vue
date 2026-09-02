@@ -239,7 +239,13 @@ const handleSave = async () => {
             try {
                 // Map names before sending
                 const payload = { ...customerForm.value };
-                const mappedPayload = mapCodesToNames(customerForm.value, provinces.value, districts.value, wards.value);
+                if (payload.ten) payload.ten = payload.ten.trim().replace(/\s+/g, ' ');
+                if (payload.email) payload.email = payload.email.trim();
+                if (payload.sdt) payload.sdt = payload.sdt.trim();
+                if (payload.diaChiChiTiet) payload.diaChiChiTiet = payload.diaChiChiTiet.trim().replace(/\s+/g, ' ');
+                if (payload.ghiChu) payload.ghiChu = payload.ghiChu.trim();
+
+                const mappedPayload = mapCodesToNames(payload, provinces.value, districts.value, wards.value);
                 Object.assign(payload, mappedPayload);
                 // validate address fields
                 if (!isEditMode.value || listDiaChi.value.length === 0) {
@@ -491,7 +497,13 @@ const saveAddress = async () => {
         }
     }
     try {
-        const payload = { ...addrForm.value, idKhachHang: route.params.id };
+        const payload = {
+            ...addrForm.value,
+            idKhachHang: route.params.id,
+            diaChiChiTiet: addrForm.value.diaChiChiTiet ? addrForm.value.diaChiChiTiet.trim().replace(/\s+/g, ' ') : '',
+            tenNguoiNhan: addrForm.value.tenNguoiNhan ? addrForm.value.tenNguoiNhan.trim().replace(/\s+/g, ' ') : '',
+            sdtNguoiNhan: addrForm.value.sdtNguoiNhan ? addrForm.value.sdtNguoiNhan.trim() : ''
+        };
         const p = provinces.value.find((x) => x.code === addrForm.value.tinh);
         const d = districts.value.find((x) => x.code === addrForm.value.thanhPho);
         const w = wards.value.find((x) => x.code === addrForm.value.phuongXa);
@@ -586,15 +598,13 @@ const handlePhoneInput = () => {
 };
 
 const nameRules = [
-    (v) => !!v || 'Vui lòng nhập Họ và tên',
-    (v) => (v && v.trim().length >= 3) || 'Họ và tên phải có ít nhất 3 ký tự',
-    (v) => (v && v.length <= 255) || 'Họ và tên không được vượt quá 255 ký tự',
+    (v) => (v && v.trim().length > 0) || 'Vui lòng nhập Họ và tên',
+    (v) => (v && v.trim().length >= 2) || 'Họ và tên phải có ít nhất 2 ký tự',
+    (v) => (v && v.trim().length <= 255) || 'Họ và tên không được vượt quá 255 ký tự',
     (v) =>
-        (v &&
-            /^[a-zA-ZàáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠÂẦẤẨẪẬĂẰẮẲẴẶÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ\s]+$/.test(
-                v.trim()
-            )) ||
-        'Họ và tên chỉ được chứa chữ cái và khoảng trắng'
+        !v ||
+        /^[\p{L}0-9\s]+$/u.test(v.trim()) ||
+        'Họ và tên không được chứa ký tự đặc biệt'
 ];
 
 const emailRules = [

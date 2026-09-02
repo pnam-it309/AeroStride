@@ -1130,8 +1130,8 @@ const persistVariantStatus = async (variant, nextStatus) => {
 
 const buildProductPayload = ({ includeVariants = false } = {}) => {
     const payload = {
-        maSanPham: product.value.maSanPham || null,
-        tenSanPham: product.value.tenSanPham || null,
+        maSanPham: product.value.maSanPham ? product.value.maSanPham.trim() : null,
+        tenSanPham: product.value.tenSanPham ? product.value.tenSanPham.trim().replace(/\s+/g, ' ') : null,
         idThuongHieu: product.value.idThuongHieu,
 
         idXuatXu: product.value.idXuatXu,
@@ -1143,7 +1143,7 @@ const buildProductPayload = ({ includeVariants = false } = {}) => {
         trangThai: product.value.trangThai,
         hinhAnh: product.value.hinhAnh || '',
 
-        moTaChiTiet: product.value.moTaChiTiet || ''
+        moTaChiTiet: product.value.moTaChiTiet ? product.value.moTaChiTiet.trim() : ''
     };
 
     if (includeVariants) {

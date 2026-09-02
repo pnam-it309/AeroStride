@@ -110,9 +110,9 @@ const submitQuickAdd = async () => {
         return;
     }
 
-    const nameRegex = /^[a-zA-ZàáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠÂẦẤẨẪẬĂẰẮẲẴẶÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ\s]+$/;
+    const nameRegex = /^[\p{L}0-9\s]+$/u;
     if (!nameRegex.test(name)) {
-        addNotification({ title: 'Tên không hợp lệ', subtitle: 'Tên khách hàng chỉ được chứa chữ cái và khoảng trắng.', color: 'warning' });
+        addNotification({ title: 'Tên không hợp lệ', subtitle: 'Tên khách hàng không được chứa ký tự đặc biệt.', color: 'warning' });
         return;
     }
 

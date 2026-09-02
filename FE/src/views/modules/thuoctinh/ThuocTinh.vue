@@ -301,6 +301,8 @@ const confirmSaveItem = () => {
             addNotification({ title: 'Lỗi', subtitle: `Tên ${getCurrentTabTitle().toLowerCase()}: ${noSpecialCharRes}`, color: 'error' });
             return;
         }
+
+        itemForm.value.ten = trimmed.replace(/\s+/g, ' ');
     }
 
     if (itemForm.value.moTa) {
@@ -309,6 +311,7 @@ const confirmSaveItem = () => {
             addNotification({ title: 'Lỗi', subtitle: 'Mô tả không được vượt quá 255 ký tự', color: 'error' });
             return;
         }
+        itemForm.value.moTa = moTaTrimmed;
     }
 
     if (selectedTab.value === 'colors') {

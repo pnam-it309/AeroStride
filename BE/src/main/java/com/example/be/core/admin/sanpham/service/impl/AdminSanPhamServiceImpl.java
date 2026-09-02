@@ -288,7 +288,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     private void applyProductData(SanPham sp, Object request, String code) {
         // Use a common interface or reflection if needed, but for now simple check
         if (request instanceof CreateProductRequest req) {
-            sp.setTen(req.getTenSanPham());
+            sp.setTen(req.getTenSanPham() != null ? req.getTenSanPham().trim().replaceAll("\\s+", " ") : null);
             sp.setThuongHieu(thuongHieuRepository.findById(req.getIdThuongHieu()).orElse(null));
             sp.setXuatXu(xuatXuRepository.findById(req.getIdXuatXu()).orElse(null));
             sp.setMucDichChay(mucDichChayRepository.findById(req.getIdMucDichChay()).orElse(null));
@@ -296,11 +296,11 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             sp.setChatLieu(chatLieuRepository.findById(req.getIdChatLieu()).orElse(null));
             sp.setDeGiay(deGiayRepository.findById(req.getIdDeGiay()).orElse(null));
             sp.setGioiTinhKhachHang(req.getGioiTinhKhachHang());
-            sp.setHinhAnh(req.getHinhAnh());
-            sp.setMoTaChiTiet(req.getMoTaChiTiet());
+            sp.setHinhAnh(req.getHinhAnh() != null ? req.getHinhAnh().trim() : null);
+            sp.setMoTaChiTiet(req.getMoTaChiTiet() != null ? req.getMoTaChiTiet().trim() : null);
             sp.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : TrangThai.DANG_HOAT_DONG);
         } else if (request instanceof UpdateProductRequest req) {
-            sp.setTen(req.getTenSanPham());
+            sp.setTen(req.getTenSanPham() != null ? req.getTenSanPham().trim().replaceAll("\\s+", " ") : null);
             sp.setThuongHieu(thuongHieuRepository.findById(req.getIdThuongHieu()).orElse(null));
             sp.setXuatXu(xuatXuRepository.findById(req.getIdXuatXu()).orElse(null));
             sp.setMucDichChay(mucDichChayRepository.findById(req.getIdMucDichChay()).orElse(null));
@@ -308,11 +308,11 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             sp.setChatLieu(chatLieuRepository.findById(req.getIdChatLieu()).orElse(null));
             sp.setDeGiay(deGiayRepository.findById(req.getIdDeGiay()).orElse(null));
             sp.setGioiTinhKhachHang(req.getGioiTinhKhachHang());
-            sp.setHinhAnh(req.getHinhAnh());
-            sp.setMoTaChiTiet(req.getMoTaChiTiet());
+            sp.setHinhAnh(req.getHinhAnh() != null ? req.getHinhAnh().trim() : null);
+            sp.setMoTaChiTiet(req.getMoTaChiTiet() != null ? req.getMoTaChiTiet().trim() : null);
             sp.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : TrangThai.DANG_HOAT_DONG);
         }
-        sp.setMa(code);
+        sp.setMa(code != null ? code.trim() : null);
         sp.setXoaMem(false);
     }
 

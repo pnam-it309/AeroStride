@@ -332,21 +332,37 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     /** Applies mutable fields from request onto an existing entity (create + update). */
     private void applyEntityFields(NhanVien nv, AdminNhanVienRequest req) {
         if (req.getMa() != null && !req.getMa().isBlank()) {
-            nv.setMa(req.getMa());
+            nv.setMa(req.getMa().trim());
         }
-        nv.setTen(req.getTen());
-        nv.setEmail(req.getEmail());
+        if (req.getTen() != null) {
+            nv.setTen(req.getTen().trim().replaceAll("\\s+", " "));
+        }
+        if (req.getEmail() != null) {
+            nv.setEmail(req.getEmail().trim());
+        }
         if (req.getTenTaiKhoan() != null && !req.getTenTaiKhoan().isBlank()) {
-            nv.setTenTaiKhoan(req.getTenTaiKhoan());
+            nv.setTenTaiKhoan(req.getTenTaiKhoan().trim());
         }
         nv.setGioiTinh(req.getGioiTinh());
-        nv.setSdt(req.getSdt());
+        if (req.getSdt() != null) {
+            nv.setSdt(req.getSdt().trim());
+        }
         nv.setNgaySinh(req.getNgaySinh());
-        nv.setHinhAnh(req.getHinhAnh());
-        nv.setTinh(req.getTinh());
-        nv.setThanhPho(req.getThanhPho());
-        nv.setPhuongXa(req.getPhuongXa());
-        nv.setDiaChiChiTiet(req.getDiaChiChiTiet());
+        if (req.getHinhAnh() != null) {
+            nv.setHinhAnh(req.getHinhAnh().trim());
+        }
+        if (req.getTinh() != null) {
+            nv.setTinh(req.getTinh().trim());
+        }
+        if (req.getThanhPho() != null) {
+            nv.setThanhPho(req.getThanhPho().trim());
+        }
+        if (req.getPhuongXa() != null) {
+            nv.setPhuongXa(req.getPhuongXa().trim());
+        }
+        if (req.getDiaChiChiTiet() != null) {
+            nv.setDiaChiChiTiet(req.getDiaChiChiTiet().trim().replaceAll("\\s+", " "));
+        }
     }
 
     /** Small random numeric suffix to avoid username collisions. */

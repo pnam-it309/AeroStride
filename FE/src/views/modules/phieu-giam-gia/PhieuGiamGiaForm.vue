@@ -354,7 +354,9 @@ const handleSave = () => {
 
                 const payload = {
                     ...form.value,
-                    ghiChu: form.value.moTa,
+                    ma: form.value.ma ? String(form.value.ma).trim() : '',
+                    ten: form.value.ten ? String(form.value.ten).trim().replace(/\s+/g, ' ') : '',
+                    ghiChu: form.value.moTa ? String(form.value.moTa).trim() : '',
                     donHangToiThieu: form.value.giatriToiThieu,
                     hinhThuc: form.value.loaiHienThi,
                     ngayBatDau: new Date(form.value.ngayBatDau).getTime(),

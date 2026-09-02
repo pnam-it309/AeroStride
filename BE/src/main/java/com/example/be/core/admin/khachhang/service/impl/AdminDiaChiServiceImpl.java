@@ -76,6 +76,12 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
 
         DiaChi dc = new DiaChi();
         BeanUtils.copyProperties(request, dc);
+        if (dc.getTinh() != null) dc.setTinh(dc.getTinh().trim());
+        if (dc.getThanhPho() != null) dc.setThanhPho(dc.getThanhPho().trim());
+        if (dc.getPhuongXa() != null) dc.setPhuongXa(dc.getPhuongXa().trim());
+        if (dc.getDiaChiChiTiet() != null) dc.setDiaChiChiTiet(dc.getDiaChiChiTiet().trim().replaceAll("\\s+", " "));
+        if (dc.getTenNguoiNhan() != null) dc.setTenNguoiNhan(dc.getTenNguoiNhan().trim().replaceAll("\\s+", " "));
+        if (dc.getSdtNguoiNhan() != null) dc.setSdtNguoiNhan(dc.getSdtNguoiNhan().trim());
         dc.setKhachHang(kh);
         
         dc = repository.save(dc);
@@ -99,6 +105,12 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
         }
 
         BeanUtils.copyProperties(request, dc, "id", "khachHang");
+        if (dc.getTinh() != null) dc.setTinh(dc.getTinh().trim());
+        if (dc.getThanhPho() != null) dc.setThanhPho(dc.getThanhPho().trim());
+        if (dc.getPhuongXa() != null) dc.setPhuongXa(dc.getPhuongXa().trim());
+        if (dc.getDiaChiChiTiet() != null) dc.setDiaChiChiTiet(dc.getDiaChiChiTiet().trim().replaceAll("\\s+", " "));
+        if (dc.getTenNguoiNhan() != null) dc.setTenNguoiNhan(dc.getTenNguoiNhan().trim().replaceAll("\\s+", " "));
+        if (dc.getSdtNguoiNhan() != null) dc.setSdtNguoiNhan(dc.getSdtNguoiNhan().trim());
         dc = repository.save(dc);
         
         if (Boolean.TRUE.equals(request.getLaMacDinh())) {

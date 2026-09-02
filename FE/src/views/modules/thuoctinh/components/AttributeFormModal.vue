@@ -30,11 +30,7 @@ const nameRules = computed(() => {
 const closeModal = () => emit('update:show', false);
 const handleSave = () => emit('save');
 const updateFormField = (field, value) => {
-    let val = value;
-    if (typeof val === 'string' && val.startsWith(' ')) {
-        val = val.trimStart();
-    }
-    const updatedForm = { ...props.form, [field]: val };
+    const updatedForm = { ...props.form, [field]: value };
 
     // Tự động đồng bộ tên màu và mã hex khi quản lý màu sắc.
     if (props.selectedTab === 'colors') {

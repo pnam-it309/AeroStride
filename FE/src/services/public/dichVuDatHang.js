@@ -25,21 +25,20 @@ export const dichVuDatHang = {
     },
 
     // Tra cứu đơn hàng công khai (Khách vãng lai) - Cho phép tra theo Mã đơn HOẶC SĐT
-    async traCuuDonHang(maHoaDon = '', soDienThoai = '') {
+    async traCuuDonHang(maHoaDon = '', soDienThoai = '', options = {}) {
         const params = {};
         if (maHoaDon) params.maHoaDon = maHoaDon;
         if (soDienThoai) params.soDienThoai = soDienThoai;
         const response = await api.get('/customer/order/track', {
             params,
-            bigOp: true,
-            loadingMessage: 'Đang tra cứu đơn hàng...'
+            ...options
         });
         return response.data.data;
     },
 
     // Lấy chi tiết đơn hàng
-    async layChiTietDonHang(id) {
-        const response = await api.get(`${API_CUSTOMER.ORDER}/${id}`);
+    async layChiTietDonHang(id, options = {}) {
+        const response = await api.get(`${API_CUSTOMER.ORDER}/${id}`, options);
         return response.data.data;
     },
 

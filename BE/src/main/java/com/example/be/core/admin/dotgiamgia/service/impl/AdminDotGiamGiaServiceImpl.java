@@ -88,6 +88,14 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
         if (d.getMa() == null || d.getMa().trim().isEmpty()) {
             // Generating DGG sequential or unique code
             d.setMa("DGG" + System.currentTimeMillis() % 1000000);
+        } else {
+            d.setMa(d.getMa().trim());
+        }
+        if (d.getTen() != null) {
+            d.setTen(d.getTen().trim().replaceAll("\\s+", " "));
+        }
+        if (d.getMoTa() != null) {
+            d.setMoTa(d.getMoTa().trim());
         }
         if (d.getTrangThai() == null) {
             d.setTrangThai(TrangThai.DANG_HOAT_DONG);
@@ -104,6 +112,15 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DOT_GIAM_GIA_NOT_FOUND_ID + id));
         BeanUtils.copyProperties(req, d);
         d.setId(id); // Keep the ID
+        if (d.getMa() != null) {
+            d.setMa(d.getMa().trim());
+        }
+        if (d.getTen() != null) {
+            d.setTen(d.getTen().trim().replaceAll("\\s+", " "));
+        }
+        if (d.getMoTa() != null) {
+            d.setMoTa(d.getMoTa().trim());
+        }
         DotGiamGia saved = repo.saveAndFlush(d);
 
         chiTietDotGiamGiaRepo.deleteByDotGiamGiaId(id);
