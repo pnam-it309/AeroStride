@@ -16,10 +16,10 @@ import MainView from './Main.vue';
                     <RouterView v-slot="{ Component, route }">
                         <template v-if="Component">
                             <transition name="route-shell" mode="out-in">
-                                <keep-alive :max="20">
+                                <keep-alive :max="20" :exclude="['SanPhamForm', 'KhachHangForm', 'NhanVienForm', 'PhieuGiamGiaForm', 'DotGiamGiaForm', 'HoaDonChiTiet']">
                                     <Suspense>
                                         <template #default>
-                                            <component :is="Component" :key="route.meta?.key || (route.name === 'ThuocTinh' ? 'ThuocTinh' : route.path)" />
+                                            <component :is="Component" :key="route.meta?.key || (route.name === 'ThuocTinh' ? 'ThuocTinh' : route.fullPath)" />
                                         </template>
                                         <template #fallback>
                                             <div

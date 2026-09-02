@@ -136,7 +136,11 @@ public class EmailServiceImpl implements EmailService {
                 log.info("Email sent successfully via Resend to: {}, Response: {}", to, response.body());
                 return true;
             } else {
-                log.error("Resend API returned error {}: {}", response.statusCode(), response.body());
+                if (response.statusCode() == 403 && response.body().contains("testing emails")) {
+                    log.error("RESEND CHẶN GỬI (403): Domain 'onboarding@resend.dev' CHỈ cho phép gửi email đến đúng địa chỉ email bạn dùng đăng ký tài khoản Resend. Để gửi đến '{}', bạn cần thêm và xác thực domain riêng tại https://resend.com/domains và đặt biến RESEND_FROM=AeroStride <no-reply@yourdomain.com>.", to);
+                } else {
+                    log.error("Resend API returned error {}: {}", response.statusCode(), response.body());
+                }
                 return false;
             }
         } catch (Exception e) {
