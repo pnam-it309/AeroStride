@@ -69,18 +69,18 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     private final MauSacRepository mauSacRepository;
     private final KichThuocRepository kichThuocRepository;
 
-    // Lấy danh sách biến thể theo ID sản phẩm gốc
+    // Lấy danh sách biến thể theo ID sản phẩm gốc (tinh gọn, không nhúng toàn bộ ảnh base64 lớn)
     @Override
     @Transactional(readOnly = true)
     public List<ProductVariantResponse> getVariantsByProductId(String productId) {
-        return mapVariants(adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(productId), true);
+        return mapVariants(adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(productId), false);
     }
 
-    // Lấy toàn bộ danh sách biến thể sản phẩm đang hoạt động
+    // Lấy toàn bộ danh sách biến thể sản phẩm đang hoạt động (tinh gọn)
     @Override
     @Transactional(readOnly = true)
     public List<ProductVariantResponse> getAllVariants() {
-        return mapVariants(adminChiTietSanPhamRepository.findAllByXoaMemFalse());
+        return mapVariants(adminChiTietSanPhamRepository.findAllByXoaMemFalse(), false);
     }
 
     // Lấy danh sách biến thể có phân trang + lọc (server-side) cho màn quản lý biến thể.

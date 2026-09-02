@@ -1399,7 +1399,7 @@ const fetchFormOptions = async () => {
     try {
         const [opts, productsRes] = await Promise.all([
             dichVuSanPham.layOptionsForm().catch(() => null),
-            dichVuSanPham.layDanhSachSanPham({ size: 1000 }).catch(() => null)
+            dichVuSanPham.layOptionsSanPham().catch(() => null)
         ]);
 
         if (productsRes) {
@@ -1654,7 +1654,11 @@ const loadProduct = async (id) => {
 
 // Các watcher đồng bộ giá/phân trang/lựa chọn của bảng biến thể đã nằm trong useVariantTable.
 
+let isInitializing = false;
+
 const loadInitData = async () => {
+    if (isInitializing) return;
+    isInitializing = true;
     uiStore.startProgress();
     try {
         await fetchFormOptions();
@@ -1696,14 +1700,15 @@ const loadInitData = async () => {
         console.error('Error initializing form:', error);
         addNotification({ title: 'Lỗi', subtitle: 'Không thể tải dữ liệu khởi tạo', color: 'error' });
     } finally {
+        isInitializing = false;
         uiStore.stopProgress();
     }
 };
 
 watch(
     () => route.params.id,
-    () => {
-        if (route.name === 'SanPhamForm') {
+    (newId, oldId) => {
+        if (newId && newId !== oldId && route.name === 'SanPhamForm') {
             loadInitData();
         }
     }

@@ -2,10 +2,24 @@ import api from '../apiService';
 import { API_PRODUCT } from '@/constants/apiPaths';
 
 export const dichVuBienThe = {
-    // Lấy danh sách biến thể theo ID sản phẩm
+    _inFlightByProductId: new Map(),
+
+    // Lấy danh sách biến thể theo ID sản phẩm (có in-flight deduplication)
     async layBienTheTheoSanPham(productId) {
-        const response = await api.get(`${API_PRODUCT.SAN_PHAM}/${productId}/variants`);
-        return response.data.data;
+        if (!productId) return [];
+        if (this._inFlightByProductId.has(productId)) {
+            return this._inFlightByProductId.get(productId);
+        }
+        const promise = (async () => {
+            try {
+                const response = await api.get(`${API_PRODUCT.SAN_PHAM}/${productId}/variants`);
+                return response.data.data;
+            } finally {
+                this._inFlightByProductId.delete(productId);
+            }
+        })();
+        this._inFlightByProductId.set(productId, promise);
+        return promise;
     },
 
     // Lấy tất cả biến thể

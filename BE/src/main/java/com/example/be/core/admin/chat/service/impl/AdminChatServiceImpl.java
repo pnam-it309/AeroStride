@@ -70,10 +70,21 @@ public class AdminChatServiceImpl implements AdminChatService {
                 .format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
+    private String sanitizeAvatar(String hinhAnh) {
+        if (hinhAnh == null || hinhAnh.trim().isEmpty()) {
+            return DEFAULT_AVATAR;
+        }
+        // Nếu là base64 image dài quá 2KB thì không nhúng thẳng vào danh sách hội thoại để tránh payload 1.35MB
+        if (hinhAnh.startsWith("data:") && hinhAnh.length() > 2048) {
+            return DEFAULT_AVATAR;
+        }
+        return hinhAnh;
+    }
+
     private String getAvatarUrl(CuocHoiThoai c, String currentUsername) {
         if (c.getKhachHang() != null) {
             String hinhAnh = c.getKhachHang().getHinhAnh();
-            return (hinhAnh != null && !hinhAnh.trim().isEmpty()) ? hinhAnh : DEFAULT_AVATAR;
+            return sanitizeAvatar(hinhAnh);
         }
 
         if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
@@ -89,7 +100,7 @@ public class AdminChatServiceImpl implements AdminChatService {
             }
             if (partner != null) {
                 String hinhAnh = partner.getHinhAnh();
-                return (hinhAnh != null && !hinhAnh.trim().isEmpty()) ? hinhAnh : DEFAULT_AVATAR;
+                return sanitizeAvatar(hinhAnh);
             }
         }
         
@@ -316,7 +327,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                         .id("NEW_INTERNAL_" + nv.getId())
                         .ten(nv.getTen())
                         .tinNhanCuoi("")
-                        .anhDaiDien(nv.getHinhAnh() != null && !nv.getHinhAnh().trim().isEmpty() ? nv.getHinhAnh() : DEFAULT_AVATAR)
+                        .anhDaiDien(sanitizeAvatar(nv.getHinhAnh()))
                         .thoiGian("")
                         .chuaDoc(0)
                         .daChapNhan(true)

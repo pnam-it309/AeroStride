@@ -497,10 +497,13 @@ const init = async () => {
         const maxPrice = results[1];
         const options = results[2] || {};
 
-        if (maxPrice !== undefined && maxPrice !== null) {
-            dynamicMaxPrice.value = Math.max(maxPrice, 50000);
-            detailFilters.value.khoangGia = [0, dynamicMaxPrice.value];
+        const maxPriceNum = Number(maxPrice);
+        if (!isNaN(maxPriceNum) && maxPriceNum > 0) {
+            dynamicMaxPrice.value = Math.max(maxPriceNum, 50000);
+        } else {
+            dynamicMaxPrice.value = 6500000;
         }
+        detailFilters.value.khoangGia = [0, dynamicMaxPrice.value];
 
         brands.value = (options?.thuongHieus || []).map((b) => b.ten);
         colors.value = (options?.mauSacs || []).map((c) => c.ten);
@@ -508,15 +511,17 @@ const init = async () => {
         materials.value = (options?.chatLieus || []).map((m) => m.ten);
 
         if (isEditMode.value || isDetailView.value) {
-            const data = results[6];
-            const applied = results[7];
+            const data = results[3];
+            const applied = results[4];
 
-            form.value = {
-                ...data,
-                giamToiDa: data?.giamToiDa !== undefined && data?.giamToiDa !== null ? data.giamToiDa : null,
-                ngayBatDau: data.ngayBatDau ? toLocalDatetimeString(data.ngayBatDau) : '',
-                ngayKetThuc: data.ngayKetThuc ? toLocalDatetimeString(data.ngayKetThuc) : ''
-            };
+            if (data) {
+                form.value = {
+                    ...data,
+                    giamToiDa: data?.giamToiDa !== undefined && data?.giamToiDa !== null ? data.giamToiDa : null,
+                    ngayBatDau: data.ngayBatDau ? toLocalDatetimeString(data.ngayBatDau) : '',
+                    ngayKetThuc: data.ngayKetThuc ? toLocalDatetimeString(data.ngayKetThuc) : ''
+                };
+            }
 
             const newMap = new Map();
             (applied || []).forEach((v) => {
@@ -525,7 +530,7 @@ const init = async () => {
             });
             selectedVariantsMap.value = newMap;
         } else {
-            form.value.ma = results[6] || ('DGG' + Date.now().toString().slice(-6));
+            form.value.ma = results[3] || ('DGG' + Date.now().toString().slice(-6));
         }
     } catch (e) {
         console.error('Error during init:', e);

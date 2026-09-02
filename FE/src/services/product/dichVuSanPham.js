@@ -29,53 +29,71 @@ export const dichVuSanPham = {
     },
 
     _cachedFormOptions: null,
+    _inFlightFormOptions: null,
 
-    // Lấy options cho form sản phẩm (có cache)
+    // Lấy options cho form sản phẩm (có cache & in-flight deduplication)
     async layOptionsForm(forceRefresh = false) {
         if (!forceRefresh && this._cachedFormOptions) {
             return this._cachedFormOptions;
         }
-        try {
-            const response = await api.get(`${API_ADMIN.SAN_PHAM}/form-options`);
-            if (response.data?.data) {
-                this._cachedFormOptions = response.data.data;
-            }
-            return response.data.data;
-        } catch (error) {
-            console.error('Error loading form options:', error);
-            return {
-                thuongHieus: [],
-                xuatXus: [],
-                mucDichChays: [],
-                chatLieus: [],
-                deGiays: [],
-                coGiays: [],
-                mauSacs: [],
-                kichThuocs: [],
-                trangThais: ['DANG_HOAT_DONG', 'NGUNG_HOAT_DONG'],
-                gioiTinhKhachHangs: ['NAM', 'NU', 'TRE_EM', 'UNISEX']
-            };
+        if (this._inFlightFormOptions) {
+            return this._inFlightFormOptions;
         }
+        this._inFlightFormOptions = (async () => {
+            try {
+                const response = await api.get(`${API_ADMIN.SAN_PHAM}/form-options`);
+                if (response.data?.data) {
+                    this._cachedFormOptions = response.data.data;
+                }
+                return response.data?.data || this._cachedFormOptions;
+            } catch (error) {
+                console.error('Error loading form options:', error);
+                return {
+                    thuongHieus: [],
+                    xuatXus: [],
+                    mucDichChays: [],
+                    chatLieus: [],
+                    deGiays: [],
+                    coGiays: [],
+                    mauSacs: [],
+                    kichThuocs: [],
+                    trangThais: ['DANG_HOAT_DONG', 'NGUNG_HOAT_DONG'],
+                    gioiTinhKhachHangs: ['NAM', 'NU', 'TRE_EM', 'UNISEX']
+                };
+            } finally {
+                this._inFlightFormOptions = null;
+            }
+        })();
+        return this._inFlightFormOptions;
     },
 
     _cachedProductOptions: null,
+    _inFlightProductOptions: null,
 
-    // Lấy danh sách sản phẩm rút gọn cho bộ lọc (có cache)
+    // Lấy danh sách sản phẩm rút gọn cho bộ lọc (có cache & in-flight deduplication)
     async layOptionsSanPham(forceRefresh = false) {
         if (!forceRefresh && this._cachedProductOptions) {
             return this._cachedProductOptions;
         }
-        try {
-            const response = await api.get(API_ADMIN.SAN_PHAM, { params: { page: 0, size: 1000 } });
-            const list = response.data?.data?.content || [];
-            if (list.length > 0) {
-                this._cachedProductOptions = list;
-            }
-            return list;
-        } catch (error) {
-            console.error('Error loading product options:', error);
-            return this._cachedProductOptions || [];
+        if (this._inFlightProductOptions) {
+            return this._inFlightProductOptions;
         }
+        this._inFlightProductOptions = (async () => {
+            try {
+                const response = await api.get(API_ADMIN.SAN_PHAM, { params: { page: 0, size: 1000 } });
+                const list = response.data?.data?.content || [];
+                if (list.length > 0) {
+                    this._cachedProductOptions = list;
+                }
+                return list;
+            } catch (error) {
+                console.error('Error loading product options:', error);
+                return this._cachedProductOptions || [];
+            } finally {
+                this._inFlightProductOptions = null;
+            }
+        })();
+        return this._inFlightProductOptions;
     },
 
     // Lấy danh sách sản phẩm
@@ -84,10 +102,24 @@ export const dichVuSanPham = {
         return response.data.data;
     },
 
-    // Lấy chi tiết sản phẩm
+    _detailInFlight: new Map(),
+
+    // Lấy chi tiết sản phẩm (có in-flight deduplication)
     async layChiTietSanPham(id) {
-        const response = await api.get(`${API_ADMIN.SAN_PHAM}/${id}`);
-        return response.data.data;
+        if (!id) return null;
+        if (this._detailInFlight.has(id)) {
+            return this._detailInFlight.get(id);
+        }
+        const promise = (async () => {
+            try {
+                const response = await api.get(`${API_ADMIN.SAN_PHAM}/${id}`);
+                return response.data.data;
+            } finally {
+                this._detailInFlight.delete(id);
+            }
+        })();
+        this._detailInFlight.set(id, promise);
+        return promise;
     },
 
     // Kiểm tra trùng thuộc tính
