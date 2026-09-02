@@ -60,7 +60,7 @@ const navLinks = [
     { label: 'GIỚI THIỆU', path: '/gioi-thieu' },
     { label: 'TIN TỨC', path: '/tin-tuc' },
     { label: 'LIÊN HỆ', path: '/lien-he' },
-    { label: 'TRA CỨU', path: PATH.ORDERS }
+    { label: 'TRA CỨU', path: PATH.TRACK_ORDER }
 ];
 
 // ─── Live search ──────────────────────────────────────────────────────────────

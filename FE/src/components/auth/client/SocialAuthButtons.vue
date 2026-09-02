@@ -26,8 +26,8 @@
         <span class="social-btn-text">Google</span>
       </v-btn>
 
-      <!-- Facebook Login Button -->
-      <v-btn
+      <!-- Facebook Login Button (Tạm ẩn theo yêu cầu) -->
+      <!-- <v-btn
         id="btn-login-facebook"
         variant="outlined"
         class="social-action-btn facebook-btn flex-grow-1"
@@ -40,7 +40,7 @@
           <FacebookIcon :size="20" class="mr-2" />
         </template>
         <span class="social-btn-text">Facebook</span>
-      </v-btn>
+      </v-btn> -->
     </div>
   </div>
 </template>

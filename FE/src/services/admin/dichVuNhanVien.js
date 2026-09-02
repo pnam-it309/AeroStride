@@ -1,5 +1,6 @@
 import api from '../apiService';
 import { API_ADMIN } from '@/constants/apiPaths';
+import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 
 export const dichVuNhanVien = {
     // Lấy tất cả nhân viên
@@ -80,17 +81,8 @@ export const dichVuNhanVien = {
         return response.data.data;
     },
 
-    _cachedStaffMe: null,
-
-    // Lấy thông tin cá nhân (có cache)
+    // Lấy thông tin cá nhân (dùng chung cache từ dichVuXacThuc)
     async layThongTinCaNhan(forceRefresh = false) {
-        if (!forceRefresh && this._cachedStaffMe) {
-            return this._cachedStaffMe;
-        }
-        const response = await api.get(`${API_ADMIN.NHAN_VIEN}/me`);
-        if (response.data?.data) {
-            this._cachedStaffMe = response.data.data;
-        }
-        return response.data?.data;
+        return dichVuXacThuc.layThongTinCaNhan(forceRefresh);
     }
 };

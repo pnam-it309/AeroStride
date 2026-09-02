@@ -58,7 +58,14 @@ export const router = createRouter({
             path: PATH.ORDERS,
             name: 'MyOrders',
             component: () => import('@/views/pages/orders/MyOrdersPage.vue'),
-            meta: { seoTitle: 'Đơn Hàng Của Tôi' }
+            meta: { requiresCustomerAuth: true, seoTitle: 'Đơn Hàng Của Tôi' }
+        },
+        {
+            path: PATH.TRACK_ORDER,
+            alias: ['/tra-cuu', '/tracking', '/order-tracking'],
+            name: 'OrderTracking',
+            component: () => import('@/views/pages/orders/OrderTrackingPage.vue'),
+            meta: { seoTitle: 'Tra Cứu Đơn Hàng' }
         },
         {
             path: PATH.PROFILE,

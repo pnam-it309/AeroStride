@@ -167,7 +167,7 @@ public class AdminChatServiceImpl implements AdminChatService {
         NhanVien currentNv = nhanVienRepository.findByTenTaiKhoan(currentUsername).orElse(null);
         boolean isManager = currentNv != null && VaiTro.isManagementRole(currentNv);
         
-        List<AdminChatResponse> allConvs = conversationRepository.findAllWithDetails().stream()
+        List<CuocHoiThoai> rawConvs = conversationRepository.findAllWithDetails().stream()
                 .filter(c -> {
                     // Logic lọc hội thoại:
                     // 1. Nếu là PENDING: Mọi nhân viên đều thấy để có thể tiếp nhận.
@@ -192,6 +192,29 @@ public class AdminChatServiceImpl implements AdminChatService {
                     
                     return false;
                 })
+                .toList();
+
+        List<String> convIds = rawConvs.stream().map(CuocHoiThoai::getId).filter(Objects::nonNull).toList();
+        Map<String, TinNhan> latestMsgMap = new HashMap<>();
+        Map<String, Integer> unreadCountMap = new HashMap<>();
+
+        if (!convIds.isEmpty()) {
+            List<TinNhan> latestMessages = messageRepository.findLatestMessagesByConversationIds(convIds);
+            for (TinNhan t : latestMessages) {
+                if (t.getCuocHoiThoai() != null && t.getCuocHoiThoai().getId() != null) {
+                    latestMsgMap.put(t.getCuocHoiThoai().getId(), t);
+                }
+            }
+
+            List<Object[]> unreadCounts = messageRepository.countUnreadByConversationIds(convIds);
+            for (Object[] row : unreadCounts) {
+                if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                    unreadCountMap.put((String) row[0], ((Number) row[1]).intValue());
+                }
+            }
+        }
+
+        List<AdminChatResponse> allConvs = rawConvs.stream()
                 .map(c -> {
                     String partnerStaffId = null;
                     String partnerUsername = null;
@@ -226,54 +249,34 @@ public class AdminChatServiceImpl implements AdminChatService {
                             role = "ROLE_QUAN_LY";
                         }
                     }
+
+                    TinNhan lastMsg = latestMsgMap.get(c.getId());
                     int unreadCount = 0;
                     if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
-                        // Nếu đã có nhân viên khác tiếp nhận cuộc trò chuyện -> không hiển thị số chưa đọc cho nhân viên hiện tại
                         boolean isAssignedToOther = Boolean.TRUE.equals(c.getDaChapNhan())
                                 && c.getNhanVien() != null
                                 && !c.getNhanVien().getTenTaiKhoan().equalsIgnoreCase(currentUsername);
 
-                        if (!isAssignedToOther && c.getDanhSachTinNhan() != null && !c.getDanhSachTinNhan().isEmpty()) {
-                            TinNhan last = c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1);
-                            String lastSender = last.getLoaiNguoiGui();
+                        if (!isAssignedToOther && lastMsg != null) {
+                            String lastSender = lastMsg.getLoaiNguoiGui();
                             if (lastSender != null && !lastSender.equalsIgnoreCase(currentUsername) && !"staff".equalsIgnoreCase(lastSender)) {
-                                unreadCount = 1;
+                                unreadCount = unreadCountMap.getOrDefault(c.getId(), 0);
                             }
                         }
                     } else {
-                        if (c.getDanhSachTinNhan() != null && !c.getDanhSachTinNhan().isEmpty()) {
-                            TinNhan last = c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1);
-                            String lastSender = last.getLoaiNguoiGui();
+                        if (lastMsg != null) {
+                            String lastSender = lastMsg.getLoaiNguoiGui();
                             if (lastSender != null && !lastSender.equalsIgnoreCase(currentUsername)) {
-                                unreadCount = 1;
+                                unreadCount = unreadCountMap.getOrDefault(c.getId(), 0);
                             }
                         }
                     }
-                    Long lastMsgTimestamp = c.getNgayCapNhat() != null ? c.getNgayCapNhat() : 0L;
-                    String lastMessageText = "";
-                    if (c.getDanhSachTinNhan() != null && !c.getDanhSachTinNhan().isEmpty()) {
-                        if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
-                            List<TinNhan> realMsgs = c.getDanhSachTinNhan().stream()
-                                    .filter(m -> !ChatConstants.SENDER_TYPE_SYSTEM.equalsIgnoreCase(m.getLoaiNguoiGui())
-                                            && m.getNoiDung() != null
-                                            && !m.getNoiDung().contains("tự động kết thúc")
-                                            && !m.getNoiDung().contains("đã được đóng"))
-                                    .toList();
-                            if (!realMsgs.isEmpty()) {
-                                TinNhan lastReal = realMsgs.get(realMsgs.size() - 1);
-                                lastMessageText = lastReal.getNoiDung();
-                                if (lastReal.getNgayTao() != null) {
-                                    lastMsgTimestamp = lastReal.getNgayTao();
-                                }
-                            }
-                        } else {
-                            TinNhan last = c.getDanhSachTinNhan().get(c.getDanhSachTinNhan().size() - 1);
-                            lastMessageText = last.getNoiDung();
-                            if (last.getNgayTao() != null) {
-                                lastMsgTimestamp = last.getNgayTao();
-                            }
-                        }
-                    }
+
+                    Long lastMsgTimestamp = lastMsg != null && lastMsg.getNgayTao() != null
+                            ? lastMsg.getNgayTao()
+                            : (c.getNgayCapNhat() != null ? c.getNgayCapNhat() : 0L);
+                    String lastMessageText = lastMsg != null && lastMsg.getNoiDung() != null ? lastMsg.getNoiDung() : "";
+
                     boolean isPartnerOnline = partnerUsername != null && userPresenceService.isOnline(partnerUsername);
                     String internalStatus = isPartnerOnline ? CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name() : CuocHoiThoai.TrangThaiHoiThoai.CLOSED.name();
 
@@ -283,7 +286,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                             .tinNhanCuoi(lastMessageText)
                             .anhDaiDien(getAvatarUrl(c, currentUsername))
                             .thoiGian(formatTime(lastMsgTimestamp > 0 ? lastMsgTimestamp : c.getNgayCapNhat()))
-                            .chuaDoc(0)
+                            .chuaDoc(unreadCount)
                             .daChapNhan(c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL ? true : c.getDaChapNhan())
                             .loaiHoiThoai(c.getLoaiHoiThoai() != null ? c.getLoaiHoiThoai().name() : CuocHoiThoai.LoaiHoiThoai.CUSTOMER.name())
                             .trangThaiHoiThoai(c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL ? internalStatus : (c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name()))
@@ -293,7 +296,6 @@ public class AdminChatServiceImpl implements AdminChatService {
                             .tenTaiKhoanNhanVienNhan(c.getNhanVienNhan() != null ? c.getNhanVienNhan().getTenTaiKhoan() : null)
                             .idNhanVienDoiTac(partnerStaffId)
                             .tenTaiKhoanDoiTac(partnerUsername)
-                            .chuaDoc(unreadCount)
                             .vaiTro(role)
                             .timestamp(lastMsgTimestamp)
                             .build();

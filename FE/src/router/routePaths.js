@@ -43,6 +43,7 @@ export const PATH = {
     AI_RECOMMEND: '/ai-recommend',
     PROFILE: '/profile',
     ORDERS: '/my-orders',
+    TRACK_ORDER: '/tra-cuu',
     CHECKOUT: '/checkout',
     FAVORITES: '/favorites',
     ORDER_SUCCESS: '/order/success',

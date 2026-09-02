@@ -19,6 +19,17 @@ public interface AdminTinNhanRepository extends TinNhanRepository, JpaSpecificat
 
     Optional<TinNhan> findTopByCuocHoiThoaiOrderByNgayTaoDesc(CuocHoiThoai cuocHoiThoai);
 
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM TinNhan t WHERE t.id IN (" +
+            "SELECT MAX(t2.id) FROM TinNhan t2 " +
+            "WHERE t2.cuocHoiThoai.id IN :conversationIds " +
+            "GROUP BY t2.cuocHoiThoai.id)")
+    List<TinNhan> findLatestMessagesByConversationIds(@org.springframework.data.repository.query.Param("conversationIds") List<String> conversationIds);
+
+    @org.springframework.data.jpa.repository.Query("SELECT t.cuocHoiThoai.id, COUNT(t) FROM TinNhan t " +
+            "WHERE t.cuocHoiThoai.id IN :conversationIds AND (t.daDoc = false OR t.daDoc IS NULL) " +
+            "GROUP BY t.cuocHoiThoai.id")
+    List<Object[]> countUnreadByConversationIds(@org.springframework.data.repository.query.Param("conversationIds") List<String> conversationIds);
+
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(t) FROM TinNhan t WHERE t.cuocHoiThoai.id = :conversationId AND (t.daDoc = false OR t.daDoc IS NULL) AND (t.loaiNguoiGui != :loaiNguoiGui OR t.loaiNguoiGui IS NULL)")
     int countUnreadForCustomerConv(@org.springframework.data.repository.query.Param("conversationId") String conversationId, @org.springframework.data.repository.query.Param("loaiNguoiGui") String loaiNguoiGui);
 

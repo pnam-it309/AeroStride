@@ -95,12 +95,14 @@ const handleExport = async () => {
 };
 
 const authStore = useAuthStore();
-const currentUserInfo = ref(null);
+const currentUserInfo = ref(authStore.userProfile || null);
 
 const fetchCurrentUser = async () => {
     try {
-        const info = await dichVuNhanVien.layThongTinCaNhan();
-        currentUserInfo.value = info;
+        if (!currentUserInfo.value) {
+            const info = await dichVuNhanVien.layThongTinCaNhan();
+            currentUserInfo.value = info;
+        }
     } catch (e) {
         console.error('Error fetching current user info:', e);
     }
@@ -108,8 +110,9 @@ const fetchCurrentUser = async () => {
 
 const isSelf = (item) => {
     if (!item) return false;
-    if (currentUserInfo.value?.id && item.id === currentUserInfo.value.id) return true;
-    if (currentUserInfo.value?.tenTaiKhoan && item.tenTaiKhoan === currentUserInfo.value.tenTaiKhoan) return true;
+    const current = currentUserInfo.value || authStore.userProfile;
+    if (current?.id && item.id === current.id) return true;
+    if (current?.tenTaiKhoan && item.tenTaiKhoan === current.tenTaiKhoan) return true;
     if (authStore.user?.username && (item.tenTaiKhoan === authStore.user.username || item.email === authStore.user.username)) return true;
     return false;
 };

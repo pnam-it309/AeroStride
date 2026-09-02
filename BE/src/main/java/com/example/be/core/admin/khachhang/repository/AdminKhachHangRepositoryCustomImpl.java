@@ -28,33 +28,26 @@ public class AdminKhachHangRepositoryCustomImpl implements AdminKhachHangReposit
             " kh.gioiTinh, kh.sdt, kh.ngaySinh, kh.hinhAnh, kh.ghiChu," +
             " kh.trangThai, kh.ngayTao, kh.ngayCapNhat," +
             " CONCAT(COALESCE(dc.diaChiChiTiet, ''), ', ', COALESCE(dc.phuongXa, ''), ', ', COALESCE(dc.thanhPho, ''), ', ', COALESCE(dc.tinh, ''))," +
-            " SUM(CASE WHEN hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH THEN hd.tongTienSauGiam ELSE 0.0 END)," +
-            " MAX(hd.ngayTao)," +
-            " COUNT(CASE WHEN hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH THEN hd.id ELSE NULL END)" +
+            " COALESCE((SELECT SUM(hd.tongTienSauGiam) FROM HoaDon hd WHERE hd.khachHang = kh AND hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH), 0.0)," +
+            " (SELECT MAX(hd.ngayTao) FROM HoaDon hd WHERE hd.khachHang = kh)," +
+            " (SELECT COUNT(hd) FROM HoaDon hd WHERE hd.khachHang = kh AND hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH)" +
             ")";
 
     private static final String FROM_CLAUSE =
             " FROM KhachHang kh" +
-            " LEFT JOIN kh.diaChi dc" +
-            " LEFT JOIN HoaDon hd ON hd.khachHang = kh";
-
-    private static final String GROUP_BY_CLAUSE =
-            " GROUP BY kh.id, kh.ma, kh.ten, kh.email, kh.tenTaiKhoan," +
-            "          kh.gioiTinh, kh.sdt, kh.ngaySinh," +
-            "          kh.trangThai, kh.ngayTao, kh.ngayCapNhat," +
-            "          dc.diaChiChiTiet, dc.phuongXa, dc.thanhPho, dc.tinh";
+            " LEFT JOIN kh.diaChi dc";
 
     // ── Interface implementations ─────────────────────────────────────────
 
     @Override
     public List<AdminKhachHangResponse> hienThi() {
-        String jpql = SELECT_CLAUSE + FROM_CLAUSE + GROUP_BY_CLAUSE + " ORDER BY kh.ngayTao DESC";
+        String jpql = SELECT_CLAUSE + FROM_CLAUSE + " ORDER BY kh.ngayTao DESC";
         return entityManager.createQuery(jpql, AdminKhachHangResponse.class).getResultList();
     }
 
     @Override
     public AdminKhachHangResponse detail(String id) {
-        String jpql = SELECT_CLAUSE + FROM_CLAUSE + " WHERE kh.id = :id" + GROUP_BY_CLAUSE;
+        String jpql = SELECT_CLAUSE + FROM_CLAUSE + " WHERE kh.id = :id";
         List<AdminKhachHangResponse> list = entityManager.createQuery(jpql, AdminKhachHangResponse.class)
                 .setParameter("id", id)
                 .getResultList();
@@ -130,7 +123,7 @@ public class AdminKhachHangRepositoryCustomImpl implements AdminKhachHangReposit
         }
 
         // Build main query from shared fragments
-        String jpql = SELECT_CLAUSE + FROM_CLAUSE + where + GROUP_BY_CLAUSE + " ORDER BY kh.ngayTao DESC, kh.id DESC";
+        String jpql = SELECT_CLAUSE + FROM_CLAUSE + where + " ORDER BY kh.ngayTao DESC, kh.id DESC";
 
         TypedQuery<AdminKhachHangResponse> query = entityManager.createQuery(jpql, AdminKhachHangResponse.class);
         TypedQuery<Long> countQuery = entityManager.createQuery(countJpql.toString(), Long.class);

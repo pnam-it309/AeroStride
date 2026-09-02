@@ -15,33 +15,7 @@ const orders = ref([]);
 const activeTab = ref('');
 const searchKeyword = ref('');
 const isLoggedIn = ref(false);
-
-const trackingForm = ref({ maHoaDon: '', soDienThoai: '' });
-const trackingLoading = ref(false);
-
-const handleTrackOrder = async () => {
-    const code = trackingForm.value.maHoaDon ? trackingForm.value.maHoaDon.trim() : '';
-    const phone = trackingForm.value.soDienThoai ? trackingForm.value.soDienThoai.trim() : '';
-
-    if (!code && !phone) {
-        alert('Vui lòng nhập Mã đơn hàng hoặc Số điện thoại để tra cứu');
-        return;
-    }
-    trackingLoading.value = true;
-    try {
-        const res = await dichVuDatHang.traCuuDonHang(code, phone);
-        if (res && res.id) {
-            const query = {};
-            if (res.maHoaDon) query.code = res.maHoaDon;
-            if (res.soDienThoaiNguoiNhan) query.phone = res.soDienThoaiNguoiNhan;
-            router.push({ path: `/my-orders/${res.id}`, query });
-        }
-    } catch (error) {
-        alert(error.response?.data?.message || 'Không tìm thấy đơn hàng hợp lệ');
-    } finally {
-        trackingLoading.value = false;
-    }
-};
+import { PATH } from '@/router/routePaths';
 
 const tabs = [
     { label: 'Tất cả', value: '', icon: 'mdi-format-list-bulleted' },
@@ -232,53 +206,37 @@ const goToDetail = (id) => {
             </v-row>
         </v-container>
 
-        <!-- Tracking Form (Guest Only) -->
-        <v-container v-if="!isLoggedIn" style="max-width: 800px" class="mt-n8 position-relative z-index-1">
-            <v-card class="elevation-4 rounded-xl pa-8 text-center" style="border-top: 4px solid #1e257c">
-                <v-icon size="48" color="#1e257c" class="mb-4">mdi-magnify-scan</v-icon>
-                <h2 class="text-h5 font-weight-bold mb-2">Tra cứu đơn hàng</h2>
-                <p class="text-body-2 text-grey-darken-1 mb-8">
-                    Nhập mã đơn hàng hoặc số điện thoại (không nhất thiết phải cả hai) để tra cứu trạng thái đơn hàng của bạn.
+        <!-- Not Logged In CTA (Prompt user to login) -->
+        <v-container v-if="!isLoggedIn" style="max-width: 600px" class="mt-n8 position-relative z-index-1 mb-12">
+            <v-card class="elevation-4 rounded-2xl pa-8 text-center bg-white border" style="border-top: 4px solid #1e257c !important">
+                <v-avatar size="64" color="#e8eaff" class="mb-4">
+                    <v-icon size="32" color="#1e257c">mdi-account-lock-outline</v-icon>
+                </v-avatar>
+                <h2 class="text-h5 font-weight-bold mb-2 text-slate-800">Vui lòng đăng nhập</h2>
+                <p class="text-body-2 text-slate-600 mb-6">
+                    Đăng nhập tài khoản để theo dõi, quản lý toàn bộ danh sách đơn mua và đánh giá sản phẩm.
                 </p>
-                <v-form @submit.prevent="handleTrackOrder" class="mx-auto" style="max-width: 500px">
-                    <v-text-field
-                        v-model="trackingForm.maHoaDon"
-                        label="Mã đơn hàng (VD: HD...)"
-                        variant="outlined"
-                        density="comfortable"
-                        class="mb-4"
-                        hide-details="auto"
-                        prepend-inner-icon="mdi-barcode"
-                        maxlength="30"
-                        counter="30"
-                    />
-                    <v-text-field
-                        v-model="trackingForm.soDienThoai"
-                        label="Số điện thoại người nhận"
-                        variant="outlined"
-                        density="comfortable"
-                        class="mb-6"
-                        hide-details="auto"
-                        prepend-inner-icon="mdi-phone-outline"
-                        maxlength="10"
-                        counter="10"
-                        :rules="[(v) => !v || /^0[3|5|7|8|9][0-9]{8}$/.test(v.trim()) || 'SĐT 10 số không hợp lệ (VD: 0912345678)']"
-                    />
+                <div class="d-flex ga-3 justify-center flex-wrap">
                     <v-btn
-                        type="submit"
+                        :href="PATH.LOGIN"
                         size="large"
                         rounded="pill"
-                        block
-                        class="text-none font-weight-bold"
+                        class="px-8 font-weight-bold text-none shadow-sm"
                         style="background: #1e257c; color: white !important"
-                        :loading="trackingLoading"
                     >
-                        <v-icon size="20" class="mr-2">mdi-magnify</v-icon>Tra cứu ngay
+                        Đăng nhập tài khoản
                     </v-btn>
-                </v-form>
-                <p class="text-caption text-grey mt-6">
-                    Hoặc <a href="/login" class="font-weight-bold" style="color: #1e257c">Đăng nhập</a> để quản lý toàn bộ đơn hàng
-                </p>
+                    <v-btn
+                        :href="PATH.TRACK_ORDER"
+                        variant="outlined"
+                        size="large"
+                        rounded="pill"
+                        class="px-6 font-weight-bold text-none"
+                        color="primary"
+                    >
+                        Tra cứu đơn khách
+                    </v-btn>
+                </div>
             </v-card>
         </v-container>
 

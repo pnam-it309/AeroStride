@@ -51,11 +51,20 @@ export const dichVuXacThuc = {
     },
 
     // Bộ nhớ đệm profile nhân viên (tránh gọi /me lặp lại nhiều lần)
-    _cachedProfile: null,
+    _cachedProfile: (() => {
+        try {
+            const cached = sessionStorage.getItem('userProfile');
+            return cached ? JSON.parse(cached) : null;
+        } catch (e) {
+            return null;
+        }
+    })(),
+    _pendingProfilePromise: null,
 
     // Đăng xuất
     async dangXuat() {
         this._cachedProfile = null;
+        this._pendingProfilePromise = null;
         try {
             await api.post(API_AUTH.LOGOUT);
         } catch (error) {
@@ -64,6 +73,7 @@ export const dichVuXacThuc = {
             sessionStorage.removeItem('accessToken');
             sessionStorage.removeItem('refreshToken');
             sessionStorage.removeItem('user');
+            sessionStorage.removeItem('userProfile');
         }
     },
 
@@ -75,27 +85,56 @@ export const dichVuXacThuc = {
 
     // Lấy hồ sơ nhân viên đang đăng nhập (tự động cache để tránh gọi lặp lại)
     async layThongTinCaNhan(forceRefresh = false) {
-        if (!forceRefresh && this._cachedProfile) {
-            return this._cachedProfile;
+        if (!forceRefresh) {
+            if (this._cachedProfile) {
+                return this._cachedProfile;
+            }
+            try {
+                const stored = sessionStorage.getItem('userProfile');
+                if (stored) {
+                    this._cachedProfile = JSON.parse(stored);
+                    return this._cachedProfile;
+                }
+            } catch (e) {}
+            if (this._pendingProfilePromise) {
+                return this._pendingProfilePromise;
+            }
         }
-        const response = await api.get(API_AUTH.ME);
-        if (response.data?.data) {
-            this._cachedProfile = response.data.data;
+
+        if (!this.layAccessToken()) {
+            return null;
         }
-        return response.data?.data;
+
+        this._pendingProfilePromise = (async () => {
+            try {
+                const response = await api.get(API_AUTH.ME);
+                if (response.data?.data) {
+                    this._cachedProfile = response.data.data;
+                    sessionStorage.setItem('userProfile', JSON.stringify(response.data.data));
+                }
+                return response.data?.data;
+            } finally {
+                this._pendingProfilePromise = null;
+            }
+        })();
+
+        return this._pendingProfilePromise;
     },
 
     // Xóa cache profile thủ công
     xoaCacheProfile() {
         this._cachedProfile = null;
+        this._pendingProfilePromise = null;
+        sessionStorage.removeItem('userProfile');
     },
 
     // Cập nhật thông tin cá nhân nhân viên đang đăng nhập
     async capNhatThongTin(payload) {
-        this._cachedProfile = null;
+        this.xoaCacheProfile();
         const response = await api.put(`${API_AUTH.BASE}/profile`, payload);
         if (response.data?.data) {
             this._cachedProfile = response.data.data;
+            sessionStorage.setItem('userProfile', JSON.stringify(response.data.data));
         }
         return response.data;
     },

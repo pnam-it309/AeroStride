@@ -74,4 +74,14 @@ public class AdminKhachHangResponse {
         this.ngayDonHangGanNhat = ngayDonHangGanNhat;
         this.tongDonHang = tongDonHang;
     }
+
+    public AdminKhachHangResponse(String id, String ma, String ten, String email, String tenTaiKhoan, 
+                                 Boolean gioiTinh, String sdt, LocalDate ngaySinh, String hinhAnh, 
+                                 String ghiChu, TrangThai trangThai, Long ngayTao, Long ngayCapNhat,
+                                 String diaChiChiTiet, Double tongChiTieu, Long ngayDonHangGanNhat, Long tongDonHang) {
+        this(id, ma, ten, email, tenTaiKhoan, gioiTinh, sdt, ngaySinh, hinhAnh, ghiChu, trangThai, ngayTao, ngayCapNhat, diaChiChiTiet);
+        this.tongChiTieu = tongChiTieu != null ? java.math.BigDecimal.valueOf(tongChiTieu) : java.math.BigDecimal.ZERO;
+        this.ngayDonHangGanNhat = ngayDonHangGanNhat;
+        this.tongDonHang = tongDonHang;
+    }
 }

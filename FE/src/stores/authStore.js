@@ -7,6 +7,14 @@ import { notifyFavoritesUpdated } from '@/utils/favoritesUtil';
 export const useAuthStore = defineStore('auth', {
     state: () => ({
         user: JSON.parse(sessionStorage.getItem('user')) || null,
+        userProfile: (() => {
+            try {
+                const stored = sessionStorage.getItem('userProfile');
+                return stored ? JSON.parse(stored) : null;
+            } catch (e) {
+                return null;
+            }
+        })(),
         accessToken: sessionStorage.getItem('accessToken') || null,
         loading: false,
         error: null
@@ -15,10 +23,26 @@ export const useAuthStore = defineStore('auth', {
     getters: {
         isLoggedIn: (state) => !!state.accessToken,
         isAdmin: (state) => state.user?.role === APP_ROLES.ADMIN,
-        isStaff: (state) => state.user?.role === APP_ROLES.STAFF
+        isStaff: (state) => state.user?.role === APP_ROLES.STAFF,
+        profile: (state) => state.userProfile || state.user
     },
 
     actions: {
+        async fetchProfile(forceRefresh = false) {
+            if (!forceRefresh && this.userProfile) {
+                return this.userProfile;
+            }
+            try {
+                const profile = await dichVuXacThuc.layThongTinCaNhan(forceRefresh);
+                if (profile) {
+                    this.userProfile = profile;
+                }
+                return profile;
+            } catch (e) {
+                console.error('Error fetching user profile in authStore:', e);
+                return null;
+            }
+        },
         async login(loginData) {
             this.loading = true;
             this.error = null;
@@ -84,6 +108,7 @@ export const useAuthStore = defineStore('auth', {
         async logout() {
             await dichVuXacThuc.dangXuat();
             this.user = null;
+            this.userProfile = null;
             this.accessToken = null;
 
             // Xóa cache dữ liệu trang & preferences khi đăng xuất

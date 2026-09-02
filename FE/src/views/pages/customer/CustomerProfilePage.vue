@@ -107,7 +107,7 @@ watch(
     }
 );
 
-const fetchProfile = async () => {
+const fetchProfile = async (forceRefresh = false) => {
     if (!authStore.isLoggedIn) {
         router.push(PATH.LOGIN);
         return;
@@ -115,7 +115,7 @@ const fetchProfile = async () => {
 
     try {
         await fetchProvinces();
-        const res = await dichVuKhachHang.layThongTinCaNhan();
+        const res = await dichVuKhachHang.layThongTinCaNhan(forceRefresh);
         if (res.success && res.data) {
             const data = res.data;
             profileInfo.value = {
@@ -133,16 +133,18 @@ const fetchProfile = async () => {
             let matchedDistrictCode = null;
             let matchedWardCode = null;
 
-            if (data.tinhThanh) {
+            if (data.tinhThanh || data.tinh) {
+                const provName = data.tinhThanh || data.tinh;
                 const prov = provinces.value.find(
-                    (p) => cleanName(p.name) === cleanName(data.tinhThanh) || String(p.code) === String(data.tinhThanh)
+                    (p) => cleanName(p.name) === cleanName(provName) || String(p.code) === String(provName)
                 );
                 if (prov) {
                     matchedProvinceCode = prov.code;
                     await fetchDistricts(prov.code);
-                    if (data.quanHuyen) {
+                    const distName = data.quanHuyen || data.thanhPho;
+                    if (distName) {
                         const dist = districts.value.find(
-                            (d) => cleanName(d.name) === cleanName(data.quanHuyen) || String(d.code) === String(data.quanHuyen)
+                            (d) => cleanName(d.name) === cleanName(distName) || String(d.code) === String(distName)
                         );
                         if (dist) {
                             matchedDistrictCode = dist.code;
@@ -225,7 +227,7 @@ const startEditing = async () => {
 const cancelEditing = async () => {
     isEditing.value = false;
     avatarPreview.value = '';
-    await fetchProfile();
+    await fetchProfile(true);
 };
 
 const submitUpdateProfile = async () => {
@@ -241,10 +243,23 @@ const submitUpdateProfile = async () => {
         const distObj = districts.value.find((d) => d.code === addressForm.value.thanhPho || String(d.code) === String(addressForm.value.thanhPho));
         const wardObj = wards.value.find((w) => w.code === addressForm.value.phuongXa || String(w.code) === String(addressForm.value.phuongXa));
 
-        await dichVuKhachHang.capNhatHoSo({
+        let formattedDob = profileInfo.value.ngaySinh;
+        if (formattedDob instanceof Date) {
+            const y = formattedDob.getFullYear();
+            const m = String(formattedDob.getMonth() + 1).padStart(2, '0');
+            const d = String(formattedDob.getDate()).padStart(2, '0');
+            formattedDob = `${y}-${m}-${d}`;
+        } else if (typeof formattedDob === 'string' && formattedDob.includes('/')) {
+            const parts = formattedDob.split('/');
+            if (parts.length === 3) {
+                formattedDob = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+        }
+
+        const res = await dichVuKhachHang.capNhatHoSo({
             ten: profileInfo.value.ten?.trim(),
             sdt: profileInfo.value.sdt?.trim(),
-            ngaySinh: profileInfo.value.ngaySinh || null,
+            ngaySinh: formattedDob || null,
             gioiTinh: profileInfo.value.gioiTinh,
             hinhAnh: profileInfo.value.hinhAnh,
             tinh: provObj ? provObj.name : null,
@@ -253,10 +268,16 @@ const submitUpdateProfile = async () => {
             diaChiChiTiet: addressForm.value.diaChiChiTiet?.trim() || null
         });
 
+        if (res?.data) {
+            authStore.userProfile = res.data;
+            sessionStorage.setItem('userProfile', JSON.stringify(res.data));
+            window.dispatchEvent(new CustomEvent('profile-updated', { detail: res.data }));
+        }
+
         addNotification({ title: 'Thành công', subtitle: 'Cập nhật hồ sơ thành công', color: 'success' });
         isEditing.value = false;
         avatarPreview.value = '';
-        await fetchProfile();
+        await fetchProfile(true);
     } catch (error) {
         addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Lỗi cập nhật hồ sơ', color: 'error' });
     } finally {
@@ -488,17 +509,18 @@ onMounted(() => {
                                 <!-- Ngày sinh -->
                                 <v-col cols="12" sm="6" class="py-2">
                                     <label class="text-subtitle-2 font-weight-bold text-blue-darken-4 mb-2 d-block">Ngày sinh</label>
-                                    <v-text-field
+                                    <AppDatePicker
                                         v-model="profileInfo.ngaySinh"
-                                        type="date"
-                                        variant="outlined"
-                                        density="comfortable"
-                                        prepend-inner-icon="mdi-calendar-month-outline"
-                                        color="blue-darken-4"
-                                        hide-details="auto"
-                                        class="profile-input"
-                                        :readonly="!isEditing"
-                                    ></v-text-field>
+                                        :disabled="!isEditing"
+                                        placeholder="Chọn ngày sinh"
+                                        input-class="profile-input"
+                                        :text-field-props="{
+                                            variant: 'outlined',
+                                            density: 'comfortable',
+                                            color: 'blue-darken-4',
+                                            'hide-details': 'auto'
+                                        }"
+                                    />
                                 </v-col>
 
                                 <!-- Giới tính -->

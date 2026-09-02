@@ -254,39 +254,40 @@ const loadData = async () => {
             }
         }
 
-        const [scheduleRes, shiftRes, empRes] = await Promise.all([
+        const promises = [
             apiService.get(API_LICH_LAM_VIEC.SCHEDULES, {
                 params: {
                     search: filters.value.search,
                     ca: filters.value.ca === 'Tất cả' ? null : filters.value.ca,
                     ngay: null
                 }
-            }),
-            apiService.get(API_LICH_LAM_VIEC.SHIFTS),
-            apiService.get('/admin/nhan-vien/hien-thi')
-        ]);
+            })
+        ];
 
-        // if (scheduleRes.data.success) {
-        //     items.value = scheduleRes.data.data;
-        //     if (items.value.length > 0) {
-        //         const todayStr = new Date().toISOString().substr(0, 10);
-        //         const hasToday = items.value.some((s) => s.ngay === todayStr);
-        //         if (!hasToday) {
-        //             const sorted = [...items.value].sort((a, b) => b.ngay.localeCompare(a.ngay));
-        //             currentMonth.value = new Date(sorted[0].ngay);
-        //         }
-        //     }
-        // }
+        const needShifts = !rawShifts.value || rawShifts.value.length === 0;
+        const needEmployees = !employeeOptions.value || employeeOptions.value.length === 0;
+
+        if (needShifts) {
+            promises.push(apiService.get(API_LICH_LAM_VIEC.SHIFTS));
+        }
+        if (needEmployees) {
+            promises.push(apiService.get('/admin/nhan-vien/hien-thi'));
+        }
+
+        const [scheduleRes, maybeShiftRes, maybeEmpRes] = await Promise.all(promises);
+
         if (scheduleRes.data.success) {
-    items.value = scheduleRes.data.data;
-}
+            items.value = scheduleRes.data.data;
+        }
 
-        if (shiftRes.data.success) {
+        const shiftRes = needShifts ? maybeShiftRes : null;
+        if (shiftRes && shiftRes.data.success) {
             rawShifts.value = shiftRes.data.data;
             shiftOptions.value = ['Tất cả', ...shiftRes.data.data.map((s) => s.tenCa)];
         }
 
-        if (empRes.data.success) {
+        const empRes = needEmployees ? (needShifts ? maybeEmpRes : maybeShiftRes) : null;
+        if (empRes && empRes.data.success) {
             const rawContent = empRes.data.data.content || empRes.data.data;
             const content = Array.isArray(rawContent) ? rawContent : [];
             // Remove duplicates by ID and filter out management/admin roles
