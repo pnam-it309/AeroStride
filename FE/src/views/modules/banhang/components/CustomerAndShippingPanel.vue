@@ -184,26 +184,10 @@
             <div v-if="isGiaoHang" class="shipping-wrapper">
                 <v-card class="pos-navy-card pa-4">
                     <div class="d-flex justify-space-between align-center border-b pb-2 mb-3">
-                        <div class="d-flex align-center ga-2 text-truncate">
-                            <div class="font-weight-bold text-black flex-shrink-0" style="font-size: 15px !important">Thông tin nhận hàng</div>
-                            <span class="text-caption text-slate-500 text-truncate font-weight-medium">
-                                ({{ isDifferentRecipient ? (recipientName || 'Người nhận khác') : (customerForm.ten || 'Giống người mua') }})
-                            </span>
+                        <div class="font-weight-bold text-black flex-shrink-0" style="font-size: 15px !important">
+                            Thông tin nhận hàng
                         </div>
                         <div class="d-flex align-center ga-1 flex-shrink-0">
-                            <v-btn
-                                variant="tonal"
-                                color="primary"
-                                size="x-small"
-                                class="text-none font-weight-bold rounded-lg px-2"
-                                style="height: 26px !important; min-height: 26px"
-                                @click="isDifferentRecipient = !isDifferentRecipient"
-                            >
-                                <v-icon size="13" class="mr-1">
-                                    {{ isDifferentRecipient ? 'mdi-account-check-outline' : 'mdi-account-switch-outline' }}
-                                </v-icon>
-                                {{ isDifferentRecipient ? 'Giống người mua' : 'Đổi người nhận' }}
-                            </v-btn>
                             <v-btn
                                 v-if="order?.idKhachHang"
                                 variant="tonal"
@@ -219,20 +203,18 @@
                         </div>
                     </div>
                     <div class="d-flex flex-column ga-3">
-                        <!-- Trường Tên người nhận (Chỉ hiện khi đổi người nhận khác) -->
-                        <div v-if="isDifferentRecipient">
-                            <v-text-field
-                                v-model="recipientName"
-                                placeholder="Tên người nhận hàng"
-                                variant="outlined"
-                                density="compact"
-                                hide-details
-                                maxlength="100"
-                                autocomplete="off"
-                                class="navy-input-field w-100"
-                                @input="emitShippingChange"
-                            />
-                        </div>
+                        <!-- Tên người nhận -->
+                        <v-text-field
+                            v-model="recipientName"
+                            placeholder="Tên người nhận hàng"
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                            maxlength="100"
+                            autocomplete="off"
+                            class="navy-input-field w-100"
+                            @input="emitShippingChange"
+                        />
 
                         <!-- Row 1: Địa chỉ chi tiết -->
                         <v-text-field

@@ -735,19 +735,12 @@ const loadStatistics = async () => {
         const startOfYear = `${selectedYear.value}-01-01`;
         const endOfYear = `${selectedYear.value}-12-31`;
 
-        // Chỉ gọi layTongQuan 1 lần nếu khoảng ngày chọn chính là cả năm
-        const isFullYear = tuNgay === startOfYear && denNgay === endOfYear;
-        const promises = [
+        const [overview, dailyData] = await Promise.all([
             dichVuThongKe.layTongQuan(tuNgay, denNgay),
             dichVuThongKe.layDoanhThuTheoNgay(startOfYear, endOfYear),
             fetchProductStats()
-        ];
-        if (!isFullYear) {
-            promises.push(dichVuThongKe.layTongQuan(startOfYear, endOfYear));
-        }
-
-        const [overview, dailyData, prodStats, maybeYearly] = await Promise.all(promises);
-        const yearlyOverview = isFullYear ? overview : maybeYearly;
+        ]);
+        const yearlyOverview = overview;
 
         if (overview) {
             const soldProductQuantity = Array.isArray(overview.topSanPhamBanChay)
@@ -954,8 +947,10 @@ const loadStatistics = async () => {
             }
         }
 
-        const startHourlyData = await generateHourlyDataFromInvoices(startRevenue, startDate.value);
-        const endHourlyData = await generateHourlyDataFromInvoices(endRevenue, endDate.value);
+        const [startHourlyData, endHourlyData] = await Promise.all([
+            generateHourlyDataFromInvoices(startRevenue, startDate.value),
+            generateHourlyDataFromInvoices(endRevenue, endDate.value)
+        ]);
 
         const startSum = startHourlyData.revenue.reduce((a, b) => a + b, 0);
         const endSum = endHourlyData.revenue.reduce((a, b) => a + b, 0);

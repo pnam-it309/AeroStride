@@ -14,6 +14,9 @@ import {
 let globalProvincesCache = null;
 const globalDistrictsCache = new Map();
 const globalWardsCache = new Map();
+let inFlightProvincesPromise = null;
+const inFlightDistrictsMap = new Map();
+const inFlightWardsMap = new Map();
 
 export function useLocation(options = {}) {
     const allowFallback = options.allowFallback !== false;
@@ -180,128 +183,171 @@ export function useLocation(options = {}) {
     };
 
     const fetchProvinces = async (forceRefresh = false) => {
-        // Neu da co du lieu cache va khong force thi lay tu cache ngay lap tuc
         if (globalProvincesCache && globalProvincesCache.length && !forceRefresh) {
             provinces.value = globalProvincesCache;
-            return;
+            return globalProvincesCache;
+        }
+        if (inFlightProvincesPromise) {
+            const list = await inFlightProvincesPromise;
+            provinces.value = list;
+            return list;
         }
 
         loadingLocations.value.provinces = true;
-        try {
-            // Nguon 1: Backend GHN
-            const res = await api.get(`${API_ADMIN.GHN}/provinces`, { silent: true, timeout: 3000 });
-            const list = extractList(res);
-            if (!list.length) throw new Error('GHN provinces empty');
-            provinces.value = list
-                .map((p) => ({
-                    code: p.ProvinceID ?? p.code,
-                    name: p.ProvinceName ?? p.name,
-                    source: 'GHN'
-                }))
-                .filter((p) => p.code && p.name);
-            globalProvincesCache = provinces.value;
-        } catch (e) {
-            logLocationFallback('GHN provinces unavailable, fallback to open-api / local.', e);
-            if (!allowFallback) {
-                loadLocalProvinces();
-                globalProvincesCache = provinces.value;
-                return;
-            }
+        inFlightProvincesPromise = (async () => {
             try {
-                await loadFallbackProvinces();
-            } catch (fallbackError) {
-                loadLocalProvinces();
-            }
-            globalProvincesCache = provinces.value;
-        } finally {
-            if (!provinces.value.length) {
-                loadLocalProvinces();
+                const res = await api.get(`${API_ADMIN.GHN}/provinces`, { silent: true, timeout: 3000 });
+                const list = extractList(res);
+                if (!list.length) throw new Error('GHN provinces empty');
+                const result = list
+                    .map((p) => ({
+                        code: p.ProvinceID ?? p.code,
+                        name: p.ProvinceName ?? p.name,
+                        source: 'GHN'
+                    }))
+                    .filter((p) => p.code && p.name);
+                globalProvincesCache = result;
+                return result;
+            } catch (e) {
+                logLocationFallback('GHN provinces unavailable, fallback to open-api / local.', e);
+                if (!allowFallback) {
+                    loadLocalProvinces();
+                    globalProvincesCache = provinces.value;
+                    return provinces.value;
+                }
+                try {
+                    await loadFallbackProvinces();
+                } catch (fallbackError) {
+                    loadLocalProvinces();
+                }
                 globalProvincesCache = provinces.value;
+                return provinces.value;
+            } finally {
+                if (!provinces.value.length && (!globalProvincesCache || !globalProvincesCache.length)) {
+                    loadLocalProvinces();
+                    globalProvincesCache = provinces.value;
+                }
+                loadingLocations.value.provinces = false;
+                inFlightProvincesPromise = null;
             }
-            loadingLocations.value.provinces = false;
-        }
+        })();
+
+        const list = await inFlightProvincesPromise;
+        provinces.value = list;
+        return list;
     };
 
     const fetchDistricts = async (provinceCode) => {
-        if (!provinceCode) return;
+        if (!provinceCode) return [];
         const pKey = String(provinceCode);
         if (globalDistrictsCache.has(pKey)) {
             districts.value = globalDistrictsCache.get(pKey);
-            return;
+            return districts.value;
+        }
+        if (inFlightDistrictsMap.has(pKey)) {
+            const list = await inFlightDistrictsMap.get(pKey);
+            districts.value = list;
+            return list;
         }
 
         loadingLocations.value.districts = true;
         districts.value = [];
         wards.value = [];
         const selectedProvince = provinces.value.find((p) => String(p.code) === pKey);
-        try {
-            // Neu tinh duoc chon dang la fallback OPEN_API hoac LOCAL thi thu goi GHN truoc neu co mang
-            const res = await api.get(`${API_ADMIN.GHN}/districts`, { params: { provinceId: provinceCode }, silent: true, timeout: 3000 });
-            const list = extractList(res);
-            if (!list.length) throw new Error('GHN districts empty');
-            districts.value = list
-                .map((d) => ({
-                    code: d.DistrictID ?? d.code,
-                    name: d.DistrictName ?? d.name,
-                    source: 'GHN'
-                }))
-                .filter((d) => d.code && d.name);
-            globalDistrictsCache.set(pKey, districts.value);
-        } catch (e) {
-            logLocationFallback('GHN districts unavailable, fallback to open-api / local.', e);
-            if (selectedProvince?.source === 'LOCAL') {
-                loadLocalDistricts(provinceCode, selectedProvince?.name);
-            } else {
-                await loadFallbackDistricts(provinceCode, selectedProvince?.name);
-            }
-            globalDistrictsCache.set(pKey, districts.value);
-        } finally {
-            if (!districts.value.length) {
-                loadLocalDistricts(provinceCode, selectedProvince?.name);
+
+        const fetchPromise = (async () => {
+            try {
+                const res = await api.get(`${API_ADMIN.GHN}/districts`, { params: { provinceId: provinceCode }, silent: true, timeout: 3000 });
+                const list = extractList(res);
+                if (!list.length) throw new Error('GHN districts empty');
+                const result = list
+                    .map((d) => ({
+                        code: d.DistrictID ?? d.code,
+                        name: d.DistrictName ?? d.name,
+                        source: 'GHN'
+                    }))
+                    .filter((d) => d.code && d.name);
+                globalDistrictsCache.set(pKey, result);
+                return result;
+            } catch (e) {
+                logLocationFallback('GHN districts unavailable, fallback to open-api / local.', e);
+                if (selectedProvince?.source === 'LOCAL') {
+                    loadLocalDistricts(provinceCode, selectedProvince?.name);
+                } else {
+                    await loadFallbackDistricts(provinceCode, selectedProvince?.name);
+                }
                 globalDistrictsCache.set(pKey, districts.value);
+                return districts.value;
+            } finally {
+                if (!districts.value.length) {
+                    loadLocalDistricts(provinceCode, selectedProvince?.name);
+                    globalDistrictsCache.set(pKey, districts.value);
+                }
+                loadingLocations.value.districts = false;
+                inFlightDistrictsMap.delete(pKey);
             }
-            loadingLocations.value.districts = false;
-        }
+        })();
+
+        inFlightDistrictsMap.set(pKey, fetchPromise);
+        const list = await fetchPromise;
+        districts.value = list;
+        return list;
     };
 
     const fetchWards = async (districtCode) => {
-        if (!districtCode) return;
+        if (!districtCode) return [];
         const dKey = String(districtCode);
         if (globalWardsCache.has(dKey)) {
             wards.value = globalWardsCache.get(dKey);
-            return;
+            return wards.value;
+        }
+        if (inFlightWardsMap.has(dKey)) {
+            const list = await inFlightWardsMap.get(dKey);
+            wards.value = list;
+            return list;
         }
 
         loadingLocations.value.wards = true;
         wards.value = [];
         const selectedDistrict = districts.value.find((d) => String(d.code) === dKey);
-        try {
-            const res = await api.get(`${API_ADMIN.GHN}/wards`, { params: { districtId: districtCode }, silent: true, timeout: 3000 });
-            const list = extractList(res);
-            if (!list.length) throw new Error('GHN wards empty');
-            wards.value = list
-                .map((w) => ({
-                    code: w.WardCode ?? w.code,
-                    name: w.WardName ?? w.name,
-                    source: 'GHN'
-                }))
-                .filter((w) => w.code && w.name);
-            globalWardsCache.set(dKey, wards.value);
-        } catch (e) {
-            logLocationFallback('GHN wards unavailable, fallback to open-api / local.', e);
-            if (selectedDistrict?.source === 'LOCAL') {
-                loadLocalWards(districtCode, selectedDistrict?.name);
-            } else {
-                await loadFallbackWards(districtCode, selectedDistrict?.name);
-            }
-            globalWardsCache.set(dKey, wards.value);
-        } finally {
-            if (!wards.value.length) {
-                loadLocalWards(districtCode, selectedDistrict?.name);
+
+        const fetchPromise = (async () => {
+            try {
+                const res = await api.get(`${API_ADMIN.GHN}/wards`, { params: { districtId: districtCode }, silent: true, timeout: 3000 });
+                const list = extractList(res);
+                if (!list.length) throw new Error('GHN wards empty');
+                const result = list
+                    .map((w) => ({
+                        code: w.WardCode ?? w.code,
+                        name: w.WardName ?? w.name,
+                        source: 'GHN'
+                    }))
+                    .filter((w) => w.code && w.name);
+                globalWardsCache.set(dKey, result);
+                return result;
+            } catch (e) {
+                logLocationFallback('GHN wards unavailable, fallback to open-api / local.', e);
+                if (selectedDistrict?.source === 'LOCAL') {
+                    loadLocalWards(districtCode, selectedDistrict?.name);
+                } else {
+                    await loadFallbackWards(districtCode, selectedDistrict?.name);
+                }
                 globalWardsCache.set(dKey, wards.value);
+                return wards.value;
+            } finally {
+                if (!wards.value.length) {
+                    loadLocalWards(districtCode, selectedDistrict?.name);
+                    globalWardsCache.set(dKey, wards.value);
+                }
+                loadingLocations.value.wards = false;
+                inFlightWardsMap.delete(dKey);
             }
-            loadingLocations.value.wards = false;
-        }
+        })();
+
+        inFlightWardsMap.set(dKey, fetchPromise);
+        const list = await fetchPromise;
+        wards.value = list;
+        return list;
     };
 
     // Tu dong lang nghe su kien bat mang tro lai (Online) de chuyen ve Live API

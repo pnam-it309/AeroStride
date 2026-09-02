@@ -14,50 +14,50 @@ import java.util.List;
 public interface AdminThongKeRepository extends HoaDonRepository, 
         JpaSpecificationExecutor<HoaDon>, AdminThongKeRepositoryCustom {
 
-    @Query("""
+    @Query(value = """
             SELECT 
-                 COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 THEN hd.tongTien ELSE 0 END), 0),
-                 COUNT(hd),
-                 SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 THEN 1 ELSE 0 END),
-                 SUM(CASE WHEN CAST(hd.trangThai AS int) = 0 THEN 1 ELSE 0 END),
-                 SUM(CASE WHEN CAST(hd.trangThai AS int) = 3 THEN 1 ELSE 0 END),
-                 SUM(CASE WHEN CAST(hd.trangThai AS int) = 5 AND (hd.orderType = com.example.be.infrastructure.constants.OrderType.ONLINE OR (hd.orderType IS NULL AND hd.nhanVien IS NULL AND (hd.loaiDon = 'ONLINE' OR hd.loaiDon IS NULL))) THEN 1 ELSE 0 END),
-                 SUM(CASE WHEN CAST(hd.trangThai AS int) = 6 THEN 1 ELSE 0 END),
-                 COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 0 THEN hd.tongTien ELSE 0 END), 0),
-                 COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 3 THEN hd.tongTien ELSE 0 END), 0),
-                 COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 5 AND (hd.orderType = com.example.be.infrastructure.constants.OrderType.ONLINE OR (hd.orderType IS NULL AND hd.nhanVien IS NULL AND (hd.loaiDon = 'ONLINE' OR hd.loaiDon IS NULL))) THEN hd.tongTien ELSE 0 END), 0)
-            FROM HoaDon hd
-            WHERE (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
-            AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
-            """)
+                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0),
+                 COUNT(hd.id),
+                 SUM(CASE WHEN hd.trang_thai = 4 THEN 1 ELSE 0 END),
+                 SUM(CASE WHEN hd.trang_thai = 0 THEN 1 ELSE 0 END),
+                 SUM(CASE WHEN hd.trang_thai = 3 THEN 1 ELSE 0 END),
+                 SUM(CASE WHEN hd.trang_thai = 5 AND (hd.order_type = 'ONLINE' OR (hd.order_type IS NULL AND hd.id_nhan_vien IS NULL AND (hd.loai_don = 'ONLINE' OR hd.loai_don IS NULL))) THEN 1 ELSE 0 END),
+                 SUM(CASE WHEN hd.trang_thai = 6 THEN 1 ELSE 0 END),
+                 COALESCE(SUM(CASE WHEN hd.trang_thai = 0 THEN hd.tong_tien ELSE 0 END), 0),
+                 COALESCE(SUM(CASE WHEN hd.trang_thai = 3 THEN hd.tong_tien ELSE 0 END), 0),
+                 COALESCE(SUM(CASE WHEN hd.trang_thai = 5 AND (hd.order_type = 'ONLINE' OR (hd.order_type IS NULL AND hd.id_nhan_vien IS NULL AND (hd.loai_don = 'ONLINE' OR hd.loai_don IS NULL))) THEN hd.tong_tien ELSE 0 END), 0)
+            FROM hoa_don hd
+            WHERE (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
+            AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+            """, nativeQuery = true)
     List<Object[]> getOverviewStats(@Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
-    @Query("""
+    @Query(value = """
            SELECT
-                COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 AND (
-                    hd.orderType = com.example.be.infrastructure.constants.OrderType.IN_STORE
-                    OR (hd.orderType IS NULL AND hd.loaiDon IN ('TAI_QUAY', 'OFFLINE', 'GIAO_HANG'))
-                    OR (hd.orderType IS NULL AND hd.loaiDon IS NULL AND hd.nhanVien IS NOT NULL)
-                ) THEN hd.tongTien ELSE 0 END), 0),
-                SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 AND (
-                    hd.orderType = com.example.be.infrastructure.constants.OrderType.IN_STORE
-                    OR (hd.orderType IS NULL AND hd.loaiDon IN ('TAI_QUAY', 'OFFLINE', 'GIAO_HANG'))
-                    OR (hd.orderType IS NULL AND hd.loaiDon IS NULL AND hd.nhanVien IS NOT NULL)
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (
+                    hd.order_type = 'IN_STORE'
+                    OR (hd.order_type IS NULL AND hd.loai_don IN ('TAI_QUAY', 'OFFLINE', 'GIAO_HANG'))
+                    OR (hd.order_type IS NULL AND hd.loai_don IS NULL AND hd.id_nhan_vien IS NOT NULL)
+                ) THEN hd.tong_tien ELSE 0 END), 0),
+                SUM(CASE WHEN hd.trang_thai = 4 AND (
+                    hd.order_type = 'IN_STORE'
+                    OR (hd.order_type IS NULL AND hd.loai_don IN ('TAI_QUAY', 'OFFLINE', 'GIAO_HANG'))
+                    OR (hd.order_type IS NULL AND hd.loai_don IS NULL AND hd.id_nhan_vien IS NOT NULL)
                 ) THEN 1 ELSE 0 END),
-                COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 AND (
-                    hd.orderType = com.example.be.infrastructure.constants.OrderType.ONLINE
-                    OR (hd.orderType IS NULL AND hd.loaiDon = 'ONLINE')
-                    OR (hd.orderType IS NULL AND hd.loaiDon IS NULL AND hd.nhanVien IS NULL)
-                ) THEN hd.tongTien ELSE 0 END), 0),
-                SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 AND (
-                    hd.orderType = com.example.be.infrastructure.constants.OrderType.ONLINE
-                    OR (hd.orderType IS NULL AND hd.loaiDon = 'ONLINE')
-                    OR (hd.orderType IS NULL AND hd.loaiDon IS NULL AND hd.nhanVien IS NULL)
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (
+                    hd.order_type = 'ONLINE'
+                    OR (hd.order_type IS NULL AND hd.loai_don = 'ONLINE')
+                    OR (hd.order_type IS NULL AND hd.loai_don IS NULL AND hd.id_nhan_vien IS NULL)
+                ) THEN hd.tong_tien ELSE 0 END), 0),
+                SUM(CASE WHEN hd.trang_thai = 4 AND (
+                    hd.order_type = 'ONLINE'
+                    OR (hd.order_type IS NULL AND hd.loai_don = 'ONLINE')
+                    OR (hd.order_type IS NULL AND hd.loai_don IS NULL AND hd.id_nhan_vien IS NULL)
                 ) THEN 1 ELSE 0 END)
-           FROM HoaDon hd
-           WHERE (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
-           AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
-           """)
+           FROM hoa_don hd
+           WHERE (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
+           AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+           """, nativeQuery = true)
     List<Object[]> getOrderTypeStats(@Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
     // Đơn hàng gần đây
@@ -113,16 +113,12 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             SELECT 
                 COALESCE(kh.ten_nguoi_dung, hd.ten_nguoi_nhan, 'Khách lẻ') AS tenKhachHang,
                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) AS tongChi,
-                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN COALESCE(hdct_agg.tong_sp, 0) ELSE 0 END), 0) AS tongSanPham,
-                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN 1 ELSE 0 END), 0) AS donThanhCong,
-                COALESCE(SUM(CASE WHEN hd.trang_thai = 6 THEN 1 ELSE 0 END), 0) AS donHoan
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hdct.so_luong ELSE 0 END), 0) AS tongSanPham,
+                COALESCE(COUNT(DISTINCT CASE WHEN hd.trang_thai = 4 THEN hd.id END), 0) AS donThanhCong,
+                COALESCE(COUNT(DISTINCT CASE WHEN hd.trang_thai = 6 THEN hd.id END), 0) AS donHoan
             FROM hoa_don hd
             LEFT JOIN khach_hang kh ON hd.id_khach_hang = kh.id
-            LEFT JOIN (
-                SELECT id_hoa_don, SUM(so_luong) AS tong_sp
-                FROM hoa_don_chi_tiet
-                GROUP BY id_hoa_don
-            ) hdct_agg ON hdct_agg.id_hoa_don = hd.id
+            LEFT JOIN hoa_don_chi_tiet hdct ON hdct.id_hoa_don = hd.id
             WHERE (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
               AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
             GROUP BY kh.id, kh.ten_nguoi_dung, hd.ten_nguoi_nhan
@@ -138,17 +134,13 @@ public interface AdminThongKeRepository extends HoaDonRepository,
                 nv.ma_nhan_vien AS maNhanVien,
                 nv.ten_nhan_vien AS tenNhanVien,
                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) AS tongDoanhThu,
-                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN COALESCE(hdct_agg.tong_sp, 0) ELSE 0 END), 0) AS tongSanPham,
-                COALESCE(COUNT(hd.id), 0) AS tongDonHang
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hdct.so_luong ELSE 0 END), 0) AS tongSanPham,
+                COALESCE(COUNT(DISTINCT hd.id), 0) AS tongDonHang
             FROM nhan_vien nv
-            LEFT JOIN hoa_don hd ON hd.id_nhan_vien = nv.id
+            JOIN hoa_don hd ON hd.id_nhan_vien = nv.id
               AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
               AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
-            LEFT JOIN (
-                SELECT id_hoa_don, SUM(so_luong) AS tong_sp
-                FROM hoa_don_chi_tiet
-                GROUP BY id_hoa_don
-            ) hdct_agg ON hdct_agg.id_hoa_don = hd.id
+            LEFT JOIN hoa_don_chi_tiet hdct ON hdct.id_hoa_don = hd.id
             WHERE nv.xoa_mem = false OR nv.xoa_mem IS NULL
             GROUP BY nv.id, nv.ma_nhan_vien, nv.ten_nhan_vien
             HAVING COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) > 0
