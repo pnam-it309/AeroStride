@@ -3,6 +3,7 @@ package com.example.be.core.admin.hoadon.repository;
 import com.example.be.core.admin.hoadon.model.request.AdminHoaDonRequest;
 import com.example.be.core.admin.hoadon.model.response.AdminHoaDonResponse;
 import com.example.be.infrastructure.constants.DeliveryMethod;
+import com.example.be.infrastructure.constants.OrderConstants;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.entity.QHoaDon;
@@ -57,7 +58,7 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
         // (đây là các hóa đơn POS draft, dù có được đổi loaiDon thành ONLINE hay thêm sản phẩm thì vẫn là draft chưa thanh toán)
         builder.and(
             hd.trangThai.ne(OrderStatus.CHO_XAC_NHAN)
-            .or(hd.loaiDon.notIn("TAI_QUAY", "GIAO_HANG"))
+            .or(hd.loaiDon.notIn(OrderConstants.LOAI_DON_TAI_QUAY, OrderConstants.LOAI_DON_GIAO_HANG))
         );
 
         // Đơn hàng đã hủy (DA_HUY): Chỉ có bên trực tuyến (ONLINE), không có bên bán hàng tại quầy.
@@ -66,7 +67,7 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
             hd.trangThai.ne(OrderStatus.DA_HUY)
             .or(
                 hd.orderType.eq(OrderType.ONLINE)
-                .or(hd.orderType.isNull().and(hd.nhanVien.isNull()).and(hd.loaiDon.equalsIgnoreCase("ONLINE")))
+                .or(hd.orderType.isNull().and(hd.nhanVien.isNull()).and(hd.loaiDon.equalsIgnoreCase(OrderConstants.LOAI_DON_ONLINE)))
             )
         );
 
@@ -98,26 +99,26 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
 
         if (req.getLoaiDon() != null && !req.getLoaiDon().trim().isEmpty()) {
             String ld = req.getLoaiDon().trim().toUpperCase();
-            if ("GIAO_HANG".equals(ld)) {
-                builder.and(hd.loaiDon.equalsIgnoreCase("GIAO_HANG")
+            if (OrderConstants.LOAI_DON_GIAO_HANG.equals(ld)) {
+                builder.and(hd.loaiDon.equalsIgnoreCase(OrderConstants.LOAI_DON_GIAO_HANG)
                         .or(hd.deliveryMethod.eq(DeliveryMethod.SHIPPING).and(hd.orderType.eq(OrderType.IN_STORE))));
-            } else if ("ONLINE".equals(ld)) {
+            } else if (OrderConstants.LOAI_DON_ONLINE.equals(ld)) {
                 builder.and(hd.orderType.eq(OrderType.ONLINE)
-                        .or(hd.orderType.isNull().and(hd.nhanVien.isNull()).and(hd.loaiDon.equalsIgnoreCase("ONLINE"))));
-            } else if ("IN_STORE".equals(ld) || "TAI_QUAY".equals(ld) || "OFFLINE".equals(ld)) {
+                        .or(hd.orderType.isNull().and(hd.nhanVien.isNull()).and(hd.loaiDon.equalsIgnoreCase(OrderConstants.LOAI_DON_ONLINE))));
+            } else if (OrderType.IN_STORE.name().equals(ld) || OrderConstants.LOAI_DON_TAI_QUAY.equals(ld) || OrderConstants.LOAI_DON_OFFLINE.equals(ld)) {
                 builder.and(
-                        (hd.orderType.eq(OrderType.IN_STORE).and(hd.deliveryMethod.ne(DeliveryMethod.SHIPPING).or(hd.deliveryMethod.isNull())).and(hd.loaiDon.ne("GIAO_HANG").or(hd.loaiDon.isNull())))
-                                .or(hd.orderType.isNull().and(hd.loaiDon.in("TAI_QUAY", "OFFLINE")))
+                        (hd.orderType.eq(OrderType.IN_STORE).and(hd.deliveryMethod.ne(DeliveryMethod.SHIPPING).or(hd.deliveryMethod.isNull())).and(hd.loaiDon.ne(OrderConstants.LOAI_DON_GIAO_HANG).or(hd.loaiDon.isNull())))
+                                .or(hd.orderType.isNull().and(hd.loaiDon.in(OrderConstants.LOAI_DON_TAI_QUAY, OrderConstants.LOAI_DON_OFFLINE)))
                 );
             }
         } else if (req.getOrderType() != null) {
             if (req.getOrderType() == OrderType.IN_STORE) {
                 builder.and(hd.orderType.eq(OrderType.IN_STORE)
                         .or(hd.orderType.isNull().and(hd.nhanVien.isNotNull()
-                                .or(hd.loaiDon.in("TAI_QUAY", "OFFLINE", "GIAO_HANG")))));
+                                .or(hd.loaiDon.in(OrderConstants.LOAI_DON_TAI_QUAY, OrderConstants.LOAI_DON_OFFLINE, OrderConstants.LOAI_DON_GIAO_HANG)))));
             } else {
                 builder.and(hd.orderType.eq(OrderType.ONLINE)
-                        .or(hd.orderType.isNull().and(hd.nhanVien.isNull()).and(hd.loaiDon.equalsIgnoreCase("ONLINE"))));
+                        .or(hd.orderType.isNull().and(hd.nhanVien.isNull()).and(hd.loaiDon.equalsIgnoreCase(OrderConstants.LOAI_DON_ONLINE))));
             }
         }
 
@@ -200,7 +201,7 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                                     ? OrderType.IN_STORE : OrderType.ONLINE))
                     .deliveryMethod(t.get(hd.deliveryMethod) != null
                             ? t.get(hd.deliveryMethod)
-                            : (java.util.Set.of(OrderType.ONLINE.name(), "GIAO_HANG").contains(
+                            : (java.util.Set.of(OrderType.ONLINE.name(), OrderConstants.LOAI_DON_GIAO_HANG).contains(
                                     String.valueOf(t.get(hd.loaiDon)).toUpperCase())
                                     ? DeliveryMethod.SHIPPING
                                     : DeliveryMethod.TAKEAWAY))

@@ -10,12 +10,12 @@ import com.example.be.core.admin.banhang.repository.*;
 import com.example.be.core.admin.banhang.service.AdminBanHangService;
 import com.example.be.core.admin.dotgiamgia.repository.AdminChiTietDotGiamGiaRepository;
 import com.example.be.entity.*;
+import com.example.be.infrastructure.constants.OrderConstants;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.infrastructure.constants.DeliveryMethod;
 import com.example.be.infrastructure.constants.HinhThucPhieuGiamGia;
 import com.example.be.infrastructure.constants.LoaiPhieuGiamGia;
-import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.infrastructure.constants.PaymentConstants;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.constants.MessageConstants;
@@ -974,13 +974,13 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         if (deliveryMethod != null) {
             return deliveryMethod;
         }
-        return OrderType.ONLINE.name().equalsIgnoreCase(legacyLoaiDon) || "GIAO_HANG".equalsIgnoreCase(legacyLoaiDon)
+        return OrderType.ONLINE.name().equalsIgnoreCase(legacyLoaiDon) || OrderConstants.LOAI_DON_GIAO_HANG.equalsIgnoreCase(legacyLoaiDon)
                 ? DeliveryMethod.SHIPPING
                 : DeliveryMethod.TAKEAWAY;
     }
 
     private String toLegacyLoaiDon(DeliveryMethod deliveryMethod) {
-        return deliveryMethod == DeliveryMethod.SHIPPING ? "GIAO_HANG" : "TAI_QUAY";
+        return deliveryMethod == DeliveryMethod.SHIPPING ? OrderConstants.LOAI_DON_GIAO_HANG : OrderConstants.LOAI_DON_TAI_QUAY;
     }
 
     private void createGiaoDich(HoaDon hd, String maPTTT, BigDecimal soTien, String maGiaoDichNgoai) {
@@ -1274,18 +1274,21 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                     .isPaid(false).transactionNo(null).build();
         }
 
-        // Đơn POS sau khi IPN VNPay thành công sẽ có trạng thái XAC_NHAN
-        boolean isPaid = hd.getTrangThai() == OrderStatus.XAC_NHAN || hd.getTrangThai() == OrderStatus.HOAN_THANH;
+        // Đơn POS sau khi IPN VNPay thành công sẽ có trạng thái XAC_NHAN hoặc HOAN_THANH hoặc có giao dịch thành công
+        boolean hasPaidTransaction = false;
         String transactionNo = null;
 
-        if (isPaid && hd.getListsGiaoDichThanhToan() != null) {
+        if (hd.getListsGiaoDichThanhToan() != null) {
             for (GiaoDichThanhToan gd : hd.getListsGiaoDichThanhToan()) {
-                if (gd.getMaGiaoDichNgoai() != null) {
+                if (gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG || (gd.getMaGiaoDichNgoai() != null && !gd.getMaGiaoDichNgoai().isBlank())) {
+                    hasPaidTransaction = true;
                     transactionNo = gd.getMaGiaoDichNgoai();
                     break;
                 }
             }
         }
+
+        boolean isPaid = hd.getTrangThai() == OrderStatus.XAC_NHAN || hd.getTrangThai() == OrderStatus.HOAN_THANH || hasPaidTransaction;
 
         return com.example.be.core.admin.banhang.model.response.AdminBanHangPaymentStatusResponse.builder()
                 .isPaid(isPaid)

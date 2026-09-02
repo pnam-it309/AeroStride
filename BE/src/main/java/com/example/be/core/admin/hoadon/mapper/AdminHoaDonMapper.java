@@ -57,11 +57,11 @@ public interface AdminHoaDonMapper {
         }
         String loai = payment.getLoaiGiaoDich();
         if (loai != null && !loai.isBlank()) {
-            if ("TIEN_MAT".equalsIgnoreCase(loai)) return "Tiền mặt";
-            if ("COD".equalsIgnoreCase(loai)) return "Thanh toán khi nhận hàng (COD)";
-            if ("VNPAY".equalsIgnoreCase(loai)) return "VNPay";
-            if ("CHUYEN_KHOAN".equalsIgnoreCase(loai) || "ONLINE".equalsIgnoreCase(loai)) {
-                if (payment.getGhiChu() != null && payment.getGhiChu().toUpperCase().contains("VNPAY")) {
+            if (PaymentConstants.METHOD_TIEN_MAT.equalsIgnoreCase(loai)) return "Tiền mặt";
+            if (PaymentConstants.METHOD_COD.equalsIgnoreCase(loai)) return "Thanh toán khi nhận hàng (COD)";
+            if (PaymentConstants.METHOD_VNPAY.equalsIgnoreCase(loai)) return "VNPay";
+            if (PaymentConstants.METHOD_CHUYEN_KHOAN.equalsIgnoreCase(loai) || PaymentConstants.METHOD_ONLINE.equalsIgnoreCase(loai)) {
+                if (payment.getGhiChu() != null && payment.getGhiChu().toUpperCase().contains(PaymentConstants.METHOD_VNPAY)) {
                     return "VNPay";
                 }
                 return "Chuyển khoản";
@@ -70,9 +70,9 @@ public interface AdminHoaDonMapper {
         }
         if (payment.getGhiChu() != null) {
             String noteUpper = payment.getGhiChu().toUpperCase();
-            if (noteUpper.contains("VNPAY")) return "VNPay";
-            if (noteUpper.contains("TIỀN MẶT") || noteUpper.contains("TIEN_MAT") || noteUpper.contains("COD")) return "Tiền mặt";
-            if (noteUpper.contains("CHUYỂN KHOẢN") || noteUpper.contains("CHUYEN_KHOAN")) return "Chuyển khoản";
+            if (noteUpper.contains(PaymentConstants.METHOD_VNPAY)) return "VNPay";
+            if (noteUpper.contains("TIỀN MẶT") || noteUpper.contains(PaymentConstants.METHOD_TIEN_MAT) || noteUpper.contains(PaymentConstants.METHOD_COD)) return "Tiền mặt";
+            if (noteUpper.contains("CHUYỂN KHOẢN") || noteUpper.contains(PaymentConstants.METHOD_CHUYEN_KHOAN)) return "Chuyển khoản";
         }
         return "Chuyển khoản";
     }
