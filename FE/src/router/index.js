@@ -63,7 +63,7 @@ export const router = createRouter({
         },
         {
             path: PATH.TRACK_ORDER,
-            alias: ['/tra-cuu', '/tracking', '/order-tracking'],
+            alias: ['/tra-cuu', '/tracking', '/order-tracking', '/orders', '/tra-cuu-don-hang'],
             name: 'OrderTracking',
             component: () => import('@/views/pages/orders/OrderTrackingPage.vue'),
             meta: { seoTitle: 'Tra Cứu Đơn Hàng' }

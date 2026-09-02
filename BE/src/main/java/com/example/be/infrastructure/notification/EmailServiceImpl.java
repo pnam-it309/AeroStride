@@ -269,7 +269,7 @@ public class EmailServiceImpl implements EmailService {
         variables.put("maVanDon", maVanDon != null ? maVanDon : "Chờ cập nhật");
         variables.put("donViVanChuyen", donViVanChuyen != null ? donViVanChuyen : "Giao Hàng Nhanh (GHN)");
         variables.put("ngayGiaoDuKien", ngayGiaoDuKien);
-        variables.put("linkTraCuu", linkTraCuu != null ? linkTraCuu : (frontendUrl + "/orders"));
+        variables.put("linkTraCuu", linkTraCuu != null ? linkTraCuu : (frontendUrl + "/tra-cuu?code=" + (maHoaDon != null ? maHoaDon : "")));
 
         EmailRequest request = EmailRequest.builder()
                 .to(to)

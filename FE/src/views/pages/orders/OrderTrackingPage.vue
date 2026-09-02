@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import MainFooter from '@/components/shared/MainFooter.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
@@ -10,11 +10,26 @@ import { useNotifications } from '@/services/notificationService';
 import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const { addNotification } = useNotifications();
 
 const trackingForm = ref({ maHoaDon: '', soDienThoai: '' });
 const trackingLoading = ref(false);
+
+onMounted(() => {
+    const code = route.query.code || route.query.maHoaDon;
+    const phone = route.query.phone || route.query.sdt;
+    if (code) {
+        trackingForm.value.maHoaDon = String(code).trim();
+    }
+    if (phone) {
+        trackingForm.value.soDienThoai = String(phone).trim();
+    }
+    if (code || phone) {
+        handleTrackOrder();
+    }
+});
 
 const handleTrackOrder = async () => {
     const code = trackingForm.value.maHoaDon ? trackingForm.value.maHoaDon.trim() : '';

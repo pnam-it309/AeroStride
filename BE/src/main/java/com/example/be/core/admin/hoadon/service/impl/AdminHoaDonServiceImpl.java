@@ -311,7 +311,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
 
         if (newStatus == OrderStatus.DANG_GIAO) {
             String donVi = "Giao Hàng Nhanh (GHN)";
-            String trackingUrl = frontendUrl + "/orders?code=" + (hd.getMaHoaDon() != null ? hd.getMaHoaDon() : "");
+            String trackingUrl = frontendUrl + "/tra-cuu?code=" + (hd.getMaHoaDon() != null ? hd.getMaHoaDon() : "");
             emailService.guiEmailVanChuyen(email, tenKhachHang, hd.getMaHoaDon(), "GHN-" + hd.getMaHoaDon(), donVi, hd.getNgayDuKienNhan(), trackingUrl);
         } else {
             emailService.guiEmailCapNhatTrangThaiHoaDon(email, tenKhachHang, hd.getMaHoaDon(),
