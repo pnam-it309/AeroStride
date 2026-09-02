@@ -73,7 +73,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductVariantResponse> getVariantsByProductId(String productId) {
-        return mapVariants(adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(productId));
+        return mapVariants(adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(productId), true);
     }
 
     // Lấy toàn bộ danh sách biến thể sản phẩm đang hoạt động
@@ -489,6 +489,10 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     }
 
     private List<ProductVariantResponse> mapVariants(List<ChiTietSanPham> variants) {
+        return mapVariants(variants, false);
+    }
+
+    private List<ProductVariantResponse> mapVariants(List<ChiTietSanPham> variants, boolean includeAllImages) {
         if (variants == null || variants.isEmpty()) {
             return Collections.emptyList();
         }
@@ -519,7 +523,8 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         return variants.stream().map(v -> {
             v.setChiTietDotGiamGias(new java.util.LinkedHashSet<>(relationMap.getOrDefault(v.getId(), new ArrayList<>())));
             List<ProductVariantImageResponse> imgs = imageMap.getOrDefault(v.getId(), new ArrayList<>());
-            return adminSanPhamMapper.toVariantResponse(v, imgs);
+            List<ProductVariantImageResponse> returnImgs = includeAllImages ? imgs : Collections.emptyList();
+            return adminSanPhamMapper.toVariantResponse(v, imgs, returnImgs);
         }).toList();
     }
 

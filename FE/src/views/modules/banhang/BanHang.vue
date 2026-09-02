@@ -915,7 +915,6 @@ onMounted(async () => {
 
     // Tác vụ nền chạy sau khi UI đã sẵn sàng
     try {
-        refreshBestVoucher();
         handleVnPayCallbackFromUrl();
 
         // Tải trước danh mục tỉnh thành sau khi màn hình POS đã hiển thị mượt mà
@@ -1682,19 +1681,36 @@ const decorateVoucher = (v, order = selectedOrder.value) => {
 };
 
 // BE là nguồn quyết định voucher tốt nhất (đã xét %/tiền mặt, trần giảm, thời hạn và phiếu cá nhân).
-// Dùng serial để response cũ không ghi đè khi nhân viên thêm/xóa sản phẩm liên tục.
+// Dùng serial và inFlight map để response cũ không ghi đè và không gửi request mạng trùng lặp.
 let voucherRefreshSerial = 0;
+let inFlightVoucherKey = null;
+let inFlightVoucherPromise = null;
+
 const refreshBestVoucher = async (order = selectedOrder.value) => {
     if (!order?.id) return;
-    const refreshSerial = ++voucherRefreshSerial;
-    try {
-        const list = await dichVuDonHang.getVouchers(order.tongTien || 0);
-        const decorated = (list || []).map((v) => decorateVoucher(v, order));
-        if (refreshSerial !== voucherRefreshSerial) return;
-        vouchers.value = decorated;
-    } catch (e) {
-        console.error('Lỗi khi cập nhật phiếu giảm giá:', e);
+    const total = Number(order.tongTien || 0);
+    const key = `${order.id}_${total}`;
+
+    if (inFlightVoucherKey === key && inFlightVoucherPromise) {
+        return inFlightVoucherPromise;
     }
+
+    inFlightVoucherKey = key;
+    const refreshSerial = ++voucherRefreshSerial;
+    inFlightVoucherPromise = (async () => {
+        try {
+            const list = await dichVuDonHang.getVouchers(total);
+            const decorated = (list || []).map((v) => decorateVoucher(v, order));
+            if (refreshSerial !== voucherRefreshSerial) return;
+            vouchers.value = decorated;
+        } catch (e) {
+            console.error('Lỗi khi cập nhật phiếu giảm giá:', e);
+        } finally {
+            inFlightVoucherKey = null;
+            inFlightVoucherPromise = null;
+        }
+    })();
+    return inFlightVoucherPromise;
 };
 
 // Cố định 1 voucher do người dùng tự chọn trên giao diện

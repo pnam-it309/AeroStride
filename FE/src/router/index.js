@@ -189,8 +189,30 @@ export const router = createRouter({
     ]
 });
 
+// Dọn dẹp tooltip còn sót lại khi chuyển trang
+const cleanupLingeringTooltips = () => {
+    try {
+        if (typeof document !== 'undefined') {
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+            const tooltips = document.querySelectorAll('.v-overlay-container .v-tooltip, .v-overlay-container .v-overlay');
+            tooltips.forEach((el) => {
+                if (el.querySelector('.v-tooltip__content') || el.classList.contains('v-tooltip')) {
+                    el.remove();
+                }
+            });
+        }
+    } catch (e) {}
+};
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('popstate', cleanupLingeringTooltips);
+}
+
 // Global guard: Customer auth pages (checkout, orders)
 router.beforeEach((to, from, next) => {
+    cleanupLingeringTooltips();
     try {
         const uiStore = useUIStore();
         uiStore.startProgress();
@@ -213,6 +235,8 @@ router.beforeEach((to, from, next) => {
 });
 
 router.afterEach(() => {
+    cleanupLingeringTooltips();
+    setTimeout(cleanupLingeringTooltips, 60);
     try {
         const uiStore = useUIStore();
         uiStore.stopProgress();

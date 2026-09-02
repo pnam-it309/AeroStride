@@ -58,6 +58,26 @@ export const dichVuSanPham = {
         }
     },
 
+    _cachedProductOptions: null,
+
+    // Lấy danh sách sản phẩm rút gọn cho bộ lọc (có cache)
+    async layOptionsSanPham(forceRefresh = false) {
+        if (!forceRefresh && this._cachedProductOptions) {
+            return this._cachedProductOptions;
+        }
+        try {
+            const response = await api.get(API_ADMIN.SAN_PHAM, { params: { page: 0, size: 1000 } });
+            const list = response.data?.data?.content || [];
+            if (list.length > 0) {
+                this._cachedProductOptions = list;
+            }
+            return list;
+        } catch (error) {
+            console.error('Error loading product options:', error);
+            return this._cachedProductOptions || [];
+        }
+    },
+
     // Lấy danh sách sản phẩm
     async layDanhSachSanPham(params) {
         const response = await api.get(API_ADMIN.SAN_PHAM, { params });

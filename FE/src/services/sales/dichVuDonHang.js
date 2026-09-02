@@ -1,6 +1,9 @@
 import api from '../apiService';
 import { API_ADMIN } from '@/constants/apiPaths';
 
+const voucherCache = new Map();
+const inFlightVouchersMap = new Map();
+
 export const dichVuDonHang = {
     // Lấy danh sách hóa đơn chờ
     async layDonHangCho() {
@@ -73,10 +76,28 @@ export const dichVuDonHang = {
         return response.data.data;
     },
 
-    // Lấy danh sách voucher phù hợp
+    // Lấy danh sách voucher phù hợp (có deduplication và cache ngắn tránh gọi lặp)
     async getVouchers(tongTien) {
-        const response = await api.get(`${API_ADMIN.BAN_HANG}/vouchers`, { params: { tongTien } });
-        return response.data.data;
+        const key = Number(tongTien || 0);
+        const cached = voucherCache.get(key);
+        if (cached && Date.now() - cached.timestamp < 10000) {
+            return cached.data;
+        }
+        if (inFlightVouchersMap.has(key)) {
+            return inFlightVouchersMap.get(key);
+        }
+        const promise = (async () => {
+            try {
+                const response = await api.get(`${API_ADMIN.BAN_HANG}/vouchers`, { params: { tongTien: key } });
+                const data = response.data.data;
+                voucherCache.set(key, { timestamp: Date.now(), data });
+                return data;
+            } finally {
+                inFlightVouchersMap.delete(key);
+            }
+        })();
+        inFlightVouchersMap.set(key, promise);
+        return promise;
     },
 
     // Set voucher cho hóa đơn

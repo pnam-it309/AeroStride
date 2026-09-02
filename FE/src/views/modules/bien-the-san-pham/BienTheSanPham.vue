@@ -181,11 +181,11 @@ const fetchFormOptions = async () => {
     }
 };
 
-// Tải danh sách tên sản phẩm để hiển thị trong select box bộ lọc
+// Tải danh sách tên sản phẩm để hiển thị trong select box bộ lọc (sử dụng cache)
 const fetchProductOptions = async () => {
     try {
-        const response = await dichVuSanPham.layDanhSachSanPham({ page: 0, size: 1000 });
-        productOptions.value = response.content || [];
+        const list = await dichVuSanPham.layOptionsSanPham();
+        productOptions.value = list || [];
         updateSelectedProductMeta();
     } catch (error) {
         console.error('Lỗi khi tải danh sách sản phẩm:', error);

@@ -81,18 +81,22 @@ public class AdminSanPhamMapper {
 
     /** Map bien the: giaGoc la gia luu DB, giaBan la gia sau dot giam gia dang hieu luc. */
     public ProductVariantResponse toVariantResponse(ChiTietSanPham variant, List<ProductVariantImageResponse> images) {
+        return toVariantResponse(variant, images, images);
+    }
+
+    public ProductVariantResponse toVariantResponse(ChiTietSanPham variant, List<ProductVariantImageResponse> allImages, List<ProductVariantImageResponse> responseImages) {
         BigDecimal originalPrice = variant.getGiaBan() != null ? variant.getGiaBan() : BigDecimal.ZERO;
         BigDecimal discountedPrice = DiscountPriceUtils.calculateDiscountedPrice(originalPrice, variant.getChiTietDotGiamGias());
         BigDecimal activeDiscountPercent = DiscountPriceUtils.getActiveDiscountPercent(variant.getChiTietDotGiamGias());
 
         String variantImg = null;
-        if (images != null && !images.isEmpty()) {
-            variantImg = images.stream()
+        if (allImages != null && !allImages.isEmpty()) {
+            variantImg = allImages.stream()
                     .filter(img -> Boolean.TRUE.equals(img.getHinhAnhDaiDien()))
                     .map(ProductVariantImageResponse::getDuongDanAnh)
                     .filter(url -> url != null && !url.isBlank())
                     .findFirst()
-                    .orElseGet(() -> images.stream()
+                    .orElseGet(() -> allImages.stream()
                             .map(ProductVariantImageResponse::getDuongDanAnh)
                             .filter(url -> url != null && !url.isBlank())
                             .findFirst()
@@ -127,7 +131,7 @@ public class AdminSanPhamMapper {
                 .trangThai(variant.getTrangThai())
                 .ngayTao(variant.getNgayTao())
                 .ngayCapNhat(variant.getNgayCapNhat())
-                .images(images)
+                .images(responseImages)
                 .build();
     }
 
