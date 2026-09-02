@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import MainFooter from '@/components/shared/MainFooter.vue';
@@ -60,68 +60,9 @@ const reviewsLoading = ref(false);
 const ratingCounts = ref({ 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 });
 const selectedFilter = ref('all');
 
-// Bộ đánh giá mẫu chân thực dành cho demo khi sản phẩm chưa có đánh giá thực tế
-const DEMO_FALLBACK_REVIEWS = [
-    {
-        id: 'fb-rev-1',
-        tenKhachHang: 'Nguyễn Hoàng Nam',
-        avatarKhachHang: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80',
-        diemDanhGia: 5,
-        ngayTao: Date.now() - 86400000 * 2,
-        noiDung: 'Giày mang cực kỳ êm chân và nhẹ, đệm đàn hồi rất tốt khi chạy bộ cự ly dài. Form giày ôm vừa vặn, đóng gói 2 lớp hộp cẩn thận, giao hàng siêu nhanh!'
-    },
-    {
-        id: 'fb-rev-2',
-        tenKhachHang: 'Trần Thị Mai Anh',
-        avatarKhachHang: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
-        diemDanhGia: 5,
-        ngayTao: Date.now() - 86400000 * 5,
-        noiDung: 'Màu sắc bên ngoài đẹp hơn cả trong ảnh chụp, chất vải dệt thoáng khí không bị bí chân dù mang cả ngày. Rất ưng ý với chất lượng phục vụ của shop!'
-    },
-    {
-        id: 'fb-rev-3',
-        tenKhachHang: 'Lê Minh Quân',
-        avatarKhachHang: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=120&q=80',
-        diemDanhGia: 5,
-        ngayTao: Date.now() - 86400000 * 8,
-        noiDung: 'Đã test chạy 10km sáng nay, độ bám đường cực tốt và nâng đỡ gót chân rất vững. Xứng đáng 5 sao trong tầm giá.'
-    },
-    {
-        id: 'fb-rev-4',
-        tenKhachHang: 'Phạm Thu Trang',
-        avatarKhachHang: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
-        diemDanhGia: 4,
-        ngayTao: Date.now() - 86400000 * 12,
-        noiDung: 'Giày đẹp, hoàn thiện tỉ mỉ từng đường kim mũi chỉ. Đi đúng size chân mang rất thoải mái, sẽ tiếp tục ủng hộ AeroStride!'
-    }
-];
-
-const effectiveReviews = computed(() => {
-    return reviews.value && reviews.value.length > 0 ? reviews.value : DEMO_FALLBACK_REVIEWS;
-});
-
-const displayTotalReviews = computed(() => {
-    return reviews.value && reviews.value.length > 0 ? (totalReviews.value || reviews.value.length) : DEMO_FALLBACK_REVIEWS.length;
-});
-
-const displayAverageRating = computed(() => {
-    if (reviews.value && reviews.value.length > 0) {
-        return averageRating.value || '5.0';
-    }
-    return '4.9';
-});
-
-const displayRatingCounts = computed(() => {
-    if (reviews.value && reviews.value.length > 0) {
-        return ratingCounts.value;
-    }
-    return { 5: 3, 4: 1, 3: 0, 2: 0, 1: 0 };
-});
-
 const filteredReviews = computed(() => {
-    const list = effectiveReviews.value;
-    if (selectedFilter.value === 'all') return list;
-    return list.filter((r) => Math.floor(r.diemDanhGia || r.rating || 5) === Number(selectedFilter.value));
+    if (selectedFilter.value === 'all') return reviews.value;
+    return reviews.value.filter((r) => Math.floor(r.diemDanhGia || r.rating || 5) === Number(selectedFilter.value));
 });
 
 // State cho xem chi tiết ảnh / Lightbox modal
@@ -202,11 +143,62 @@ const fetchReviews = async () => {
 
 const { setProductSeo } = useSeoMeta();
 
+const handleRealtimeStockUpdate = (event) => {
+    const detail = event.detail;
+    if (!detail || !product.value) return;
+
+    const variantId = detail.id;
+    const productId = detail.idSanPham;
+    const isSameProduct = (productId && String(productId) === String(product.value.id)) ||
+        (product.value.chiTietSanPhams && product.value.chiTietSanPhams.some((v) => String(v.id) === String(variantId)));
+
+    if (!isSameProduct) return;
+
+    if (product.value.chiTietSanPhams) {
+        const found = product.value.chiTietSanPhams.find((v) => String(v.id) === String(variantId));
+        if (found) {
+            const newStock = Number(detail.soLuongTon) || 0;
+            found.soLuong = newStock;
+
+            // Tính lại totalStock
+            product.value.totalStock = product.value.chiTietSanPhams.reduce((sum, v) => sum + (v.soLuong || 0), 0);
+
+            // Tính lại stockByColor
+            if (found.mauSac?.ten && product.value.stockByColor) {
+                product.value.stockByColor[found.mauSac.ten] = product.value.chiTietSanPhams
+                    .filter((v) => v.mauSac?.ten === found.mauSac.ten)
+                    .reduce((sum, v) => sum + (v.soLuong || 0), 0);
+            }
+
+            // Nếu khách đang chọn đúng biến thể này
+            if (selectedVariant.value && String(selectedVariant.value.id) === String(variantId)) {
+                if (newStock === 0) {
+                    showStockAlert(
+                        'Sản phẩm vừa hết hàng',
+                        `Biến thể bạn đang chọn (${found.mauSac?.ten || ''} - Size ${found.kichThuoc?.ten || ''}) vừa hết hàng trong kho. Vui lòng chọn màu sắc hoặc kích cỡ khác.`
+                    );
+                } else if (newStock < selectedQuantity.value) {
+                    selectedQuantity.value = newStock;
+                    showStockAlert(
+                        'Số lượng tồn kho vừa cập nhật',
+                        `Biến thể bạn đang chọn vừa được cập nhật số lượng tồn kho còn ${newStock} sản phẩm.`
+                    );
+                }
+            }
+        }
+    }
+};
+
 onMounted(() => {
     fetchProduct();
     fetchRecommendations();
     fetchReviews();
     fetchUserProfile();
+    window.addEventListener('product-stock-update', handleRealtimeStockUpdate);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('product-stock-update', handleRealtimeStockUpdate);
 });
 
 watch(
@@ -234,32 +226,12 @@ watch(product, (newProduct) => {
     }
 });
 
-const generateFallbackDescription = (p) => {
-    if (!p) return '';
-    const name = p.tenSanPham || 'Sản phẩm AeroStride';
-    const brand = p.tenThuongHieu || 'AeroStride';
-    const material = p.tenChatLieu || 'vải dệt Mesh cao cấp';
-    const sole = p.tenDeGiay || 'đế cao su đàn hồi giảm chấn';
-    const purpose = p.tenMucDichChay || 'chạy bộ và luyện tập thể thao đa năng';
-    const origin = p.tenXuatXu || 'Chính hãng';
-
-    return `${name} là dòng giày thể thao cao cấp từ ${brand}, được nghiên cứu và thiết kế chuyên biệt cho mục đích ${purpose}.
-
-Đặc điểm nổi bật:
-• Thân giày (Upper): Sử dụng chất liệu ${material} siêu nhẹ, cấu trúc lưới thoáng khí đa chiều giúp lưu thông không khí tối đa, hạn chế tích tụ nhiệt và mồ hôi trong suốt quá trình vận động cường độ cao.
-• Đế đệm (Midsole & Outsole): Hệ thống ${sole} với cấu trúc đệm phản hồi năng lượng vượt trội, phân tán áp lực đồng đều, hỗ trợ bảo vệ tối đa khớp gối và gót chân trên mọi địa hình.
-• Thiết kế công thái học: Ôm sát vòm bàn chân tự nhiên, mang lại cảm giác vừa vặn, linh hoạt và ổn định trong từng sải chân bứt phá.
-• Tiêu chuẩn chất lượng: ${origin}, trải qua quy trình kiểm định nghiêm ngặt đạt chuẩn độ bền thể thao chuyên nghiệp.
-
-Sản phẩm là sự lựa chọn hoàn hảo cho cả luyện tập thể thao hàng ngày lẫn phối đồ phong cách năng động.`;
-};
-
 const productDescription = computed(() => {
     const desc = product.value?.moTaChiTiet || product.value?.moTa || product.value?.moTaNgan;
     if (desc && typeof desc === 'string' && desc.trim() && desc.trim() !== 'null' && desc.trim() !== 'undefined') {
         return desc.trim();
     }
-    return generateFallbackDescription(product.value);
+    return 'Chưa có mô tả chi tiết cho sản phẩm này.';
 });
 
 const formatPrice = (price) => {
@@ -515,29 +487,10 @@ const allImages = computed(() => {
         }
     }
 
-    // Nếu không có ảnh nào -> thêm ảnh chính fallback
+    // Nếu sản phẩm hoàn toàn không có ảnh nào -> thêm 1 ảnh mặc định
     if (images.length === 0) {
-        const baseFallback = getDeterministicFallback(product.value?.id || product.value?.maSanPham);
-        addImg(baseFallback, 'Ảnh chính');
-    }
-
-    // Đảm bảo luôn có tối thiểu 4 góc chụp sắc nét cho buổi demo mượt mà
-    const prodId = product.value?.id || product.value?.maSanPham || 'demo';
-    let baseOffset = 0;
-    for (let i = 0; i < prodId.length; i++) baseOffset += prodId.charCodeAt(i);
-
-    let fallbackIdx = 0;
-    while (images.length < 4 && fallbackIdx < FALLBACK_SHOES.length) {
-        const candidateImg = FALLBACK_SHOES[(baseOffset + fallbackIdx) % FALLBACK_SHOES.length];
-        if (!addedUrls.has(candidateImg)) {
-            addedUrls.add(candidateImg);
-            images.push({
-                duongDanAnh: candidateImg,
-                thumbnailUrl: candidateImg,
-                label: placeholderAngles[images.length] || 'Chi tiết'
-            });
-        }
-        fallbackIdx++;
+        const baseFallback = DEFAULT_SHOE_IMAGE;
+        addImg(baseFallback, 'Ảnh sản phẩm');
     }
 
     return images;
@@ -937,16 +890,21 @@ const toggleFavorite = () => {
 
                         <!-- Ratings, Review & Sold Count -->
                         <div class="product-meta-row d-flex align-center gap-2 mb-6">
-                            <div class="rating-stars-wrapper d-flex align-center">
-                                <v-icon v-for="star in 5" :key="star" size="14" color="amber" class="mr-0.5">
-                                    {{ star <= Math.round(Number(displayAverageRating)) ? 'mdi-star' : 'mdi-star-outline' }}
-                                </v-icon>
-                                <span class="rating-value-text ml-1">{{ displayAverageRating }}</span>
-                            </div>
+                            <template v-if="totalReviews > 0">
+                                <div class="rating-stars-wrapper d-flex align-center">
+                                    <v-icon v-for="star in 5" :key="star" size="14" color="amber" class="mr-0.5">
+                                        {{ star <= Math.round(Number(averageRating)) ? 'mdi-star' : 'mdi-star-outline' }}
+                                    </v-icon>
+                                    <span class="rating-value-text ml-1">{{ averageRating }}</span>
+                                </div>
+                                <span class="meta-separator text-grey-lighten-1">|</span>
+                                <span class="reviews-count-text">({{ totalReviews }} đánh giá)</span>
+                            </template>
+                            <template v-else>
+                                <span class="no-reviews-text text-grey-darken-1 font-weight-medium">Chưa có đánh giá</span>
+                            </template>
                             <span class="meta-separator text-grey-lighten-1">|</span>
-                            <span class="reviews-count-text">({{ displayTotalReviews }} đánh giá)</span>
-                            <span class="meta-separator text-grey-lighten-1">|</span>
-                            <span class="sold-count-text">Đã bán {{ product.daBan || 28 }}</span>
+                            <span class="sold-count-text">Đã bán {{ product.daBan || 0 }}</span>
                         </div>
 
                         <!-- Price Section -->
@@ -1088,14 +1046,14 @@ const toggleFavorite = () => {
                 <div v-if="reviewsLoading" class="text-center py-8">
                     <v-progress-circular indeterminate color="primary"></v-progress-circular>
                 </div>
-                <div v-else-if="effectiveReviews.length > 0">
+                <div v-else-if="reviews.length > 0">
                     <v-card variant="outlined" class="mb-10 rounded-xl border-grey-lighten-2">
                         <v-row class="ma-0">
                             <v-col cols="12" md="4" class="d-flex align-center justify-center bg-grey-lighten-4 pa-6">
                                 <div class="text-center">
-                                    <div class="text-h2 font-weight-semibold text-amber-darken-3">{{ displayAverageRating }}</div>
+                                    <div class="text-h2 font-weight-semibold text-amber-darken-3">{{ averageRating }}</div>
                                     <v-rating
-                                        :model-value="Number(displayAverageRating) || 5"
+                                        :model-value="Number(averageRating) || 5"
                                         color="amber"
                                         active-color="amber"
                                         half-increments
@@ -1103,7 +1061,7 @@ const toggleFavorite = () => {
                                         size="large"
                                         class="mb-2"
                                     ></v-rating>
-                                    <div class="text-body-1 text-grey-darken-1 font-weight-medium">{{ displayTotalReviews }} đánh giá</div>
+                                    <div class="text-body-1 text-grey-darken-1 font-weight-medium">{{ totalReviews }} đánh giá</div>
                                 </div>
                             </v-col>
 
@@ -1116,7 +1074,7 @@ const toggleFavorite = () => {
                                         @click="selectedFilter = 'all'"
                                         class="font-weight-bold px-4"
                                     >
-                                        Tất cả ({{ displayTotalReviews }})
+                                        Tất cả ({{ totalReviews }})
                                     </v-chip>
                                     <v-chip
                                         v-for="star in [5, 4, 3, 2, 1]"
@@ -1126,7 +1084,7 @@ const toggleFavorite = () => {
                                         @click="selectedFilter = star"
                                         class="font-weight-bold px-4"
                                     >
-                                        {{ star }} Sao ({{ displayRatingCounts[star] || 0 }})
+                                        {{ star }} Sao ({{ ratingCounts[star] || 0 }})
                                     </v-chip>
                                 </div>
                             </v-col>

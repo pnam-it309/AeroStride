@@ -235,10 +235,23 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         history.setNgayTao(System.currentTimeMillis());
         lichSuTrangThaiHoaDonRepository.save(history);
 
-        // Nếu giao lại (từ Giao thất bại / Khách không nhận sang Đang giao hoặc Hoàn thành) -> Trừ kho lại
+        // Nếu giao lại (từ Giao thất bại / Khách không nhận sang Đang giao hoặc Hoàn thành) -> Kiểm tra tồn kho thay thế và trừ kho lại
         if ((oldStatus == OrderStatus.GIAO_THAT_BAI || oldStatus == OrderStatus.KHACH_KHONG_NHAN) 
                 && (newStatus == OrderStatus.DANG_GIAO || newStatus == OrderStatus.HOAN_THANH)) {
             if (hd.getListsHoaDonChiTiet() != null) {
+                if (newStatus == OrderStatus.DANG_GIAO) {
+                    for (HoaDonChiTiet detail : hd.getListsHoaDonChiTiet()) {
+                        ChiTietSanPham ct = detail.getChiTietSanPham();
+                        if (ct != null && detail.getSoLuong() != null) {
+                            int currentStock = ct.getSoLuong() != null ? ct.getSoLuong() : 0;
+                            if (currentStock < detail.getSoLuong()) {
+                                String tenSP = ct.getSanPham() != null ? ct.getSanPham().getTen() : ct.getMaChiTietSanPham();
+                                throw new BusinessException("Không đủ tồn kho để lấy hàng thay thế giao lại. Sản phẩm '" 
+                                        + tenSP + "' chỉ còn " + currentStock + " sản phẩm (cần " + detail.getSoLuong() + "). Vui lòng nhập thêm hàng trước khi giao lại.");
+                            }
+                        }
+                    }
+                }
                 for (HoaDonChiTiet detail : hd.getListsHoaDonChiTiet()) {
                     ChiTietSanPham ct = detail.getChiTietSanPham();
                     if (ct != null && detail.getSoLuong() != null) {
@@ -689,14 +702,20 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         HoaDon hoaDon = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
 
-        if (isCashOrder(hoaDon)) {
-            throw new BusinessException("Đơn thanh toán khi nhận hàng (COD) không cần thanh toán online");
+        boolean daThanhToan = hoaDon.getListsGiaoDichThanhToan() != null && hoaDon.getListsGiaoDichThanhToan().stream()
+                .anyMatch(gd -> gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG 
+                        && gd.getMaGiaoDichNgoai() != null && !gd.getMaGiaoDichNgoai().isBlank());
+        if (daThanhToan) {
+            throw new BusinessException("Đơn hàng này đã được thanh toán thành công.");
         }
         if (hoaDon.getTrangThai() != OrderStatus.CHO_XAC_NHAN) {
             throw new BusinessException("Chỉ có thể tạo link thanh toán lại khi đơn đang ở trạng thái 'Chờ xác nhận'");
         }
 
         BigDecimal amount = hoaDon.getTongTienSauGiam() != null ? hoaDon.getTongTienSauGiam() : hoaDon.getTongTien();
+        if (hoaDon.getPhiVanChuyen() != null) {
+            amount = amount.add(hoaDon.getPhiVanChuyen());
+        }
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException("Số tiền thanh toán không hợp lệ.");
         }

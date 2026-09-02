@@ -25,11 +25,16 @@ class WebSocketService {
         }
 
         this.stompClient = new Client({
-            webSocketFactory: () => new SockJS(httpUrl),
-            reconnectDelay: 10000, // 10s backoff to avoid rate limiting (429)
-            heartbeatIncoming: 10000,
-            heartbeatOutgoing: 10000,
-            connectionTimeout: 10000
+            webSocketFactory: () =>
+                new SockJS(httpUrl, null, {
+                    transports: ['websocket', 'xhr-streaming', 'xhr-polling'],
+                    timeout: 10000
+                }),
+            reconnectDelay: 8000,
+            heartbeatIncoming: 15000,
+            heartbeatOutgoing: 15000,
+            connectionTimeout: 15000,
+            debug: () => {}
         });
 
         this.stompClient.onConnect = (frame) => {

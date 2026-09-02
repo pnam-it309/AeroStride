@@ -13,7 +13,8 @@ const props = defineProps({
     loading: { type: Boolean, default: false },
     showInput: { type: Boolean, default: false },
     inputLabel: { type: String, default: 'Ghi chú' },
-    inputRequired: { type: Boolean, default: false }
+    inputRequired: { type: Boolean, default: false },
+    suggestions: { type: Array, default: () => [] }
 });
 
 const emit = defineEmits(['update:show', 'confirm', 'cancel']);
@@ -41,7 +42,7 @@ const handleCancel = () => {
 </script>
 
 <template>
-    <v-dialog v-model="props.show" max-width="450" persistent transition="confirm-dialog-transition">
+    <v-dialog v-model="props.show" max-width="480" persistent transition="confirm-dialog-transition">
         <v-card class="premium-confirm-card">
             <v-card-text class="pa-8 pb-4">
                 <div class="d-flex align-start">
@@ -61,7 +62,22 @@ const handleCancel = () => {
                 </div>
 
                 <div v-if="showInput" class="mt-6">
-                    <label class="text-body-2 text-slate-700 font-weight-medium mb-2 d-block">{{ inputLabel }}</label>
+                    <div class="d-flex align-center justify-space-between mb-2">
+                        <label class="text-body-2 text-slate-700 font-weight-medium">{{ inputLabel }}</label>
+                    </div>
+                    <div v-if="suggestions && suggestions.length > 0" class="d-flex flex-wrap ga-1 mb-2">
+                        <v-chip
+                            v-for="(sug, sIdx) in suggestions"
+                            :key="sIdx"
+                            size="x-small"
+                            variant="tonal"
+                            color="primary"
+                            class="cursor-pointer font-weight-medium"
+                            @click="inputValue = sug"
+                        >
+                            {{ sug }}
+                        </v-chip>
+                    </div>
                     <v-textarea
                         v-model="inputValue"
                         variant="outlined"

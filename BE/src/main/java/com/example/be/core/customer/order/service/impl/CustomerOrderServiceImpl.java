@@ -627,20 +627,26 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         return mapToResponse(hoaDon, null);
     }
 
-    // Tạo lại URL thanh toán VNPay cho đơn chuyển khoản chưa thanh toán (cho phép thanh toán lại khi đã tắt/hủy cổng)
+    // Tạo lại URL thanh toán VNPay cho đơn chưa thanh toán (cho phép thanh toán lại khi đã tắt/hủy cổng hoặc thanh toán thất bại)
     @Override
     @Transactional(readOnly = true)
     public String createVnPayUrl(String id, String returnUrl, String username) {
         HoaDon hoaDon = findOwnedOrder(id, username);
 
-        if (isCashOrder(hoaDon)) {
-            throw new RuntimeException("Đơn thanh toán khi nhận hàng (COD) không cần thanh toán online");
+        boolean daThanhToan = hoaDon.getListsGiaoDichThanhToan() != null && hoaDon.getListsGiaoDichThanhToan().stream()
+                .anyMatch(gd -> gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG 
+                        && gd.getMaGiaoDichNgoai() != null && !gd.getMaGiaoDichNgoai().isBlank());
+        if (daThanhToan) {
+            throw new RuntimeException("Đơn hàng này đã được thanh toán thành công");
         }
         if (hoaDon.getTrangThai() != OrderStatus.CHO_XAC_NHAN) {
             throw new RuntimeException("Chỉ có thể thanh toán lại khi đơn đang ở trạng thái 'Chờ xác nhận'");
         }
 
         BigDecimal amount = hoaDon.getTongTienSauGiam() != null ? hoaDon.getTongTienSauGiam() : hoaDon.getTongTien();
+        if (hoaDon.getPhiVanChuyen() != null) {
+            amount = amount.add(hoaDon.getPhiVanChuyen());
+        }
         com.example.be.core.payment.dto.PaymentRequest payReq = com.example.be.core.payment.dto.PaymentRequest.builder()
                 .amount(amount)
                 .orderId(hoaDon.getId())
@@ -877,8 +883,8 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         // Sửa số lượng sản phẩm: cho phép khi đang chờ xác nhận (cả tiền mặt & trả trước)
         boolean choPhepSuaSanPham = choXacNhan;
         boolean choPhepHuy = choXacNhan && !daThanhToan;
-        // Đơn chuyển khoản (không phải tiền mặt) còn chờ xác nhận và CHƯA thanh toán -> cho thanh toán lại
-        boolean choPhepThanhToanLai = choXacNhan && !laTienMat && !daThanhToan;
+        // Đơn còn chờ xác nhận và CHƯA thanh toán thành công -> cho thanh toán lại
+        boolean choPhepThanhToanLai = choXacNhan && !daThanhToan;
 
         BigDecimal tienHoanTraTruoc = Boolean.FALSE.equals(hoaDon.getDaHoanPhi()) && hoaDon.getPhiHoanHang() != null && hoaDon.getPhiHoanHang().compareTo(BigDecimal.ZERO) > 0
                 ? hoaDon.getPhiHoanHang()

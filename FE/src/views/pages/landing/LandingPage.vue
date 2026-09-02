@@ -476,12 +476,12 @@ const scrollToCategories = () => {
                                 </div>
                             </div>
                             <h3 class="product-name-title">{{ product.tenSanPham }}</h3>
-                            <div class="d-flex align-center justify-space-between mb-1 text-caption text-slate-500">
-                                <span class="d-inline-flex align-center font-weight-bold" style="color: #f59e0b">
+                            <div class="d-flex align-center justify-space-between mb-1 text-caption text-slate-500" v-if="product.daBan > 0 || product.diemDanhGia > 0">
+                                <span class="d-inline-flex align-center font-weight-bold" style="color: #f59e0b" v-if="product.diemDanhGia > 0">
                                     <v-icon size="13" color="amber" class="mr-0.5">mdi-star</v-icon>
-                                    4.9
+                                    {{ product.diemDanhGia }}
                                 </span>
-                                <span class="text-caption text-grey">Đã bán {{ product.daBan || 28 }}</span>
+                                <span class="text-caption text-grey" v-if="product.daBan > 0">Đã bán {{ product.daBan }}</span>
                             </div>
                             <div class="price-section-row">
                                 <span class="current-price-text" :class="{ 'text-discount-red': product.phanTramGiam > 0 }">

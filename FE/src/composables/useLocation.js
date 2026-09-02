@@ -196,7 +196,7 @@ export function useLocation(options = {}) {
         loadingLocations.value.provinces = true;
         inFlightProvincesPromise = (async () => {
             try {
-                const res = await api.get(`${API_ADMIN.GHN}/provinces`, { silent: true, timeout: 3000 });
+                const res = await api.get(`${API_ADMIN.GHN}/provinces`, { silent: true, timeout: 8000 });
                 const list = extractList(res);
                 if (!list.length) throw new Error('GHN provinces empty');
                 const result = list
@@ -257,7 +257,7 @@ export function useLocation(options = {}) {
 
         const fetchPromise = (async () => {
             try {
-                const res = await api.get(`${API_ADMIN.GHN}/districts`, { params: { provinceId: provinceCode }, silent: true, timeout: 3000 });
+                const res = await api.get(`${API_ADMIN.GHN}/districts`, { params: { provinceId: provinceCode }, silent: true, timeout: 8000 });
                 const list = extractList(res);
                 if (!list.length) throw new Error('GHN districts empty');
                 const result = list
@@ -313,7 +313,7 @@ export function useLocation(options = {}) {
 
         const fetchPromise = (async () => {
             try {
-                const res = await api.get(`${API_ADMIN.GHN}/wards`, { params: { districtId: districtCode }, silent: true, timeout: 3000 });
+                const res = await api.get(`${API_ADMIN.GHN}/wards`, { params: { districtId: districtCode }, silent: true, timeout: 8000 });
                 const list = extractList(res);
                 if (!list.length) throw new Error('GHN wards empty');
                 const result = list

@@ -105,19 +105,46 @@ public class GhnClient {
         return null;
     }
 
+    private final java.util.concurrent.ConcurrentHashMap<String, Map<String, Object>> locationCache = new java.util.concurrent.ConcurrentHashMap<>();
+
     public Map<String, Object> getProvinces() {
+        if (locationCache.containsKey("provinces")) {
+            return locationCache.get("provinces");
+        }
         String url = apiUrl + "/master-data/province";
-        return executeGet(url);
+        Map<String, Object> res = executeGet(url);
+        if (res != null) {
+            locationCache.put("provinces", res);
+        }
+        return res;
     }
 
     public Map<String, Object> getDistricts(Integer provinceId) {
+        if (provinceId == null) return null;
+        String key = "districts_" + provinceId;
+        if (locationCache.containsKey(key)) {
+            return locationCache.get(key);
+        }
         String url = apiUrl + "/master-data/district?province_id=" + provinceId;
-        return executeGet(url);
+        Map<String, Object> res = executeGet(url);
+        if (res != null) {
+            locationCache.put(key, res);
+        }
+        return res;
     }
 
     public Map<String, Object> getWards(Integer districtId) {
+        if (districtId == null) return null;
+        String key = "wards_" + districtId;
+        if (locationCache.containsKey(key)) {
+            return locationCache.get(key);
+        }
         String url = apiUrl + "/master-data/ward?district_id=" + districtId;
-        return executeGet(url);
+        Map<String, Object> res = executeGet(url);
+        if (res != null) {
+            locationCache.put(key, res);
+        }
+        return res;
     }
 
     private Map<String, Object> executeGet(String url) {

@@ -97,6 +97,14 @@ const showReviewModal = ref(false);
 const orderToReview = ref(null);
 const repayLoadingId = ref(null);
 
+const canRepayOrder = (order) => {
+    if (!order) return false;
+    if (order.choPhepThanhToanLai) return true;
+    const isUnpaid = !order.daThanhToan;
+    const isChoXacNhan = order.trangThai === 'CHO_XAC_NHAN' || order.trangThai === 0 || order.trangThai === '0';
+    return isUnpaid && isChoXacNhan;
+};
+
 const handleRepay = async (order) => {
     repayLoadingId.value = order.id;
     try {
@@ -341,7 +349,7 @@ const goToDetail = (id) => {
                     <!-- Actions -->
                     <div class="d-flex justify-end mt-4 ga-2 border-t pt-3" style="border-top: 1px solid #f0f0f0">
                         <v-btn
-                            v-if="order.choPhepThanhToanLai"
+                            v-if="canRepayOrder(order)"
                             style="background: #1e257c; color: white !important"
                             variant="flat"
                             size="small"

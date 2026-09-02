@@ -125,6 +125,14 @@ const uniqueOrderStatusHistories = computed(() => {
     });
 });
 
+const canRepayOrder = computed(() => {
+    if (!order.value) return false;
+    if (order.value.choPhepThanhToanLai) return true;
+    const isUnpaid = !order.value.daThanhToan;
+    const isChoXacNhan = order.value.trangThai === 'CHO_XAC_NHAN' || order.value.trangThai === 0 || order.value.trangThai === '0';
+    return isUnpaid && isChoXacNhan;
+});
+
 const isPriceChanged = (item) => item.giaHienTai != null && Number(item.giaHienTai) !== Number(item.donGia);
 
 const repayLoading = ref(false);
@@ -743,7 +751,7 @@ onMounted(async () => {
                         </div>
 
                         <!-- Repay VNPay Button -->
-                        <div v-if="order.choPhepThanhToanLai" class="section-block pa-6 text-center">
+                        <div v-if="canRepayOrder" class="section-block pa-6 text-center">
                             <div class="repay-icon-wrapper mx-auto mb-4">
                                 <v-icon size="32" style="color: #1e257c">mdi-credit-card-sync-outline</v-icon>
                             </div>

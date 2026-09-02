@@ -176,8 +176,9 @@ const hourlyPercentageInfo = computed(() => {
 });
 
 const getHourlyChartOptions = (color, maxVal, maxCust) => {
-    const isUnder50M = !maxVal || maxVal <= 50000000;
-    const safeMaxVal = Number.isFinite(maxVal) ? maxVal : 0;
+    const safeMaxVal = Number.isFinite(Number(maxVal)) && Number(maxVal) > 0 ? Number(maxVal) : 0;
+    const safeMaxCust = Number.isFinite(Number(maxCust)) && Number(maxCust) > 0 ? Number(maxCust) : 0;
+    const isUnder50M = safeMaxVal <= 50000000;
     const yaxisMaxRevenue = isUnder50M ? 50000000 : Math.ceil((safeMaxVal * 1.2) / 10000000) * 10000000;
     return {
         chart: {
@@ -530,6 +531,7 @@ const areaChartOptions = ref({
     },
     yaxis: [
         {
+            min: 0,
             labels: {
                 formatter: function (value) {
                     if (value >= 1e9) {
@@ -879,8 +881,14 @@ const loadStatistics = async () => {
             }
             monthlyRevenue.value = months;
 
+            const safeMax = (arr, defaultVal = 0) => {
+                if (!arr || !arr.length) return defaultVal;
+                const nums = arr.map(Number).filter((n) => Number.isFinite(n));
+                return nums.length ? Math.max(...nums) : defaultVal;
+            };
+
             // Cập nhật biểu đồ Area
-            const maxMonthlyCustomers = Math.max(...months.map((m) => m.customers));
+            const maxMonthlyCustomers = safeMax(months.map((m) => m.customers), 0);
             if (areaChartOptions.value.yaxis && areaChartOptions.value.yaxis[1]) {
                 areaChartOptions.value.yaxis[1].max = maxMonthlyCustomers > 100 ? undefined : 100;
             }
@@ -889,12 +897,12 @@ const loadStatistics = async () => {
                 {
                     name: 'Doanh thu',
                     type: 'line',
-                    data: months.map((m) => m.revenue)
+                    data: months.map((m) => Number(m.revenue) || 0)
                 },
                 {
                     name: 'Khách hàng',
                     type: 'line',
-                    data: months.map((m) => m.customers)
+                    data: months.map((m) => Number(m.customers) || 0)
                 }
             ];
             areaChartKey.value += 1;
@@ -927,21 +935,21 @@ const loadStatistics = async () => {
             const start3HourData = aggregateTo3HourSlots(startHourlyData);
             const end3HourData = aggregateTo3HourSlots(endHourlyData);
 
-            startHourlyMax.value = Math.max(...start3HourData.revenue);
-            endHourlyMax.value = Math.max(...end3HourData.revenue);
-            startHourlyCustomerMax.value = Math.max(...start3HourData.customers);
-            endHourlyCustomerMax.value = Math.max(...end3HourData.customers);
+            startHourlyMax.value = safeMax(start3HourData.revenue, 0);
+            endHourlyMax.value = safeMax(end3HourData.revenue, 0);
+            startHourlyCustomerMax.value = safeMax(start3HourData.customers, 0);
+            endHourlyCustomerMax.value = safeMax(end3HourData.customers, 0);
 
             startHourlyChartSeries.value = [
                 {
                     name: 'Doanh thu',
                     type: 'line',
-                    data: start3HourData.revenue
+                    data: start3HourData.revenue.map((n) => Number(n) || 0)
                 },
                 {
                     name: 'Khách hàng',
                     type: 'line',
-                    data: start3HourData.customers
+                    data: start3HourData.customers.map((n) => Number(n) || 0)
                 }
             ];
 
@@ -949,12 +957,12 @@ const loadStatistics = async () => {
                 {
                     name: 'Doanh thu',
                     type: 'line',
-                    data: end3HourData.revenue
+                    data: end3HourData.revenue.map((n) => Number(n) || 0)
                 },
                 {
                     name: 'Khách hàng',
                     type: 'line',
-                    data: end3HourData.customers
+                    data: end3HourData.customers.map((n) => Number(n) || 0)
                 }
             ];
 

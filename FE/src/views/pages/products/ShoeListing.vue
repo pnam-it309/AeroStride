@@ -581,12 +581,12 @@ const closeMobileFilter = () => {
                                 <div class="card-info-wrapper">
                                     <span class="product-brand-badge">{{ p.tenThuongHieu || 'AEROSTRIDE' }}</span>
                                     <h4 class="product-name-title">{{ p.tenSanPham }}</h4>
-                                    <div class="d-flex align-center justify-space-between mb-1 text-caption text-slate-500">
-                                        <span class="d-inline-flex align-center font-weight-bold" style="color: #f59e0b">
+                                    <div class="d-flex align-center justify-space-between mb-1 text-caption text-slate-500" v-if="p.daBan > 0 || p.diemDanhGia > 0">
+                                        <span class="d-inline-flex align-center font-weight-bold" style="color: #f59e0b" v-if="p.diemDanhGia > 0">
                                             <v-icon size="13" color="amber" class="mr-0.5">mdi-star</v-icon>
-                                            4.9
+                                            {{ p.diemDanhGia }}
                                         </span>
-                                        <span class="text-caption text-grey">Đã bán {{ p.daBan || 28 }}</span>
+                                        <span class="text-caption text-grey" v-if="p.daBan > 0">Đã bán {{ p.daBan }}</span>
                                     </div>
                                     <div class="price-row-block">
                                         <span class="current-price-label">{{ formatPrice(getProductPrice(p)) }}</span>

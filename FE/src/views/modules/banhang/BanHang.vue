@@ -2320,6 +2320,11 @@ const onCheckout = async () => {
     if (selectedOrder.value?.canApplySuggestedVoucher && selectedOrder.value?.bestVoucherId) {
         const betterInfo = await checkBetterVoucherBeforeCheckout();
         if (betterInfo) {
+            addNotification({
+                title: 'Có phiếu giảm giá tốt hơn',
+                subtitle: `Đơn hàng có thể áp dụng mã [${betterInfo.betterVoucher?.ma || selectedOrder.value.betterVoucherCode}] để tiết kiệm thêm.`,
+                color: 'info'
+            });
             betterVoucherDialog.value = {
                 show: true,
                 currentVoucher: betterInfo.currentVoucher,

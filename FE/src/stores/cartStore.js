@@ -248,10 +248,36 @@ export const useCartStore = defineStore('cart', {
 
 // Auto-sync cart in realtime when any product variant stock or price is updated
 if (typeof window !== 'undefined') {
-    window.addEventListener('product-stock-update', () => {
+    window.addEventListener('product-stock-update', (event) => {
         try {
             const store = useCartStore();
             if (store && store.items && store.items.length > 0) {
+                const detail = event?.detail;
+                if (detail && detail.id) {
+                    const affectedItem = store.items.find((i) => String(i.idChiTietSanPham) === String(detail.id));
+                    if (affectedItem) {
+                        const newStock = Number(detail.soLuongTon) || 0;
+                        if (newStock === 0) {
+                            import('@/services/notificationService').then(({ useNotifications }) => {
+                                const { addNotification } = useNotifications();
+                                addNotification({
+                                    title: 'Sản phẩm hết hàng',
+                                    subtitle: `Sản phẩm "${affectedItem.tenSanPham || 'trong giỏ hàng'}" vừa hết hàng trong kho.`,
+                                    color: 'warning'
+                                });
+                            });
+                        } else if (newStock < affectedItem.soLuong) {
+                            import('@/services/notificationService').then(({ useNotifications }) => {
+                                const { addNotification } = useNotifications();
+                                addNotification({
+                                    title: 'Cập nhật số lượng',
+                                    subtitle: `Sản phẩm "${affectedItem.tenSanPham || 'trong giỏ'}" chỉ còn ${newStock} trong kho. Giỏ hàng đã được đồng bộ.`,
+                                    color: 'info'
+                                });
+                            });
+                        }
+                    }
+                }
                 store.syncWithBackend();
             }
         } catch (e) {

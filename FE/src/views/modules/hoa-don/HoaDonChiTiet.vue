@@ -262,20 +262,15 @@ const repayLoading = ref(false);
 const copySuccess = ref(false);
 
 const canTaoLinkThanhToanLai = computed(() => {
-    if (!order.value || order.value.orderType !== 'ONLINE') return false;
+    if (!order.value) return false;
     const currentStatus = order.value.trangThai;
     const isChoXacNhan = currentStatus === ORDER_STATUS.CHO_XAC_NHAN || currentStatus === ORDER_STATUS_ORDINALS.CHO_XAC_NHAN || String(currentStatus) === '0';
     if (!isChoXacNhan) return false;
 
-    const isCash = order.value.listsGiaoDichThanhToan?.some((gd) => {
-        const name = String(gd.tenPhuongThuc || '').toUpperCase();
-        const note = String(gd.ghiChu || '').toUpperCase();
-        return name.includes('TIEN_MAT') || name.includes('TIỀN MẶT') || name.includes('COD') || note.includes('COD');
-    });
     const isPaid = order.value.listsGiaoDichThanhToan?.some((gd) =>
         (gd.trangThai === 1 || gd.trangThai === '1' || gd.trangThai === 'NGUNG_HOAT_DONG') && gd.maGiaoDichNgoai
     );
-    return !isCash && !isPaid;
+    return !isPaid;
 });
 
 const handleTaoLinkThanhToanLai = async () => {
@@ -900,15 +895,40 @@ const requestStatusUpdate = (status) => {
         targetStatus = selectedStatus.value;
     }
 
-    const targetOrdinal = getOrderStatusOrdinal(targetStatus);
+    let suggestions = [];
+    if (targetOrdinal === ORDER_STATUS_ORDINALS.GIAO_THAT_BAI) {
+        suggestions = [
+            'Ship làm mất hàng (Bên vận chuyển làm mất)',
+            'Nhân viên cửa hàng đi ship làm mất (Xử lý nội bộ)',
+            'Không liên lạc được với khách hàng',
+            'Khách hẹn giao lại sau'
+        ];
+    } else if (targetOrdinal === ORDER_STATUS_ORDINALS.DANG_GIAO) {
+        suggestions = [
+            'Lấy hàng thay thế giao lại cho khách',
+            'Giao lại lần 2 theo lịch hẹn khách',
+            'Điều phối đơn vị vận chuyển mới'
+        ];
+    } else if (targetOrdinal === ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN) {
+        suggestions = [
+            'Khách đổi ý không muốn mua nữa',
+            'Khách không đủ tiền nhận hàng',
+            'Hàng không đúng mẫu yêu cầu'
+        ];
+    }
 
     confirmDialog.value = {
         show: true,
-        title: 'Cập nhật trạng thái',
-        message: `Xác nhận chuyển đơn hàng sang trạng thái [${getStatusLabel(targetStatus)}]?`,
+        title: targetOrdinal === ORDER_STATUS_ORDINALS.DANG_GIAO && (getOrderStatusOrdinal(order.value.trangThai) === ORDER_STATUS_ORDINALS.GIAO_THAT_BAI || getOrderStatusOrdinal(order.value.trangThai) === ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN)
+            ? 'Giao lại đơn hàng'
+            : 'Cập nhật trạng thái',
+        message: targetOrdinal === ORDER_STATUS_ORDINALS.DANG_GIAO && (getOrderStatusOrdinal(order.value.trangThai) === ORDER_STATUS_ORDINALS.GIAO_THAT_BAI || getOrderStatusOrdinal(order.value.trangThai) === ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN)
+            ? `Xác nhận lấy hàng thay thế để giao lại đơn hàng #${order.value.maHoaDon || ''}? Hệ thống sẽ kiểm tra và trừ tồn kho hàng thay thế.`
+            : `Xác nhận chuyển đơn hàng sang trạng thái [${getStatusLabel(targetStatus)}]?`,
         color: 'primary',
         showInput: true,
         inputLabel: 'Ghi chú cập nhật',
+        suggestions,
         inputRequired: targetOrdinal === ORDER_STATUS_ORDINALS.DA_HUY || targetOrdinal === ORDER_STATUS_ORDINALS.GIAO_THAT_BAI || targetOrdinal === ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN, // Yêu cầu ghi chú khi hủy đơn hoặc giao không thành công
         action: async (note) => {
             confirmDialog.value.loading = true;
@@ -1641,6 +1661,22 @@ onMounted(() => {
                             <span class="text-white font-weight-bold" style="color: #ffffff !important">Khách không nhận</span>
                         </v-btn>
                     </template>
+
+                    <!-- Nút Giao lại đơn hàng khi Giao thất bại hoặc Khách không nhận -->
+                    <template v-if="order.trangThai === ORDER_STATUS.GIAO_THAT_BAI || order.trangThai === ORDER_STATUS_ORDINALS.GIAO_THAT_BAI || String(order.trangThai) === '7' || order.trangThai === ORDER_STATUS.KHACH_KHONG_NHAN || order.trangThai === ORDER_STATUS_ORDINALS.KHACH_KHONG_NHAN || String(order.trangThai) === '8'">
+                        <v-btn
+                            variant="flat"
+                            class="rounded-lg px-6"
+                            height="44"
+                            style="background-color: #1e257c !important; color: #ffffff !important;"
+                            @click="requestStatusUpdate(ORDER_STATUS.DANG_GIAO)"
+                        >
+                            <template v-slot:prepend>
+                                <v-icon size="18" class="mr-1" color="#ffffff">mdi-truck-fast-outline</v-icon>
+                            </template>
+                            <span class="text-white font-weight-bold">Giao lại đơn hàng</span>
+                        </v-btn>
+                    </template>
                     <!-- Nút Đặt lại đơn hàng khi đơn đã bị hủy -->
                     <v-btn
                         v-if="order.trangThai === ORDER_STATUS.DA_HUY"
@@ -1977,6 +2013,7 @@ onMounted(() => {
             :show-input="confirmDialog.showInput"
             :input-label="confirmDialog.inputLabel"
             :input-required="confirmDialog.inputRequired"
+            :suggestions="confirmDialog.suggestions"
             @confirm="(note) => confirmDialog.action(note)"
         />
 

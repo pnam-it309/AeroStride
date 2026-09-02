@@ -436,6 +436,9 @@ const revalidateSelectedVoucher = () => {
         showVoucherIneligibleModal.value = true;
     } else {
         // Hợp lệ: cập nhật data mới nhất
+        if (conditionsChanged) {
+            toast.info(`Phiếu giảm giá "${freshData.ten || freshData.ma}" đã được cập nhật lại giá trị.`);
+        }
         selectedVoucher.value = freshData;
     }
 };
