@@ -124,11 +124,6 @@ const filteredReviews = computed(() => {
     return list.filter((r) => Math.floor(r.diemDanhGia || r.rating || 5) === Number(selectedFilter.value));
 });
 
-// State cho modal đánh giá trực tiếp
-const showReviewModal = ref(false);
-const newReview = ref({ rating: 5, comment: '' });
-const submittingReview = ref(false);
-
 // State cho xem chi tiết ảnh / Lightbox modal
 const showImageLightbox = ref(false);
 const lightboxIndex = ref(0);
@@ -147,50 +142,6 @@ const nextLightboxImage = () => {
 const prevLightboxImage = () => {
     if (allImages.value.length <= 1) return;
     lightboxIndex.value = (lightboxIndex.value - 1 + allImages.value.length) % allImages.value.length;
-};
-
-const handleWriteReview = () => {
-    if (!authStore.isLoggedIn) {
-        toastStore.showToast('Vui lòng đăng nhập để đánh giá sản phẩm', 'warning');
-        router.push(PATH.LOGIN);
-        return;
-    }
-    showReviewModal.value = true;
-};
-
-const submitDirectReview = async () => {
-    if (!newReview.value.comment.trim()) {
-        toastStore.showToast('Vui lòng nhập nội dung đánh giá', 'warning');
-        return;
-    }
-
-    submittingReview.value = true;
-    try {
-        const payload = {
-            idHoaDon: null,
-            idSanPham: product.value.id,
-            idKhachHang: userProfile.value?.id || authStore.user?.id || null,
-            diemDanhGia: newReview.value.rating,
-            noiDung: newReview.value.comment
-        };
-
-        const response = await api.post('/customer/review/submit', payload);
-        if (response.data?.success || response.status === 200) {
-            const serverMsg = response.data?.message || 'Cảm ơn bạn đã gửi đánh giá sản phẩm!';
-            toastStore.showToast(serverMsg, 'success');
-            showReviewModal.value = false;
-            newReview.value.comment = '';
-            newReview.value.rating = 5;
-            fetchReviews();
-        } else {
-            toastStore.showToast(response.data?.message || 'Có lỗi xảy ra', 'error');
-        }
-    } catch (error) {
-        console.error('Lỗi khi gửi đánh giá:', error);
-        toastStore.showToast(error.response?.data?.message || 'Có lỗi xảy ra khi gửi đánh giá', 'error');
-    } finally {
-        submittingReview.value = false;
-    }
 };
 
 const fetchProduct = async () => {
@@ -1132,17 +1083,6 @@ const toggleFavorite = () => {
                         <h2 class="text-h4 font-weight-semibold text-primary mb-1">Đánh Giá Sản Phẩm</h2>
                         <p class="text-caption text-grey mb-0">Ý kiến từ khách hàng đã sử dụng sản phẩm</p>
                     </div>
-                    <v-btn
-                        v-if="authStore.isLoggedIn"
-                        color="black"
-                        variant="flat"
-                        rounded="pill"
-                        class="font-weight-bold text-none px-6"
-                        @click="handleWriteReview"
-                    >
-                        <v-icon start class="mr-1">mdi-pencil-outline</v-icon>
-                        Viết đánh giá
-                    </v-btn>
                 </div>
 
                 <div v-if="reviewsLoading" class="text-center py-8">
@@ -1334,75 +1274,7 @@ const toggleFavorite = () => {
             </v-card>
         </v-dialog>
 
-        <!-- Direct Review Modal -->
-        <v-dialog v-model="showReviewModal" max-width="500" persistent>
-            <v-card class="rounded-xl overflow-hidden">
-                <v-card-title class="d-flex align-center py-3 bg-black text-white">
-                    <v-icon icon="mdi-star-circle-outline" class="mr-2"></v-icon>
-                    Viết đánh giá
-                    <v-spacer></v-spacer>
-                    <v-btn
-                        icon="mdi-close"
-                        variant="text"
-                        color="white"
-                        @click="showReviewModal = false"
-                        density="compact"
-                        :disabled="submittingReview"
-                    ></v-btn>
-                </v-card-title>
 
-                <v-card-text class="pa-4">
-                    <div class="d-flex align-center mb-4 pa-2 bg-grey-lighten-4 rounded-lg pa-3" v-if="product">
-                        <v-avatar rounded size="48" class="mr-3 bg-white elevation-1">
-                            <img
-                                :src="getValidImgUrl(product.hinhAnh) || DEFAULT_SHOE_IMAGE"
-                                style="width: 100%; height: 100%; object-fit: cover"
-                                @error="handleImgError"
-                            />
-                        </v-avatar>
-                        <div>
-                            <div class="font-weight-bold text-body-2 text-truncate" style="max-width: 300px">{{ product.tenSanPham }}</div>
-                            <div class="text-caption text-grey">{{ product.tenThuongHieu }}</div>
-                        </div>
-                    </div>
-
-                    <div class="text-center mb-4">
-                        <p class="text-subtitle-2 font-weight-bold mb-1">Chất lượng sản phẩm</p>
-                        <v-rating v-model="newReview.rating" color="amber" active-color="amber" hover size="x-large"></v-rating>
-                    </div>
-
-                    <v-textarea
-                        v-model="newReview.comment"
-                        label="Nhận xét của bạn *"
-                        placeholder="Hãy chia sẻ cảm nhận của bạn về sản phẩm này nhé (tối thiểu 5 ký tự)..."
-                        variant="outlined"
-                        rows="4"
-                        auto-grow
-                        hide-details="auto"
-                        bg-color="grey-lighten-5"
-                        maxlength="1000"
-                        counter="1000"
-                        :rules="[(v) => !!v?.trim() || 'Vui lòng nhập nhận xét', (v) => (v && v.trim().length >= 5) || 'Nhận xét tối thiểu 5 ký tự']"
-                    ></v-textarea>
-                </v-card-text>
-
-                <v-card-actions class="pa-4 pt-0">
-                    <v-spacer></v-spacer>
-                    <v-btn variant="text" class="text-none font-weight-bold" @click="showReviewModal = false" :disabled="submittingReview"
-                        >Hủy</v-btn
-                    >
-                    <v-btn
-                        color="black"
-                        variant="flat"
-                        class="text-none font-weight-bold px-6 rounded-pill"
-                        :loading="submittingReview"
-                        @click="submitDirectReview"
-                    >
-                        Gửi đánh giá
-                    </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
 
         <!-- Image Detail / Lightbox Modal -->
         <v-dialog v-model="showImageLightbox" max-width="1000" class="image-lightbox-dialog">
