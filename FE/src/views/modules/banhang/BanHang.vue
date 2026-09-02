@@ -1771,6 +1771,17 @@ const cancelVnPayFlow = () => {
     addNotification({ title: 'Hủy thanh toán', subtitle: 'Giao dịch VNPay đã được hủy bỏ', color: 'info' });
 };
 
+const handleVnPayTimeout = () => {
+    sessionStorage.removeItem(VNPAY_PENDING_KEY);
+    closeVnPayFlow();
+    addNotification({
+        title: 'Hết thời gian thanh toán',
+        subtitle: 'Giao dịch VNPay đã hết thời gian chờ thanh toán (120s). Modal đã tự động đóng.',
+        color: 'warning',
+        timeout: 6000
+    });
+};
+
 const handleVnPayCanceled = (subtitle = 'Cửa sổ VNPay đã đóng trước khi hệ thống nhận được kết quả thanh toán thành công.') => {
     sessionStorage.removeItem(VNPAY_PENDING_KEY);
     closeVnPayFlow();
@@ -2689,6 +2700,7 @@ const handleVnPayCallbackFromUrl = async () => {
             @confirm-manual="onConfirmVnPayManual"
             @retry-qr="startVnPayFlow"
             @cancel="cancelVnPayFlow"
+            @timeout="handleVnPayTimeout"
             @open-gateway="
                 () => {
                     vnpayPopup = window.open(vnpayDialog.paymentUrl, 'vnpay', 'width=800,height=600');

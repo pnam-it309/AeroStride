@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import QrcodeVue from 'qrcode.vue';
 
 const props = defineProps({
@@ -25,8 +25,38 @@ const emit = defineEmits([
     'confirmManual',
     'retryQr',
     'cancel',
+    'timeout',
     'openGateway'
 ]);
+
+const countdown = ref(120);
+let countdownTimer = null;
+
+const startCountdown = () => {
+    stopCountdown();
+    countdown.value = 120;
+    countdownTimer = setInterval(() => {
+        if (countdown.value > 0) {
+            countdown.value -= 1;
+        } else {
+            stopCountdown();
+            emit('timeout');
+        }
+    }, 1000);
+};
+
+const stopCountdown = () => {
+    if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+    }
+};
+
+const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+};
 
 const vnpayDialogState = computed({
     get: () => props.vnpayDialog.show,
@@ -42,6 +72,27 @@ const choiceMethod = computed({
     get: () => props.vnpayChoiceDialog.method,
     set: (val) => emit('update:vnpayChoiceDialog', { ...props.vnpayChoiceDialog, method: val })
 });
+
+watch(
+    () => [props.vnpayDialog.show, props.vnpayDialog.paymentUrl, props.vnpayDialog.verified],
+    ([show, paymentUrl, verified]) => {
+        if (show && paymentUrl && !verified) {
+            startCountdown();
+        } else {
+            stopCountdown();
+        }
+    },
+    { immediate: true }
+);
+
+onUnmounted(() => {
+    stopCountdown();
+});
+
+const handleRetryQr = () => {
+    startCountdown();
+    emit('retryQr');
+};
 </script>
 
 <template>
@@ -54,7 +105,7 @@ const choiceMethod = computed({
                 </div>
 
                 <h3 class="text-h6 font-weight-bold mb-1">Thanh toán VNPay</h3>
-                <p class="text-subtitle-2 text-grey-darken-1 mb-6">Mã đơn: {{ vnpayDialog.orderId }}</p>
+                <p class="text-subtitle-2 text-grey-darken-1 mb-4">Mã đơn: {{ vnpayDialog.orderId }}</p>
 
                 <div v-if="vnpayDialog.loading" class="pa-8 d-flex flex-column align-center">
                     <v-progress-circular indeterminate color="#005BAA" size="48" class="mb-4"></v-progress-circular>
@@ -68,6 +119,12 @@ const choiceMethod = computed({
                 </div>
 
                 <div v-else class="w-100 d-flex flex-column align-center">
+                    <!-- Countdown timer display -->
+                    <div class="d-flex align-center justify-center ga-1.5 mb-4 px-4 py-1.5 rounded-pill border" style="background: #fffbeb; border-color: #fde68a !important; font-size: 13px; color: #92400e">
+                        <v-icon size="16" color="#d97706">mdi-clock-outline</v-icon>
+                        <span>Tự động đóng sau: <strong class="text-error font-weight-bold">{{ formatTime(countdown) }}</strong> ({{ countdown }}s)</span>
+                    </div>
+
                     <template v-if="vnpayMethod === 'QR'">
                         <div class="pa-2 bg-white rounded-lg elevation-2 mb-4 d-inline-block">
                             <QrcodeVue
@@ -125,7 +182,7 @@ const choiceMethod = computed({
                         color="grey-darken-1"
                         class="rounded-lg font-weight-bold"
                         height="48"
-                        @click="emit('retryQr')"
+                        @click="handleRetryQr"
                     >
                         TẠO LẠI MÃ QR
                     </v-btn>
