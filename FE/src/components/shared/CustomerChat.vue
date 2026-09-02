@@ -922,7 +922,7 @@ const openChatImage = (url) => {
                             />
                         </v-avatar>
                         <div class="header-info">
-                            <div class="store-name">AeroStride Support</div>
+                            <div class="store-name">Hỗ trợ AeroStride</div>
                             <div class="store-status">
                                 <span class="status-dot"></span>
                                 Trực tuyến

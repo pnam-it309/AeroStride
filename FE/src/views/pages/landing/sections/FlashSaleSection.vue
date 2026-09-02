@@ -162,13 +162,13 @@ onBeforeUnmount(() => {
                                     <!-- Discount Badge -->
                                     <div class="discount-badge">
                                         <span class="font-weight-black text-body-2">-{{ item.phanTramGiam || 30 }}%</span>
-                                        <span class="text-xxs uppercase">OFF</span>
+                                        <span class="text-xxs uppercase">GIẢM</span>
                                     </div>
 
                                     <!-- Hot Flame Tag -->
                                     <div class="hot-tag">
                                         <v-icon icon="mdi-fire" size="14" color="white" />
-                                        <span>HOT DEAL</span>
+                                        <span>GIẢM SỐC</span>
                                     </div>
                                 </div>
 

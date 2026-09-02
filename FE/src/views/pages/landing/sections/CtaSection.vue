@@ -7,7 +7,7 @@ const props = defineProps({ active: Boolean, warm: Boolean });
         <template v-if="props.active || props.warm">
             <div class="cta-bg"></div>
             <v-container class="z-index-10" :class="{ 'animate-in-up': props.active }">
-                <h2 class="text-h1 font-weight-black text-blue-darken-4 mb-8">Ready to Stride?</h2>
+                <h2 class="text-h1 font-weight-black text-blue-darken-4 mb-8">Sẵn Sàng Bứt Phá?</h2>
                 <v-btn
                     size="x-large"
                     color="#2962ff"

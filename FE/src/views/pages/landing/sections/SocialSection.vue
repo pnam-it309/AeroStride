@@ -4,67 +4,67 @@ const props = defineProps({ active: Boolean, warm: Boolean });
 
 const promotions = [
     {
-        phase: 'P00',
-        label: 'PAST',
-        title: 'FOUNDER EDITION',
-        date: 'APRIL 2026',
+        phase: 'GĐ 00',
+        label: 'ĐÃ QUA',
+        title: 'PHIÊN BẢN SÁNG LẬP',
+        date: 'THÁNG 04/2026',
         desc: 'Đã hoàn thành đợt phát hành nội bộ cho các nhà sáng lập. Các ưu đãi độc quyền đã được áp dụng cho 100 thành viên nòng cốt.',
         longDesc:
             'Chương trình Founder Edition bao gồm việc khắc tên lên đế giày, thẻ thành viên NFT vĩnh viễn và quyền truy cập sớm vào tất cả các bộ sưu tập trong 2 năm tới.',
-        status: 'COMPLETED',
+        status: 'ĐÃ HOÀN THÀNH',
         icon: 'mdi-check-decagram',
         color: '#64748b',
-        specs: ['100 Slots', 'NFT Badge', 'Custom Engraving']
+        specs: ['100 Suất', 'Huy hiệu thành viên', 'Khắc tên độc quyền']
     },
     {
-        phase: 'P01',
-        label: 'NOW',
-        title: 'EARLY BIRD ACCESS',
+        phase: 'GĐ 01',
+        label: 'HIỆN TẠI',
+        title: 'ƯU ĐÃI ĐẶT TRƯỚC',
         date: '15.05 - 20.05',
         desc: 'Đang mở đăng ký. Giảm ngay 20% cho 500 khách hàng đầu tiên đặt trước phiên bản AeroStride X1.',
         longDesc:
             'Cơ hội duy nhất để sở hữu X1 với mức giá ưu đãi nhất. Đi kèm là gói bảo hành mở rộng 24 tháng và bộ kit vệ sinh giày Carbon-Nano.',
-        status: 'ACTIVE',
+        status: 'ĐANG DIỄN RA',
         icon: 'mdi-fire',
         color: '#2962FF',
-        specs: ['500 Slots', '-20% Off', 'Extended Warranty']
+        specs: ['500 Suất', 'Giảm 20%', 'Bảo hành mở rộng']
     },
     {
-        phase: 'P02',
-        label: 'NEXT',
-        title: 'GRAND LAUNCH EVENT',
+        phase: 'GĐ 02',
+        label: 'SẮP TỚI',
+        title: 'SỰ KIỆN RA MẮT',
         date: '25.05.2026',
         desc: 'Sắp diễn ra. Sự kiện ra mắt trực tuyến toàn cầu. Tặng kèm bộ vệ sinh giày chuyên dụng.',
         longDesc:
             'Livestream ra mắt toàn cầu trên 5 nền tảng. Khách hàng tham gia có cơ hội nhận voucher may mắn trị giá lên tới 5.000.000 VNĐ.',
-        status: 'UPCOMING',
+        status: 'SẮP DIỄN RA',
         icon: 'mdi-rocket-launch',
         color: '#00E676',
-        specs: ['Global Live', 'Exclusive Gifts', 'Lucky Draw']
+        specs: ['Phát trực tiếp', 'Quà tặng độc quyền', 'Bốc thăm may mắn']
     },
     {
-        phase: 'P03',
-        label: 'FUTURE',
-        title: 'LOYALTY REWARDS',
-        date: 'JUNE 2026',
+        phase: 'GĐ 03',
+        label: 'TƯƠNG LAI',
+        title: 'TRI ÂN THÀNH VIÊN',
+        date: 'THÁNG 06/2026',
         desc: 'Dự kiến kích hoạt hệ thống hoàn tiền 5% cho thành viên và quà tặng sinh nhật.',
         longDesc: 'Hệ thống tích điểm AeroPoints cho phép quy đổi voucher. Thành viên hạng Gold sẽ được miễn phí vận chuyển trọn đời.',
-        status: 'PREPARING',
+        status: 'ĐANG CHUẨN BỊ',
         icon: 'mdi-crown-outline',
         color: '#FFD600',
-        specs: ['5% Cashback', 'AeroPoints', 'Birthday Gifts']
+        specs: ['Hoàn tiền 5%', 'Điểm thưởng AeroPoints', 'Quà sinh nhật']
     },
     {
-        phase: 'P04',
-        label: 'LOCKED',
-        title: 'SEASONAL COLLAB',
-        date: 'Q3 2026',
+        phase: 'GĐ 04',
+        label: 'CHƯA MỞ',
+        title: 'BỘ SƯU TẬP MÙA',
+        date: 'QUÝ 3/2026',
         desc: 'Các phiên bản giới hạn kết hợp cùng các nghệ sĩ đương đại. Đang trong quá trình thiết kế.',
         longDesc: 'Hợp tác cùng 3 nghệ sĩ Graffiti nổi tiếng thế giới để tạo ra những bản phối màu độc bản không bao giờ tái sản xuất.',
-        status: 'LOCKED',
+        status: 'CHƯA MỞ',
         icon: 'mdi-palette-swatch-outline',
         color: '#FF1744',
-        specs: ['Limited 500 prs', 'Artist Signature', 'Unique Box']
+        specs: ['Giới hạn 500 đôi', 'Chữ ký nghệ sĩ', 'Hộp thiết kế riêng']
     }
 ];
 
@@ -97,7 +97,7 @@ const currentPromo = computed(() => promotions[activeIndex.value]);
             <div class="hud-bg-system">
                 <div class="grid-lines"></div>
                 <div class="parallax-title" :style="{ transform: `translateX(${-activeIndex * 50}px)` }">
-                    STRATEGIC ROADMAP 2026 // ASSET ANALYSIS
+                    LỘ TRÌNH PHÁT TRIỂN 2026 // AEROSTRIDE
                 </div>
             </div>
 
@@ -109,7 +109,7 @@ const currentPromo = computed(() => promotions[activeIndex.value]);
                             v-for="(promo, i) in promotions"
                             :key="'nav-' + i"
                             class="nav-node"
-                            :class="{ active: activeIndex === i, past: promo.status === 'COMPLETED' }"
+                            :class="{ active: activeIndex === i, past: promo.status === 'ĐÃ HOÀN THÀNH' }"
                             @click="selectPhase(i)"
                         >
                             <div class="node-content">
@@ -163,7 +163,7 @@ const currentPromo = computed(() => promotions[activeIndex.value]);
                                             variant="tonal"
                                             class="font-weight-black"
                                         >
-                                            DATA ANALYSIS <v-icon class="ml-2">mdi-chart-timeline-variant</v-icon>
+                                            XEM CHI TIẾT <v-icon class="ml-2">mdi-chart-timeline-variant</v-icon>
                                         </v-btn>
                                     </div>
                                 </div>
@@ -192,11 +192,11 @@ const currentPromo = computed(() => promotions[activeIndex.value]);
                             <div class="sheet-body py-8">
                                 <v-row>
                                     <v-col cols="12" md="7">
-                                        <h5 class="section-label">OBJECTIVE</h5>
+                                        <h5 class="section-label">MỤC TIÊU CHIẾN LƯỢC</h5>
                                         <p class="long-desc">{{ currentPromo.longDesc }}</p>
 
                                         <div class="mt-8">
-                                            <h5 class="section-label">TECHNICAL SPECIFICATIONS</h5>
+                                            <h5 class="section-label">THÔNG SỐ & QUYỀN LỢI ĐẶC BIỆT</h5>
                                             <div class="spec-grid">
                                                 <div v-for="spec in currentPromo.specs" :key="spec" class="spec-tag">
                                                     <v-icon size="14" class="mr-2">mdi-check-circle-outline</v-icon> {{ spec }}
@@ -225,11 +225,11 @@ const currentPromo = computed(() => promotions[activeIndex.value]);
 
             <!-- Bottom Status Bar -->
             <div class="system-status-bar">
-                <div class="item">ROADMAP_v2.0</div>
-                <div class="item">ACTIVE_PHASE: {{ currentPromo.phase }}</div>
-                <div class="item">SYSTEM: READY</div>
+                <div class="item">LỘ_TRÌNH_v2.0</div>
+                <div class="item">GIAI_ĐOẠN: {{ currentPromo.phase }}</div>
+                <div class="item">HỆ THỐNG: SẴN SÀNG</div>
                 <div class="spacer"></div>
-                <div class="item font-weight-black">AEROSTRIDE TECHNOLOGY CORP.</div>
+                <div class="item font-weight-black">AEROSTRIDE VIỆT NAM</div>
             </div>
         </template>
     </section>
