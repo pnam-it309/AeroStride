@@ -7,6 +7,7 @@ import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
+import { dichVuCaLam } from '@/services/admin/dichVuLichLamViec';
 
 const { addNotification } = useNotifications();
 const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
@@ -51,15 +52,13 @@ const tableHeaders = [
     { text: 'Hành động', width: '100px' }
 ];
 
-const loadData = async (showLoading = true) => {
+const loadData = async (showLoading = true, forceRefresh = false) => {
     if (showLoading) loading.value = true;
     try {
-        const response = await apiService.get(API_LICH_LAM_VIEC.SHIFTS);
-        if (response.data.success) {
-            items.value = response.data.data;
-            pagination.value.totalElements = filteredItems.value.length;
-            pagination.value.totalPages = Math.ceil(filteredItems.value.length / pagination.value.size);
-        }
+        const data = await dichVuCaLam.layDanhSachCaLam(forceRefresh);
+        items.value = data || [];
+        pagination.value.totalElements = filteredItems.value.length;
+        pagination.value.totalPages = Math.ceil(filteredItems.value.length / pagination.value.size);
     } catch (error) {
         console.error('Error fetching shifts:', error);
     } finally {
@@ -176,6 +175,7 @@ const saveShift = async () => {
         }
 
         if (res.data.success) {
+            dichVuCaLam.invalidateCache();
             addNotification({
                 title: 'Thành công',
                 subtitle: isEdit.value ? 'Cập nhật ca làm thành công!' : 'Tạo ca làm thành công!',
@@ -183,7 +183,7 @@ const saveShift = async () => {
                 color: 'success'
             });
             showDialog.value = false;
-            loadData(false);
+            loadData(false, true);
         }
     } catch (error) {
         console.error('Error saving shift:', error);
@@ -200,8 +200,9 @@ const handleDelete = (item) => {
             try {
                 const res = await apiService.delete(`${API_LICH_LAM_VIEC.SHIFTS}/${item.id}`);
                 if (res.data.success) {
+                    dichVuCaLam.invalidateCache();
                     addNotification({ title: 'Thành công', subtitle: 'Xóa ca làm thành công!', icon: 'CircleCheckIcon', color: 'success' });
-                    loadData(false);
+                    loadData(false, true);
                 }
             } catch (error) {
                 console.error('Error deleting shift:', error);

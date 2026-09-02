@@ -12,6 +12,9 @@ public interface AdminNhanVienService {
     /** Lấy tất cả nhân viên không phân trang (dùng cho export, select). */
     List<AdminNhanVienResponse> hienThi();
 
+    /** Lấy danh sách nhân viên tinh gọn cho select dropdown (bỏ base64 avatar). */
+    List<AdminNhanVienResponse> getOptions();
+
     /**
      * Tìm kiếm + lọc + phân trang nhân viên.
      * Gộp 3 method cũ (phanTrang / timKiem / locNV) thành 1.

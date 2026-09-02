@@ -11,6 +11,26 @@ import java.util.List;
 @Repository
 public interface AdminLichLamViecRepository extends LichLamViecRepository, JpaSpecificationExecutor<LichLamViec> {
 
+    @org.springframework.data.jpa.repository.Query("SELECT l.id as id, " +
+           "nv.id as nhanVienId, nv.ten as tenNhanVien, nv.ma as maNhanVien, " +
+           "cl.id as caId, cl.tenCa as tenCa, " +
+           "l.ngayLam as ngayLam, l.trangThaiLich as trangThaiLich, " +
+           "l.tangCa as tangCa, l.gioBatDauTangCa as gioBatDauTangCa, l.gioKetThucTangCa as gioKetThucTangCa, " +
+           "l.gioVao as gioVao, l.gioRa as gioRa, l.ghiChu as ghiChu, " +
+           "cl.gioBatDau as gioBatDauCa, cl.gioKetThuc as gioKetThucCa " +
+           "FROM LichLamViec l " +
+           "LEFT JOIN l.nhanVien nv " +
+           "LEFT JOIN l.caLam cl " +
+           "WHERE (:ngayLam IS NULL OR l.ngayLam = :ngayLam) AND " +
+           "(:caId IS NULL OR (cl IS NOT NULL AND (cl.id = :caId OR cl.tenCa = :caId))) AND " +
+           "(:keyword IS NULL OR (nv IS NOT NULL AND (LOWER(nv.ten) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(nv.ma) LIKE LOWER(CONCAT('%', :keyword, '%'))))) " +
+           "ORDER BY l.ngayLam DESC, l.ngayTao DESC")
+    List<com.example.be.core.admin.lichlamviec.model.LichLamViecProjection> searchScheduleProjections(
+            @org.springframework.data.repository.query.Param("keyword") String keyword,
+            @org.springframework.data.repository.query.Param("caId") String caId,
+            @org.springframework.data.repository.query.Param("ngayLam") LocalDate ngayLam
+    );
+
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"nhanVien", "caLam"})
     @org.springframework.data.jpa.repository.Query("SELECT l FROM LichLamViec l WHERE " +
            "(:ngayLam IS NULL OR l.ngayLam = :ngayLam) AND " +

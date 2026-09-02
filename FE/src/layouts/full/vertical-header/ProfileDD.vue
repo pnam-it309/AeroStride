@@ -8,7 +8,14 @@ import defaultAvatar from '@/assets/images/profile/default-avatar.svg';
 import { APP_ROLES } from '@/constants/appConstants';
 
 const router = useRouter();
-const profile = ref(null);
+const getInitialProfile = () => {
+    try {
+        const stored = sessionStorage.getItem('userProfile');
+        if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return dichVuXacThuc.layUserHienTai();
+};
+const profile = ref(getInitialProfile());
 const avatarError = ref(false);
 
 const roleLabels = {

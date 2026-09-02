@@ -104,7 +104,6 @@ const {
 const onRefresh = async () => {
     await executeRefresh(async () => {
         handleReset();
-        await loadConfigAndStats();
     });
 };
 
@@ -245,10 +244,7 @@ const updatePaginationSize = (size) => {
 };
 
 onMounted(async () => {
-    await Promise.all([
-        loadConfigAndStats(),
-        loadReviews()
-    ]);
+    await loadReviews();
 });
 </script>
 

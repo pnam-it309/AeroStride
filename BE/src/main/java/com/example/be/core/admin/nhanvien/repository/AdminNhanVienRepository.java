@@ -30,6 +30,20 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
     @Query("""
         SELECT new com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse(
                 nv.id, nv.ma, nv.ten, nv.email, nv.tenTaiKhoan,
+                nv.gioiTinh, nv.sdt, nv.ngaySinh, null,
+                nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
+                nv.trangThai, nv.ngayTao, nv.ngayCapNhat,
+                pq.id, pq.ma, pq.ten, pq.quyenHan)
+            FROM NhanVien nv
+            LEFT JOIN nv.phanQuyen pq
+            WHERE nv.trangThai = com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG
+            ORDER BY nv.ten ASC
+        """)
+    List<AdminNhanVienResponse> findOptions();
+
+    @Query("""
+        SELECT new com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse(
+                nv.id, nv.ma, nv.ten, nv.email, nv.tenTaiKhoan,
                 nv.gioiTinh, nv.sdt, nv.ngaySinh, nv.hinhAnh,
                 nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
                 nv.trangThai, nv.ngayTao, nv.ngayCapNhat,

@@ -89,15 +89,15 @@ public class LichLamViecServiceImpl implements LichLamViecService {
 
         final String finalStaffId = staffId;
 
-        return lichLamViecRepository.searchSchedules(cleanSearch, cleanCa, cleanNgay).stream()
-                .filter(l -> finalStaffId == null || (l.getNhanVien() != null && finalStaffId.equals(l.getNhanVien().getId())))
+        return lichLamViecRepository.searchScheduleProjections(cleanSearch, cleanCa, cleanNgay).stream()
+                .filter(l -> finalStaffId == null || (l.getNhanVienId() != null && finalStaffId.equals(l.getNhanVienId())))
                 .map(l -> LichLamViecResponse.builder()
                         .id(l.getId())
-                        .nhanVien(l.getNhanVien() != null ? l.getNhanVien().getTen() : "N/A")
-                        .nhanVienId(l.getNhanVien() != null ? l.getNhanVien().getId() : null)
-                        .maNhanVien(l.getNhanVien() != null ? l.getNhanVien().getMa() : "N/A")
-                        .ca(l.getCaLam() != null ? l.getCaLam().getTenCa() : "N/A")
-                        .caId(l.getCaLam() != null ? l.getCaLam().getId() : null)
+                        .nhanVien(l.getTenNhanVien() != null ? l.getTenNhanVien() : "N/A")
+                        .nhanVienId(l.getNhanVienId())
+                        .maNhanVien(l.getMaNhanVien() != null ? l.getMaNhanVien() : "N/A")
+                        .ca(l.getTenCa() != null ? l.getTenCa() : "N/A")
+                        .caId(l.getCaId())
                         .ngay(l.getNgayLam() != null ? l.getNgayLam().format(dateFormatter) : "")
                         .trangThai(resolveTrangThaiString(l.getTrangThaiLich()))
                         .tangCa(l.getTangCa() != null ? l.getTangCa() : false)
@@ -105,7 +105,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                         .gioKetThucTangCa(l.getGioKetThucTangCa() != null ? l.getGioKetThucTangCa().format(timeFormatter) : null)
                         .gioVao(l.getGioVao() != null ? l.getGioVao().format(timeFormatter) : null)
                         .gioRa(l.getGioRa() != null ? l.getGioRa().format(timeFormatter) : null)
-                        .tongSoGio(calculateTotalHours(l))
+                        .tongSoGio(calculateTotalHours(l.getGioVao(), l.getGioRa(), l.getGioBatDauCa(), l.getGioKetThucCa()))
                         .ghiChu(l.getGhiChu())
                         .build())
                 .collect(Collectors.toList());
@@ -795,9 +795,9 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         lichSuHoatDongRepository.save(activity);
     }
 
-    private String calculateTotalHours(LichLamViec l) {
-        if (l.getGioVao() != null && l.getGioRa() != null) {
-            long minutes = java.time.Duration.between(l.getGioVao(), l.getGioRa()).toMinutes();
+    private String calculateTotalHours(LocalTime gioVao, LocalTime gioRa, LocalTime caGioBatDau, LocalTime caGioKetThuc) {
+        if (gioVao != null && gioRa != null) {
+            long minutes = java.time.Duration.between(gioVao, gioRa).toMinutes();
             if (minutes < 0) {
                 minutes += 24 * 60;
             }
@@ -807,8 +807,8 @@ public class LichLamViecServiceImpl implements LichLamViecService {
             if (m == 0) return h + " giờ";
             return h + "h " + m + "p";
         }
-        if (l.getCaLam() != null && l.getCaLam().getGioBatDau() != null && l.getCaLam().getGioKetThuc() != null) {
-            long minutes = java.time.Duration.between(l.getCaLam().getGioBatDau(), l.getCaLam().getGioKetThuc()).toMinutes();
+        if (caGioBatDau != null && caGioKetThuc != null) {
+            long minutes = java.time.Duration.between(caGioBatDau, caGioKetThuc).toMinutes();
             if (minutes < 0) {
                 minutes += 24 * 60;
             }
@@ -819,5 +819,12 @@ public class LichLamViecServiceImpl implements LichLamViecService {
             return h + "h " + m + "p";
         }
         return "--";
+    }
+
+    private String calculateTotalHours(LichLamViec l) {
+        if (l == null) return "--";
+        LocalTime caGioBatDau = l.getCaLam() != null ? l.getCaLam().getGioBatDau() : null;
+        LocalTime caGioKetThuc = l.getCaLam() != null ? l.getCaLam().getGioKetThuc() : null;
+        return calculateTotalHours(l.getGioVao(), l.getGioRa(), caGioBatDau, caGioKetThuc);
     }
 }

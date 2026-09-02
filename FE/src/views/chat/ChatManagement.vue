@@ -432,48 +432,59 @@ const totalInternalUnread = computed(() => {
     ).length;
 });
 
-// Lấy danh sách hội thoại từ Backend (1 request duy nhất)
+let inFlightFetchConversations = null;
+
+// Lấy danh sách hội thoại từ Backend (1 request duy nhất, có chống trùng lặp)
 const fetchConversations = async (quiet = false) => {
+    if (inFlightFetchConversations) {
+        return inFlightFetchConversations;
+    }
     if (!quiet && allConversations.value.length === 0) {
         isLoading.value = true;
     }
-    try {
-        const response = await api.get(API_CHAT.CONVERSATIONS);
-        const data = response.data?.data || [];
-        allConversations.value = data;
-        customers.value = data;
-        notificationStore.syncUnreadConversations(data);
+    inFlightFetchConversations = (async () => {
+        try {
+            const response = await api.get(API_CHAT.CONVERSATIONS);
+            const data = response.data?.data || [];
+            allConversations.value = data;
+            customers.value = data;
+            notificationStore.syncUnreadConversations(data);
 
-        if (activeChat.value) {
-            const updatedChat = allConversations.value.find((c) => c.id === activeChat.value.id);
-            if (updatedChat) {
-                activeChat.value.status = updatedChat.status;
-                activeChat.value.isAccepted = updatedChat.isAccepted;
-                activeChat.value.name = updatedChat.name;
-                activeChat.value.lastMsg = updatedChat.lastMsg;
+            if (activeChat.value) {
+                const updatedChat = allConversations.value.find((c) => c.id === activeChat.value.id);
+                if (updatedChat) {
+                    activeChat.value.status = updatedChat.status;
+                    activeChat.value.isAccepted = updatedChat.isAccepted;
+                    activeChat.value.name = updatedChat.name;
+                    activeChat.value.lastMsg = updatedChat.lastMsg;
+                }
             }
-        }
 
-        if (activeChat.value && activeChat.value.id.startsWith('NEW_INTERNAL_')) {
-            const targetPartnerId = activeChat.value.id.replace('NEW_INTERNAL_', '');
-            const realConv = allConversations.value.find(
-                (c) =>
-                    c.type === CHAT_TYPES.INTERNAL &&
-                    !c.id.startsWith('NEW_INTERNAL_') &&
-                    (c.partnerStaffId === targetPartnerId ||
-                        c.partnerUsername === activeChat.value.partnerUsername ||
-                        c.name === activeChat.value.name)
-            );
-            if (realConv) {
-                activeChat.value = realConv;
-                fetchMessages(realConv.id);
+            if (activeChat.value && activeChat.value.id.startsWith('NEW_INTERNAL_')) {
+                const targetPartnerId = activeChat.value.id.replace('NEW_INTERNAL_', '');
+                const realConv = allConversations.value.find(
+                    (c) =>
+                        c.type === CHAT_TYPES.INTERNAL &&
+                        !c.id.startsWith('NEW_INTERNAL_') &&
+                        (c.partnerStaffId === targetPartnerId ||
+                            c.partnerUsername === activeChat.value.partnerUsername ||
+                            c.name === activeChat.value.name)
+                );
+                if (realConv) {
+                    activeChat.value = realConv;
+                    fetchMessages(realConv.id);
+                }
             }
+            return data;
+        } catch (error) {
+            console.error('Lỗi khi tải danh sách hội thoại:', error);
+            return [];
+        } finally {
+            isLoading.value = false;
+            inFlightFetchConversations = null;
         }
-    } catch (error) {
-        console.error('Lỗi khi tải danh sách hội thoại:', error);
-    } finally {
-        isLoading.value = false;
-    }
+    })();
+    return inFlightFetchConversations;
 };
 
 watch(chatType, () => {

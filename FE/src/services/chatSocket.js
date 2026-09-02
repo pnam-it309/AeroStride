@@ -8,6 +8,7 @@ class ChatSocketService {
         this.connecting = false;
         this.retryCount = 0;
         this.maxRetries = 5;
+        this.hasEverConnected = false;
         this.subscriptions = new Map(); // topic -> Set of callbacks
         this.stompSubscriptions = new Map(); // topic -> StompSubscription
         this.localBridge = new BroadcastChannel('aerostride_chat_local');
@@ -64,6 +65,8 @@ class ChatSocketService {
             heartbeatOutgoing: 15000,
             connectionTimeout: 15000,
             onConnect: () => {
+                const isReconnect = this.hasEverConnected;
+                this.hasEverConnected = true;
                 this.connected = true;
                 this.connecting = false;
                 this.retryCount = 0;
@@ -75,8 +78,8 @@ class ChatSocketService {
                     onConnectedCallback();
                 }
 
-                // Notify components to sync/fetch any messages missed during disconnected state
-                if (typeof window !== 'undefined') {
+                // Notify components only on actual RECONNECT to sync missed messages
+                if (isReconnect && typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('chat-socket-reconnected'));
                 }
             },

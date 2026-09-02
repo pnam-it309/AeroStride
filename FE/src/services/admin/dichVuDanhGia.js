@@ -1,6 +1,8 @@
 import apiService from '../apiService';
 import { API_ADMIN } from '@/constants/apiPaths';
 
+let inFlightConfigPromise = null;
+
 export const dichVuDanhGia = {
     getAll: async (params) => {
         const response = await apiService.get(API_ADMIN.DANH_GIA, { params });
@@ -8,8 +10,14 @@ export const dichVuDanhGia = {
     },
 
     getConfig: async () => {
-        const response = await apiService.get(`${API_ADMIN.DANH_GIA}/config`);
-        return response.data;
+        if (inFlightConfigPromise) return inFlightConfigPromise;
+        inFlightConfigPromise = apiService
+            .get(`${API_ADMIN.DANH_GIA}/config`)
+            .then((res) => res.data)
+            .finally(() => {
+                inFlightConfigPromise = null;
+            });
+        return inFlightConfigPromise;
     },
 
     updateConfig: async (autoApprove) => {

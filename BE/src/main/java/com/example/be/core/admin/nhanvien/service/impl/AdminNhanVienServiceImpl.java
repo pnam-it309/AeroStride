@@ -45,6 +45,12 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         return adminNhanVienRepository.hienThi();
     }
 
+    // ── OPTIONS CHO DROPDOWN (tinh gọn, không base64) ───────────────────────
+    @Override
+    public List<AdminNhanVienResponse> getOptions() {
+        return adminNhanVienRepository.findOptions();
+    }
+
     // ── TÌM KIẾM / LỌC / PHÂN TRANG — gộp 1 method ──────────────────────
     @Override
     public Page<AdminNhanVienResponse> search(AdminNhanVienRequest request) {

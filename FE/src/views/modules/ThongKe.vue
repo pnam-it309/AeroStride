@@ -735,269 +735,241 @@ const loadStatistics = async () => {
         const startOfYear = `${selectedYear.value}-01-01`;
         const endOfYear = `${selectedYear.value}-12-31`;
 
-        const [overview, dailyData] = await Promise.all([
-            dichVuThongKe.layTongQuan(tuNgay, denNgay),
-            dichVuThongKe.layDoanhThuTheoNgay(startOfYear, endOfYear),
-            fetchProductStats()
-        ]);
-        const yearlyOverview = overview;
+        // 1. Tải Tổng quan trước (Nhanh nhất & hiển thị ngay 5 KPI Cards đầu trang)
+        const overviewPromise = dichVuThongKe.layTongQuan(tuNgay, denNgay).then((overview) => {
+            if (overview) {
+                const soldProductQuantity = Array.isArray(overview.topSanPhamBanChay)
+                    ? overview.topSanPhamBanChay.reduce((sum, item) => sum + Number(item.quantity || 0), 0)
+                    : 0;
+                const completedOrderCount = Number(overview.donHangHoanThanh || 0);
+                const totalRevenue = Number(overview.tongDoanhThu || 0);
+                const averageOrderValue =
+                    overview.giaTriTrungBinh != null
+                        ? Number(overview.giaTriTrungBinh)
+                        : completedOrderCount > 0
+                          ? totalRevenue / completedOrderCount
+                          : 0;
 
-        if (overview) {
-            const soldProductQuantity = Array.isArray(overview.topSanPhamBanChay)
-                ? overview.topSanPhamBanChay.reduce((sum, item) => sum + Number(item.quantity || 0), 0)
-                : 0;
-            const completedOrderCount = Number(overview.donHangHoanThanh || 0);
-            const totalRevenue = Number(overview.tongDoanhThu || 0);
-            const averageOrderValue =
-                overview.giaTriTrungBinh != null
-                    ? Number(overview.giaTriTrungBinh)
-                    : completedOrderCount > 0
-                      ? totalRevenue / completedOrderCount
-                      : 0;
+                revenueStats.value = {
+                    totalRevenue,
+                    totalOrders: overview.tongDonHang || 0,
+                    averageOrderValue,
+                    growthRate: 0,
+                    donHangHoanThanh: overview.donHangHoanThanh || 0,
+                    donHangChoXacNhan: overview.donHangChoXacNhan || 0,
+                    donHangDangGiao: overview.donHangDangGiao || 0,
+                    donHangDaHuy: overview.donHangDaHuy || 0,
+                    donHangHoan: overview.donHangHoan || 0,
+                    tongKhachHang: overview.tongKhachHang || 0,
+                    tongSanPham: overview.tongSanPham || 0,
+                    sanPhamDaBan: soldProductQuantity,
+                    doanhThuTaiQuay: overview.doanhThuTaiQuay || 0,
+                    doanhThuTrucTuyen: overview.doanhThuTrucTuyen || 0,
+                    donTaiQuay: overview.donTaiQuay || 0,
+                    donTrucTuyen: overview.donTrucTuyen || 0,
+                    sanPhamSapHet: overview.sanPhamSapHet || 0,
+                    doanhThuChoXacNhan: overview.doanhThuChoXacNhan || 0,
+                    doanhThuDangGiao: overview.doanhThuDangGiao || 0,
+                    doanhThuDaHuy: overview.doanhThuDaHuy || 0
+                };
 
-            revenueStats.value = {
-                totalRevenue,
-                totalOrders: overview.tongDonHang || 0,
-                averageOrderValue,
-                growthRate: 0,
-                donHangHoanThanh: overview.donHangHoanThanh || 0,
-                donHangChoXacNhan: overview.donHangChoXacNhan || 0,
-                donHangDangGiao: overview.donHangDangGiao || 0,
-                donHangDaHuy: overview.donHangDaHuy || 0,
-                donHangHoan: overview.donHangHoan || 0,
-                tongKhachHang: overview.tongKhachHang || 0,
-                tongSanPham: overview.tongSanPham || 0,
-                sanPhamDaBan: soldProductQuantity,
-                doanhThuTaiQuay: overview.doanhThuTaiQuay || 0,
-                doanhThuTrucTuyen: overview.doanhThuTrucTuyen || 0,
-                donTaiQuay: overview.donTaiQuay || 0,
-                donTrucTuyen: overview.donTrucTuyen || 0,
-                sanPhamSapHet: overview.sanPhamSapHet || 0,
-                doanhThuChoXacNhan: overview.doanhThuChoXacNhan || 0,
-                doanhThuDangGiao: overview.doanhThuDangGiao || 0,
-                doanhThuDaHuy: overview.doanhThuDaHuy || 0
-            };
+                const effectiveTopProducts = (overview.topSanPhamBanChay && overview.topSanPhamBanChay.length > 0)
+                    ? overview.topSanPhamBanChay
+                    : [];
 
-            const effectiveTopProducts = (overview.topSanPhamBanChay && overview.topSanPhamBanChay.length > 0)
-                ? overview.topSanPhamBanChay
-                : (yearlyOverview?.topSanPhamBanChay || []);
-
-            if (effectiveTopProducts.length > 0) {
-                topProducts.value = effectiveTopProducts.map((item) => ({
-                    maSanPham: item.maSanPham || '',
-                    name: item.name,
-                    thuongHieu: item.thuongHieu || '',
-                    revenue: item.revenue || 0,
-                    quantity: item.quantity || 0,
-                    growth: item.growth || 0
-                }));
-            } else {
-                topProducts.value = [];
-            }
-
-            const effectiveBrandShares = (Array.isArray(overview.tyTrongTheoThuongHieu) && overview.tyTrongTheoThuongHieu.length > 0)
-                ? overview.tyTrongTheoThuongHieu
-                : (Array.isArray(yearlyOverview?.tyTrongTheoThuongHieu) ? yearlyOverview.tyTrongTheoThuongHieu : []);
-
-            const brandShares = effectiveBrandShares
-                .map((item) => ({
-                    name: item.name || 'Khác',
-                    revenue: Number(item.revenue || 0)
-                }))
-                .filter((item) => Number.isFinite(item.revenue) && item.revenue > 0);
-
-            donutChartSeries.value = brandShares.map((item) => item.revenue);
-            donutChartOptions.value = {
-                ...donutChartOptions.value,
-                labels: brandShares.map((item) => item.name)
-            };
-            donutChartKey.value += 1;
-
-            const effectiveCustomers = (overview.topKhachHang && overview.topKhachHang.length > 0)
-                ? overview.topKhachHang
-                : (yearlyOverview?.topKhachHang || []);
-
-            if (effectiveCustomers.length > 0) {
-                customerPurchaseStats.value = effectiveCustomers.map((item) => ({
-                    tenKhachHang: item.tenKhachHang || 'Khách lẻ',
-                    tongChi: Number(item.tongChi || 0),
-                    tongSanPham: Number(item.tongSanPham || 0),
-                    donThanhCong: Number(item.donThanhCong || 0),
-                    donHoan: Number(item.donHoan || 0)
-                }));
-            } else {
-                customerPurchaseStats.value = [];
-            }
-
-            const effectiveEmployees = (overview.topNhanVien && overview.topNhanVien.length > 0)
-                ? overview.topNhanVien
-                : (yearlyOverview?.topNhanVien || []);
-
-            if (effectiveEmployees.length > 0) {
-                employeePurchaseStats.value = effectiveEmployees.map((item) => ({
-                    maNhanVien: item.maNhanVien || '',
-                    tenNhanVien: item.tenNhanVien || 'Hệ thống/Online',
-                    tongChi: Number(item.tongChi || 0),
-                    tongSanPham: Number(item.tongSanPham || 0),
-                    tongDonHang: Number(item.tongDonHang || 0)
-                }));
-            } else {
-                employeePurchaseStats.value = [];
-            }
-
-            if (overview.chuKyDoanhThu && overview.chuKyDoanhThu.length > 0) {
-                revenueCycles.value = overview.chuKyDoanhThu.map((item) => ({
-                    tenChuKy: item.tenChuKy,
-                    doanhThu: Number(item.doanhThu || 0),
-                    soDon: Number(item.soDon || 0),
-                    trungBinhDon: Number(item.trungBinhDon || 0)
-                }));
-            } else {
-                revenueCycles.value = [];
-            }
-        }
-
-        if (yearlyOverview) {
-            const yearlySoldProductQuantity = Array.isArray(yearlyOverview.topSanPhamBanChay)
-                ? yearlyOverview.topSanPhamBanChay.reduce((sum, item) => sum + Number(item.quantity || 0), 0)
-                : 0;
-            const yearlyCompletedOrderCount = Number(yearlyOverview.donHangHoanThanh || 0);
-            const yearlyTotalRevenue = Number(yearlyOverview.tongDoanhThu || 0);
-            const yearlyAverageOrderValue =
-                yearlyOverview.giaTriTrungBinh != null
-                    ? Number(yearlyOverview.giaTriTrungBinh)
-                    : yearlyCompletedOrderCount > 0
-                      ? yearlyTotalRevenue / yearlyCompletedOrderCount
-                      : 0;
-
-            yearlyRevenueStats.value = {
-                totalRevenue: yearlyTotalRevenue,
-                totalOrders: yearlyOverview.tongDonHang || 0,
-                averageOrderValue: yearlyAverageOrderValue,
-                growthRate: 0,
-                donHangHoanThanh: yearlyOverview.donHangHoanThanh || 0,
-                donHangChoXacNhan: yearlyOverview.donHangChoXacNhan || 0,
-                donHangDangGiao: yearlyOverview.donHangDangGiao || 0,
-                donHangDaHuy: yearlyOverview.donHangDaHuy || 0,
-                donHangHoan: yearlyOverview.donHangHoan || 0,
-                tongKhachHang: yearlyOverview.tongKhachHang || 0,
-                tongSanPham: yearlyOverview.tongSanPham || 0,
-                sanPhamDaBan: yearlySoldProductQuantity,
-                doanhThuTaiQuay: yearlyOverview.doanhThuTaiQuay || 0,
-                doanhThuTrucTuyen: yearlyOverview.doanhThuTrucTuyen || 0,
-                donTaiQuay: yearlyOverview.donTaiQuay || 0,
-                donTrucTuyen: yearlyOverview.donTrucTuyen || 0,
-                sanPhamSapHet: yearlyOverview.sanPhamSapHet || 0,
-                doanhThuChoXacNhan: yearlyOverview.doanhThuChoXacNhan || 0,
-                doanhThuDangGiao: yearlyOverview.doanhThuDangGiao || 0,
-                doanhThuDaHuy: yearlyOverview.doanhThuDaHuy || 0
-            };
-        }
-
-        const months = Array.from({ length: 12 }, (_, i) => ({
-            month: `Tháng ${i + 1}`,
-            revenue: 0,
-            customers: 0
-        }));
-
-        if (dailyData && Array.isArray(dailyData)) {
-            dailyData.forEach((item) => {
-                if (item.ngay) {
-                    const parts = item.ngay.split('-');
-                    const m = parseInt(parts[1], 10);
-                    if (m >= 1 && m <= 12) {
-                        months[m - 1].revenue += Number(item.doanhThu || 0);
-                        months[m - 1].customers += Number(item.soDon || 0);
-                    }
+                if (effectiveTopProducts.length > 0) {
+                    topProducts.value = effectiveTopProducts.map((item) => ({
+                        maSanPham: item.maSanPham || '',
+                        name: item.name,
+                        thuongHieu: item.thuongHieu || '',
+                        revenue: item.revenue || 0,
+                        quantity: item.quantity || 0,
+                        growth: item.growth || 0
+                    }));
+                } else {
+                    topProducts.value = [];
                 }
-            });
-        }
-        monthlyRevenue.value = months;
 
-        // Cập nhật biểu đồ Area
-        const maxMonthlyCustomers = Math.max(...months.map((m) => m.customers));
-        if (areaChartOptions.value.yaxis && areaChartOptions.value.yaxis[1]) {
-            areaChartOptions.value.yaxis[1].max = maxMonthlyCustomers > 100 ? undefined : 100;
-        }
+                const effectiveBrandShares = (Array.isArray(overview.tyTrongTheoThuongHieu) && overview.tyTrongTheoThuongHieu.length > 0)
+                    ? overview.tyTrongTheoThuongHieu
+                    : [];
 
-        areaChartSeries.value = [
-            {
-                name: 'Doanh thu',
-                type: 'line',
-                data: months.map((m) => m.revenue)
-            },
-            {
-                name: 'Khách hàng',
-                type: 'line',
-                data: months.map((m) => m.customers)
+                const brandShares = effectiveBrandShares
+                    .map((item) => ({
+                        name: item.name || 'Khác',
+                        revenue: Number(item.revenue || 0)
+                    }))
+                    .filter((item) => Number.isFinite(item.revenue) && item.revenue > 0);
+
+                donutChartSeries.value = brandShares.map((item) => item.revenue);
+                donutChartOptions.value = {
+                    ...donutChartOptions.value,
+                    labels: brandShares.map((item) => item.name)
+                };
+                donutChartKey.value += 1;
+
+                const effectiveCustomers = (overview.topKhachHang && overview.topKhachHang.length > 0)
+                    ? overview.topKhachHang
+                    : [];
+
+                if (effectiveCustomers.length > 0) {
+                    customerPurchaseStats.value = effectiveCustomers.map((item) => ({
+                        tenKhachHang: item.tenKhachHang || 'Khách lẻ',
+                        tongChi: Number(item.tongChi || 0),
+                        tongSanPham: Number(item.tongSanPham || 0),
+                        donThanhCong: Number(item.donThanhCong || 0),
+                        donHoan: Number(item.donHoan || 0)
+                    }));
+                } else {
+                    customerPurchaseStats.value = [];
+                }
+
+                const effectiveEmployees = (overview.topNhanVien && overview.topNhanVien.length > 0)
+                    ? overview.topNhanVien
+                    : [];
+
+                if (effectiveEmployees.length > 0) {
+                    employeePurchaseStats.value = effectiveEmployees.map((item) => ({
+                        maNhanVien: item.maNhanVien || '',
+                        tenNhanVien: item.tenNhanVien || 'Hệ thống/Online',
+                        tongChi: Number(item.tongChi || 0),
+                        tongSanPham: Number(item.tongSanPham || 0),
+                        tongDonHang: Number(item.tongDonHang || 0)
+                    }));
+                } else {
+                    employeePurchaseStats.value = [];
+                }
+
+                if (overview.chuKyDoanhThu && overview.chuKyDoanhThu.length > 0) {
+                    revenueCycles.value = overview.chuKyDoanhThu.map((item) => ({
+                        tenChuKy: item.tenChuKy,
+                        doanhThu: Number(item.doanhThu || 0),
+                        soDon: Number(item.soDon || 0),
+                        trungBinhDon: Number(item.trungBinhDon || 0)
+                    }));
+                } else {
+                    revenueCycles.value = [];
+                }
             }
-        ];
+            return overview;
+        });
 
-        // Lấy doanh thu của startDate và endDate để làm biểu đồ theo giờ
-        let startRevenue = 0;
-        let endRevenue = 0;
-        if (dailyData && Array.isArray(dailyData)) {
-            const startItem = dailyData.find((item) => item.ngay === startDate.value);
-            if (startItem) {
-                startRevenue = Number(startItem.doanhThu || 0);
+        // 2. Tải danh sách sản phẩm theo bộ lọc (chạy song song)
+        const productPromise = fetchProductStats();
+
+        // 3. Tải dữ liệu doanh thu theo ngày cả năm (cho biểu đồ 12 tháng & biểu đồ theo giờ)
+        const dailyPromise = dichVuThongKe.layDoanhThuTheoNgay(startOfYear, endOfYear).then(async (dailyData) => {
+            const months = Array.from({ length: 12 }, (_, i) => ({
+                month: `Tháng ${i + 1}`,
+                revenue: 0,
+                customers: 0
+            }));
+
+            if (dailyData && Array.isArray(dailyData)) {
+                dailyData.forEach((item) => {
+                    if (item.ngay) {
+                        const parts = item.ngay.split('-');
+                        const m = parseInt(parts[1], 10);
+                        if (m >= 1 && m <= 12) {
+                            months[m - 1].revenue += Number(item.doanhThu || 0);
+                            months[m - 1].customers += Number(item.soDon || 0);
+                        }
+                    }
+                });
             }
-            const endItem = dailyData.find((item) => item.ngay === endDate.value);
-            if (endItem) {
-                endRevenue = Number(endItem.doanhThu || 0);
+            monthlyRevenue.value = months;
+
+            // Cập nhật biểu đồ Area
+            const maxMonthlyCustomers = Math.max(...months.map((m) => m.customers));
+            if (areaChartOptions.value.yaxis && areaChartOptions.value.yaxis[1]) {
+                areaChartOptions.value.yaxis[1].max = maxMonthlyCustomers > 100 ? undefined : 100;
             }
-        }
 
-        const [startHourlyData, endHourlyData] = await Promise.all([
-            generateHourlyDataFromInvoices(startRevenue, startDate.value),
-            generateHourlyDataFromInvoices(endRevenue, endDate.value)
-        ]);
+            areaChartSeries.value = [
+                {
+                    name: 'Doanh thu',
+                    type: 'line',
+                    data: months.map((m) => m.revenue)
+                },
+                {
+                    name: 'Khách hàng',
+                    type: 'line',
+                    data: months.map((m) => m.customers)
+                }
+            ];
+            areaChartKey.value += 1;
 
-        const startSum = startHourlyData.revenue.reduce((a, b) => a + b, 0);
-        const endSum = endHourlyData.revenue.reduce((a, b) => a + b, 0);
-
-        startDailyTotalRevenue.value = startSum > 0 ? startSum : startRevenue;
-        endDailyTotalRevenue.value = endSum > 0 ? endSum : endRevenue;
-
-        const start3HourData = aggregateTo3HourSlots(startHourlyData);
-        const end3HourData = aggregateTo3HourSlots(endHourlyData);
-
-        startHourlyMax.value = Math.max(...start3HourData.revenue);
-        endHourlyMax.value = Math.max(...end3HourData.revenue);
-        startHourlyCustomerMax.value = Math.max(...start3HourData.customers);
-        endHourlyCustomerMax.value = Math.max(...end3HourData.customers);
-
-        startHourlyChartSeries.value = [
-            {
-                name: 'Doanh thu',
-                type: 'line',
-                data: start3HourData.revenue
-            },
-            {
-                name: 'Khách hàng',
-                type: 'line',
-                data: start3HourData.customers
+            // Lấy doanh thu của startDate và endDate để làm biểu đồ theo giờ
+            let startRevenue = 0;
+            let endRevenue = 0;
+            if (dailyData && Array.isArray(dailyData)) {
+                const startItem = dailyData.find((item) => item.ngay === startDate.value);
+                if (startItem) {
+                    startRevenue = Number(startItem.doanhThu || 0);
+                }
+                const endItem = dailyData.find((item) => item.ngay === endDate.value);
+                if (endItem) {
+                    endRevenue = Number(endItem.doanhThu || 0);
+                }
             }
-        ];
 
-        endHourlyChartSeries.value = [
-            {
-                name: 'Doanh thu',
-                type: 'line',
-                data: end3HourData.revenue
-            },
-            {
-                name: 'Khách hàng',
-                type: 'line',
-                data: end3HourData.customers
-            }
-        ];
+            const [startHourlyData, endHourlyData] = await Promise.all([
+                generateHourlyDataFromInvoices(startRevenue, startDate.value),
+                generateHourlyDataFromInvoices(endRevenue, endDate.value)
+            ]);
 
-        // Tự động làm mới key để ApexCharts vẽ lại ngay tức thì không cần reload
-        startHourlyChartKey.value += 1;
-        endHourlyChartKey.value += 1;
-        areaChartKey.value += 1;
-        statusBarChartKey.value += 1;
-        donutChartKey.value += 1;
+            const startSum = startHourlyData.revenue.reduce((a, b) => a + b, 0);
+            const endSum = endHourlyData.revenue.reduce((a, b) => a + b, 0);
+
+            startDailyTotalRevenue.value = startSum > 0 ? startSum : startRevenue;
+            endDailyTotalRevenue.value = endSum > 0 ? endSum : endRevenue;
+
+            const start3HourData = aggregateTo3HourSlots(startHourlyData);
+            const end3HourData = aggregateTo3HourSlots(endHourlyData);
+
+            startHourlyMax.value = Math.max(...start3HourData.revenue);
+            endHourlyMax.value = Math.max(...end3HourData.revenue);
+            startHourlyCustomerMax.value = Math.max(...start3HourData.customers);
+            endHourlyCustomerMax.value = Math.max(...end3HourData.customers);
+
+            startHourlyChartSeries.value = [
+                {
+                    name: 'Doanh thu',
+                    type: 'line',
+                    data: start3HourData.revenue
+                },
+                {
+                    name: 'Khách hàng',
+                    type: 'line',
+                    data: start3HourData.customers
+                }
+            ];
+
+            endHourlyChartSeries.value = [
+                {
+                    name: 'Doanh thu',
+                    type: 'line',
+                    data: end3HourData.revenue
+                },
+                {
+                    name: 'Khách hàng',
+                    type: 'line',
+                    data: end3HourData.customers
+                }
+            ];
+
+            startHourlyChartKey.value += 1;
+            endHourlyChartKey.value += 1;
+            statusBarChartKey.value += 1;
+            return dailyData;
+        });
+
+        // Hiển thị giao diện ngay khi có dữ liệu tổng quan + bảng sản phẩm (< 1s)
+        await Promise.all([overviewPromise, productPromise]);
+        loading.value = false;
+
+        // Các biểu đồ lớn tiếp tục nạp ngầm
+        await dailyPromise;
     } catch (error) {
         console.error('Error loading statistics:', error);
     } finally {

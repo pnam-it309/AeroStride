@@ -31,6 +31,11 @@ public class AdminNhanVienController {
         return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.getMe()));
     }
 
+    @GetMapping("/options")
+    public ResponseEntity<ApiResponse<?>> getOptions() {
+        return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.getOptions()));
+    }
+
     @GetMapping({RoutesConstant.HIEN_THI, RoutesConstant.PHAN_TRANG, RoutesConstant.TIM_KIEM}) // Aliases for FE compatibility
     public ResponseEntity<ApiResponse<?>> search(AdminNhanVienRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.search(request)));
