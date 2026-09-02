@@ -32,6 +32,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import java.util.Optional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -204,7 +205,7 @@ public class AuthController {
         // 2. Nếu không phải nhân viên, kiểm tra xem có phải khách hàng không (đăng nhập thường hoặc Google)
         Optional<KhachHang> optionalKh = khachHangRepository.findByTenTaiKhoan(identifier);
         if (optionalKh.isEmpty()) {
-            optionalKh = khachHangRepository.findByEmail(identifier);
+            optionalKh = khachHangRepository.findFirstByEmailIgnoreCase(identifier);
         }
         if (optionalKh.isPresent()) {
             KhachHang kh = optionalKh.get();

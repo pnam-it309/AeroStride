@@ -91,6 +91,16 @@ export const useNotificationStore = defineStore('notification', {
                     return;
                 }
 
+                const isCustomerChat = message.type === 'CUSTOMER' || !message.type || message.loaiHoiThoai === 'CUSTOMER';
+                const hasAssignedStaff = !!(message.staffUsername || message.staffId);
+
+                // Cuộc trò chuyện khách hàng chưa được nhân viên tiếp nhận:
+                // CHỈ hiển thị con số khi khách hàng có yêu cầu gặp nhân viên (CUSTOMER_HANDOFF_REQUEST đã xử lý ở mục 1).
+                // Tuyệt đối không hiện số khi khách chỉ gửi tin nhắn thông thường cho chatbot AI.
+                if (isCustomerChat && !hasAssignedStaff) {
+                    return;
+                }
+
                 // Nếu cuộc trò chuyện khách hàng đã có nhân viên khác tiếp nhận -> người khác không nhận số chưa đọc
                 const isAssignedToOther = message.staffUsername && message.staffUsername !== currentUsername;
                 if (isAssignedToOther) {
@@ -98,14 +108,12 @@ export const useNotificationStore = defineStore('notification', {
                 }
 
                 const isMyChat =
-                    !message.staffId ||
-                    !message.staffUsername ||
                     message.staffUsername === currentUsername ||
                     message.staffId === currentUsername ||
                     message.secondStaffUsername === currentUsername ||
                     message.secondStaffId === currentUsername;
 
-                if (!isMyChat) {
+                if (!isMyChat && isCustomerChat) {
                     return;
                 }
 
@@ -208,8 +216,8 @@ export const useNotificationStore = defineStore('notification', {
                         }
                         const type = c.type || c.loaiHoiThoai || 'CUSTOMER';
                         if (type === 'CUSTOMER') {
-                            // 1. Nếu chưa ai tiếp nhận (PENDING) -> tất cả nhân viên đều thấy số
-                            if (status === 'PENDING' || !c.isAccepted || !c.daChapNhan) {
+                            // 1. Nếu chưa ai tiếp nhận -> CHỈ hiển thị số khi có số chưa đọc (> 0) từ server
+                            if (!c.isAccepted && !c.daChapNhan) {
                                 return (c.unread > 0 || c.chuaDoc > 0);
                             }
                             // 2. Nếu ĐÃ TIẾP NHẬN -> CHỈ nhân viên đang tiếp nhận mới thấy số

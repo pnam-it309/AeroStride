@@ -257,10 +257,27 @@ public class AdminChatServiceImpl implements AdminChatService {
                                 && c.getNhanVien() != null
                                 && !c.getNhanVien().getTenTaiKhoan().equalsIgnoreCase(currentUsername);
 
-                        if (!isAssignedToOther && lastMsg != null) {
-                            String lastSender = lastMsg.getLoaiNguoiGui();
-                            if (lastSender != null && !lastSender.equalsIgnoreCase(currentUsername) && !"staff".equalsIgnoreCase(lastSender)) {
-                                unreadCount = unreadCountMap.getOrDefault(c.getId(), 0);
+                        if (Boolean.TRUE.equals(c.getDaChapNhan())) {
+                            if (!isAssignedToOther && lastMsg != null) {
+                                String lastSender = lastMsg.getLoaiNguoiGui();
+                                if (lastSender != null && !lastSender.equalsIgnoreCase(currentUsername) && !"staff".equalsIgnoreCase(lastSender)) {
+                                    unreadCount = unreadCountMap.getOrDefault(c.getId(), 0);
+                                }
+                            }
+                        } else {
+                            // Chưa tiếp nhận: CHỈ tính unread khi khách hàng có yêu cầu gặp nhân viên
+                            if (lastMsg != null && lastMsg.getNoiDung() != null) {
+                                String content = lastMsg.getNoiDung().toLowerCase();
+                                if (content.contains("kết nối bạn với nhân viên") || content.contains("nhân viên hỗ trợ")
+                                        || content.contains("gặp nhân viên") || content.contains("nhan vien")
+                                        || content.contains("người thật") || content.contains("nguoi that")
+                                        || content.contains("admin") || content.contains("gặp hỗ trợ")
+                                        || content.contains("liên hệ hỗ trợ")) {
+                                    unreadCount = unreadCountMap.getOrDefault(c.getId(), 0);
+                                    if (unreadCount == 0) {
+                                        unreadCount = 1;
+                                    }
+                                }
                             }
                         }
                     } else {
