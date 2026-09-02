@@ -4,10 +4,30 @@ import { useRouter } from 'vue-router';
 import { useToastStore } from '@/stores/toastStore';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 import { dichVuFile } from '@/services/core/dichVuFile';
-import defaultShoeImg from '@/assets/images/products/cat_speed.jpg';
+import shoe1Img from '@/assets/images/products/cat_running.jpg';
+import shoe2Img from '@/assets/images/products/cat_training.jpg';
+import shoe3Img from '@/assets/images/products/cat_speed.jpg';
+import shoe4Img from '@/assets/images/products/s4.jpg';
+import shoe5Img from '@/assets/images/products/s7.jpg';
+import shoe6Img from '@/assets/images/products/s11.jpg';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import MainFooter from '@/components/shared/MainFooter.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
+
+const FALLBACK_SHOES = [shoe3Img, shoe1Img, shoe2Img, shoe4Img, shoe5Img, shoe6Img];
+const DEFAULT_SHOE_IMAGE = shoe3Img;
+
+const getDeterministicFallback = (id) => {
+    if (!id) return DEFAULT_SHOE_IMAGE;
+    let hash = 0;
+    const str = String(id);
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+    }
+    const idx = Math.abs(hash) % FALLBACK_SHOES.length;
+    return FALLBACK_SHOES[idx];
+};
 
 const router = useRouter();
 const toastStore = useToastStore();
@@ -23,7 +43,7 @@ const isAbsoluteUrl = (v) =>
 
 const getProductImage = (p) => {
     const raw = p.hinhAnh || p.duongDanAnh || p.images?.[0]?.duongDanAnh;
-    if (!raw) return defaultShoeImg;
+    if (!raw) return getDeterministicFallback(p.id);
     if (isAbsoluteUrl(raw)) return raw;
     return dichVuFile.layUrlFile(raw.replace(/^\/+/, ''));
 };
@@ -37,8 +57,12 @@ const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
-const handleImageError = (e) => {
-    e.target.src = defaultShoeImg;
+const handleImageError = (e, id) => {
+    const target = e?.target || (e && e.tagName ? e : null);
+    if (!target) return;
+    if (target.getAttribute('data-fallback') === 'true') return;
+    target.setAttribute('data-fallback', 'true');
+    target.src = getDeterministicFallback(id);
 };
 
 import { getFavoriteIds, setFavoriteIds, removeFavorite as removeFavUtil } from '@/utils/favoritesUtil';
@@ -160,7 +184,9 @@ const removeFavorite = (id, event) => {
                                 :alt="p.tenSanPham"
                                 class="fav-shoe-img"
                                 referrerpolicy="no-referrer"
-                                @error="handleImageError"
+                                loading="lazy"
+                                decoding="async"
+                                @error="(e) => handleImageError(e, p.id)"
                             />
                         </div>
 

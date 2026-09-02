@@ -21,6 +21,8 @@ public class CustomerLandingProductResponse {
     private String hinhAnh;
     private BigDecimal giaBanThapNhat;
     private BigDecimal giaBanCaoNhat;
+    private String moTa;
+    private String moTaNgan;
     private String moTaChiTiet;
     private String tenChatLieu;
     private String tenDeGiay;

@@ -20,7 +20,9 @@ export interface Product {
   tenChatLieu: string;
   tenDeGiay: string;
   gioiTinhKhachHang: string;
-  moTaNgan: string;
+  moTa?: string;
+  moTaNgan?: string;
+  moTaChiTiet?: string;
   hinhAnh: string;
   trangThai: string;
   ngayTao: number;
@@ -82,8 +84,9 @@ export interface ProductDetail {
   tenChatLieu: string;
   tenDeGiay: string;
   gioiTinhKhachHang: string;
-  moTaNgan: string;
-  moTaChiTiet: string;
+  moTa?: string;
+  moTaNgan?: string;
+  moTaChiTiet?: string;
   hinhAnh: string;
   trangThai: string;
   ngayTao: number;

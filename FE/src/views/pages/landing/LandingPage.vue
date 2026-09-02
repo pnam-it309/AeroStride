@@ -14,16 +14,31 @@ import { useToastStore } from '@/stores/toastStore';
 import shoe1Img from '@/assets/images/products/cat_running.jpg';
 import shoe2Img from '@/assets/images/products/cat_training.jpg';
 import shoe3Img from '@/assets/images/products/cat_speed.jpg';
-import defaultShoeImg from '@/assets/images/products/cat_running.jpg';
+import shoe4Img from '@/assets/images/products/s4.jpg';
+import shoe5Img from '@/assets/images/products/s7.jpg';
+import shoe6Img from '@/assets/images/products/s11.jpg';
 
-const DEFAULT_SHOE_IMAGE = defaultShoeImg || new URL('/src/assets/images/products/cat_running.jpg', import.meta.url).href;
+const FALLBACK_SHOES = [shoe1Img, shoe2Img, shoe3Img, shoe4Img, shoe5Img, shoe6Img];
+const DEFAULT_SHOE_IMAGE = shoe1Img;
 
-const handleImageError = (e) => {
+const getDeterministicFallback = (id) => {
+    if (!id) return DEFAULT_SHOE_IMAGE;
+    let hash = 0;
+    const str = String(id);
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+    }
+    const idx = Math.abs(hash) % FALLBACK_SHOES.length;
+    return FALLBACK_SHOES[idx];
+};
+
+const handleImageError = (e, id) => {
     const target = e?.target || (e && e.tagName ? e : null);
     if (!target) return;
     if (target.getAttribute('data-fallback') === 'true') return;
     target.setAttribute('data-fallback', 'true');
-    target.src = DEFAULT_SHOE_IMAGE;
+    target.src = getDeterministicFallback(id);
 };
 
 const router = useRouter();
@@ -423,11 +438,13 @@ const scrollToCategories = () => {
                         <!-- Image Box with Light Blue Background -->
                         <div class="card-image-box">
                             <img
-                                :src="product.hinhAnh || DEFAULT_SHOE_IMAGE"
+                                :src="product.hinhAnh || getDeterministicFallback(product.id)"
                                 :alt="product.tenSanPham"
                                 class="product-card-img"
                                 referrerpolicy="no-referrer"
-                                @error="handleImageError"
+                                loading="lazy"
+                                decoding="async"
+                                @error="(e) => handleImageError(e, product.id)"
                             />
 
                             <!-- Dynamic Badge per Tab / Discount Status -->
@@ -459,6 +476,13 @@ const scrollToCategories = () => {
                                 </div>
                             </div>
                             <h3 class="product-name-title">{{ product.tenSanPham }}</h3>
+                            <div class="d-flex align-center justify-space-between mb-1 text-caption text-slate-500">
+                                <span class="d-inline-flex align-center font-weight-bold" style="color: #f59e0b">
+                                    <v-icon size="13" color="amber" class="mr-0.5">mdi-star</v-icon>
+                                    4.9
+                                </span>
+                                <span class="text-caption text-grey">Đã bán {{ product.daBan || 28 }}</span>
+                            </div>
                             <div class="price-section-row">
                                 <span class="current-price-text" :class="{ 'text-discount-red': product.phanTramGiam > 0 }">
                                     {{ formatPrice(product.giaBanThapNhat) }}

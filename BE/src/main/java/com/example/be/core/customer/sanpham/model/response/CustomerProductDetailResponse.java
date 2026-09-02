@@ -36,6 +36,7 @@ public class CustomerProductDetailResponse {
     private String idDeGiay;
     private String tenDeGiay;
     private GioiTinhKhachHang gioiTinhKhachHang;
+    private String moTa;
     private String moTaNgan;
     private String moTaChiTiet;
     private String hinhAnh;

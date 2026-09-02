@@ -7,7 +7,27 @@ import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import { dichVuFile } from '@/services/core/dichVuFile';
-import defaultShoeImg from '@/assets/images/products/s4.jpg';
+import shoe1Img from '@/assets/images/products/cat_running.jpg';
+import shoe2Img from '@/assets/images/products/cat_training.jpg';
+import shoe3Img from '@/assets/images/products/cat_speed.jpg';
+import shoe4Img from '@/assets/images/products/s4.jpg';
+import shoe5Img from '@/assets/images/products/s7.jpg';
+import shoe6Img from '@/assets/images/products/s11.jpg';
+
+const FALLBACK_SHOES = [shoe4Img, shoe5Img, shoe6Img, shoe1Img, shoe2Img, shoe3Img];
+const DEFAULT_SHOE_IMAGE = shoe4Img;
+
+const getDeterministicFallback = (id) => {
+    if (!id) return DEFAULT_SHOE_IMAGE;
+    let hash = 0;
+    const str = String(id);
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+    }
+    const idx = Math.abs(hash) % FALLBACK_SHOES.length;
+    return FALLBACK_SHOES[idx];
+};
 
 const router = useRouter();
 const route = useRoute();
@@ -15,7 +35,6 @@ const loading = ref(false);
 
 const filters = ref([]);
 const products = ref([]);
-const DEFAULT_SHOE_IMAGE = defaultShoeImg || new URL('/src/assets/images/products/s4.jpg', import.meta.url).href;
 const imageFallbacks = ref({});
 
 const handleImageError = (e, productId) => {
@@ -23,9 +42,10 @@ const handleImageError = (e, productId) => {
     if (!target) return;
     if (target.getAttribute('data-fallback') === 'true') return;
     target.setAttribute('data-fallback', 'true');
-    target.src = DEFAULT_SHOE_IMAGE;
+    const fallback = getDeterministicFallback(productId);
+    target.src = fallback;
     if (productId) {
-        imageFallbacks.value[productId] = DEFAULT_SHOE_IMAGE;
+        imageFallbacks.value[productId] = fallback;
     }
 };
 const totalElements = ref(0);
@@ -308,7 +328,7 @@ const getImageUrl = (p) => {
         }
     }
     const resolved = resolveImg(raw);
-    return resolved && !isInvalidImage(resolved) ? resolved : DEFAULT_SHOE_IMAGE;
+    return resolved && !isInvalidImage(resolved) ? resolved : getDeterministicFallback(p.id || p.maSanPham);
 };
 
 const formatPrice = (price) => {
@@ -561,6 +581,13 @@ const closeMobileFilter = () => {
                                 <div class="card-info-wrapper">
                                     <span class="product-brand-badge">{{ p.tenThuongHieu || 'AEROSTRIDE' }}</span>
                                     <h4 class="product-name-title">{{ p.tenSanPham }}</h4>
+                                    <div class="d-flex align-center justify-space-between mb-1 text-caption text-slate-500">
+                                        <span class="d-inline-flex align-center font-weight-bold" style="color: #f59e0b">
+                                            <v-icon size="13" color="amber" class="mr-0.5">mdi-star</v-icon>
+                                            4.9
+                                        </span>
+                                        <span class="text-caption text-grey">Đã bán {{ p.daBan || 28 }}</span>
+                                    </div>
                                     <div class="price-row-block">
                                         <span class="current-price-label">{{ formatPrice(getProductPrice(p)) }}</span>
                                         <span v-if="p.phanTramGiam > 0 && getOldPrice(p)" class="old-price-label">

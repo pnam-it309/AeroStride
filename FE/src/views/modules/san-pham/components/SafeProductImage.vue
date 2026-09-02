@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { getDisplayImageUrl } from '@/utils/imageDisplay';
+import defaultShoeImg from '@/assets/images/products/cat_running.jpg';
 
 const props = defineProps({
     src: {
@@ -9,7 +10,7 @@ const props = defineProps({
     },
     fallbackSrc: {
         type: String,
-        default: ''
+        default: defaultShoeImg
     },
     alt: {
         type: String,
@@ -29,9 +30,9 @@ const imageError = ref(false);
 const resolvedSrc = computed(() => {
     const raw = props.src || '';
     if (!raw || typeof raw !== 'string' || !raw.trim()) {
-        return props.fallbackSrc || '';
+        return props.fallbackSrc || defaultShoeImg;
     }
-    return getDisplayImageUrl(raw) || props.fallbackSrc || '';
+    return getDisplayImageUrl(raw) || props.fallbackSrc || defaultShoeImg;
 });
 const currentSrc = ref(resolvedSrc.value);
 

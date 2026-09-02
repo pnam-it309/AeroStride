@@ -76,6 +76,9 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
                     .hinhAnh(sp.getHinhAnh())
                     .giaBanThapNhat(s != null ? s.getGiaBanThapNhat() : null)
                     .giaBanCaoNhat(s != null ? s.getGiaBanCaoNhat() : null)
+                    .moTa(sp.getMoTaChiTiet())
+                    .moTaNgan(sp.getMoTaChiTiet())
+                    .moTaChiTiet(sp.getMoTaChiTiet())
                     .tongSoLuongTon(s != null ? s.getTongSoLuongTon() : 0L)
                     .build();
         }).collect(Collectors.toList());

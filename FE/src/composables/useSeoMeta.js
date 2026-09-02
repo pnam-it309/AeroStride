@@ -69,9 +69,9 @@ export function useSeoMeta() {
     function setProductSeo(product) {
         if (!product) return;
 
-        const pTitle = product.tenSanPham || 'Sản phẩm';
-        const pDescription = product.moTa
-            ? product.moTa.substring(0, 160)
+        const desc = product.moTaChiTiet || product.moTa || product.moTaNgan;
+        const pDescription = desc
+            ? desc.substring(0, 160)
             : `Mua ${product.tenSanPham} chính hãng tại AeroStride. ${product.tenThuongHieu || ''}. Giao hàng nhanh, đổi trả miễn phí.`;
 
         const firstImage = product.variants?.[0]?.images?.[0]?.duongDanAnh || DEFAULTS.image;

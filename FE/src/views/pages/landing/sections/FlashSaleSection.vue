@@ -3,6 +3,34 @@ import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { dichVuLanding } from '@/services/public/dichVuLanding';
 import { formatCurrency } from '@/utils/formatters';
+import shoe1Img from '@/assets/images/products/cat_running.jpg';
+import shoe2Img from '@/assets/images/products/cat_training.jpg';
+import shoe3Img from '@/assets/images/products/cat_speed.jpg';
+import shoe4Img from '@/assets/images/products/s4.jpg';
+import shoe5Img from '@/assets/images/products/s7.jpg';
+import shoe6Img from '@/assets/images/products/s11.jpg';
+
+const FALLBACK_SHOES = [shoe1Img, shoe2Img, shoe3Img, shoe4Img, shoe5Img, shoe6Img];
+
+const getDeterministicFallback = (id) => {
+    if (!id) return shoe1Img;
+    let hash = 0;
+    const str = String(id);
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+    }
+    const idx = Math.abs(hash) % FALLBACK_SHOES.length;
+    return FALLBACK_SHOES[idx];
+};
+
+const handleImgError = (e, id) => {
+    const target = e?.target || (e && e.tagName ? e : null);
+    if (!target) return;
+    if (target.getAttribute('data-fallback') === 'true') return;
+    target.setAttribute('data-fallback', 'true');
+    target.src = getDeterministicFallback(id);
+};
 
 const router = useRouter();
 
@@ -147,10 +175,13 @@ onBeforeUnmount(() => {
                                 <!-- Thumbnail Box -->
                                 <div class="product-img-wrapper position-relative overflow-hidden">
                                     <v-img
-                                        :src="item.hinhAnh || '/placeholder-shoe.png'"
+                                        :src="item.hinhAnh || getDeterministicFallback(item.idSanPham || item.id)"
                                         height="220"
                                         cover
                                         class="product-img bg-slate-50"
+                                        loading="lazy"
+                                        decoding="async"
+                                        @error="(e) => handleImgError(e, item.idSanPham || item.id)"
                                     >
                                         <template #placeholder>
                                             <div class="d-flex align-center justify-center fill-height bg-slate-100">
