@@ -26,5 +26,24 @@ app.component('AppDatePicker', AppDatePicker);
 
 app.use(vuetify).mount('#app');
 
+// Tự động tải lại trang khi có phiên bản mới làm thay đổi hash chunk JS
+window.addEventListener('vite:preloadError', (event) => {
+    event.preventDefault();
+    window.location.reload();
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason?.message || String(event.reason || '');
+    if (
+        reason.includes('Failed to fetch dynamically imported module') ||
+        reason.includes('Importing a module script failed') ||
+        reason.includes('dynamically imported module')
+    ) {
+        event.preventDefault();
+        console.warn('Phát hiện bản cập nhật ứng dụng mới, tự động tải lại...', event.reason);
+        window.location.reload();
+    }
+});
+
 // Kích hoạt preload các route và component khi trình duyệt rảnh
 initRoutePreloader();
