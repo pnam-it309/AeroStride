@@ -53,15 +53,17 @@ const handleMouseEnter = () => {
 };
 
 // ─── Nav links ────────────────────────────────────────────────────────────────
-const navLinks = [
+const navLinks = computed(() => [
     { label: 'TRANG CHỦ', path: PATH.LANDING },
     { label: 'SẢN PHẨM', path: PATH.SHOES },
     { label: 'GỢI Ý', path: PATH.AI_RECOMMEND },
     { label: 'GIỚI THIỆU', path: '/gioi-thieu' },
     { label: 'TIN TỨC', path: '/tin-tuc' },
     { label: 'LIÊN HỆ', path: '/lien-he' },
-    { label: 'TRA CỨU', path: PATH.TRACK_ORDER }
-];
+    authStore.isLoggedIn
+        ? { label: 'ĐƠN HÀNG', path: PATH.ORDERS }
+        : { label: 'TRA CỨU', path: PATH.TRACK_ORDER }
+]);
 
 // ─── Live search ──────────────────────────────────────────────────────────────
 const searchQuery = ref('');
@@ -285,7 +287,7 @@ onUnmounted(() => {
                     </template>
                     <v-list density="compact" width="180" class="rounded-lg mt-2 border elevation-1">
                         <v-list-item prepend-icon="mdi-account-outline" title="Tài khoản" :to="PATH.PROFILE"></v-list-item>
-                        <v-list-item prepend-icon="mdi-package-variant-closed" title="Đơn mua" :to="PATH.ORDERS"></v-list-item>
+                        <v-list-item prepend-icon="mdi-package-variant-closed" title="Đơn hàng của tôi" :to="PATH.ORDERS"></v-list-item>
                         <v-divider class="my-1"></v-divider>
                         <v-list-item prepend-icon="mdi-logout" title="Đăng xuất" @click="handleLogout" color="error"></v-list-item>
                     </v-list>

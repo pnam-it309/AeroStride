@@ -67,16 +67,9 @@ export const socialAuthService = {
     },
 
     /**
-     * Đăng nhập thật với Google OAuth Popup
+     * Lấy Access Token từ Google Identity Services Popup
      */
-    async loginWithGoogle(customPayload = null) {
-        if (customPayload) {
-            return await dichVuXacThuc.dangNhapSocial({
-                provider: 'GOOGLE',
-                ...customPayload
-            });
-        }
-
+    async getGoogleToken() {
         const googleClientId = this.getGoogleClientId();
         if (!googleClientId) {
             throw new Error('Chưa cấu hình Google Client ID (VITE_GOOGLE_CLIENT_ID).');
@@ -93,7 +86,7 @@ export const socialAuthService = {
                 const client = window.google.accounts.oauth2.initTokenClient({
                     client_id: googleClientId,
                     scope: 'email profile openid',
-                    callback: async (tokenResponse) => {
+                    callback: (tokenResponse) => {
                         if (tokenResponse.error) {
                             if (tokenResponse.error === 'access_denied') {
                                 reject(new Error('Bạn đã hủy đăng nhập Google.'));
@@ -102,21 +95,31 @@ export const socialAuthService = {
                             }
                             return;
                         }
-                        try {
-                            const result = await dichVuXacThuc.dangNhapSocial({
-                                provider: 'GOOGLE',
-                                token: tokenResponse.access_token
-                            });
-                            resolve(result);
-                        } catch (err) {
-                            reject(err);
-                        }
+                        resolve(tokenResponse.access_token);
                     }
                 });
                 client.requestAccessToken({ prompt: 'select_account' });
             } catch (err) {
                 reject(err);
             }
+        });
+    },
+
+    /**
+     * Đăng nhập thật với Google OAuth Popup (fallback)
+     */
+    async loginWithGoogle(customPayload = null) {
+        if (customPayload) {
+            return await dichVuXacThuc.dangNhapSocial({
+                provider: 'GOOGLE',
+                ...customPayload
+            });
+        }
+
+        const token = await this.getGoogleToken();
+        return await dichVuXacThuc.dangNhapSocial({
+            provider: 'GOOGLE',
+            token
         });
     },
 

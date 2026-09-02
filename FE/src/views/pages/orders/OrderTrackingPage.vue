@@ -7,8 +7,10 @@ import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { dichVuDatHang } from '@/services/public/dichVuDatHang';
 import { PATH } from '@/router/routePaths';
 import { useNotifications } from '@/services/notificationService';
+import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const { addNotification } = useNotifications();
 
 const trackingForm = ref({ maHoaDon: '', soDienThoai: '' });
@@ -73,6 +75,19 @@ const handleTrackOrder = async () => {
         <!-- Tracking Form Box -->
         <v-container style="max-width: 700px" class="mt-n8 mb-12 flex-grow-1 position-relative z-index-1">
             <v-card class="elevation-6 rounded-2xl pa-8 bg-white border" style="border-top: 5px solid #1e257c !important">
+                <div v-if="authStore.isLoggedIn" class="d-flex align-center justify-space-between flex-wrap ga-3 pa-4 mb-6 rounded-xl border" style="background: #eef2ff; border-color: #c7d2fe !important">
+                    <div class="d-flex align-center ga-3">
+                        <v-icon color="#1e257c" size="28">mdi-account-check</v-icon>
+                        <div>
+                            <div class="text-subtitle-2 font-weight-bold" style="color: #1e257c">Bạn đang đăng nhập tài khoản</div>
+                            <div class="text-caption text-grey-darken-2">Xem danh sách tất cả đơn hàng đã mua tại Đơn hàng của tôi.</div>
+                        </div>
+                    </div>
+                    <v-btn :to="PATH.ORDERS" variant="flat" style="background: #1e257c; color: white !important" class="text-none font-weight-bold" rounded="pill">
+                        Đến Đơn hàng của tôi
+                    </v-btn>
+                </div>
+
                 <div class="text-center mb-6">
                     <p class="text-body-2 text-slate-600">
                         Vui lòng nhập <strong>Mã đơn hàng</strong> (VD: HD12345) hoặc <strong>Số điện thoại</strong> đã dùng khi đặt hàng.

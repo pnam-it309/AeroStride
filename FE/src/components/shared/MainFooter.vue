@@ -138,7 +138,12 @@
                         <ul class="footer-nav-list list-unstyled d-flex flex-column ga-2.5">
                             <li>
                                 <router-link :to="PATH.ORDERS" class="footer-dark-link">
-                                    Tra cứu đơn hàng của bạn
+                                    Đơn hàng của tôi
+                                </router-link>
+                            </li>
+                            <li>
+                                <router-link :to="PATH.TRACK_ORDER" class="footer-dark-link">
+                                    Tra cứu đơn hàng
                                 </router-link>
                             </li>
                             <li>

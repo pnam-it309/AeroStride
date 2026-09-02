@@ -106,15 +106,23 @@ const handleSocialClick = async (provider) => {
   try {
     if (provider === 'GOOGLE') {
       uiStore.showLoading?.('Đang kết nối tới Google...');
-      await socialAuthService.loginWithGoogle();
-      handleSuccess('Google');
+      const token = await socialAuthService.getGoogleToken();
+      await authStore.socialLogin({
+        provider: 'GOOGLE',
+        token
+      });
+      await handleSuccess('Google');
       return;
     }
 
     if (provider === 'FACEBOOK') {
       uiStore.showLoading?.('Đang kết nối tới Facebook...');
-      await socialAuthService.loginWithFacebook();
-      handleSuccess('Facebook');
+      const result = await socialAuthService.loginWithFacebook();
+      if (result && result.data) {
+        authStore.user = { username: result.data.username, role: result.data.role };
+        authStore.accessToken = result.data.accessToken;
+      }
+      await handleSuccess('Facebook');
       return;
     }
   } catch (err) {
@@ -125,10 +133,13 @@ const handleSocialClick = async (provider) => {
   }
 };
 
-const handleSuccess = (providerName) => {
+const handleSuccess = async (providerName) => {
   if (toastStore && toastStore.showSuccess) {
     toastStore.showSuccess(`Đăng nhập bằng ${providerName} thành công!`);
   }
+  try {
+    await authStore.fetchProfile(true);
+  } catch (e) {}
   emit('login-success', { provider: providerName, user: authStore.user });
   router.push('/');
 };
