@@ -98,7 +98,7 @@ public final class DiscountPriceUtils {
         return getActiveDiscountName(BigDecimal.ZERO, relations);
     }
 
-    /** Lay phan tram giam neu dot giam gia la dang phan tram hoac quy doi tu tien mat. */
+    /** Lay phan tram giam theo dung so % cua dot giam gia (neu la dang phan tram). */
     public static BigDecimal getActiveDiscountPercent(BigDecimal originalPrice, Collection<ChiTietDotGiamGia> relations) {
         BigDecimal basePrice = originalPrice != null ? originalPrice : BigDecimal.ZERO;
         ChiTietDotGiamGia activeRelation = getBestActiveRelation(basePrice, relations);

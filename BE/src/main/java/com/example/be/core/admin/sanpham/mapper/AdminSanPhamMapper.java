@@ -84,10 +84,47 @@ public class AdminSanPhamMapper {
         return toVariantResponse(variant, images, images);
     }
 
+    public ProductVariantResponse toVariantResponseWithThumbnail(ChiTietSanPham variant, String thumbnail) {
+        BigDecimal originalPrice = variant.getGiaBan() != null ? variant.getGiaBan() : BigDecimal.ZERO;
+        BigDecimal discountedPrice = DiscountPriceUtils.calculateDiscountedPrice(originalPrice, variant.getChiTietDotGiamGias());
+        BigDecimal activeDiscountPercent = DiscountPriceUtils.getActiveDiscountPercent(originalPrice, variant.getChiTietDotGiamGias());
+
+        return ProductVariantResponse.builder()
+                .id(variant.getId())
+                .idSanPham(variant.getSanPham() != null ? variant.getSanPham().getId() : null)
+                .maSanPham(variant.getSanPham() != null ? variant.getSanPham().getMa() : null)
+                .tenSanPham(variant.getSanPham() != null ? variant.getSanPham().getTen() : null)
+                .tenSanPhamDayDu(variant.getSanPham() != null 
+                    ? String.format("%s [%s - %s]", 
+                        variant.getSanPham().getTen(), 
+                        variant.getMauSac() != null ? variant.getMauSac().getTen() : "?",
+                        variant.getKichThuoc() != null ? variant.getKichThuoc().getTen() : "?") 
+                    : null)
+                .tenThuongHieu(variant.getSanPham() != null && variant.getSanPham().getThuongHieu() != null ? variant.getSanPham().getThuongHieu().getTen() : null)
+                .tenChatLieu(variant.getSanPham() != null && variant.getSanPham().getChatLieu() != null ? variant.getSanPham().getChatLieu().getTen() : null)
+                .hinhAnh(thumbnail)
+                .maChiTietSanPham(variant.getMaChiTietSanPham())
+                .idMauSac(variant.getMauSac() != null ? variant.getMauSac().getId() : null)
+                .tenMauSac(variant.getMauSac() != null ? variant.getMauSac().getTen() : null)
+                .maMauHex(variant.getMauSac() != null ? variant.getMauSac().getMaMauHex() : null)
+                .idKichThuoc(variant.getKichThuoc() != null ? variant.getKichThuoc().getId() : null)
+                .tenKichThuoc(variant.getKichThuoc() != null ? variant.getKichThuoc().getTen() : null)
+                .giaTriKichThuoc(variant.getKichThuoc() != null ? variant.getKichThuoc().getGiaTriKichThuoc() : null)
+                .soLuong(variant.getSoLuong())
+                .giaGoc(activeDiscountPercent.compareTo(BigDecimal.ZERO) > 0 ? originalPrice : null)
+                .giaBan(discountedPrice)
+                .phanTramGiam(activeDiscountPercent)
+                .trangThai(variant.getTrangThai())
+                .ngayTao(variant.getNgayTao())
+                .ngayCapNhat(variant.getNgayCapNhat())
+                .images(java.util.Collections.emptyList())
+                .build();
+    }
+
     public ProductVariantResponse toVariantResponse(ChiTietSanPham variant, List<ProductVariantImageResponse> allImages, List<ProductVariantImageResponse> responseImages) {
         BigDecimal originalPrice = variant.getGiaBan() != null ? variant.getGiaBan() : BigDecimal.ZERO;
         BigDecimal discountedPrice = DiscountPriceUtils.calculateDiscountedPrice(originalPrice, variant.getChiTietDotGiamGias());
-        BigDecimal activeDiscountPercent = DiscountPriceUtils.getActiveDiscountPercent(variant.getChiTietDotGiamGias());
+        BigDecimal activeDiscountPercent = DiscountPriceUtils.getActiveDiscountPercent(originalPrice, variant.getChiTietDotGiamGias());
 
         String variantImg = null;
         if (allImages != null && !allImages.isEmpty()) {

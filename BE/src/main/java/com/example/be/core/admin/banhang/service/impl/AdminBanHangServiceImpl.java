@@ -861,7 +861,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         if (variant == null) {
             return BigDecimal.ZERO;
         }
-        return DiscountPriceUtils.getActiveDiscountPercent(relationMap.getOrDefault(variant.getId(), List.of()));
+        return DiscountPriceUtils.getActiveDiscountPercent(variant.getGiaBan(), relationMap.getOrDefault(variant.getId(), List.of()));
     }
 
     /** Gom dot giam gia theo id bien the de FE hien thi dung gia va badge giam gia. */

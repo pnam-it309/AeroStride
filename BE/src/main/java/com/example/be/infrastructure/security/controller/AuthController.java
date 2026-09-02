@@ -95,10 +95,10 @@ public class AuthController {
 
         log.info("REGISTER ATTEMPT: account [{}], email [{}]", username, email);
 
-        if (khachHangRepository.existsByTenTaiKhoanIgnoreCase(username) || nhanVienRepository.findByTenTaiKhoan(username).isPresent()) {
+        if (khachHangRepository.existsByTenTaiKhoanIgnoreCase(username)) {
             throw new BusinessException("Tên tài khoản '" + username + "' đã được sử dụng. Vui lòng chọn tên tài khoản khác.");
         }
-        if (khachHangRepository.existsByEmailIgnoreCase(email) || nhanVienRepository.findByEmail(email).isPresent()) {
+        if (khachHangRepository.existsByEmailIgnoreCase(email)) {
             throw new BusinessException("Email '" + email + "' đã tồn tại trong hệ thống. Vui lòng đăng nhập hoặc sử dụng chức năng Đăng nhập bằng Google / Quên mật khẩu.");
         }
         if (!sdt.isBlank() && khachHangRepository.findFirstBySdt(sdt).isPresent()) {

@@ -19,4 +19,11 @@ public interface AdminAnhChiTietSanPhamRepository extends AnhChiTietSanPhamRepos
     List<AnhChiTietSanPham> findAllByChiTietSanPhamIdInAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(List<String> variantIds);
 
     Optional<AnhChiTietSanPham> findFirstByChiTietSanPhamIdAndXoaMemFalseOrderByNgayTaoAsc(String variantId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT a.chiTietSanPham.id AS variantId, a.duongDanAnh AS url, a.hinhAnhDaiDien AS isMain " +
+            "FROM AnhChiTietSanPham a WHERE a.chiTietSanPham.id IN :variantIds AND a.xoaMem = false " +
+            "ORDER BY a.hinhAnhDaiDien DESC, a.ngayTao ASC")
+    List<com.example.be.core.admin.sanpham.model.response.VariantThumbnailProjection> findThumbnailProjectionsByVariantIds(
+            @org.springframework.data.repository.query.Param("variantIds") List<String> variantIds
+    );
 }

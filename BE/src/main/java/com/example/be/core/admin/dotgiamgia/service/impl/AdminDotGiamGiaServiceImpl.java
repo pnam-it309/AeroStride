@@ -239,16 +239,15 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
 
         List<String> ids = variants.stream().map(ChiTietSanPham::getId).toList();
 
-        // 1. Bulk-fetch images trong 1 query duy nhất
-        List<AnhChiTietSanPham> images = anhChiTietSanPhamRepo
-                .findAllByChiTietSanPhamIdInAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(ids);
-
-        java.util.Map<String, List<com.example.be.core.admin.sanpham.model.response.ProductVariantImageResponse>> imageMap = images.stream()
-                .filter(img -> img.getChiTietSanPham() != null)
-                .collect(Collectors.groupingBy(
-                        img -> img.getChiTietSanPham().getId(),
-                        Collectors.mapping(mapper::toVariantImageResponse, Collectors.toList())
-                ));
+        // 1. Bulk-fetch thumbnail trong 1 query projection duy nhat (khong load toan bo entity & base64)
+        List<com.example.be.core.admin.sanpham.model.response.VariantThumbnailProjection> thumbProjections =
+                anhChiTietSanPhamRepo.findThumbnailProjectionsByVariantIds(ids);
+        java.util.Map<String, String> thumbnailMap = new java.util.HashMap<>();
+        for (com.example.be.core.admin.sanpham.model.response.VariantThumbnailProjection p : thumbProjections) {
+            if (p.getVariantId() != null && !thumbnailMap.containsKey(p.getVariantId()) && p.getUrl() != null && !p.getUrl().isBlank()) {
+                thumbnailMap.put(p.getVariantId(), p.getUrl());
+            }
+        }
 
         // 2. Bulk-fetch quan hệ đợt giảm giá trong 1 query duy nhất
         List<ChiTietDotGiamGia> relations = chiTietDotGiamGiaRepo.findAllByChiTietSanPhamIdIn(ids);
@@ -262,8 +261,8 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
         // 3. Map sang response trong memory (0 query phát sinh)
         return variants.stream().map(v -> {
             v.setChiTietDotGiamGias(new java.util.LinkedHashSet<>(relationMap.getOrDefault(v.getId(), java.util.Collections.emptyList())));
-            List<com.example.be.core.admin.sanpham.model.response.ProductVariantImageResponse> imgs = imageMap.getOrDefault(v.getId(), java.util.Collections.emptyList());
-            return mapper.toVariantResponse(v, imgs);
+            String thumb = thumbnailMap.get(v.getId());
+            return mapper.toVariantResponseWithThumbnail(v, thumb);
         }).toList();
     }
 

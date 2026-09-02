@@ -499,16 +499,31 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
         List<String> ids = variants.stream().map(ChiTietSanPham::getId).toList();
 
-        // 1. Bulk-fetch images
-        List<AnhChiTietSanPham> images = adminAnhChiTietSanPhamRepository
-                .findAllByChiTietSanPhamIdInAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(ids);
-        
-        Map<String, List<ProductVariantImageResponse>> imageMap = images.stream()
-                .filter(img -> img.getChiTietSanPham() != null)
-                .collect(Collectors.groupingBy(
-                        img -> img.getChiTietSanPham().getId(),
-                        Collectors.mapping(adminSanPhamMapper::toVariantImageResponse, Collectors.toList())
-                ));
+        Map<String, String> thumbnailMap = new HashMap<>();
+        final Map<String, List<ProductVariantImageResponse>> imageMap;
+
+        if (includeAllImages) {
+            // 1. Bulk-fetch full images only when explicitly requested
+            List<AnhChiTietSanPham> images = adminAnhChiTietSanPhamRepository
+                    .findAllByChiTietSanPhamIdInAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(ids);
+            
+            imageMap = images.stream()
+                    .filter(img -> img.getChiTietSanPham() != null)
+                    .collect(Collectors.groupingBy(
+                            img -> img.getChiTietSanPham().getId(),
+                            Collectors.mapping(adminSanPhamMapper::toVariantImageResponse, Collectors.toList())
+                    ));
+        } else {
+            imageMap = Collections.emptyMap();
+            // 1. Lean thumbnail query: avoid fetching heavy LONGTEXT base64 images into memory
+            List<com.example.be.core.admin.sanpham.model.response.VariantThumbnailProjection> thumbProjections =
+                    adminAnhChiTietSanPhamRepository.findThumbnailProjectionsByVariantIds(ids);
+            for (com.example.be.core.admin.sanpham.model.response.VariantThumbnailProjection p : thumbProjections) {
+                if (p.getVariantId() != null && !thumbnailMap.containsKey(p.getVariantId()) && p.getUrl() != null && !p.getUrl().isBlank()) {
+                    thumbnailMap.put(p.getVariantId(), p.getUrl());
+                }
+            }
+        }
 
         // 2. Bulk-fetch campaign details
         List<ChiTietDotGiamGia> relations = adminChiTietDotGiamGiaRepository.findAllByChiTietSanPhamIdIn(ids);
@@ -522,9 +537,13 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         // 3. Map to responses in memory
         return variants.stream().map(v -> {
             v.setChiTietDotGiamGias(new java.util.LinkedHashSet<>(relationMap.getOrDefault(v.getId(), new ArrayList<>())));
-            List<ProductVariantImageResponse> imgs = imageMap.getOrDefault(v.getId(), new ArrayList<>());
-            List<ProductVariantImageResponse> returnImgs = includeAllImages ? imgs : Collections.emptyList();
-            return adminSanPhamMapper.toVariantResponse(v, imgs, returnImgs);
+            if (includeAllImages) {
+                List<ProductVariantImageResponse> imgs = imageMap.getOrDefault(v.getId(), new ArrayList<>());
+                return adminSanPhamMapper.toVariantResponse(v, imgs, imgs);
+            } else {
+                String thumb = thumbnailMap.get(v.getId());
+                return adminSanPhamMapper.toVariantResponseWithThumbnail(v, thumb);
+            }
         }).toList();
     }
 

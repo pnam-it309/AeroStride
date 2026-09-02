@@ -70,21 +70,10 @@ public class AdminChatServiceImpl implements AdminChatService {
                 .format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
-    private String sanitizeAvatar(String hinhAnh) {
-        if (hinhAnh == null || hinhAnh.trim().isEmpty()) {
-            return DEFAULT_AVATAR;
-        }
-        // Nếu là base64 image dài quá 2KB thì không nhúng thẳng vào danh sách hội thoại để tránh payload 1.35MB
-        if (hinhAnh.startsWith("data:") && hinhAnh.length() > 2048) {
-            return DEFAULT_AVATAR;
-        }
-        return hinhAnh;
-    }
-
     private String getAvatarUrl(CuocHoiThoai c, String currentUsername) {
         if (c.getKhachHang() != null) {
             String hinhAnh = c.getKhachHang().getHinhAnh();
-            return sanitizeAvatar(hinhAnh);
+            return (hinhAnh != null && !hinhAnh.trim().isEmpty()) ? hinhAnh : DEFAULT_AVATAR;
         }
 
         if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
@@ -100,7 +89,7 @@ public class AdminChatServiceImpl implements AdminChatService {
             }
             if (partner != null) {
                 String hinhAnh = partner.getHinhAnh();
-                return sanitizeAvatar(hinhAnh);
+                return (hinhAnh != null && !hinhAnh.trim().isEmpty()) ? hinhAnh : DEFAULT_AVATAR;
             }
         }
         
@@ -314,33 +303,35 @@ public class AdminChatServiceImpl implements AdminChatService {
                 .collect(Collectors.toCollection(ArrayList::new));
 
         // For INTERNAL chat, we want to see ALL staff except current user (as potential new chats)
-        Set<String> existingInternalPartnerIds = allConvs.stream()
-                .filter(c -> CuocHoiThoai.LoaiHoiThoai.INTERNAL.name().equals(c.getLoaiHoiThoai()))
-                .map(AdminChatResponse::getIdNhanVienDoiTac)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        if (type == null || CuocHoiThoai.LoaiHoiThoai.INTERNAL.name().equalsIgnoreCase(type)) {
+            Set<String> existingInternalPartnerIds = allConvs.stream()
+                    .filter(c -> CuocHoiThoai.LoaiHoiThoai.INTERNAL.name().equals(c.getLoaiHoiThoai()))
+                    .map(AdminChatResponse::getIdNhanVienDoiTac)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
 
-        List<AdminChatResponse> allStaff = nhanVienRepository.findAll().stream()
-                .filter(nv -> nv.getTenTaiKhoan() != null && !nv.getTenTaiKhoan().equals(currentUsername))
-                .filter(nv -> !existingInternalPartnerIds.contains(nv.getId()))
-                .map(nv -> AdminChatResponse.builder()
-                        .id("NEW_INTERNAL_" + nv.getId())
-                        .ten(nv.getTen())
-                        .tinNhanCuoi("")
-                        .anhDaiDien(sanitizeAvatar(nv.getHinhAnh()))
-                        .thoiGian("")
-                        .chuaDoc(0)
-                        .daChapNhan(true)
-                        .loaiHoiThoai(CuocHoiThoai.LoaiHoiThoai.INTERNAL.name())
-                        .trangThaiHoiThoai(userPresenceService.isOnline(nv.getTenTaiKhoan()) ? CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name() : CuocHoiThoai.TrangThaiHoiThoai.CLOSED.name())
-                        .idNhanVienDoiTac(nv.getId())
-                        .tenTaiKhoanDoiTac(nv.getTenTaiKhoan())
-                        .vaiTro(VaiTro.isManagementRole(nv) ? "ROLE_QUAN_LY" : "ROLE_NHAN_VIEN")
-                        .timestamp(0L)
-                        .build())
-                .collect(Collectors.toList());
-        
-        allConvs.addAll(allStaff);
+            List<AdminChatResponse> allStaff = nhanVienRepository.findAll().stream()
+                    .filter(nv -> nv.getTenTaiKhoan() != null && !nv.getTenTaiKhoan().equals(currentUsername))
+                    .filter(nv -> !existingInternalPartnerIds.contains(nv.getId()))
+                    .map(nv -> AdminChatResponse.builder()
+                            .id("NEW_INTERNAL_" + nv.getId())
+                            .ten(nv.getTen())
+                            .tinNhanCuoi("")
+                            .anhDaiDien(nv.getHinhAnh() != null && !nv.getHinhAnh().trim().isEmpty() ? nv.getHinhAnh() : DEFAULT_AVATAR)
+                            .thoiGian("")
+                            .chuaDoc(0)
+                            .daChapNhan(true)
+                            .loaiHoiThoai(CuocHoiThoai.LoaiHoiThoai.INTERNAL.name())
+                            .trangThaiHoiThoai(userPresenceService.isOnline(nv.getTenTaiKhoan()) ? CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name() : CuocHoiThoai.TrangThaiHoiThoai.CLOSED.name())
+                            .idNhanVienDoiTac(nv.getId())
+                            .tenTaiKhoanDoiTac(nv.getTenTaiKhoan())
+                            .vaiTro(VaiTro.isManagementRole(nv) ? "ROLE_QUAN_LY" : "ROLE_NHAN_VIEN")
+                            .timestamp(0L)
+                            .build())
+                    .collect(Collectors.toList());
+            
+            allConvs.addAll(allStaff);
+        }
 
         // Apply filters
         return allConvs.stream()

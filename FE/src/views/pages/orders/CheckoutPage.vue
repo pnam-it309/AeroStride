@@ -249,6 +249,10 @@ const originalSubtotal = computed(() =>
 const campaignDiscount = computed(() => Math.max(0, originalSubtotal.value - cartStore.cartTotal));
 
 const campaignDiscountPercent = computed(() => {
+    const discountedItems = cartStore.cartItems.filter((item) => Number(item.phanTramGiam || 0) > 0);
+    if (discountedItems.length > 0) {
+        return Math.max(...discountedItems.map((item) => Number(item.phanTramGiam)));
+    }
     if (originalSubtotal.value === 0) return 0;
     return Math.round((campaignDiscount.value / originalSubtotal.value) * 100);
 });
@@ -1225,7 +1229,7 @@ onUnmounted(() => {
                                         <span class="text-body-2 text-grey-darken-1">Tạm tính ({{ cartStore.cartCount }} sản phẩm)</span>
                                         <span class="text-body-2 font-weight-bold">{{ formatPrice(originalSubtotal) }}</span>
                                     </div>
-                                    <div v-if="campaignDiscount > 0" class="d-flex justify-space-between mb-3">
+                                    <div v-if="campaignDiscountPercent > 0 || campaignDiscount > 0" class="d-flex justify-space-between mb-3">
                                         <span class="text-body-2 text-error">Đợt giảm giá</span>
                                         <span class="text-body-2 font-weight-bold text-error">-{{ campaignDiscountPercent }}%</span>
                                     </div>

@@ -91,12 +91,7 @@ public class SocialAuthService {
             name = "Khách hàng " + ("GOOGLE".equals(provider) ? "Google" : "Facebook");
         }
 
-        // 3. Kiểm tra xem email có thuộc nhân viên không (nhân viên không được dùng luồng khách hàng)
-        if (nhanVienRepository.findByEmail(email).isPresent()) {
-            throw new BusinessException("Email này thuộc tài khoản nhân viên. Vui lòng đăng nhập tại trang quản trị.");
-        }
-
-        // 4. Tìm hoặc tạo mới khách hàng
+        // 3. Tìm hoặc tạo mới khách hàng theo email
         KhachHang khachHang = findOrCreateCustomer(email, name, avatarUrl, provider, providerId);
 
         // 5. Tạo token đăng nhập

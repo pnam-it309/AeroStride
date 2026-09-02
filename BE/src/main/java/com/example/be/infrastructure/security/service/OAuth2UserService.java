@@ -35,25 +35,20 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         String name = oAuth2User.getAttribute("name");
 
         if (email != null) {
-            // Staff accounts are never auto-created via OAuth2
-            boolean isStaff = nhanVienRepository.findByEmail(email).isPresent();
-            if (!isStaff) {
-                // Auto-create customer account if not exists
-                boolean customerExists = khachHangRepository.existsByEmail(email);
-                if (!customerExists) {
-                    KhachHang newKhachHang = KhachHang.builder()
-                            .tenTaiKhoan(email)
-                            .email(email)
-                            .matKhau("") // OAuth2 users don't have a password
-                            .build();
-                    
-                    // Set base class fields not available in Lombok @Builder
-                    newKhachHang.setTen(name != null ? name : "Khách hàng");
-                    newKhachHang.setMa(CodeUtils.generateRandom(KhachHang.class, khachHangRepository::existsByMa));
-                    newKhachHang.setTrangThai(TrangThai.DANG_HOAT_DONG);
-                    
-                    khachHangRepository.save(newKhachHang);
-                }
+            boolean customerExists = khachHangRepository.existsByEmail(email);
+            if (!customerExists) {
+                KhachHang newKhachHang = KhachHang.builder()
+                        .tenTaiKhoan(email)
+                        .email(email)
+                        .matKhau("") // OAuth2 users don't have a password
+                        .build();
+                
+                // Set base class fields not available in Lombok @Builder
+                newKhachHang.setTen(name != null ? name : "Khách hàng");
+                newKhachHang.setMa(CodeUtils.generateRandom(KhachHang.class, khachHangRepository::existsByMa));
+                newKhachHang.setTrangThai(TrangThai.DANG_HOAT_DONG);
+                
+                khachHangRepository.save(newKhachHang);
             }
         }
 

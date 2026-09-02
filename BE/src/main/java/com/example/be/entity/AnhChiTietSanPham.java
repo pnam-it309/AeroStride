@@ -7,7 +7,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "anh_chi_tiet_san_pham")
+@Table(
+        name = "anh_chi_tiet_san_pham",
+        indexes = {
+                @Index(name = "idx_actsp_ctsp_xoa", columnList = "id_chi_tiet_san_pham, xoa_mem")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
