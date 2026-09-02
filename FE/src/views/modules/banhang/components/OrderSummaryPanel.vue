@@ -10,17 +10,22 @@
                     Thông tin thanh toán
                 </h3>
             </div>
-            <div class="d-flex align-center ga-2">
+            <div
+                class="d-flex align-center ga-2 cursor-pointer select-none"
+                style="user-select: none"
+                @click.stop.prevent="$emit('update:isGiaoHang', !isGiaoHang)"
+            >
                 <span class="text-slate-600 font-weight-medium" style="font-size: 12px !important">Giao hàng</span>
                 <v-switch
-                    :model-value="isGiaoHang"
-                    @update:model-value="(val) => $emit('update:isGiaoHang', val)"
+                    :model-value="Boolean(isGiaoHang)"
                     color="primary"
                     hide-details
                     density="compact"
                     inset
+                    readonly
                     class="custom-switch-giao-hang"
                     :class="{ 'is-active': isGiaoHang }"
+                    style="pointer-events: none"
                 />
             </div>
         </div>

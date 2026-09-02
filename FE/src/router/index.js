@@ -4,6 +4,7 @@ import AuthRoutes from './AuthRoutes';
 import { requireAuth, requireGuest } from './guards';
 import { PATH } from './routePaths';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
+import { useUIStore } from '@/stores/ui';
 export const router = createRouter({
     history: createWebHistory(),
     scrollBehavior(to, from, savedPosition) {
@@ -190,6 +191,11 @@ export const router = createRouter({
 
 // Global guard: Customer auth pages (checkout, orders)
 router.beforeEach((to, from, next) => {
+    try {
+        const uiStore = useUIStore();
+        uiStore.startProgress();
+    } catch (e) {}
+
     // SEO: Update document title based on route meta
     if (to.meta.seoTitle) {
         document.title = `${to.meta.seoTitle} | AeroStride`;
@@ -204,6 +210,13 @@ router.beforeEach((to, from, next) => {
     } else {
         next();
     }
+});
+
+router.afterEach(() => {
+    try {
+        const uiStore = useUIStore();
+        uiStore.stopProgress();
+    } catch (e) {}
 });
 
 // Auto-recovery for dynamic module load / chunk MIME type errors

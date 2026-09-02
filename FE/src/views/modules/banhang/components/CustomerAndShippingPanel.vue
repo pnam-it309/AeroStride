@@ -33,7 +33,7 @@
                         size="x-small"
                         variant="outlined"
                         class="navy-clear-btn flex-shrink-0 ml-1"
-                        @click="$emit('remove-customer')"
+                        @click="handleRemoveCustomer"
                     >
                         <v-icon size="15" color="#64748b">mdi-close</v-icon>
                         <v-tooltip activator="parent" location="top">Gỡ khách hàng</v-tooltip>
@@ -634,6 +634,29 @@ const emitShippingChange = () => {
             ward: recipientWard.value
         });
     }, 100);
+};
+
+const handleRemoveCustomer = () => {
+    customerForm.value = {
+        ten: '',
+        sdt: '',
+        email: '',
+        gioiTinh: 'Giới tính',
+        ngaySinh: '',
+        tongDonHang: 0
+    };
+    customerSearch.value = '';
+    customerResults.value = [];
+    recipientName.value = '';
+    recipientPhone.value = '';
+    recipientAddressDetail.value = '';
+    recipientProvince.value = null;
+    recipientDistrict.value = null;
+    recipientWard.value = null;
+    customerAddresses.value = [];
+    selectedAddressId.value = '';
+    emitShippingChange();
+    emit('remove-customer');
 };
 
 const onProvinceChange = async (val) => {

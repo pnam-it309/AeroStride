@@ -165,13 +165,24 @@ const {
     onSelectSuggestedCustomer,
     onCustomerFormUpdate,
     ensureCustomerAndGetId,
-    onRemoveCustomer
+    onRemoveCustomer: baseRemoveCustomer
 } = useCustomerSelect(
     computed(() => orders.value[activeOrderIndex.value] || null),
     (updated) => updateOrderInList(updated),
     (order, autoApply) => refreshBestVoucher(order, autoApply),
     addNotification
 );
+
+const onRemoveCustomer = async () => {
+    recipientName.value = '';
+    recipientPhone.value = '';
+    recipientAddressDetail.value = '';
+    recipientProvince.value = null;
+    recipientDistrict.value = null;
+    recipientWard.value = null;
+    shippingFee.value = 0;
+    await baseRemoveCustomer();
+};
 
 const shippingAddressSelect = ref('Chọn địa chỉ');
 const expectedDeliveryDate = ref('');
@@ -2466,13 +2477,6 @@ const handleVnPayCallbackFromUrl = async () => {
 
 <template>
     <v-container fluid class="pos-wrapper pa-0 position-relative">
-        <v-progress-linear
-            v-if="loading"
-            indeterminate
-            color="primary"
-            height="3"
-            style="position: absolute; top: 0; left: 0; right: 0; z-index: 9999"
-        />
         <div class="pos-shell">
             <header class="pos-header-row d-flex align-center justify-space-between">
                 <div class="d-flex align-center ga-4">

@@ -24,12 +24,39 @@ api.interceptors.request.use(
     (config) => {
         try {
             const uiStore = useUIStore();
+            const method = (config.method || 'get').toLowerCase();
+            const url = config.url || '';
 
-            // Bỏ qua thanh loading/progress bar cho các yêu cầu chat để đảm bảo trải nghiệm real-time mượt mà
-            const isChat = config.url && config.url.includes('/chat');
+            // Không hiển thị thanh bar trên đỉnh cho:
+            // 1. Chat, POS, GHN, sinh mã code
+            // 2. Các truy vấn GET dữ liệu bảng/tìm kiếm/lọc/phân trang/counts (vì AdminTable đã có skeleton & fetching bar cục bộ)
+            const isSilentUrl = url.includes('/chat') ||
+                url.includes('/admin/ban-hang') ||
+                url.includes('/admin/ghn') ||
+                url.includes('/common/code/generate');
 
-            if (config.silent || isChat) {
-                // Không hiển thị loading/progress bar
+            const isTableOrQueryGet = method === 'get' && (
+                url.includes('/phan-trang') ||
+                url.includes('/search') ||
+                url.includes('/counts') ||
+                url.includes('/form-options') ||
+                url.includes('/max-price') ||
+                url.includes('/options') ||
+                url.includes('/thuoc-tinh') ||
+                url.includes('/variants') ||
+                url.includes('/thong-ke') ||
+                url.includes('/dia-chi') ||
+                url.includes('/hien-thi') ||
+                url.includes('/san-pham') ||
+                url.includes('/hoa-don') ||
+                url.includes('/khach-hang') ||
+                url.includes('/nhan-vien') ||
+                url.includes('/dot-giam-gia') ||
+                url.includes('/phieu-giam-gia')
+            );
+
+            if (config.silent || isSilentUrl || isTableOrQueryGet) {
+                // Không kích hoạt progress bar toàn cục
             } else if (config.bigOp) {
                 uiStore.showLoading(config.loadingMessage || 'Đang xử lý...');
             } else {
@@ -48,12 +75,11 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
-        const uiStore = useUIStore();
-        const isChat = error.config?.url && error.config.url.includes('/chat');
-        if (!error.config?.silent && !isChat) {
+        try {
+            const uiStore = useUIStore();
             uiStore.stopProgress();
             uiStore.hideLoading();
-        }
+        } catch (e) {}
         return Promise.reject(error);
     }
 );
