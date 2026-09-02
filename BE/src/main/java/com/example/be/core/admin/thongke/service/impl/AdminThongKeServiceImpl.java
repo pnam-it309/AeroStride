@@ -56,8 +56,8 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         Long tongKhachHang = khachHangRepository.count();
         Long tongSanPham = sanPhamRepository.count();
 
-        // Lấy đủ dữ liệu bán sản phẩm để FE ghép chính xác vào bảng thống kê sản phẩm.
-        List<Object[]> topProdRows = thongKeRepository.getTopProductsData(tuNgayMs, denNgayMs, PageRequest.of(0, 1000));
+        // Lấy top 10 sản phẩm bán chạy nhất cho bảng tổng quan
+        List<Object[]> topProdRows = thongKeRepository.getTopProductsData(tuNgayMs, denNgayMs, PageRequest.of(0, 10));
         List<AdminThongKeResponse.SanPhamBanChay> topProducts = new java.util.ArrayList<>();
         for (Object[] row : topProdRows) {
             topProducts.add(AdminThongKeResponse.SanPhamBanChay.builder()
@@ -118,17 +118,22 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                 ? tongDoanhThu.divide(BigDecimal.valueOf(donHoanThanh), 2, java.math.RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
-        // Chu kỳ doanh thu: Hôm nay, Tuần này, Tháng này, Năm này
+        // Chu kỳ doanh thu: Hôm nay, Tuần này, Tháng này, Năm này (Gộp 1 query duy nhất)
         LocalDate today = LocalDate.now();
-        LocalDate startOfWeek = today.with(java.time.DayOfWeek.MONDAY);
-        LocalDate startOfMonth = today.with(java.time.temporal.TemporalAdjusters.firstDayOfMonth());
-        LocalDate startOfYear = today.with(java.time.temporal.TemporalAdjusters.firstDayOfYear());
+        Long todayStartMs = AccountUtils.parseDateToLong(today.toString(), false);
+        Long todayEndMs = AccountUtils.parseDateToLong(today.toString(), true);
+        Long weekStartMs = AccountUtils.parseDateToLong(today.with(java.time.DayOfWeek.MONDAY).toString(), false);
+        Long monthStartMs = AccountUtils.parseDateToLong(today.with(java.time.temporal.TemporalAdjusters.firstDayOfMonth()).toString(), false);
+        Long yearStartMs = AccountUtils.parseDateToLong(today.with(java.time.temporal.TemporalAdjusters.firstDayOfYear()).toString(), false);
+
+        List<Object[]> cycleRows = thongKeRepository.getAllRevenueCycles(todayStartMs, todayEndMs, weekStartMs, monthStartMs, yearStartMs);
+        Object[] cycleRow = cycleRows != null && !cycleRows.isEmpty() ? cycleRows.get(0) : new Object[8];
 
         List<AdminThongKeResponse.ChuKyDoanhThu> chuKyList = new java.util.ArrayList<>();
-        chuKyList.add(getChuKyStats("Hôm nay", today, today));
-        chuKyList.add(getChuKyStats("Tuần này", startOfWeek, today));
-        chuKyList.add(getChuKyStats("Tháng này", startOfMonth, today));
-        chuKyList.add(getChuKyStats("Năm này", startOfYear, today));
+        chuKyList.add(buildChuKy("Hôm nay", cycleRow[0], cycleRow[1]));
+        chuKyList.add(buildChuKy("Tuần này", cycleRow[2], cycleRow[3]));
+        chuKyList.add(buildChuKy("Tháng này", cycleRow[4], cycleRow[5]));
+        chuKyList.add(buildChuKy("Năm này", cycleRow[6], cycleRow[7]));
 
         return AdminThongKeResponse.builder()
                 .tongDoanhThu(tongDoanhThu != null ? tongDoanhThu : BigDecimal.ZERO)
@@ -157,19 +162,9 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                 .build();
     }
 
-    private AdminThongKeResponse.ChuKyDoanhThu getChuKyStats(String label, LocalDate start, LocalDate end) {
-        Long startMs = AccountUtils.parseDateToLong(start.toString(), false);
-        Long endMs = AccountUtils.parseDateToLong(end.toString(), true);
-        List<Object[]> result = thongKeRepository.getRevenueCycleStats(startMs, endMs);
-        
-        BigDecimal revenue = BigDecimal.ZERO;
-        Long count = 0L;
-        if (result != null && !result.isEmpty()) {
-            Object[] row = result.get(0);
-            revenue = row[0] != null ? new BigDecimal(row[0].toString()) : BigDecimal.ZERO;
-            count = row[1] != null ? Long.parseLong(row[1].toString()) : 0L;
-        }
-        
+    private AdminThongKeResponse.ChuKyDoanhThu buildChuKy(String label, Object revObj, Object countObj) {
+        BigDecimal revenue = revObj != null ? new BigDecimal(revObj.toString()) : BigDecimal.ZERO;
+        Long count = countObj != null ? Long.parseLong(countObj.toString()) : 0L;
         BigDecimal avg = count > 0 
             ? revenue.divide(BigDecimal.valueOf(count), 2, java.math.RoundingMode.HALF_UP)
             : BigDecimal.ZERO;
@@ -190,12 +185,15 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         Long tuNgayMs = AccountUtils.parseDateToLong(tuNgay.toString(), false);
         Long denNgayMs = AccountUtils.parseDateToLong(denNgay.toString(), true);
 
-        // Build Specification dynamically using clean criteria
-        Specification<HoaDon> spec = Specification.where(AdminThongKeSpecification.hasTrangThai(OrderStatus.HOAN_THANH))
-                .and(AdminThongKeSpecification.ngayTaoGreaterOrEqual(tuNgayMs))
-                .and(AdminThongKeSpecification.ngayTaoLessOrEqual(denNgayMs));
-
-        return thongKeRepository.getDoanhThuTheoNgay(spec);
+        List<Object[]> rows = thongKeRepository.getDoanhThuTheoNgayFast(tuNgayMs, denNgayMs);
+        List<AdminThongKeResponse.DoanhThuNgay> result = new java.util.ArrayList<>();
+        for (Object[] row : rows) {
+            String ngay = row[0] != null ? row[0].toString() : "";
+            BigDecimal dt = row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO;
+            Long count = row[2] != null ? Long.parseLong(row[2].toString()) : 0L;
+            result.add(new AdminThongKeResponse.DoanhThuNgay(ngay, dt, count));
+        }
+        return result;
     }
 
     @Override

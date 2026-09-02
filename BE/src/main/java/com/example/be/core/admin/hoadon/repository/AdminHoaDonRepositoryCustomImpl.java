@@ -141,24 +141,21 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
         QHoaDon hd = QHoaDon.hoaDon;
         QKhachHang kh = QKhachHang.khachHang;
         QNhanVien nv = QNhanVien.nhanVien;
-        QDiaChi khdc = QDiaChi.diaChi;
 
         boolean isAsc = !"desc".equalsIgnoreCase(req.getSortDirection());
         BooleanBuilder conditions = buildConditions(req);
 
-        // Use Tuple to avoid problematic Enum-to-Ordinal SQL function translation in projections
+        // Direct DTO fields projection without heavy extra joins
         List<Tuple> tuples = queryFactory
                 .select(
                         hd.id, hd.maHoaDon, hd.ngayTao, kh.ten, kh.sdt,
-                        hd.soDienThoaiNguoiNhan, hd.diaChiNguoiNhan,
-                        khdc.diaChiChiTiet, khdc.phuongXa, khdc.thanhPho, khdc.tinh,
-                        nv.ma, nv.ten,
+                        hd.tenNguoiNhan, hd.soDienThoaiNguoiNhan, hd.diaChiNguoiNhan,
+                        nv.ma, nv.ten, nv.sdt,
                         hd.orderType, hd.deliveryMethod, hd.loaiDon, hd.phiVanChuyen, hd.phiHoanHang,
                         hd.tongTien, hd.tongTienSauGiam, hd.trangThai, hd.ghiChu
                 )
                 .from(hd)
                 .leftJoin(hd.khachHang, kh)
-                .leftJoin(khdc).on(khdc.khachHang.id.eq(kh.id).and(khdc.laMacDinh.eq(true)))
                 .leftJoin(hd.nhanVien, nv)
                 .where(conditions)
                 .orderBy(
@@ -169,23 +166,6 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        com.example.be.entity.NhanVien loggedInNv = null;
-        try {
-            java.util.Optional<String> currentUser = com.example.be.utils.SecurityUtils.getCurrentUserEmail();
-            if (currentUser.isPresent() && nhanVienRepository != null) {
-                loggedInNv = nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(
-                        currentUser.get(), currentUser.get(), currentUser.get(), currentUser.get()
-                ).orElse(null);
-            }
-        } catch (Exception e) {
-            // ignore
-        }
-        final com.example.be.entity.NhanVien currentNv = loggedInNv;
-        final String fallbackMaNv = (currentNv != null && currentNv.getMa() != null) ? currentNv.getMa() : 
-                                    (com.example.be.utils.SecurityUtils.getCurrentUserEmail().orElse("ADMIN")).toUpperCase();
-        final String fallbackTenNv = (currentNv != null && currentNv.getTen() != null) ? currentNv.getTen() : "Quản trị viên";
-        final String fallbackSdtNv = (currentNv != null && currentNv.getSdt() != null && !currentNv.getSdt().trim().isEmpty()) ? currentNv.getSdt() : "0988888888";
-
         List<AdminHoaDonResponse> content = tuples.stream().map(t -> {
             OrderStatus status = t.get(hd.trangThai);
             
@@ -194,47 +174,24 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
             String sdtNv = t.get(nv.sdt);
             String finalSdt = (sdtNhan != null && !sdtNhan.trim().isEmpty()) ? sdtNhan : 
                               (sdtKh != null && !sdtKh.trim().isEmpty()) ? sdtKh : 
-                              (sdtNv != null && !sdtNv.trim().isEmpty()) ? sdtNv : fallbackSdtNv;
+                              (sdtNv != null && !sdtNv.trim().isEmpty()) ? sdtNv : "0988888888";
 
             String maNv = t.get(nv.ma);
             String tenNv = t.get(nv.ten);
             String finalMaNv = (maNv != null && !maNv.trim().isEmpty() && !"Hệ thống".equalsIgnoreCase(maNv)) ? maNv : null;
             String finalTenNv = (tenNv != null && !tenNv.trim().isEmpty() && !"Hệ thống".equalsIgnoreCase(tenNv)) ? tenNv : null;
 
-            String dcNhan = t.get(hd.diaChiNguoiNhan);
-            String finalDiaChi;
-            if (dcNhan != null && !dcNhan.trim().isEmpty()) {
-                finalDiaChi = dcNhan;
-            } else {
-                String ct = t.get(khdc.diaChiChiTiet);
-                String px = t.get(khdc.phuongXa);
-                String tp = t.get(khdc.thanhPho);
-                String tinh = t.get(khdc.tinh);
-                
-                StringBuilder sb = new StringBuilder();
-                if (ct != null && !ct.trim().isEmpty()) sb.append(ct.trim());
-                if (px != null && !px.trim().isEmpty()) {
-                    if (sb.length() > 0) sb.append(", ");
-                    sb.append(px.trim());
-                }
-                if (tp != null && !tp.trim().isEmpty()) {
-                    if (sb.length() > 0) sb.append(", ");
-                    sb.append(tp.trim());
-                }
-                if (tinh != null && !tinh.trim().isEmpty()) {
-                    if (sb.length() > 0) sb.append(", ");
-                    sb.append(tinh.trim());
-                }
-                finalDiaChi = sb.length() > 0 ? sb.toString() : null;
-            }
+            String tenKh = t.get(kh.ten);
+            String tenNhan = t.get(hd.tenNguoiNhan);
+            String finalTenKh = (tenKh != null && !tenKh.isBlank()) ? tenKh : (tenNhan != null && !tenNhan.isBlank()) ? tenNhan : "Khách lẻ";
 
             return AdminHoaDonResponse.builder()
                     .id(t.get(hd.id))
                     .maHoaDon(t.get(hd.maHoaDon))
                     .ngayTao(t.get(hd.ngayTao))
-                    .tenKhachHang(t.get(kh.ten) != null && !t.get(kh.ten).isBlank() ? t.get(kh.ten) : t.get(hd.tenNguoiNhan))
+                    .tenKhachHang(finalTenKh)
                     .soDienThoai(finalSdt)
-                    .diaChiNguoiNhan(finalDiaChi)
+                    .diaChiNguoiNhan(t.get(hd.diaChiNguoiNhan))
                     .maNhanVien(finalMaNv)
                     .tenNhanVien(finalTenNv)
                     .orderType(t.get(hd.orderType) != null
@@ -254,74 +211,23 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                     .tongTienSauGiam(t.get(hd.tongTienSauGiam))
                     .trangThai(status != null ? status.ordinal() : null)
                     .ghiChu(t.get(hd.ghiChu))
+                    .bienThes(java.util.Collections.emptyList())
+                    .details(java.util.Collections.emptyList())
                     .build();
         }).collect(Collectors.toList());
 
-        List<String> hdIds = content.stream().map(AdminHoaDonResponse::getId).collect(Collectors.toList());
-        if (!hdIds.isEmpty()) {
-            QHoaDonChiTiet hdct = QHoaDonChiTiet.hoaDonChiTiet;
-            QChiTietSanPham ctsp = QChiTietSanPham.chiTietSanPham;
-            QSanPham sp = QSanPham.sanPham;
-            QMauSac ms = QMauSac.mauSac;
-            QKichThuoc kt = QKichThuoc.kichThuoc;
-
-            List<Tuple> items = queryFactory
-                    .select(hdct.hoaDon.id, sp.ten, ms.ten, kt.ten, hdct.soLuong, hdct.donGia)
-                    .from(hdct)
-                    .join(hdct.chiTietSanPham, ctsp)
-                    .join(ctsp.sanPham, sp)
-                    .leftJoin(ctsp.mauSac, ms)
-                    .leftJoin(ctsp.kichThuoc, kt)
-                    .where(hdct.hoaDon.id.in(hdIds))
-                    .fetch();
-
-            Map<String, List<String>> itemMap = new HashMap<>();
-            Map<String, List<AdminHoaDonResponse.OrderDetailResponse>> detailsMap = new HashMap<>();
-            for (Tuple item : items) {
-                String hdId = item.get(hdct.hoaDon.id);
-                String spTen = item.get(sp.ten);
-                String msTen = item.get(ms.ten);
-                String ktTen = item.get(kt.ten);
-                Integer sl = item.get(hdct.soLuong);
-                BigDecimal dg = item.get(hdct.donGia);
-
-                StringBuilder sb = new StringBuilder(spTen);
-                if (msTen != null || ktTen != null) {
-                    sb.append(" [");
-                    if (msTen != null) sb.append(msTen);
-                    if (ktTen != null) {
-                        if (msTen != null) sb.append(" - ");
-                        sb.append(ktTen);
-                    }
-                    sb.append("]");
-                }
-                sb.append(" (x").append(sl).append(")");
-
-                itemMap.computeIfAbsent(hdId, k -> new java.util.ArrayList<>()).add(sb.toString());
-                
-                detailsMap.computeIfAbsent(hdId, k -> new java.util.ArrayList<>()).add(
-                    AdminHoaDonResponse.OrderDetailResponse.builder()
-                        .tenSanPham(spTen)
-                        .mauSac(msTen != null ? msTen : "-")
-                        .kichThuoc(ktTen != null ? ktTen : "-")
-                        .soLuong(sl)
-                        .donGia(dg)
-                        .build()
-                );
-            }
-
-            for (AdminHoaDonResponse res : content) {
-                res.setBienThes(itemMap.getOrDefault(res.getId(), java.util.Collections.emptyList()));
-                res.setDetails(detailsMap.getOrDefault(res.getId(), java.util.Collections.emptyList()));
-            }
+        long total;
+        if (pageable.getOffset() == 0 && tuples.size() < pageable.getPageSize()) {
+            total = tuples.size();
+        } else {
+            Long countVal = queryFactory
+                    .select(hd.count())
+                    .from(hd)
+                    .leftJoin(hd.khachHang, kh)
+                    .where(conditions)
+                    .fetchOne();
+            total = countVal != null ? countVal : 0L;
         }
-
-        long total = queryFactory
-                .select(hd.count())
-                .from(hd)
-                .leftJoin(hd.khachHang, kh)
-                .where(conditions)
-                .fetchOne();
 
         return new PageImpl<>(content, pageable, total);
     }

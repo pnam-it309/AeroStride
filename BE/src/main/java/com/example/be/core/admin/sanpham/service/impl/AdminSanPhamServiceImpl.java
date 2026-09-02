@@ -71,12 +71,14 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     // Lấy danh sách biến thể theo ID sản phẩm gốc
     @Override
+    @Transactional(readOnly = true)
     public List<ProductVariantResponse> getVariantsByProductId(String productId) {
         return mapVariants(adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(productId));
     }
 
     // Lấy toàn bộ danh sách biến thể sản phẩm đang hoạt động
     @Override
+    @Transactional(readOnly = true)
     public List<ProductVariantResponse> getAllVariants() {
         return mapVariants(adminChiTietSanPhamRepository.findAllByXoaMemFalse());
     }
@@ -147,6 +149,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     // Lấy danh sách sản phẩm (có phân trang và tìm kiếm theo điều kiện) kết hợp thông tin tồn kho
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<ProductResponse> getProducts(SearchProductRequest request) {
         Specification<SanPham> spec = Specification.where(AdminSanPhamSpecification.notDeleted())
                 .and(AdminSanPhamSpecification.hasKeyword(request.getKeyword()))
@@ -660,8 +663,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     @Override
     public java.math.BigDecimal getMaxPrice() {
-        return adminChiTietSanPhamRepository.findFirstByXoaMemFalseOrderByGiaBanDesc()
-                .map(ChiTietSanPham::getGiaBan)
+        return adminChiTietSanPhamRepository.findMaxGiaBan()
                 .orElse(new java.math.BigDecimal("6500000"));
     }
 

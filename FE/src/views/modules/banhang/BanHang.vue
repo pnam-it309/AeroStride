@@ -252,21 +252,35 @@ const suggestionData = computed(() => {
 });
 
 // Function to fetch product suggestions from database
+let inFlightSuggestionOrderId = null;
+let inFlightSuggestionPromise = null;
 const fetchProductSuggestions = async () => {
-    if (!selectedOrder.value?.id) return;
+    const orderId = selectedOrder.value?.id;
+    if (!orderId) return;
+
+    if (inFlightSuggestionOrderId === orderId && inFlightSuggestionPromise) {
+        return inFlightSuggestionPromise;
+    }
 
     suggestionLoading.value = true;
-    try {
-        const res = await dichVuDonHang.getProductSuggestions(selectedOrder.value.id);
-        productSuggestions.value = res || [];
-        showProductSuggestions.value = productSuggestions.value.length > 0;
-    } catch (e) {
-        console.error('Lỗi khi tải gợi ý sản phẩm:', e);
-        productSuggestions.value = [];
-        showProductSuggestions.value = false;
-    } finally {
-        suggestionLoading.value = false;
-    }
+    inFlightSuggestionOrderId = orderId;
+    inFlightSuggestionPromise = dichVuDonHang.getProductSuggestions(orderId)
+        .then((res) => {
+            productSuggestions.value = res || [];
+            showProductSuggestions.value = productSuggestions.value.length > 0;
+            return res;
+        })
+        .catch((e) => {
+            console.error('Lỗi khi tải gợi ý sản phẩm:', e);
+            productSuggestions.value = [];
+            showProductSuggestions.value = false;
+        })
+        .finally(() => {
+            suggestionLoading.value = false;
+            inFlightSuggestionPromise = null;
+        });
+
+    return inFlightSuggestionPromise;
 };
 
 // Add suggested product to cart
@@ -1212,22 +1226,16 @@ watch(
     }
 );
 
-watch(
-    () => recipientWard.value,
-    async (newVal) => {
-        if (syncingRecipientAddress.value) return;
-        if (newVal && isGiaoHang.value && recipientDistrict.value) {
-            await calculateShippingFee();
-        }
-    }
-);
-
 const isGhnLocationCode = (list, code) => {
     if (!code) return false;
     if (!list || list.length === 0) return true;
     const found = list.find((item) => String(item.code) === String(code));
     return !found || found.source === 'GHN';
 };
+
+let calcFeeDebounceTimer = null;
+let inFlightCalcFeePromise = null;
+let lastCalcFeeParamsKey = '';
 
 async function calculateShippingFee() {
     if (!isGiaoHang.value || isFreeShip.value) return;
@@ -1245,37 +1253,49 @@ async function calculateShippingFee() {
         return;
     }
 
+    const weight = Math.max(200, 200 * (selectedOrderItemCount.value || 1));
+    const feeKey = `${recipientDistrict.value}_${recipientWard.value}_${weight}`;
+    if (feeKey === lastCalcFeeParamsKey && inFlightCalcFeePromise) {
+        return inFlightCalcFeePromise;
+    }
+    lastCalcFeeParamsKey = feeKey;
+
     shippingFeeLoading.value = true;
     shippingFeeError.value = '';
-    const weight = Math.max(200, 200 * (selectedOrderItemCount.value || 1));
-    try {
-        const res = await api.get(`${API_ADMIN.GHN}/fee`, {
-            params: {
-                toDistrictId: recipientDistrict.value,
-                toWardCode: recipientWard.value,
-                weight
-            },
-            silent: true
-        });
-        const total = Number(res?.data?.data?.total || res?.data?.total || res?.data?.data || 0);
-        if (total > 0) {
-            shippingFee.value = total;
-            shippingFeeSource.value = 'GHN';
-            shippingFeeError.value = '';
-        } else {
+    inFlightCalcFeePromise = (async () => {
+        try {
+            const res = await api.get(`${API_ADMIN.GHN}/fee`, {
+                params: {
+                    toDistrictId: recipientDistrict.value,
+                    toWardCode: recipientWard.value,
+                    weight
+                },
+                silent: true
+            });
+            const total = Number(res?.data?.data?.total || res?.data?.total || res?.data?.data || 0);
+            if (total > 0) {
+                shippingFee.value = total;
+                shippingFeeSource.value = 'GHN';
+                shippingFeeError.value = '';
+            } else {
+                shippingFee.value = 30000;
+                shippingFeeSource.value = 'FALLBACK';
+                shippingFeeError.value = '';
+            }
+        } catch (e) {
+            console.error('Failed to calculate shipping fee, fallback to 30.000đ', e);
             shippingFee.value = 30000;
             shippingFeeSource.value = 'FALLBACK';
             shippingFeeError.value = '';
+        } finally {
+            shippingFeeLoading.value = false;
+            inFlightCalcFeePromise = null;
         }
-    } catch (e) {
-        console.error('Failed to calculate shipping fee, fallback to 30.000đ', e);
-        shippingFee.value = 30000;
-        shippingFeeSource.value = 'FALLBACK';
-        shippingFeeError.value = '';
-    } finally {
-        shippingFeeLoading.value = false;
-    }
+    })();
+
+    return inFlightCalcFeePromise;
 }
+
 
 // Tự động tính lại phí ship GHN khi số lượng sản phẩm hoặc địa chỉ thay đổi
 watch([selectedOrderItemCount, () => recipientWard.value, () => recipientDistrict.value, isGiaoHang], () => {

@@ -53,7 +53,6 @@
                     prepend-inner-icon="mdi-magnify"
                     class="navy-input-field w-100"
                     @focus="onFocusCustomerSearch"
-                    @click="onFocusCustomerSearch"
                     autocomplete="off"
                 />
 
@@ -185,74 +184,57 @@
             <div v-if="isGiaoHang" class="shipping-wrapper">
                 <v-card class="pos-navy-card pa-4">
                     <div class="d-flex justify-space-between align-center border-b pb-2 mb-3">
-                        <div class="font-weight-bold text-black" style="font-size: 15px !important">Thông tin nhận hàng</div>
-                        <v-btn
-                            v-if="order?.idKhachHang"
-                            variant="tonal"
-                            color="primary"
-                            size="x-small"
-                            class="text-none font-weight-bold rounded-lg px-2"
-                            @click="showAddressModal = true"
-                        >
-                            <v-icon size="15" class="mr-1">mdi-book-account-outline</v-icon>
-                            Sổ địa chỉ
-                        </v-btn>
-                    </div>
-                    <div class="d-flex flex-column ga-3">
-                        <!-- Toggle / Link cho trường hợp người nhận khác người mua -->
-                        <div class="d-flex align-center justify-space-between text-caption px-1 ga-2">
-                            <div class="d-flex align-center text-slate-800 text-truncate mr-1">
-                                <span class="mr-1 flex-shrink-0">Người nhận:</span>
-                                <strong class="text-black font-weight-bold text-truncate">
-                                    {{ isDifferentRecipient ? (recipientName || 'Người nhận khác') : (customerForm.ten || 'Giống người mua') }}
-                                </strong>
-                                <span v-if="!isDifferentRecipient && customerForm.sdt" class="text-slate-500 ml-1 flex-shrink-0">
-                                    ({{ customerForm.sdt }})
-                                </span>
-                            </div>
+                        <div class="d-flex align-center ga-2 text-truncate">
+                            <div class="font-weight-bold text-black flex-shrink-0" style="font-size: 15px !important">Thông tin nhận hàng</div>
+                            <span class="text-caption text-slate-500 text-truncate font-weight-medium">
+                                ({{ isDifferentRecipient ? (recipientName || 'Người nhận khác') : (customerForm.ten || 'Giống người mua') }})
+                            </span>
+                        </div>
+                        <div class="d-flex align-center ga-1 flex-shrink-0">
                             <v-btn
                                 variant="tonal"
                                 color="primary"
                                 size="x-small"
-                                class="text-none font-weight-bold rounded-lg px-2.5 flex-shrink-0"
+                                class="text-none font-weight-bold rounded-lg px-2"
                                 style="height: 26px !important; min-height: 26px"
                                 @click="isDifferentRecipient = !isDifferentRecipient"
                             >
                                 <v-icon size="13" class="mr-1">
                                     {{ isDifferentRecipient ? 'mdi-account-check-outline' : 'mdi-account-switch-outline' }}
                                 </v-icon>
-                                {{ isDifferentRecipient ? 'Giống người mua' : 'Thay đổi người nhận' }}
+                                {{ isDifferentRecipient ? 'Giống người mua' : 'Đổi người nhận' }}
+                            </v-btn>
+                            <v-btn
+                                v-if="order?.idKhachHang"
+                                variant="tonal"
+                                color="primary"
+                                size="x-small"
+                                class="text-none font-weight-bold rounded-lg px-2"
+                                style="height: 26px !important; min-height: 26px"
+                                @click="showAddressModal = true"
+                            >
+                                <v-icon size="14" class="mr-1">mdi-book-account-outline</v-icon>
+                                Sổ địa chỉ
                             </v-btn>
                         </div>
-
-                        <!-- Trường Tên người nhận & Số điện thoại người nhận (Chỉ hiện khi đổi người nhận khác) -->
-                        <div v-if="isDifferentRecipient" class="d-flex ga-3">
+                    </div>
+                    <div class="d-flex flex-column ga-3">
+                        <!-- Trường Tên người nhận (Chỉ hiện khi đổi người nhận khác) -->
+                        <div v-if="isDifferentRecipient">
                             <v-text-field
                                 v-model="recipientName"
-                                placeholder="Tên người nhận"
+                                placeholder="Tên người nhận hàng"
                                 variant="outlined"
                                 density="compact"
                                 hide-details
                                 maxlength="100"
                                 autocomplete="off"
-                                class="navy-input-field flex-grow-1"
-                                style="width: 50%"
+                                class="navy-input-field w-100"
                                 @input="emitShippingChange"
-                            />
-                            <v-text-field
-                                v-model="recipientPhone"
-                                placeholder="SĐT người nhận"
-                                variant="outlined"
-                                density="compact"
-                                hide-details
-                                maxlength="10"
-                                autocomplete="off"
-                                class="navy-input-field flex-grow-1"
-                                style="width: 50%"
-                                @input="(e) => { recipientPhone = String(e.target.value || '').replace(/\D/g, '').slice(0, 10); emitShippingChange(); }"
                             />
                         </div>
 
+                        <!-- Row 1: Địa chỉ chi tiết -->
                         <v-text-field
                             v-model="recipientAddressDetail"
                             placeholder="Địa chỉ chi tiết (Số nhà, Tên đường...)"
@@ -265,23 +247,21 @@
                             @input="emitShippingChange"
                         />
 
-                        <!-- ĐỊA CHỈ HÀNH CHÍNH (Xếp 2 dòng để hiển thị 100% tên Tỉnh/Huyện/Xã không bị cắt ...) -->
-                        <!-- Dòng 1: Tỉnh / Thành phố (Rộng 100% full width) -->
-                        <v-autocomplete
-                            v-model="recipientProvince"
-                            :items="provincesShip"
-                            item-title="name"
-                            item-value="code"
-                            placeholder="Chọn Tỉnh / Thành phố"
-                            density="compact"
-                            variant="outlined"
-                            hide-details
-                            class="navy-select-field w-100"
-                            @update:modelValue="onProvinceChange"
-                        />
-
-                        <!-- Dòng 2: Quận/Huyện (50%) & Phường/Xã (50%) -->
+                        <!-- Row 2: Tỉnh / Thành phố (50%) & Quận / Huyện (50%) -->
                         <div class="d-flex ga-3">
+                            <v-autocomplete
+                                v-model="recipientProvince"
+                                :items="provincesShip"
+                                item-title="name"
+                                item-value="code"
+                                placeholder="Chọn Tỉnh / Thành phố"
+                                density="compact"
+                                variant="outlined"
+                                hide-details
+                                class="navy-select-field flex-grow-1"
+                                style="width: 50%"
+                                @update:modelValue="onProvinceChange"
+                            />
                             <v-autocomplete
                                 v-model="recipientDistrict"
                                 :items="districtsShip"
@@ -296,6 +276,10 @@
                                 style="width: 50%"
                                 @update:modelValue="onDistrictChange"
                             />
+                        </div>
+
+                        <!-- Row 3: Phường / Xã (50%) & SĐT người nhận (50%) -->
+                        <div class="d-flex ga-3">
                             <v-autocomplete
                                 v-model="recipientWard"
                                 :items="wardsShip"
@@ -309,6 +293,18 @@
                                 class="navy-select-field flex-grow-1"
                                 style="width: 50%"
                                 @update:modelValue="onWardChange"
+                            />
+                            <v-text-field
+                                v-model="recipientPhone"
+                                placeholder="SĐT người nhận"
+                                variant="outlined"
+                                density="compact"
+                                hide-details
+                                maxlength="10"
+                                autocomplete="off"
+                                class="navy-input-field flex-grow-1"
+                                style="width: 50%"
+                                @input="(e) => { recipientPhone = String(e.target.value || '').replace(/\D/g, '').slice(0, 10); emitShippingChange(); }"
                             />
                         </div>
                     </div>
@@ -499,8 +495,10 @@ const applyAddressFromModal = async (addr) => {
 
 const autoFillDefaultAddressIfNeeded = async () => {
     if (!props.isGiaoHang || !props.order?.idKhachHang) return;
-    await fetchCustomerAddresses();
-    if (customerAddresses.value.length === 0) return;
+    if (!customerAddresses.value || customerAddresses.value.length === 0) {
+        await fetchCustomerAddresses();
+    }
+    if (!customerAddresses.value || customerAddresses.value.length === 0) return;
 
     // Tìm địa chỉ mặc định hoặc địa chỉ đầu tiên
     const defaultAddr = customerAddresses.value.find((a) => a.laMacDinh) || customerAddresses.value[0];
@@ -515,7 +513,10 @@ watch(
         if (newKhId) {
             await fetchCustomerAddresses();
             if (props.isGiaoHang) {
-                await autoFillDefaultAddressIfNeeded();
+                const defaultAddr = customerAddresses.value.find((a) => a.laMacDinh) || customerAddresses.value[0];
+                if (defaultAddr) {
+                    await applyAddressFromModal(defaultAddr);
+                }
             }
         } else {
             customerAddresses.value = [];
@@ -553,31 +554,49 @@ watch(isDifferentRecipient, (val) => {
 });
 
 const isLoadingCustomerSearch = ref(false);
+let lastCustomerSearchKw = null;
+let inFlightCustomerSearchPromise = null;
 
-const performCustomerSearch = async (kw = '') => {
-    isLoadingCustomerSearch.value = true;
-    try {
-        const res = await dichVuDonHang.searchKhachHang(kw ? kw.trim() : '');
-        customerResults.value = res || [];
-    } catch (error) {
-        console.error('Lỗi tìm khách hàng:', error);
-        customerResults.value = [];
-    } finally {
-        isLoadingCustomerSearch.value = false;
+const performCustomerSearch = async (kw = '', force = false) => {
+    const cleanKw = kw ? kw.trim() : '';
+    if (!force && lastCustomerSearchKw === cleanKw && inFlightCustomerSearchPromise) {
+        return inFlightCustomerSearchPromise;
     }
+    if (!force && lastCustomerSearchKw === cleanKw && customerResults.value.length > 0) {
+        return;
+    }
+    lastCustomerSearchKw = cleanKw;
+    isLoadingCustomerSearch.value = true;
+
+    inFlightCustomerSearchPromise = (async () => {
+        try {
+            const res = await dichVuDonHang.searchKhachHang(cleanKw);
+            customerResults.value = res || [];
+        } catch (error) {
+            console.error('Lỗi tìm khách hàng:', error);
+            customerResults.value = [];
+        } finally {
+            isLoadingCustomerSearch.value = false;
+            inFlightCustomerSearchPromise = null;
+        }
+    })();
+
+    return inFlightCustomerSearchPromise;
 };
 
-const onFocusCustomerSearch = async () => {
+const onFocusCustomerSearch = () => {
     showCustomerSuggestions.value = true;
-    await performCustomerSearch(customerSearch.value);
+    if (!customerResults.value || customerResults.value.length === 0) {
+        performCustomerSearch(customerSearch.value, false);
+    }
 };
 
 let searchTimeout = null;
 watch(customerSearch, (newVal) => {
     if (searchTimeout) clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(async () => {
-        await performCustomerSearch(newVal);
-    }, 200);
+    searchTimeout = setTimeout(() => {
+        performCustomerSearch(newVal, true);
+    }, 250);
 });
 
 const onSelectSuggestedCustomer = (c) => {

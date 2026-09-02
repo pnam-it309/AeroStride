@@ -22,6 +22,7 @@ const store = useBanHangStore();
 const { addNotification } = useNotifications();
 
 let lastSearchParamsKey = '';
+let inFlightSearchPromise = null;
 
 // Data loading
 const fetchProductSearchResults = async (keyword, force = false) => {
@@ -44,30 +45,39 @@ const fetchProductSearchResults = async (keyword, force = false) => {
         max: maxGia
     });
 
+    if (inFlightSearchPromise && paramsKey === lastSearchParamsKey) {
+        return inFlightSearchPromise;
+    }
+
     if (!force && paramsKey === lastSearchParamsKey && store.productSearchResults?.length > 0) {
         return;
     }
     lastSearchParamsKey = paramsKey;
 
     store.productSearchLoading = true;
-    try {
-        const params = {
-            keyword: (keyword || '').trim(),
-            thuongHieu: store.filterThuongHieu,
-            mucDich: store.filterMucDich,
-            mauSac: store.filterMauSac,
-            kichCo: store.filterKichCo,
-            minGia: minGia,
-            maxGia: maxGia
-        };
-        const res = await dichVuDonHang.searchSanPham(params);
-        const list = Array.isArray(res) ? res : [];
-        store.productSearchResults = list.filter((item) => Number(item.soLuongTon ?? item.soLuong ?? 0) > 0);
-    } catch (e) {
-        console.error('Lỗi khi tải sản phẩm:', e);
-    } finally {
-        store.productSearchLoading = false;
-    }
+    inFlightSearchPromise = (async () => {
+        try {
+            const params = {
+                keyword: (keyword || '').trim(),
+                thuongHieu: store.filterThuongHieu,
+                mucDich: store.filterMucDich,
+                mauSac: store.filterMauSac,
+                kichCo: store.filterKichCo,
+                minGia: minGia,
+                maxGia: maxGia
+            };
+            const res = await dichVuDonHang.searchSanPham(params);
+            const list = Array.isArray(res) ? res : [];
+            store.productSearchResults = list.filter((item) => Number(item.soLuongTon ?? item.soLuong ?? 0) > 0);
+        } catch (e) {
+            console.error('Lỗi khi tải sản phẩm:', e);
+        } finally {
+            store.productSearchLoading = false;
+            inFlightSearchPromise = null;
+        }
+    })();
+
+    return inFlightSearchPromise;
 };
 
 const loadFilterOptions = async (force = false) => {

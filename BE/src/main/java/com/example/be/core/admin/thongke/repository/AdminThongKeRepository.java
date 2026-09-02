@@ -113,16 +113,22 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             SELECT 
                 COALESCE(kh.ten_nguoi_dung, hd.ten_nguoi_nhan, 'Khách lẻ') AS tenKhachHang,
                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) AS tongChi,
-                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN (SELECT COALESCE(SUM(hdct.so_luong), 0) FROM hoa_don_chi_tiet hdct WHERE hdct.id_hoa_don = hd.id) ELSE 0 END), 0) AS tongSanPham,
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN COALESCE(hdct_agg.tong_sp, 0) ELSE 0 END), 0) AS tongSanPham,
                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN 1 ELSE 0 END), 0) AS donThanhCong,
                 COALESCE(SUM(CASE WHEN hd.trang_thai = 6 THEN 1 ELSE 0 END), 0) AS donHoan
             FROM hoa_don hd
             LEFT JOIN khach_hang kh ON hd.id_khach_hang = kh.id
+            LEFT JOIN (
+                SELECT id_hoa_don, SUM(so_luong) AS tong_sp
+                FROM hoa_don_chi_tiet
+                GROUP BY id_hoa_don
+            ) hdct_agg ON hdct_agg.id_hoa_don = hd.id
             WHERE (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
               AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
             GROUP BY kh.id, kh.ten_nguoi_dung, hd.ten_nguoi_nhan
             HAVING COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) > 0
             ORDER BY tongChi DESC
+            LIMIT 10
             """, nativeQuery = true)
     List<Object[]> getCustomerPurchaseStats(
             @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
@@ -132,29 +138,63 @@ public interface AdminThongKeRepository extends HoaDonRepository,
                 nv.ma_nhan_vien AS maNhanVien,
                 nv.ten_nhan_vien AS tenNhanVien,
                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) AS tongDoanhThu,
-                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN (SELECT COALESCE(SUM(hdct.so_luong), 0) FROM hoa_don_chi_tiet hdct WHERE hdct.id_hoa_don = hd.id) ELSE 0 END), 0) AS tongSanPham,
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN COALESCE(hdct_agg.tong_sp, 0) ELSE 0 END), 0) AS tongSanPham,
                 COALESCE(COUNT(hd.id), 0) AS tongDonHang
             FROM nhan_vien nv
             LEFT JOIN hoa_don hd ON hd.id_nhan_vien = nv.id
               AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
               AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+            LEFT JOIN (
+                SELECT id_hoa_don, SUM(so_luong) AS tong_sp
+                FROM hoa_don_chi_tiet
+                GROUP BY id_hoa_don
+            ) hdct_agg ON hdct_agg.id_hoa_don = hd.id
             WHERE nv.xoa_mem = false OR nv.xoa_mem IS NULL
             GROUP BY nv.id, nv.ma_nhan_vien, nv.ten_nhan_vien
+            HAVING COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) > 0
             ORDER BY tongDoanhThu DESC
+            LIMIT 10
             """, nativeQuery = true)
     List<Object[]> getEmployeeRevenueStats(
             @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
     @Query(value = """
             SELECT 
+                COALESCE(SUM(CASE WHEN hd.ngay_tao >= :todayStart AND hd.ngay_tao <= :todayEnd THEN hd.tong_tien ELSE 0 END), 0),
+                SUM(CASE WHEN hd.ngay_tao >= :todayStart AND hd.ngay_tao <= :todayEnd THEN 1 ELSE 0 END),
+                COALESCE(SUM(CASE WHEN hd.ngay_tao >= :weekStart AND hd.ngay_tao <= :todayEnd THEN hd.tong_tien ELSE 0 END), 0),
+                SUM(CASE WHEN hd.ngay_tao >= :weekStart AND hd.ngay_tao <= :todayEnd THEN 1 ELSE 0 END),
+                COALESCE(SUM(CASE WHEN hd.ngay_tao >= :monthStart AND hd.ngay_tao <= :todayEnd THEN hd.tong_tien ELSE 0 END), 0),
+                SUM(CASE WHEN hd.ngay_tao >= :monthStart AND hd.ngay_tao <= :todayEnd THEN 1 ELSE 0 END),
+                COALESCE(SUM(CASE WHEN hd.ngay_tao >= :yearStart AND hd.ngay_tao <= :todayEnd THEN hd.tong_tien ELSE 0 END), 0),
+                SUM(CASE WHEN hd.ngay_tao >= :yearStart AND hd.ngay_tao <= :todayEnd THEN 1 ELSE 0 END)
+            FROM hoa_don hd
+            WHERE hd.trang_thai = 4
+              AND hd.ngay_tao >= :yearStart
+              AND hd.ngay_tao <= :todayEnd
+            """, nativeQuery = true)
+    List<Object[]> getAllRevenueCycles(
+            @Param("todayStart") Long todayStart,
+            @Param("todayEnd") Long todayEnd,
+            @Param("weekStart") Long weekStart,
+            @Param("monthStart") Long monthStart,
+            @Param("yearStart") Long yearStart);
+
+    @Query(value = """
+            SELECT 
+                DATE_FORMAT(FROM_UNIXTIME(hd.ngay_tao / 1000), '%Y-%m-%d') AS ngay,
                 COALESCE(SUM(hd.tong_tien), 0) AS doanhThu,
                 COUNT(hd.id) AS soDon
             FROM hoa_don hd
             WHERE hd.trang_thai = 4
-              AND hd.ngay_tao >= :tuNgay
-              AND hd.ngay_tao <= :denNgay
+              AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
+              AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+            GROUP BY DATE_FORMAT(FROM_UNIXTIME(hd.ngay_tao / 1000), '%Y-%m-%d')
+            ORDER BY ngay ASC
             """, nativeQuery = true)
-    List<Object[]> getRevenueCycleStats(@Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
+    List<Object[]> getDoanhThuTheoNgayFast(
+            @Param("tuNgay") Long tuNgay,
+            @Param("denNgay") Long denNgay);
 
     @Query(value = """
            SELECT sp.ma_san_pham AS ma,

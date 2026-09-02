@@ -82,13 +82,17 @@ watch(() => filters.search, (newVal) => {
 
 let priceSearchTimer = null;
 let searchTimer = null;
+let lastSearchQueryKey = '';
 
 const scheduleSearch = () => {
     if (searchTimer) window.clearTimeout(searchTimer);
     searchTimer = window.setTimeout(() => {
+        const queryKey = JSON.stringify(buildProductFilterParams());
+        if (queryKey === lastSearchQueryKey) return;
+        lastSearchQueryKey = queryKey;
         clearProductSelection();
         reloadProducts();
-    }, 300);
+    }, 450);
 };
 
 const handleSearchInput = (val) => {
@@ -103,7 +107,10 @@ const handleSearchBlur = (event) => {
         event.target.value = event.target.value.trim();
     }
     if (typeof filters.search === 'string') {
-        filters.search = filters.search.trim();
+        const trimmed = filters.search.trim();
+        if (trimmed !== filters.search) {
+            filters.search = trimmed;
+        }
     }
 };
 
@@ -154,6 +161,7 @@ const resetProductFiltersState = () => {
     filters.chatLieu = null;
     pagination.page = 1;
     priceFilterDirty.value = false;
+    lastSearchQueryKey = '';
     clearProductSelection();
 };
 
@@ -206,8 +214,15 @@ const loadFilterOptions = async () => {
     }
 };
 
-// Xử lý sự kiện submit tìm kiếm (khi nhấn Enter/Click nút)
+// Xử lý sự kiện submit tìm kiếm (khi nhấn Enter/Click nút/đổi dropdown)
 const handleSearch = async () => {
+    if (searchTimer) {
+        window.clearTimeout(searchTimer);
+        searchTimer = null;
+    }
+    const queryKey = JSON.stringify(buildProductFilterParams());
+    if (queryKey === lastSearchQueryKey) return;
+    lastSearchQueryKey = queryKey;
     clearProductSelection();
     await reloadProducts();
 };
@@ -228,9 +243,12 @@ const schedulePriceSearch = () => {
     }
 
     priceSearchTimer = window.setTimeout(() => {
+        const queryKey = JSON.stringify(buildProductFilterParams());
+        if (queryKey === lastSearchQueryKey) return;
+        lastSearchQueryKey = queryKey;
         clearProductSelection();
         reloadProducts();
-    }, 300);
+    }, 450);
 };
 
 // <- chỗ này viêt commet để biết mik làm gì đoạn này >

@@ -63,5 +63,8 @@ public interface AdminChiTietSanPhamRepository extends ChiTietSanPhamRepository,
 
     boolean existsByMaChiTietSanPhamIgnoreCaseAndXoaMemFalseAndIdNot(String maChiTietSanPham, String id);
 
+    @org.springframework.data.jpa.repository.Query("SELECT MAX(ct.giaBan) FROM ChiTietSanPham ct WHERE ct.xoaMem = false")
+    Optional<java.math.BigDecimal> findMaxGiaBan();
+
     Optional<ChiTietSanPham> findFirstByXoaMemFalseOrderByGiaBanDesc();
 }

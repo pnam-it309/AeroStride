@@ -157,26 +157,39 @@ const loadProductsToSelect = async (page = 1) => {
     }
 };
 
+const inFlightVariantRequests = new Map();
+
 // Tải biến thể theo yêu cầu (Lazy Load / On-Demand) cho 1 sản phẩm cụ thể
 const loadProductVariants = async (product) => {
+    if (!product || !product.id) return [];
     if (variantsCache.value.has(product.id)) {
         return variantsCache.value.get(product.id);
     }
-    loadingProductVariants.value[product.id] = true;
-    try {
-        const rawVariants = await dichVuBienThe.layBienTheTheoSanPham(product.id);
-        const normalized = (rawVariants || []).map((v) => normalizeVariant(v, product));
-        variantsCache.value.set(product.id, normalized);
-        product.variants = normalized;
-        return normalized;
-    } catch (e) {
-        console.error(`Lỗi khi tải biến thể sản phẩm ${product.id}:`, e);
-        variantsCache.value.set(product.id, []);
-        product.variants = [];
-        return [];
-    } finally {
-        loadingProductVariants.value[product.id] = false;
+    if (inFlightVariantRequests.has(product.id)) {
+        return inFlightVariantRequests.get(product.id);
     }
+
+    loadingProductVariants.value[product.id] = true;
+    const fetchPromise = dichVuBienThe.layBienTheTheoSanPham(product.id)
+        .then((rawVariants) => {
+            const normalized = (rawVariants || []).map((v) => normalizeVariant(v, product));
+            variantsCache.value.set(product.id, normalized);
+            product.variants = normalized;
+            return normalized;
+        })
+        .catch((e) => {
+            console.error(`Lỗi khi tải biến thể sản phẩm ${product.id}:`, e);
+            variantsCache.value.set(product.id, []);
+            product.variants = [];
+            return [];
+        })
+        .finally(() => {
+            inFlightVariantRequests.delete(product.id);
+            loadingProductVariants.value[product.id] = false;
+        });
+
+    inFlightVariantRequests.set(product.id, fetchPromise);
+    return fetchPromise;
 };
 
 // Đóng / mở danh sách biến thể của sản phẩm
@@ -463,10 +476,7 @@ const init = async () => {
         const promises = [
             loadProductsToSelect(1),
             dichVuSanPham.layGiaLonNhat().catch(() => 6500000),
-            dichVuThuongHieu.layThuongHieu({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => []),
-            dichVuMauSac.layMauSac({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => []),
-            dichVuKichThuoc.layKichThuoc({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => []),
-            dichVuChatLieu.layChatLieu({ trangThai: SYSTEM_STATUS.ACTIVE }).catch(() => [])
+            dichVuSanPham.layOptionsForm().catch(() => ({}))
         ];
 
         // Nếu mode Edit/Detail: thêm 2 promise vào batch
@@ -483,22 +493,19 @@ const init = async () => {
 
         const results = await Promise.all(promises);
 
-        // Phân tích kết quả: [0]=productLoad(void), [1]=maxPrice, [2-5]=attributes
+        // Phân tích kết quả: [0]=productLoad(void), [1]=maxPrice, [2]=options
         const maxPrice = results[1];
-        const brandData = results[2];
-        const colorData = results[3];
-        const sizeData = results[4];
-        const materialData = results[5];
+        const options = results[2] || {};
 
         if (maxPrice !== undefined && maxPrice !== null) {
             dynamicMaxPrice.value = Math.max(maxPrice, 50000);
             detailFilters.value.khoangGia = [0, dynamicMaxPrice.value];
         }
 
-        brands.value = (brandData?.content || brandData || []).map((b) => b.ten);
-        colors.value = (colorData?.content || colorData || []).map((c) => c.ten);
-        sizes.value = (sizeData?.content || sizeData || []).map((s) => s.ten);
-        materials.value = (materialData?.content || materialData || []).map((m) => m.ten);
+        brands.value = (options?.thuongHieus || []).map((b) => b.ten);
+        colors.value = (options?.mauSacs || []).map((c) => c.ten);
+        sizes.value = (options?.kichThuocs || []).map((s) => s.ten);
+        materials.value = (options?.chatLieus || []).map((m) => m.ten);
 
         if (isEditMode.value || isDetailView.value) {
             const data = results[6];

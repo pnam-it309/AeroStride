@@ -52,8 +52,10 @@ const {
             sortDirection: p.sortDirection,
             ...(nTrangThai !== null ? { trangThai: nTrangThai } : {})
         };
-        const res = await dichVuHoaDon.layHoaDonPhanTrang(params);
-        await loadCounts();
+        const [res] = await Promise.all([
+            dichVuHoaDon.layHoaDonPhanTrang(params),
+            loadCounts()
+        ]);
 
         // Trả về response để useAdminTable tự động trích xuất content, totalElements và totalPages theo đúng bộ lọc hiện tại
         return res?.data || res;
@@ -100,7 +102,19 @@ const tableHeaders = [
     { text: 'Hành động', width: '100px' }
 ];
 
-const loadCounts = async () => {
+let lastCountParamsKey = '';
+const loadCounts = async (force = false) => {
+    const paramsKey = JSON.stringify({
+        search: (filters.value.search || '').trim(),
+        tuNgay: filters.value.fromDate || '',
+        denNgay: filters.value.toDate || ''
+    });
+
+    if (!force && paramsKey === lastCountParamsKey) {
+        return;
+    }
+    lastCountParamsKey = paramsKey;
+
     try {
         const params = {
             search: filters.value.search || undefined,
@@ -126,6 +140,7 @@ const loadCounts = async () => {
 
 const handleRefresh = async () => {
     isRefreshing.value = true;
+    lastCountParamsKey = '';
     handleReset();
     setTimeout(() => (isRefreshing.value = false), 800);
 };

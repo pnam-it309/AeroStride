@@ -588,11 +588,22 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         prepareRequest(req);
 
         Map<String, Long> counts = new HashMap<>();
-        counts.put("all", repository.countWithFilter(req));
+        long totalAll = 0L;
 
-        repository.countByTrangThai(req).forEach(map -> {
-            counts.put(String.valueOf(map.get("status")), (Long) map.get("count"));
-        });
+        List<Map<String, Object>> statusList = repository.countByTrangThai(req);
+        if (statusList != null) {
+            for (Map<String, Object> map : statusList) {
+                Object status = map.get("status");
+                Long count = (Long) map.get("count");
+                if (count != null) {
+                    totalAll += count;
+                    if (status != null) {
+                        counts.put(String.valueOf(status), count);
+                    }
+                }
+            }
+        }
+        counts.put("all", totalAll);
         return counts;
     }
 

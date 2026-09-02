@@ -186,14 +186,31 @@ const openDatePicker = (event) => {
     }
 };
 
-const init = async () => {
+const loadingCustomers = ref(false);
+
+const loadCustomersIfNeeded = async () => {
+    if (customers.value.length > 0 || loadingCustomers.value) return;
+    loadingCustomers.value = true;
     try {
         const data = await dichVuKhachHang.layTatCaKhachHang();
         customers.value = data?.content || data || [];
     } catch (e) {
-        console.error(e);
+        console.error('Lỗi tải danh sách khách hàng:', e);
+    } finally {
+        loadingCustomers.value = false;
     }
+};
 
+watch(
+    () => form.value.loaiHienThi,
+    (val) => {
+        if (val === 'CA_NHAN') {
+            loadCustomersIfNeeded();
+        }
+    }
+);
+
+const init = async () => {
     if (isEditMode.value || isDetailMode.value) {
         uiStore.startProgress();
         try {
@@ -208,6 +225,9 @@ const init = async () => {
             };
             selectedCustomerIds.value = data.listIdKhachHang || [];
             if (data.soLuong === -1) isInfinite.value = true;
+            if (form.value.loaiHienThi === 'CA_NHAN') {
+                await loadCustomersIfNeeded();
+            }
         } finally {
             uiStore.stopProgress();
         }
@@ -744,13 +764,31 @@ onMounted(init);
                                             {{ formatDate(item.ngayDonHangGanNhat) }}
                                         </td>
                                     </tr>
-                                    <TableEmptyState
-                                        v-if="paginatedCustomers.length === 0"
-                                        :colspan="10"
-                                        text="Không tìm thấy khách hàng nào phù hợp."
-                                    />
                                 </tbody>
                             </table>
+                            <div
+                                v-if="loadingCustomers"
+                                class="py-12 w-100 d-flex flex-column align-center justify-center bg-white border-t"
+                                style="min-height: 220px"
+                            >
+                                <v-progress-circular indeterminate color="primary" size="36" class="mb-3" />
+                                <span class="text-slate-500 font-weight-medium" style="font-size: 13px">Đang tải danh sách khách hàng...</span>
+                            </div>
+                            <div
+                                v-else-if="paginatedCustomers.length === 0"
+                                class="empty-state-wrapper py-12 w-100 d-flex flex-column align-center justify-center bg-white border-t text-center"
+                                style="min-height: 220px"
+                            >
+                                <div
+                                    class="empty-state-icon-box d-flex align-center justify-center rounded-circle mb-3 mx-auto"
+                                    style="width: 56px; height: 56px; background: rgba(241, 245, 249, 0.8); border: 1.5px dashed #cbd5e1"
+                                >
+                                    <v-icon icon="mdi-account-search-outline" size="28" style="color: #94a3b8 !important" />
+                                </div>
+                                <span class="text-slate-600 font-weight-medium text-center" style="font-size: 13px !important; line-height: 1.5">
+                                    Không tìm thấy khách hàng nào phù hợp.
+                                </span>
+                            </div>
                         </div>
 
                         <div class="pagination-footer mt-6">

@@ -61,7 +61,7 @@ const formatDateVN = (dateStr) => {
 };
 
 const generateHourlyDataFromInvoices = async (dailyTotal, dateStr) => {
-    if (!dateStr) {
+    if (!dateStr || !dailyTotal || Number(dailyTotal) <= 0) {
         return { revenue: Array(24).fill(0), customers: Array(24).fill(0) };
     }
     try {
@@ -69,7 +69,7 @@ const generateHourlyDataFromInvoices = async (dailyTotal, dateStr) => {
             tuNgay: dateStr,
             denNgay: dateStr,
             trangThai: 4, // HOAN_THANH
-            size: 1000
+            size: 100
         });
         const invoices = Array.isArray(response) ? response : response?.data?.content || response?.data || response?.content || [];
         const hourlyRevenue = Array(24).fill(0);
@@ -425,6 +425,7 @@ const productPageSizeOptions = [
 ];
 
 const loadBrands = async () => {
+    if (brandOptions.value && brandOptions.value.length > 0) return;
     try {
         const res = await dichVuThuongHieu.layThuongHieu({ size: 100 });
         const list = Array.isArray(res?.content) ? res.content : Array.isArray(res) ? res : [];
@@ -734,13 +735,19 @@ const loadStatistics = async () => {
         const startOfYear = `${selectedYear.value}-01-01`;
         const endOfYear = `${selectedYear.value}-12-31`;
 
-        // Gọi tất cả API song song để nạp dữ liệu tức thì
-        const [overview, dailyData, yearlyOverview] = await Promise.all([
+        // Chỉ gọi layTongQuan 1 lần nếu khoảng ngày chọn chính là cả năm
+        const isFullYear = tuNgay === startOfYear && denNgay === endOfYear;
+        const promises = [
             dichVuThongKe.layTongQuan(tuNgay, denNgay),
             dichVuThongKe.layDoanhThuTheoNgay(startOfYear, endOfYear),
-            dichVuThongKe.layTongQuan(startOfYear, endOfYear),
             fetchProductStats()
-        ]);
+        ];
+        if (!isFullYear) {
+            promises.push(dichVuThongKe.layTongQuan(startOfYear, endOfYear));
+        }
+
+        const [overview, dailyData, prodStats, maybeYearly] = await Promise.all(promises);
+        const yearlyOverview = isFullYear ? overview : maybeYearly;
 
         if (overview) {
             const soldProductQuantity = Array.isArray(overview.topSanPhamBanChay)

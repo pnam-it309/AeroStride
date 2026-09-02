@@ -122,9 +122,21 @@ export const dichVuSanPham = {
         return response.data;
     },
 
-    // Lấy giá lớn nhất
-    async layGiaLonNhat() {
-        const response = await api.get(`${API_ADMIN.SAN_PHAM}/max-price`);
-        return response.data.data;
+    _cachedMaxPrice: null,
+
+    // Lấy giá lớn nhất (có cache)
+    async layGiaLonNhat(forceRefresh = false) {
+        if (!forceRefresh && this._cachedMaxPrice !== null) {
+            return this._cachedMaxPrice;
+        }
+        try {
+            const response = await api.get(`${API_ADMIN.SAN_PHAM}/max-price`);
+            if (response.data?.data) {
+                this._cachedMaxPrice = response.data.data;
+            }
+            return response.data?.data ?? this._cachedMaxPrice;
+        } catch (error) {
+            return 6500000;
+        }
     }
 };

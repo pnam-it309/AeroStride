@@ -5,18 +5,18 @@ import { API_THUOC_TINH } from '@/constants/apiPaths';
 const attributeCache = new Map();
 
 const getWithCache = async (url, params) => {
-    // Nếu có params phân trang / tìm kiếm cụ thể thì không dùng cache danh mục chung
-    const isGenericOptionRequest = !params || (params.size === 1000 && !params.keyword && !params.ten);
-    const cacheKey = isGenericOptionRequest ? url : `${url}?${JSON.stringify(params || {})}`;
+    // Cache các request lấy danh sách thuộc tính không phân trang hoặc có size lớn
+    const isGenericOptionRequest = !params || (!params.keyword && !params.ten && (!params.page || params.size >= 100));
+    const cacheKey = isGenericOptionRequest ? `${url}?generic` : `${url}?${JSON.stringify(params || {})}`;
 
-    if (isGenericOptionRequest && attributeCache.has(cacheKey)) {
+    if (attributeCache.has(cacheKey)) {
         return attributeCache.get(cacheKey);
     }
 
     const response = await api.get(url, { params });
-    const data = response.data.data;
+    const data = response.data?.data ?? response.data;
 
-    if (isGenericOptionRequest && data) {
+    if (data) {
         attributeCache.set(cacheKey, data);
     }
     return data;

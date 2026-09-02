@@ -16,28 +16,43 @@ export function useCustomerSelect(selectedOrder, updateOrderInList, refreshBestV
         tongDonHang: 0
     });
 
-    const searchCustomers = async () => {
+    let lastSearchKw = null;
+    let inFlightSearchPromise = null;
+
+    const searchCustomers = async (force = false) => {
         const kw = customerSearch.value?.trim();
         if (!kw || kw.length < 2) {
             customerResults.value = [];
+            lastSearchKw = null;
             return;
         }
-        customerLoading.value = true;
-        try {
-            const data = await dichVuDonHang.searchKhachHang(kw);
-            customerResults.value = data || [];
-        } catch (e) {
-            console.error(e);
-        } finally {
-            customerLoading.value = false;
+        if (!force && lastSearchKw === kw && inFlightSearchPromise) {
+            return inFlightSearchPromise;
         }
+        if (!force && lastSearchKw === kw && customerResults.value.length > 0) {
+            return;
+        }
+        lastSearchKw = kw;
+        customerLoading.value = true;
+        inFlightSearchPromise = (async () => {
+            try {
+                const data = await dichVuDonHang.searchKhachHang(kw);
+                customerResults.value = data || [];
+            } catch (e) {
+                console.error(e);
+            } finally {
+                customerLoading.value = false;
+                inFlightSearchPromise = null;
+            }
+        })();
+        return inFlightSearchPromise;
     };
 
     let customerDebounce = null;
     watch(customerSearch, () => {
         if (customerDebounce) clearTimeout(customerDebounce);
         customerDebounce = setTimeout(() => {
-            searchCustomers();
+            searchCustomers(true);
         }, 300);
     });
 
