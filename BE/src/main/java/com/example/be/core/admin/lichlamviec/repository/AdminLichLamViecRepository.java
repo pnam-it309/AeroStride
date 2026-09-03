@@ -51,4 +51,7 @@ public interface AdminLichLamViecRepository extends LichLamViecRepository, JpaSp
 
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"nhanVien", "caLam"})
     java.util.Optional<LichLamViec> findFirstByNhanVienIdAndNgayLamAndGioVaoIsNotNullAndGioRaIsNull(String nhanVienId, LocalDate ngayLam);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"nhanVien", "caLam"})
+    java.util.Optional<LichLamViec> findByNhanVienIdAndCaLamIdAndNgayLam(String nhanVienId, String caLamId, LocalDate ngayLam);
 }

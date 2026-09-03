@@ -599,6 +599,9 @@ const statusBarOptions = ref({
         toolbar: {
             show: false
         },
+        animations: {
+            enabled: false
+        },
         fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
     },
     colors: ['#4f939c', '#e39b32', '#16a34a', '#c9473d'],
@@ -809,6 +812,7 @@ const loadStatistics = async () => {
                     labels: brandShares.map((item) => item.name)
                 };
                 donutChartKey.value += 1;
+                statusBarChartKey.value += 1;
 
                 const effectiveCustomers = (overview.topKhachHang && overview.topKhachHang.length > 0)
                     ? overview.topKhachHang
@@ -1020,23 +1024,23 @@ const statusItems = [
 const statusChartItems = computed(() => [
     {
         label: 'Chờ xác nhận',
-        amount: yearlyRevenueStats.value.doanhThuChoXacNhan,
-        count: yearlyRevenueStats.value.donHangChoXacNhan,
+        amount: revenueStats.value.doanhThuChoXacNhan || 0,
+        count: revenueStats.value.donHangChoXacNhan || 0,
         active: true
     },
-    { label: 'Đang giao hàng', amount: yearlyRevenueStats.value.doanhThuDangGiao, count: yearlyRevenueStats.value.donHangDangGiao },
-    { label: 'Đã hoàn thành', amount: yearlyRevenueStats.value.totalRevenue, count: yearlyRevenueStats.value.donHangHoanThanh },
-    { label: 'Đã hủy bỏ', amount: yearlyRevenueStats.value.doanhThuDaHuy, count: yearlyRevenueStats.value.donHangDaHuy }
+    { label: 'Đang giao hàng', amount: revenueStats.value.doanhThuDangGiao || 0, count: revenueStats.value.donHangDangGiao || 0 },
+    { label: 'Đã hoàn thành', amount: revenueStats.value.totalRevenue || 0, count: revenueStats.value.donHangHoanThanh || 0 },
+    { label: 'Đã hủy bỏ', amount: revenueStats.value.doanhThuDaHuy || 0, count: revenueStats.value.donHangDaHuy || 0 }
 ]);
 
 const statusBarSeries = computed(() => [
     {
         name: 'Số đơn',
         data: [
-            Number(yearlyRevenueStats.value.donHangChoXacNhan || 0),
-            Number(yearlyRevenueStats.value.donHangDangGiao || 0),
-            Number(yearlyRevenueStats.value.donHangHoanThanh || 0),
-            Number(yearlyRevenueStats.value.donHangDaHuy || 0)
+            Number(revenueStats.value.donHangChoXacNhan || 0),
+            Number(revenueStats.value.donHangDangGiao || 0),
+            Number(revenueStats.value.donHangHoanThanh || 0),
+            Number(revenueStats.value.donHangDaHuy || 0)
         ]
     }
 ]);
@@ -1387,8 +1391,8 @@ onMounted(async () => {
                                 </div>
                                 <div>
                                     <span>{{ item.title }}</span>
-                                    <strong>{{ formatCurrency(yearlyRevenueStats[item.revenueKey]) }}</strong>
-                                    <small>{{ formatNumber(yearlyRevenueStats[item.orderKey]) }} đơn</small>
+                                    <strong>{{ formatCurrency(revenueStats[item.revenueKey]) }}</strong>
+                                    <small>{{ formatNumber(revenueStats[item.orderKey]) }} đơn</small>
                                 </div>
                             </article>
                         </div>

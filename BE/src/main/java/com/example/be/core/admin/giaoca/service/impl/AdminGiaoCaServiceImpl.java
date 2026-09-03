@@ -97,11 +97,24 @@ public class AdminGiaoCaServiceImpl implements AdminGiaoCaService {
         return mapToResponse(giaoCa);
     }
 
+    private NhanVien resolveNhanVien(String identifier) {
+        if (identifier == null || identifier.trim().isEmpty()) {
+            throw new ResourceNotFoundException("Không tìm thấy thông tin tài khoản nhân viên");
+        }
+        String clean = identifier.trim();
+        if (clean.contains(":")) {
+            clean = clean.substring(clean.indexOf(":") + 1);
+        }
+        final String finalClean = clean;
+        return nhanVienRepository.findCurrentProfileByIdentifier(finalClean)
+                .orElseGet(() -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(finalClean, finalClean, finalClean, finalClean)
+                        .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin nhân viên")));
+    }
+
     @Override
     @Transactional(readOnly = true)
     public AdminGiaoCaResponse getCaHienTai(String username) {
-        NhanVien nhanVien = nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(username, username, username, username)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên"));
+        NhanVien nhanVien = resolveNhanVien(username);
 
         return giaoCaRepository.findGiaoCaHienTai(nhanVien.getId())
                 .map(this::mapToResponse)
@@ -111,8 +124,7 @@ public class AdminGiaoCaServiceImpl implements AdminGiaoCaService {
     @Override
     @Transactional
     public AdminGiaoCaResponse chotCa(String username, AdminChotCaRequest request) {
-        NhanVien nhanVien = nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(username, username, username, username)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên"));
+        NhanVien nhanVien = resolveNhanVien(username);
 
         GiaoCa giaoCa = giaoCaRepository.findGiaoCaHienTai(nhanVien.getId())
                 .orElseThrow(() -> new RuntimeException("Bạn không có ca nào đang mở để chốt."));

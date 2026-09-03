@@ -172,6 +172,28 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         return confirmImport(previewData);
     }
 
+    private LocalDate parseSafeDate(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            throw new RuntimeException("Ngày làm việc không được để trống!");
+        }
+        String clean = dateStr.trim();
+        try {
+            if (clean.contains("T")) {
+                clean = clean.substring(0, clean.indexOf("T"));
+            }
+            if (clean.contains("/")) {
+                return LocalDate.parse(clean, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            }
+            return LocalDate.parse(clean, dateFormatter);
+        } catch (Exception e) {
+            try {
+                return LocalDate.parse(clean);
+            } catch (Exception ex) {
+                throw new RuntimeException("Định dạng ngày không hợp lệ (hỗ trợ yyyy-MM-dd hoặc dd/MM/yyyy)!");
+            }
+        }
+    }
+
     @Override
     @Transactional
     public String addSchedule(LichLamViecRequest request) {
@@ -180,7 +202,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         String ngayStr = request.getNgay();
         String trangThaiStr = request.getTrangThai();
 
-        LocalDate ngayLam = LocalDate.parse(ngayStr);
+        LocalDate ngayLam = parseSafeDate(ngayStr);
         LichLamViec.TrangThaiLichLamViec trangThai = LichLamViec.TrangThaiLichLamViec.CHUA_VAO_CA;
         if (trangThaiStr != null) {
             try {
@@ -195,7 +217,9 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         }
 
         List<CaLam> caLams = caLamRepository.findByXoaMemFalse().stream()
-                .filter(c -> caNames.stream().anyMatch(name -> name.equalsIgnoreCase(c.getTenCa())))
+                .filter(c -> caNames.stream().anyMatch(name ->
+                        name != null && (name.equalsIgnoreCase(c.getTenCa()) || name.equals(c.getId()))
+                ))
                 .toList();
 
         if (caLams.isEmpty()) {
@@ -207,6 +231,11 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         }
 
         List<NhanVien> nhanViens = nhanVienRepository.findAllById(nhanVienIds);
+        if (nhanViens.isEmpty()) {
+            nhanViens = nhanVienRepository.findAll().stream()
+                    .filter(nv -> nhanVienIds.contains(nv.getId()) || nhanVienIds.contains(nv.getMa()) || nhanVienIds.contains(nv.getTenTaiKhoan()))
+                    .toList();
+        }
         if (nhanViens.isEmpty()) {
             throw new RuntimeException("Không tìm thấy nhân viên hợp lệ!");
         }
@@ -226,22 +255,30 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         int scheduleCount = 0;
         for (NhanVien nv : nhanViens) {
             for (CaLam caLam : caLams) {
-                LichLamViec schedule = LichLamViec.builder()
+                Optional<LichLamViec> existing = lichLamViecRepository
+                        .findByNhanVienIdAndCaLamIdAndNgayLam(nv.getId(), caLam.getId(), ngayLam);
+
+                LichLamViec schedule = existing.orElseGet(() -> LichLamViec.builder()
                         .nhanVien(nv)
                         .caLam(caLam)
                         .ngayLam(ngayLam)
-                        .trangThaiLich(trangThai)
-                        .tangCa(tangCa)
-                        .gioBatDauTangCa(gioBatDauTangCa)
-                        .gioKetThucTangCa(gioKetThucTangCa)
-                        .build();
+                        .build());
+
+                schedule.setTrangThaiLich(trangThai);
+                schedule.setTangCa(tangCa);
+                schedule.setGioBatDauTangCa(gioBatDauTangCa);
+                schedule.setGioKetThucTangCa(gioKetThucTangCa);
+                if (schedule.getTrangThai() == null) {
+                    schedule.setTrangThai(TrangThai.DANG_HOAT_DONG);
+                }
                 lichLamViecRepository.save(schedule);
 
                 // Log activity history
                 LichSuHoatDong activity = LichSuHoatDong.builder()
-                        .hanhDong("Tạo lịch làm việc")
-                        .doiTuong("Nhân viên " + nv.getTen() + " (" + nv.getMa() + ") - Ngày " + ngayStr + " (" + caLam.getTenCa() + ")")
+                        .hanhDong(existing.isPresent() ? "Cập nhật lịch làm việc" : "Tạo lịch làm việc")
+                        .doiTuong("Nhân viên " + nv.getTen() + " (" + nv.getMa() + ") - Ngày " + ngayLam + " (" + caLam.getTenCa() + ")")
                         .build();
+                activity.setTrangThai(TrangThai.DANG_HOAT_DONG);
                 lichSuHoatDongRepository.save(activity);
                 scheduleCount++;
             }
@@ -350,7 +387,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         String trangThaiStr = request.getTrangThai();
 
         if (ngayStr != null) {
-            schedule.setNgayLam(LocalDate.parse(ngayStr));
+            schedule.setNgayLam(parseSafeDate(ngayStr));
         }
 
         if (trangThaiStr != null) {
@@ -365,7 +402,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         if (caName != null) {
             final String finalCaName = caName;
             CaLam caLam = caLamRepository.findByXoaMemFalse().stream()
-                    .filter(c -> c.getTenCa().equalsIgnoreCase(finalCaName))
+                    .filter(c -> c.getTenCa().equalsIgnoreCase(finalCaName) || c.getId().equals(finalCaName))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Ca làm việc không tồn tại: " + finalCaName));
             schedule.setCaLam(caLam);
@@ -374,7 +411,10 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         if (nhanVienIds != null && !nhanVienIds.isEmpty()) {
             String firstId = nhanVienIds.get(0);
             NhanVien nv = nhanVienRepository.findById(firstId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với ID: " + firstId));
+                    .orElseGet(() -> nhanVienRepository.findAll().stream()
+                            .filter(n -> firstId.equals(n.getMa()) || firstId.equals(n.getTenTaiKhoan()))
+                            .findFirst()
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với ID: " + firstId)));
             schedule.setNhanVien(nv);
         }
 

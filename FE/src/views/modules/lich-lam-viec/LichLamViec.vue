@@ -1199,6 +1199,8 @@ onMounted(() => {
                     :headers="tableHeaders"
                     :items="paginatedItems"
                     :loading="loading"
+                    :empty-text="isStaff && !isAdmin ? 'Bạn chưa có lịch làm việc nào được phân công' : 'Chưa có lịch làm việc nào phù hợp'"
+                    empty-icon="mdi-calendar-blank-outline"
                     class="elevation-0 border-0"
                     style="border: none !important; box-shadow: none !important; margin-bottom: 0 !important"
                 >
