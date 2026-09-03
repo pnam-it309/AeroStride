@@ -1,0 +1,1 @@
+import{r as f}from"./index-CGzbARND.js";function i(){const e=f(!1);return{isRefreshing:e,handleRefresh:async(a,r=1200)=>{if(!e.value){e.value=!0;try{a&&await a(),await new Promise(s=>setTimeout(s,r))}finally{e.value=!1}}}}}export{i as u};

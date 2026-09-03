@@ -1,0 +1,1 @@
+import{f as i,cY as s}from"./index-CGzbARND.js";let a=null,t=null;const u={async layDanhSachCaLam(e=!1){return!e&&a?a:t||(t=(async()=>{var n;try{const r=await i.get(s.SHIFTS),l=((n=r.data)==null?void 0:n.data)||r.data||[];return a=Array.isArray(l)?l:[],a}finally{t=null}})(),t)},invalidateCache(){a=null}};export{u as d};

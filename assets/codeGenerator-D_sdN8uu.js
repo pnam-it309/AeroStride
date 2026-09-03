@@ -1,0 +1,1 @@
+import{f as r,ba as a}from"./index-CGzbARND.js";const s=async t=>{try{return(await r.get(`${a.CODE_GENERATE}?type=${t}`,{silent:!0})).data}catch(e){return console.error("Lỗi khi tạo mã từ BE",e),""}};export{s as g};
