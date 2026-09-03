@@ -1228,10 +1228,6 @@ onUnmounted(() => {
 
                                 <!-- Price Breakdown -->
                                 <div class="price-breakdown pa-4 mb-4">
-                                    <div class="d-flex justify-space-between mb-3">
-                                        <span class="text-body-2 text-grey-darken-1">Tạm tính ({{ cartStore.cartCount }} sản phẩm)</span>
-                                        <span class="text-body-2 font-weight-bold">{{ formatPrice(originalSubtotal) }}</span>
-                                    </div>
                                     <div v-if="campaignDiscountPercent > 0 || campaignDiscount > 0" class="d-flex justify-space-between mb-3">
                                         <span class="text-body-2 text-error">Đợt giảm giá</span>
                                         <span class="text-body-2 font-weight-bold text-error">-{{ campaignDiscountPercent }}%</span>
@@ -1375,10 +1371,6 @@ onUnmounted(() => {
                         <div class="d-flex justify-space-between text-body-2 mb-2 text-grey-darken-1">
                             <span>Sản phẩm trong đơn:</span>
                             <span class="font-weight-bold text-black">{{ cartStore.cartCount }} sản phẩm</span>
-                        </div>
-                        <div class="d-flex justify-space-between text-body-2 mb-2 text-grey-darken-1">
-                            <span>Tạm tính:</span>
-                            <span>{{ formatPrice(originalSubtotal) }}</span>
                         </div>
                         <div v-if="voucherDiscount > 0" class="d-flex justify-space-between text-body-2 mb-2 text-error font-weight-medium">
                             <span>Giảm giá Voucher:</span>

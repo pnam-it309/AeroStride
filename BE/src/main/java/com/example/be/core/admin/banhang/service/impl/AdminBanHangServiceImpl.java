@@ -1267,6 +1267,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public com.example.be.core.admin.banhang.model.response.AdminBanHangPaymentStatusResponse checkPaymentStatus(String idHoaDon) {
         HoaDon hd = hoaDonRepository.findById(idHoaDon).orElse(null);
         if (hd == null) {
@@ -1278,8 +1279,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         boolean hasPaidTransaction = false;
         String transactionNo = null;
 
-        if (hd.getListsGiaoDichThanhToan() != null) {
-            for (GiaoDichThanhToan gd : hd.getListsGiaoDichThanhToan()) {
+        List<GiaoDichThanhToan> gdList = giaoDichThanhToanRepository.findAllByHoaDon(hd);
+        if (gdList != null) {
+            for (GiaoDichThanhToan gd : gdList) {
                 if (gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG || (gd.getMaGiaoDichNgoai() != null && !gd.getMaGiaoDichNgoai().isBlank())) {
                     hasPaidTransaction = true;
                     transactionNo = gd.getMaGiaoDichNgoai();
