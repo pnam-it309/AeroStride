@@ -772,7 +772,9 @@ const goToEdit = (id) => {
     router.push({ name: 'KhachHangForm', params: { id } });
 };
 
-const getTotalQuantity = (details) => {
+const getTotalQuantity = (details, item) => {
+    if (item && item.tongSoLuong !== undefined && item.tongSoLuong !== null) return item.tongSoLuong;
+    if (item && item.soLuong !== undefined && item.soLuong !== null) return item.soLuong;
     return (details || []).reduce((s, d) => s + (d.soLuong || 0), 0);
 };
 
@@ -1165,7 +1167,7 @@ const updateInvoicePaginationSize = (size) => {
 
                         <!-- Tổng số lượng -->
                         <td class="data-cell text-center" style="font-size: 13px">
-                            {{ getTotalQuantity(item.details) }}
+                            {{ getTotalQuantity(item.details, item) }}
                         </td>
 
                         <!-- Loại hóa đơn -->

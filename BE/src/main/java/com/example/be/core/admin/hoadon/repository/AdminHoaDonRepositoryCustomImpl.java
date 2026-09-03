@@ -167,6 +167,23 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                 .limit(pageable.getPageSize())
                 .fetch();
 
+        List<String> hoaDonIds = tuples.stream().map(t -> t.get(hd.id)).collect(Collectors.toList());
+        Map<String, Integer> totalQuantityMap = new HashMap<>();
+        if (!hoaDonIds.isEmpty()) {
+            QHoaDonChiTiet hdct = QHoaDonChiTiet.hoaDonChiTiet;
+            List<Tuple> qtyTuples = queryFactory
+                    .select(hdct.hoaDon.id, hdct.soLuong.sum())
+                    .from(hdct)
+                    .where(hdct.hoaDon.id.in(hoaDonIds))
+                    .groupBy(hdct.hoaDon.id)
+                    .fetch();
+            for (Tuple qtyT : qtyTuples) {
+                String id = qtyT.get(hdct.hoaDon.id);
+                Number sum = qtyT.get(hdct.soLuong.sum());
+                totalQuantityMap.put(id, sum != null ? sum.intValue() : 0);
+            }
+        }
+
         List<AdminHoaDonResponse> content = tuples.stream().map(t -> {
             OrderStatus status = t.get(hd.trangThai);
             
@@ -186,8 +203,11 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
             String tenNhan = t.get(hd.tenNguoiNhan);
             String finalTenKh = (tenKh != null && !tenKh.isBlank()) ? tenKh : (tenNhan != null && !tenNhan.isBlank()) ? tenNhan : "Khách lẻ";
 
+            String hoaDonId = t.get(hd.id);
+            int totalQty = totalQuantityMap.getOrDefault(hoaDonId, 0);
+
             return AdminHoaDonResponse.builder()
-                    .id(t.get(hd.id))
+                    .id(hoaDonId)
                     .maHoaDon(t.get(hd.maHoaDon))
                     .ngayTao(t.get(hd.ngayTao))
                     .tenKhachHang(finalTenKh)
@@ -211,6 +231,7 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                     .tongTien(t.get(hd.tongTien))
                     .tongTienSauGiam(t.get(hd.tongTienSauGiam))
                     .trangThai(status != null ? status.ordinal() : null)
+                    .tongSoLuong(totalQty)
                     .ghiChu(t.get(hd.ghiChu))
                     .bienThes(java.util.Collections.emptyList())
                     .details(java.util.Collections.emptyList())

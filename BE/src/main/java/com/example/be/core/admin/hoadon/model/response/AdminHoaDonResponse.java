@@ -28,6 +28,7 @@ public class AdminHoaDonResponse {
     private BigDecimal tongTien;
     private BigDecimal tongTienSauGiam;
     private Integer trangThai;
+    private Integer tongSoLuong;
     private String ghiChu;
     private String diaChiNguoiNhan;
     private List<String> bienThes;
