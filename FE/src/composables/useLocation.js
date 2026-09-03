@@ -41,9 +41,9 @@ export function useLocation(options = {}) {
         if (str.includes('hà nội') || str === 'hn') return 'hanoi';
         if (str.includes('đà nẵng') || str === 'dn') return 'danang';
 
-        // Loại bỏ tiền tố viết tắt và tiền tố đầy đủ
+        // Loại bỏ tiền tố viết tắt và tiền tố đầy đủ (kể cả khi không có khoảng cách sau dấu chấm)
         return str
-            .replace(/^(thành phố|tỉnh|quận|huyện|phường|xã|thị xã|thị trấn|tp\.?|t\.?|q\.?|h\.?|x\.?)\s+/gi, '')
+            .replace(/^(thành phố|tỉnh|quận|huyện|phường|xã|thị xã|thị trấn|tp\.?|t\.?|q\.?|h\.?|x\.?|p\.?)\s*/gi, '')
             .replace(/\s+/g, '') // Xóa trắng để so sánh chuỗi dính liền
             .trim();
     };
@@ -268,8 +268,6 @@ export function useLocation(options = {}) {
         }
 
         loadingLocations.value.districts = true;
-        districts.value = [];
-        wards.value = [];
         const selectedProvince = provinces.value.find((p) => String(p.code) === pKey);
 
         const fetchPromise = (async () => {
@@ -325,7 +323,6 @@ export function useLocation(options = {}) {
         }
 
         loadingLocations.value.wards = true;
-        wards.value = [];
         const selectedDistrict = districts.value.find((d) => String(d.code) === dKey);
 
         const fetchPromise = (async () => {

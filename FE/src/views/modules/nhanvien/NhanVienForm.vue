@@ -17,6 +17,8 @@ import axios from 'axios';
 
 import { GIOI_TINH_OPTIONS } from '@/constants/appConstants';
 import { TRANG_THAI_NHAN_VIEN } from '@/constants/nhanVienConstants';
+import { useLocation } from '@/composables/useLocation';
+import { getNameRules } from '@/utils/validators';
 
 const FB_DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
@@ -24,7 +26,6 @@ const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
 const uiStore = useUIStore();
-import { getNameRules } from '@/utils/validators';
 
 
 const saving = ref(false);

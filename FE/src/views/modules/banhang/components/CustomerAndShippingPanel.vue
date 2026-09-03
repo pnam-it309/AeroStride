@@ -443,26 +443,29 @@ const applyAddressFromModal = async (addr) => {
 
         if (matchedProvince) {
             recipientProvince.value = matchedProvince.code;
-            await fetchDistrictsShip(matchedProvince.code);
+            const distList = await fetchDistrictsShip(matchedProvince.code);
+            const currentDistricts = Array.isArray(distList) && distList.length ? distList : districtsShip.value;
 
             let matchedDistrict =
-                districtsShip.value.find((d) => String(d.code) === String(addr.thanhPho)) ||
-                matchLocation(districtsShip.value, addr.thanhPho);
+                currentDistricts.find((d) => String(d.code) === String(addr.thanhPho)) ||
+                matchLocation(currentDistricts, addr.thanhPho);
 
             if (matchedDistrict) {
                 recipientDistrict.value = matchedDistrict.code;
-                await fetchWardsShip(matchedDistrict.code);
+                const wardList = await fetchWardsShip(matchedDistrict.code);
+                const currentWards = Array.isArray(wardList) && wardList.length ? wardList : wardsShip.value;
 
                 let matchedWard =
-                    wardsShip.value.find((w) => String(w.code) === String(addr.phuongXa)) || matchLocation(wardsShip.value, addr.phuongXa);
+                    currentWards.find((w) => String(w.code) === String(addr.phuongXa)) || matchLocation(currentWards, addr.phuongXa);
 
-                recipientWard.value = matchedWard ? matchedWard.code : (wardsShip.value[0]?.code || null);
-            } else if (districtsShip.value.length > 0) {
-                recipientDistrict.value = districtsShip.value[0].code;
-                await fetchWardsShip(districtsShip.value[0].code);
+                recipientWard.value = matchedWard ? matchedWard.code : currentWards[0]?.code || null;
+            } else if (currentDistricts.length > 0) {
+                recipientDistrict.value = currentDistricts[0].code;
+                const wardList = await fetchWardsShip(currentDistricts[0].code);
+                const currentWards = Array.isArray(wardList) && wardList.length ? wardList : wardsShip.value;
                 let matchedWard =
-                    wardsShip.value.find((w) => String(w.code) === String(addr.phuongXa)) || matchLocation(wardsShip.value, addr.phuongXa);
-                recipientWard.value = matchedWard ? matchedWard.code : (wardsShip.value[0]?.code || null);
+                    currentWards.find((w) => String(w.code) === String(addr.phuongXa)) || matchLocation(currentWards, addr.phuongXa);
+                recipientWard.value = matchedWard ? matchedWard.code : currentWards[0]?.code || null;
             } else {
                 recipientDistrict.value = null;
                 recipientWard.value = null;
@@ -724,28 +727,26 @@ watch(
             recipientAddressDetail.value = newShipping.detail || '';
         }
 
-        if (newShipping.province !== recipientProvince.value) {
-            recipientProvince.value = newShipping.province || null;
-            if (newShipping.province) {
-                if (provincesShip.value.length === 0) {
-                    await fetchProvincesShip();
-                }
-                await fetchDistrictsShip(newShipping.province);
-            } else {
-                districtsShip.value = [];
+        if (newShipping.province && newShipping.province !== recipientProvince.value) {
+            recipientProvince.value = newShipping.province;
+            if (provincesShip.value.length === 0) {
+                await fetchProvincesShip();
             }
+            await fetchDistrictsShip(newShipping.province);
+        } else if (!newShipping.province) {
+            recipientProvince.value = null;
+            districtsShip.value = [];
         }
 
-        if (newShipping.district !== recipientDistrict.value) {
-            recipientDistrict.value = newShipping.district || null;
-            if (newShipping.district) {
-                await fetchWardsShip(newShipping.district);
-            } else {
-                wardsShip.value = [];
-            }
+        if (newShipping.district && newShipping.district !== recipientDistrict.value) {
+            recipientDistrict.value = newShipping.district;
+            await fetchWardsShip(newShipping.district);
+        } else if (!newShipping.district) {
+            recipientDistrict.value = null;
+            wardsShip.value = [];
         }
 
-        if (newShipping.ward !== recipientWard.value) {
+        if (newShipping.ward !== undefined) {
             recipientWard.value = newShipping.ward || null;
         }
     },
