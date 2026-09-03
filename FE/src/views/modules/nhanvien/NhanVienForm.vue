@@ -26,15 +26,6 @@ const { addNotification } = useNotifications();
 const uiStore = useUIStore();
 import { getNameRules } from '@/utils/validators';
 
-// Helper to clean location names for better matching
-const cleanName = (s) => {
-    if (!s) return '';
-    return String(s)
-        .toLowerCase()
-        .replace(/^(thành phố|tỉnh|quận|huyện|phường|xã|thị xã|thị trấn|tp\.?|t\.?|q\.?|h\.?|x\.?)\s+/gi, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-};
 
 const saving = ref(false);
 const isEditMode = ref(false);
