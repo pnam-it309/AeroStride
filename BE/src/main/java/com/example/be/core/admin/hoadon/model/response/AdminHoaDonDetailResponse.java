@@ -32,6 +32,7 @@ public class AdminHoaDonDetailResponse {
     private String ghiChu;
     private Long ngayTao;
     private Long ngayCapNhat;
+    private Long ngayThanhToan;
 
     // Hoàn phí
     private Boolean daHoanPhi;     // đã xác nhận hoàn tiền cho khách chưa

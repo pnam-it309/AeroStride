@@ -273,6 +273,22 @@ const canTaoLinkThanhToanLai = computed(() => {
     return !isPaid;
 });
 
+const computedNgayThanhToan = computed(() => {
+    if (!order.value) return null;
+    if (order.value.ngayThanhToan) return order.value.ngayThanhToan;
+    const paidTxn = order.value.listsGiaoDichThanhToan?.find(
+        (gd) => (gd.trangThai === 1 || gd.trangThai === '1' || gd.trangThai === 'NGUNG_HOAT_DONG') && gd.maGiaoDichNgoai
+    );
+    if (paidTxn) {
+        return paidTxn.ngayCapNhat || paidTxn.ngayTao || order.value.ngayCapNhat || order.value.ngayTao;
+    }
+    const currentStatus = order.value.trangThai;
+    if (currentStatus === ORDER_STATUS.HOAN_THANH || currentStatus === ORDER_STATUS_ORDINALS.HOAN_THANH || String(currentStatus) === '4') {
+        return order.value.ngayCapNhat || order.value.ngayTao;
+    }
+    return null;
+});
+
 const handleTaoLinkThanhToanLai = async () => {
     repayLoading.value = true;
     try {
@@ -1201,11 +1217,11 @@ onMounted(() => {
                             <v-col cols="12" sm="8">
                                 <div
                                     class="text-body-2 pa-2 rounded-lg d-flex justify-space-between align-center border font-weight-medium"
-                                    :class="order.ngayThanhToan ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-200'"
+                                    :class="computedNgayThanhToan ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-200'"
                                 >
-                                    <span>{{ order.ngayThanhToan ? formatDateTime(order.ngayThanhToan) : (order.trangThai === 'HOAN_THANH' && order.ngayTao ? formatDateTime(order.ngayTao) : 'Chưa thanh toán') }}</span>
-                                    <v-icon size="16" :class="order.ngayThanhToan || order.trangThai === 'HOAN_THANH' ? 'text-emerald-600' : 'text-slate-400'">
-                                        {{ order.ngayThanhToan || order.trangThai === 'HOAN_THANH' ? 'mdi-check-circle-outline' : 'mdi-clock-alert-outline' }}
+                                    <span>{{ computedNgayThanhToan ? formatDateTime(computedNgayThanhToan) : 'Chưa thanh toán' }}</span>
+                                    <v-icon size="16" :class="computedNgayThanhToan ? 'text-emerald-600' : 'text-slate-400'">
+                                        {{ computedNgayThanhToan ? 'mdi-check-circle-outline' : 'mdi-clock-alert-outline' }}
                                     </v-icon>
                                 </div>
                             </v-col>

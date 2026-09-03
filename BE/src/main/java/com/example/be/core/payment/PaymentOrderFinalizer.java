@@ -56,18 +56,31 @@ public class PaymentOrderFinalizer {
             return;
         }
 
-        String vnpTxnNo = params.get("vnp_TransactionNo");
-        String vnpTxnRef = params.get("vnp_TxnRef");
+        String vnpTxnNo = params != null ? params.get("vnp_TransactionNo") : null;
+        String vnpTxnRef = params != null ? params.get("vnp_TxnRef") : null;
 
         // Cập nhật các giao dịch thanh toán của đơn -> đã thanh toán thành công
-        if (hoaDon.getListsGiaoDichThanhToan() != null) {
-            for (GiaoDichThanhToan gd : hoaDon.getListsGiaoDichThanhToan()) {
+        java.util.List<GiaoDichThanhToan> gdList = giaoDichRepository.findAllByHoaDon(hoaDon);
+        if (gdList != null && !gdList.isEmpty()) {
+            for (GiaoDichThanhToan gd : gdList) {
                 gd.setTrangThai(TrangThai.NGUNG_HOAT_DONG); // quy ước: đã hoàn tất/đã thanh toán
                 gd.setMaGiaoDichNgoai(vnpTxnNo);
                 gd.setMaThamChieu(vnpTxnRef);
                 gd.setGhiChu("Đã thanh toán qua " + PaymentConstants.METHOD_VNPAY + (vnpTxnNo != null ? " - GD: " + vnpTxnNo : ""));
+                gd.setNgayCapNhat(System.currentTimeMillis());
                 giaoDichRepository.save(gd);
             }
+        } else {
+            GiaoDichThanhToan newGd = GiaoDichThanhToan.builder()
+                    .hoaDon(hoaDon)
+                    .soTien(hoaDon.getTongTienSauGiam())
+                    .loaiGiaoDich(PaymentConstants.METHOD_ONLINE)
+                    .trangThai(TrangThai.NGUNG_HOAT_DONG)
+                    .maGiaoDichNgoai(vnpTxnNo)
+                    .maThamChieu(vnpTxnRef)
+                    .ghiChu("Đã thanh toán qua " + PaymentConstants.METHOD_VNPAY + (vnpTxnNo != null ? " - GD: " + vnpTxnNo : ""))
+                    .build();
+            giaoDichRepository.save(newGd);
         }
 
         OrderStatus oldStatus = hoaDon.getTrangThai();
@@ -84,13 +97,16 @@ public class PaymentOrderFinalizer {
             hoaDon.setTrangThai(targetStatus);
 
             // Đơn online trừ kho tại đây (đơn POS đã được trừ kho khi thêm vào giỏ hàng tại quầy)
-            if (isOnlineOrder(hoaDon) && hoaDon.getListsHoaDonChiTiet() != null) {
-                for (HoaDonChiTiet detail : hoaDon.getListsHoaDonChiTiet()) {
-                    ChiTietSanPham ct = detail.getChiTietSanPham();
-                    if (ct != null && detail.getSoLuong() != null) {
-                        int currentStock = ct.getSoLuong() != null ? ct.getSoLuong() : 0;
-                        ct.setSoLuong(Math.max(0, currentStock - detail.getSoLuong()));
-                        chiTietSanPhamRepository.saveAndFlush(ct);
+            if (isOnlineOrder(hoaDon)) {
+                java.util.List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
+                if (details != null) {
+                    for (HoaDonChiTiet detail : details) {
+                        ChiTietSanPham ct = detail.getChiTietSanPham();
+                        if (ct != null && detail.getSoLuong() != null) {
+                            int currentStock = ct.getSoLuong() != null ? ct.getSoLuong() : 0;
+                            ct.setSoLuong(Math.max(0, currentStock - detail.getSoLuong()));
+                            chiTietSanPhamRepository.saveAndFlush(ct);
+                        }
                     }
                 }
             }

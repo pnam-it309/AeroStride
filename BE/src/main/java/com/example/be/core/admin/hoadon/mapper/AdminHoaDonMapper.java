@@ -28,6 +28,7 @@ public interface AdminHoaDonMapper {
     @Mapping(target = "maPhieuGiamGia", expression = "java(hoaDon.getPhieuGiamGia() != null ? hoaDon.getPhieuGiamGia().getMa() : (hoaDon.getPhieuGiamGiaCaNhan() != null ? hoaDon.getPhieuGiamGiaCaNhan().getPhieuGiamGia().getMa() : null))")
     @Mapping(target = "tenPhieuGiamGia", expression = "java(hoaDon.getPhieuGiamGia() != null ? hoaDon.getPhieuGiamGia().getTen() : (hoaDon.getPhieuGiamGiaCaNhan() != null ? hoaDon.getPhieuGiamGiaCaNhan().getPhieuGiamGia().getTen() : null))")
     @Mapping(target = "canHoanPhi", expression = "java(canHoanPhi(hoaDon))")
+    @Mapping(target = "ngayThanhToan", expression = "java(resolveNgayThanhToan(hoaDon))")
     AdminHoaDonDetailResponse toDetailResponse(HoaDon hoaDon);
 
     @Mapping(target = "idCtsp", source = "chiTietSanPham.id")
@@ -152,6 +153,22 @@ public interface AdminHoaDonMapper {
         }
         if (detail.getChiTietSanPham().getChiTietDotGiamGias() != null && !detail.getChiTietSanPham().getChiTietDotGiamGias().isEmpty()) {
             return com.example.be.utils.DiscountPriceUtils.getActiveDiscountName(detail.getChiTietSanPham().getChiTietDotGiamGias());
+        }
+        return null;
+    }
+
+    default Long resolveNgayThanhToan(HoaDon hoaDon) {
+        if (hoaDon == null) return null;
+        if (hoaDon.getListsGiaoDichThanhToan() != null) {
+            for (GiaoDichThanhToan gd : hoaDon.getListsGiaoDichThanhToan()) {
+                if (gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG 
+                        || (gd.getMaGiaoDichNgoai() != null && !gd.getMaGiaoDichNgoai().isBlank())) {
+                    return gd.getNgayCapNhat() != null ? gd.getNgayCapNhat() : gd.getNgayTao();
+                }
+            }
+        }
+        if (hoaDon.getTrangThai() == OrderStatus.HOAN_THANH) {
+            return hoaDon.getNgayCapNhat() != null ? hoaDon.getNgayCapNhat() : hoaDon.getNgayTao();
         }
         return null;
     }
