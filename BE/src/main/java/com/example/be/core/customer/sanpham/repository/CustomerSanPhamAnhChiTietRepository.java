@@ -16,11 +16,18 @@ public interface CustomerSanPhamAnhChiTietRepository extends AnhChiTietSanPhamRe
 
     List<AnhChiTietSanPham> findAllByChiTietSanPhamIdInAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(List<String> variantIds);
 
-    @Query("SELECT ct.sanPham.id, act.duongDanAnh FROM AnhChiTietSanPham act " +
-           "JOIN act.chiTietSanPham ct " +
-           "WHERE ct.sanPham.id IN :sanPhamIds AND (act.xoaMem = false OR act.xoaMem IS NULL) AND (ct.xoaMem = false OR ct.xoaMem IS NULL) " +
-           "ORDER BY act.hinhAnhDaiDien DESC, act.ngayTao ASC")
+    @Query(value = """
+           SELECT ct.id_san_pham, act.duong_dan_anh
+           FROM anh_chi_tiet_san_pham act
+           INNER JOIN chi_tiet_san_pham ct ON act.id_chi_tiet_san_pham = ct.id
+           INNER JOIN (
+               SELECT act_sub.id_chi_tiet_san_pham, MIN(act_sub.id) AS min_act_id
+               FROM anh_chi_tiet_san_pham act_sub
+               WHERE (act_sub.xoa_mem = false OR act_sub.xoa_mem IS NULL)
+               GROUP BY act_sub.id_chi_tiet_san_pham
+           ) sub ON act.id = sub.min_act_id
+           WHERE ct.id_san_pham IN (:sanPhamIds)
+             AND (ct.xoa_mem = false OR ct.xoa_mem IS NULL)
+           """, nativeQuery = true)
     List<Object[]> findFirstVariantImagesBySanPhamIds(@Param("sanPhamIds") Collection<String> sanPhamIds);
 }
-
-

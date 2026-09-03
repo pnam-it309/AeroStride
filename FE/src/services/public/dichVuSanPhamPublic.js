@@ -21,10 +21,22 @@ export const dichVuSanPhamPublic = {
         if (!forceRefresh && cachedFilters) {
             return cachedFilters;
         }
+        if (!forceRefresh) {
+            try {
+                const stored = sessionStorage.getItem('aerostride_cached_filters');
+                if (stored) {
+                    cachedFilters = JSON.parse(stored);
+                    return cachedFilters;
+                }
+            } catch (e) {}
+        }
         const response = await api.get('/customer/san-pham/filters');
         const res = response.data?.data ?? response.data ?? {};
         if (res && Object.keys(res).length > 0) {
             cachedFilters = res;
+            try {
+                sessionStorage.setItem('aerostride_cached_filters', JSON.stringify(res));
+            } catch (e) {}
         }
         return res;
     },

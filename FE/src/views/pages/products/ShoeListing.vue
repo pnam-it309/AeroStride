@@ -568,6 +568,8 @@ const closeMobileFilter = () => {
                                         :src="getImageUrl(p)"
                                         :alt="p.tenSanPham"
                                         class="card-shoe-img"
+                                        loading="lazy"
+                                        decoding="async"
                                         referrerpolicy="no-referrer"
                                         @error="(e) => handleImageError(e, p.id)"
                                     />

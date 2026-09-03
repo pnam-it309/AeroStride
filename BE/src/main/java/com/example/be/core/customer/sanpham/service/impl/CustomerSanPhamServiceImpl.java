@@ -106,9 +106,14 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 customerSanPhamChiTietRepository.summarizeBySanPhamIds(ids).stream()
                         .collect(Collectors.toMap(CustomerProductVariantStats::getSanPhamId, s -> s));
 
+        List<String> idsMissingImage = page.getContent().stream()
+                .filter(sp -> sp.getHinhAnh() == null || sp.getHinhAnh().trim().isEmpty())
+                .map(SanPham::getId)
+                .toList();
+
         Map<String, String> firstVariantImages = new java.util.HashMap<>();
-        if (!ids.isEmpty()) {
-            List<Object[]> variantImages = customerSanPhamAnhChiTietRepository.findFirstVariantImagesBySanPhamIds(ids);
+        if (!idsMissingImage.isEmpty()) {
+            List<Object[]> variantImages = customerSanPhamAnhChiTietRepository.findFirstVariantImagesBySanPhamIds(idsMissingImage);
             for (Object[] row : variantImages) {
                 String spId = (String) row[0];
                 String imgUrl = (String) row[1];

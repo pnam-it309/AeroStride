@@ -16,16 +16,16 @@ public interface AdminThongKeRepository extends HoaDonRepository,
 
     @Query(value = """
             SELECT 
-                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0),
+                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0),
                  COUNT(hd.id),
                  SUM(CASE WHEN hd.trang_thai = 4 THEN 1 ELSE 0 END),
                  SUM(CASE WHEN hd.trang_thai = 0 THEN 1 ELSE 0 END),
                  SUM(CASE WHEN hd.trang_thai = 3 THEN 1 ELSE 0 END),
                  SUM(CASE WHEN hd.trang_thai = 5 AND (hd.order_type = 'ONLINE' OR (hd.order_type IS NULL AND hd.id_nhan_vien IS NULL AND (hd.loai_don = 'ONLINE' OR hd.loai_don IS NULL))) THEN 1 ELSE 0 END),
                  SUM(CASE WHEN hd.trang_thai = 6 THEN 1 ELSE 0 END),
-                 COALESCE(SUM(CASE WHEN hd.trang_thai = 0 THEN hd.tong_tien ELSE 0 END), 0),
-                 COALESCE(SUM(CASE WHEN hd.trang_thai = 3 THEN hd.tong_tien ELSE 0 END), 0),
-                 COALESCE(SUM(CASE WHEN hd.trang_thai = 5 AND (hd.order_type = 'ONLINE' OR (hd.order_type IS NULL AND hd.id_nhan_vien IS NULL AND (hd.loai_don = 'ONLINE' OR hd.loai_don IS NULL))) THEN hd.tong_tien ELSE 0 END), 0)
+                 COALESCE(SUM(CASE WHEN hd.trang_thai = 0 THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0),
+                 COALESCE(SUM(CASE WHEN hd.trang_thai = 3 THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0),
+                 COALESCE(SUM(CASE WHEN hd.trang_thai = 5 AND (hd.order_type = 'ONLINE' OR (hd.order_type IS NULL AND hd.id_nhan_vien IS NULL AND (hd.loai_don = 'ONLINE' OR hd.loai_don IS NULL))) THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0)
             FROM hoa_don hd
             WHERE (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
             AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
@@ -38,7 +38,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
                     hd.order_type = 'IN_STORE'
                     OR (hd.order_type IS NULL AND hd.loai_don IN ('TAI_QUAY', 'OFFLINE', 'GIAO_HANG'))
                     OR (hd.order_type IS NULL AND hd.loai_don IS NULL AND hd.id_nhan_vien IS NOT NULL)
-                ) THEN hd.tong_tien ELSE 0 END), 0),
+                ) THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0),
                 SUM(CASE WHEN hd.trang_thai = 4 AND (
                     hd.order_type = 'IN_STORE'
                     OR (hd.order_type IS NULL AND hd.loai_don IN ('TAI_QUAY', 'OFFLINE', 'GIAO_HANG'))
@@ -48,7 +48,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
                     hd.order_type = 'ONLINE'
                     OR (hd.order_type IS NULL AND hd.loai_don = 'ONLINE')
                     OR (hd.order_type IS NULL AND hd.loai_don IS NULL AND hd.id_nhan_vien IS NULL)
-                ) THEN hd.tong_tien ELSE 0 END), 0),
+                ) THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0),
                 SUM(CASE WHEN hd.trang_thai = 4 AND (
                     hd.order_type = 'ONLINE'
                     OR (hd.order_type IS NULL AND hd.loai_don = 'ONLINE')
@@ -112,7 +112,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
     @Query(value = """
             SELECT 
                 COALESCE(kh.ten_nguoi_dung, hd.ten_nguoi_nhan, 'Khách lẻ') AS tenKhachHang,
-                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) AS tongChi,
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0) AS tongChi,
                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hdct.so_luong ELSE 0 END), 0) AS tongSanPham,
                 COALESCE(COUNT(DISTINCT CASE WHEN hd.trang_thai = 4 THEN hd.id END), 0) AS donThanhCong,
                 COALESCE(COUNT(DISTINCT CASE WHEN hd.trang_thai = 6 THEN hd.id END), 0) AS donHoan
@@ -122,7 +122,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             WHERE (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
               AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
             GROUP BY kh.id, kh.ten_nguoi_dung, hd.ten_nguoi_nhan
-            HAVING COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) > 0
+            HAVING COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0) > 0
             ORDER BY tongChi DESC
             LIMIT 10
             """, nativeQuery = true)
@@ -133,7 +133,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             SELECT 
                 nv.ma_nhan_vien AS maNhanVien,
                 nv.ten_nhan_vien AS tenNhanVien,
-                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) AS tongDoanhThu,
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0) AS tongDoanhThu,
                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hdct.so_luong ELSE 0 END), 0) AS tongSanPham,
                 COALESCE(COUNT(DISTINCT hd.id), 0) AS tongDonHang
             FROM nhan_vien nv
@@ -143,7 +143,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             LEFT JOIN hoa_don_chi_tiet hdct ON hdct.id_hoa_don = hd.id
             WHERE nv.xoa_mem = false OR nv.xoa_mem IS NULL
             GROUP BY nv.id, nv.ma_nhan_vien, nv.ten_nhan_vien
-            HAVING COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) > 0
+            HAVING COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0) > 0
             ORDER BY tongDoanhThu DESC
             LIMIT 10
             """, nativeQuery = true)
@@ -152,13 +152,13 @@ public interface AdminThongKeRepository extends HoaDonRepository,
 
     @Query(value = """
             SELECT 
-                COALESCE(SUM(CASE WHEN hd.ngay_tao >= :todayStart AND hd.ngay_tao <= :todayEnd THEN hd.tong_tien ELSE 0 END), 0),
+                COALESCE(SUM(CASE WHEN hd.ngay_tao >= :todayStart AND hd.ngay_tao <= :todayEnd THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0),
                 SUM(CASE WHEN hd.ngay_tao >= :todayStart AND hd.ngay_tao <= :todayEnd THEN 1 ELSE 0 END),
-                COALESCE(SUM(CASE WHEN hd.ngay_tao >= :weekStart AND hd.ngay_tao <= :todayEnd THEN hd.tong_tien ELSE 0 END), 0),
+                COALESCE(SUM(CASE WHEN hd.ngay_tao >= :weekStart AND hd.ngay_tao <= :todayEnd THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0),
                 SUM(CASE WHEN hd.ngay_tao >= :weekStart AND hd.ngay_tao <= :todayEnd THEN 1 ELSE 0 END),
-                COALESCE(SUM(CASE WHEN hd.ngay_tao >= :monthStart AND hd.ngay_tao <= :todayEnd THEN hd.tong_tien ELSE 0 END), 0),
+                COALESCE(SUM(CASE WHEN hd.ngay_tao >= :monthStart AND hd.ngay_tao <= :todayEnd THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0),
                 SUM(CASE WHEN hd.ngay_tao >= :monthStart AND hd.ngay_tao <= :todayEnd THEN 1 ELSE 0 END),
-                COALESCE(SUM(CASE WHEN hd.ngay_tao >= :yearStart AND hd.ngay_tao <= :todayEnd THEN hd.tong_tien ELSE 0 END), 0),
+                COALESCE(SUM(CASE WHEN hd.ngay_tao >= :yearStart AND hd.ngay_tao <= :todayEnd THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0),
                 SUM(CASE WHEN hd.ngay_tao >= :yearStart AND hd.ngay_tao <= :todayEnd THEN 1 ELSE 0 END)
             FROM hoa_don hd
             WHERE hd.trang_thai = 4
@@ -175,7 +175,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
     @Query(value = """
             SELECT 
                 DATE_FORMAT(FROM_UNIXTIME(hd.ngay_tao / 1000), '%Y-%m-%d') AS ngay,
-                COALESCE(SUM(hd.tong_tien), 0) AS doanhThu,
+                COALESCE(SUM(GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0))), 0) AS doanhThu,
                 COUNT(hd.id) AS soDon
             FROM hoa_don hd
             WHERE hd.trang_thai = 4
