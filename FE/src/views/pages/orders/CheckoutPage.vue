@@ -1545,17 +1545,6 @@ onUnmounted(() => {
                         </v-btn>
 
                         <v-btn
-                            block
-                            color="#005BAA"
-                            class="mb-3 rounded-lg text-white font-weight-bold"
-                            height="48"
-                            :loading="vnpayDialog.checking"
-                            @click="onConfirmPaidOnline"
-                        >
-                            XÁC NHẬN ĐÃ THANH TOÁN
-                        </v-btn>
-
-                        <v-btn
                             variant="text"
                             color="grey-darken-1"
                             block
