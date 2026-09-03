@@ -204,9 +204,9 @@ public class LichLamViecServiceImpl implements LichLamViecService {
 
         LocalDate ngayLam = parseSafeDate(ngayStr);
         LichLamViec.TrangThaiLichLamViec trangThai = LichLamViec.TrangThaiLichLamViec.CHUA_VAO_CA;
-        if (trangThaiStr != null) {
+        if (trangThaiStr != null && !trangThaiStr.trim().isEmpty()) {
             try {
-                trangThai = LichLamViec.TrangThaiLichLamViec.valueOf(trangThaiStr);
+                trangThai = LichLamViec.TrangThaiLichLamViec.valueOf(trangThaiStr.trim().toUpperCase());
             } catch (Exception e) {
                 // Ignore
             }
@@ -216,10 +216,14 @@ public class LichLamViecServiceImpl implements LichLamViecService {
             throw new RuntimeException("Danh sách ca làm không được để trống!");
         }
 
-        List<CaLam> caLams = caLamRepository.findByXoaMemFalse().stream()
-                .filter(c -> caNames.stream().anyMatch(name ->
-                        name != null && (name.equalsIgnoreCase(c.getTenCa()) || name.equals(c.getId()))
-                ))
+        List<CaLam> allShifts = caLamRepository.findByXoaMemFalse();
+        List<CaLam> caLams = allShifts.stream()
+                .filter(c -> caNames.stream().anyMatch(name -> {
+                    if (name == null) return false;
+                    String trimmed = name.trim();
+                    return trimmed.equalsIgnoreCase(c.getTenCa() != null ? c.getTenCa().trim() : "") ||
+                            trimmed.equals(c.getId());
+                }))
                 .toList();
 
         if (caLams.isEmpty()) {
@@ -230,12 +234,17 @@ public class LichLamViecServiceImpl implements LichLamViecService {
             throw new RuntimeException("Danh sách nhân viên không được để trống!");
         }
 
-        List<NhanVien> nhanViens = nhanVienRepository.findAllById(nhanVienIds);
-        if (nhanViens.isEmpty()) {
-            nhanViens = nhanVienRepository.findAll().stream()
-                    .filter(nv -> nhanVienIds.contains(nv.getId()) || nhanVienIds.contains(nv.getMa()) || nhanVienIds.contains(nv.getTenTaiKhoan()))
-                    .toList();
-        }
+        List<NhanVien> allEmployees = nhanVienRepository.findAll();
+        List<NhanVien> nhanViens = allEmployees.stream()
+                .filter(nv -> nhanVienIds.stream().anyMatch(id -> {
+                    if (id == null) return false;
+                    String trimmed = id.trim();
+                    return trimmed.equals(nv.getId()) ||
+                            trimmed.equalsIgnoreCase(nv.getMa() != null ? nv.getMa().trim() : "") ||
+                            trimmed.equalsIgnoreCase(nv.getTenTaiKhoan() != null ? nv.getTenTaiKhoan().trim() : "");
+                }))
+                .toList();
+
         if (nhanViens.isEmpty()) {
             throw new RuntimeException("Không tìm thấy nhân viên hợp lệ!");
         }
@@ -245,8 +254,8 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         LocalTime gioKetThucTangCa = null;
         if (tangCa && request.getGioBatDauTangCa() != null && request.getGioKetThucTangCa() != null) {
             try {
-                gioBatDauTangCa = LocalTime.parse(request.getGioBatDauTangCa(), timeFormatter);
-                gioKetThucTangCa = LocalTime.parse(request.getGioKetThucTangCa(), timeFormatter);
+                gioBatDauTangCa = LocalTime.parse(request.getGioBatDauTangCa().trim(), timeFormatter);
+                gioKetThucTangCa = LocalTime.parse(request.getGioKetThucTangCa().trim(), timeFormatter);
             } catch (Exception e) {
                 // Ignore
             }
@@ -273,13 +282,17 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                 }
                 lichLamViecRepository.save(schedule);
 
-                // Log activity history
-                LichSuHoatDong activity = LichSuHoatDong.builder()
-                        .hanhDong(existing.isPresent() ? "Cập nhật lịch làm việc" : "Tạo lịch làm việc")
-                        .doiTuong("Nhân viên " + nv.getTen() + " (" + nv.getMa() + ") - Ngày " + ngayLam + " (" + caLam.getTenCa() + ")")
-                        .build();
-                activity.setTrangThai(TrangThai.DANG_HOAT_DONG);
-                lichSuHoatDongRepository.save(activity);
+                try {
+                    // Log activity history
+                    LichSuHoatDong activity = LichSuHoatDong.builder()
+                            .hanhDong(existing.isPresent() ? "Cập nhật lịch làm việc" : "Tạo lịch làm việc")
+                            .doiTuong("Nhân viên " + nv.getTen() + " (" + nv.getMa() + ") - Ngày " + ngayLam + " (" + caLam.getTenCa() + ")")
+                            .build();
+                    activity.setTrangThai(TrangThai.DANG_HOAT_DONG);
+                    lichSuHoatDongRepository.save(activity);
+                } catch (Exception ex) {
+                    // Non-blocking for activity log
+                }
                 scheduleCount++;
             }
         }

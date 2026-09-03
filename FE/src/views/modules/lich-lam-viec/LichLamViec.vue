@@ -351,10 +351,18 @@ const saveSchedule = async () => {
         loading.value = true;
         let res;
 
-        // Ensure ca is an array for the API
+        // Ensure ca and nhanVien are arrays for the API
+        const nhanVienArray = Array.isArray(addForm.value.nhanVien)
+            ? addForm.value.nhanVien
+            : [addForm.value.nhanVien].filter(Boolean);
+        const caArray = Array.isArray(addForm.value.ca)
+            ? addForm.value.ca
+            : [addForm.value.ca].filter(Boolean);
+
         const submitData = {
             ...addForm.value,
-            ca: Array.isArray(addForm.value.ca) ? addForm.value.ca : [addForm.value.ca]
+            nhanVien: nhanVienArray,
+            ca: caArray
         };
 
         if (isEditSchedule.value && editScheduleId.value) {
