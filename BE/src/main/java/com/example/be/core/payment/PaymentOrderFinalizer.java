@@ -75,11 +75,11 @@ public class PaymentOrderFinalizer {
                     .hoaDon(hoaDon)
                     .soTien(hoaDon.getTongTienSauGiam())
                     .loaiGiaoDich(PaymentConstants.METHOD_ONLINE)
-                    .trangThai(TrangThai.NGUNG_HOAT_DONG)
                     .maGiaoDichNgoai(vnpTxnNo)
                     .maThamChieu(vnpTxnRef)
                     .ghiChu("Đã thanh toán qua " + PaymentConstants.METHOD_VNPAY + (vnpTxnNo != null ? " - GD: " + vnpTxnNo : ""))
                     .build();
+            newGd.setTrangThai(TrangThai.NGUNG_HOAT_DONG);
             giaoDichRepository.save(newGd);
         }
 
