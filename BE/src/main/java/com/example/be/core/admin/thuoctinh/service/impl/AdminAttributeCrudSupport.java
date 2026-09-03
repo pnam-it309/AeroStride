@@ -106,6 +106,28 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
     @Transactional
     @CacheEvict(value = "productOptions", allEntries = true)
     public AdminAttributeResponse create(AdminAttributeRequest request) {
+        String newTen = request.getTen() != null ? request.getTen().trim() : "";
+        if (StringUtils.hasText(newTen)) {
+            Optional<E> existingByName = repository.findOne((root, query, criteriaBuilder) ->
+                    criteriaBuilder.equal(criteriaBuilder.lower(root.get("ten")), newTen.toLowerCase())
+            );
+
+            if (existingByName.isPresent()) {
+                E existing = existingByName.get();
+                if (existing.getTrangThai() != TrangThai.DANG_HOAT_DONG || Boolean.TRUE.equals(existing.getXoaMem())) {
+                    existing.setTrangThai(TrangThai.DANG_HOAT_DONG);
+                    deletedSetter.accept(existing, false);
+                    if (StringUtils.hasText(request.getMoTa())) {
+                        existing.setMoTa(normalize(request.getMoTa()));
+                    }
+                    extraValueSetter.accept(existing, normalize(extraValueExtractor.apply(request)));
+                    return toResponse(repository.save(existing));
+                } else {
+                    return toResponse(existing);
+                }
+            }
+        }
+
         validateDuplicate(request, null);
 
         E entity = entitySupplier.get();
@@ -200,7 +222,8 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
                         criteriaBuilder.isFalse(root.get("xoaMem"))
                 ),
                 criteriaBuilder.notEqual(root.get("trangThai"), TrangThai.DA_XOA)
-        )).orElseThrow(() -> new ResourceNotFoundException("Khong tim thay " + entityDisplayName));
+        )).orElseGet(() -> repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay " + entityDisplayName)));
     }
 
     private TrangThai parseTrangThai(String value) {
