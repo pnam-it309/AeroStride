@@ -5,9 +5,7 @@ import { API_THUOC_TINH } from '@/constants/apiPaths';
 const attributeCache = new Map();
 
 const getWithCache = async (url, params) => {
-    // Cache các request lấy danh sách thuộc tính không phân trang hoặc có size lớn
-    const isGenericOptionRequest = !params || (!params.keyword && !params.ten && (!params.page || params.size >= 100));
-    const cacheKey = isGenericOptionRequest ? `${url}?generic` : `${url}?${JSON.stringify(params || {})}`;
+    const cacheKey = `${url}?${JSON.stringify(params || {})}`;
 
     if (attributeCache.has(cacheKey)) {
         return attributeCache.get(cacheKey);
@@ -22,13 +20,19 @@ const getWithCache = async (url, params) => {
     return data;
 };
 
-const invalidateCache = (url) => {
+export const invalidateAttributeCache = (url) => {
+    if (!url) {
+        attributeCache.clear();
+        return;
+    }
     for (const key of attributeCache.keys()) {
         if (key.startsWith(url)) {
             attributeCache.delete(key);
         }
     }
 };
+
+const invalidateCache = invalidateAttributeCache;
 
 // Service thương hiệu
 export const dichVuThuongHieu = {

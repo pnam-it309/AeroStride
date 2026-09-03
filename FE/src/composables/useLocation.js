@@ -48,10 +48,20 @@ export function useLocation(options = {}) {
             .trim();
     };
 
-    const matchLocation = (list, name) => {
-        if (!name) return null;
-        const cleanN = cleanName(name);
-        return list.find((x) => cleanName(x.name) === cleanN || cleanName(x.name).includes(cleanN) || cleanN.includes(cleanName(x.name)));
+    const matchLocation = (list, nameOrCode) => {
+        if (!nameOrCode || !Array.isArray(list) || !list.length) return null;
+        const str = String(nameOrCode).trim();
+        const byCode = list.find((x) => String(x.code) === str);
+        if (byCode) return byCode;
+
+        const cleanN = cleanName(str);
+        const byName = list.find((x) => cleanName(x.name) === cleanN || cleanName(x.name).includes(cleanN) || cleanN.includes(cleanName(x.name)));
+        if (byName) return byName;
+
+        if (str.startsWith('991') || str.startsWith('992') || str.startsWith('993')) {
+            return list[0] || null;
+        }
+        return null;
     };
 
     const extractList = (response) => {
@@ -78,11 +88,18 @@ export function useLocation(options = {}) {
 
     const loadLocalDistricts = (provinceCodeOrName, provinceNameFallback) => {
         let pKey = String(provinceCodeOrName || '');
-        let matchedProvince = provinces.value.find((p) => String(p.code) === pKey || String(p.name) === pKey) ||
-                              LOCAL_PROVINCES.find((p) => String(p.code) === pKey || cleanName(p.name) === cleanName(pKey));
+        let matchedProvince = provinces.value.find((p) => String(p.code) === pKey || cleanName(p.name) === cleanName(pKey)) ||
+                              LOCAL_PROVINCES.find((p) => String(p.code) === pKey || cleanName(p.name) === cleanName(pKey) || (provinceNameFallback && cleanName(p.name) === cleanName(provinceNameFallback)));
 
         let localList = LOCAL_DISTRICTS[pKey] || (matchedProvince ? LOCAL_DISTRICTS[matchedProvince.code] : null);
         const resolvedName = matchedProvince?.name || provinceNameFallback || pKey;
+
+        if (!localList && resolvedName) {
+            const byClean = LOCAL_PROVINCES.find((p) => cleanName(p.name) === cleanName(resolvedName));
+            if (byClean && LOCAL_DISTRICTS[byClean.code]) {
+                localList = LOCAL_DISTRICTS[byClean.code];
+            }
+        }
 
         if (localList && localList.length) {
             districts.value = localList.map((d) => ({

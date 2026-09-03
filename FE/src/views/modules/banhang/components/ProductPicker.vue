@@ -80,10 +80,7 @@ const fetchProductSearchResults = async (keyword, force = false) => {
     return inFlightSearchPromise;
 };
 
-const loadFilterOptions = async (force = false) => {
-    if (!force && store.filterBrands?.length > 1) {
-        return;
-    }
+const loadFilterOptions = async () => {
     try {
         const [th, md, ms, kt, maxPriceRes] = await Promise.allSettled([
             dichVuThuongHieu.layThuongHieu({ trangThai: SYSTEM_STATUS.ACTIVE, size: 1000 }),

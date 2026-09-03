@@ -456,7 +456,13 @@ const applyAddressFromModal = async (addr) => {
                 let matchedWard =
                     wardsShip.value.find((w) => String(w.code) === String(addr.phuongXa)) || matchLocation(wardsShip.value, addr.phuongXa);
 
-                recipientWard.value = matchedWard ? matchedWard.code : null;
+                recipientWard.value = matchedWard ? matchedWard.code : (wardsShip.value[0]?.code || null);
+            } else if (districtsShip.value.length > 0) {
+                recipientDistrict.value = districtsShip.value[0].code;
+                await fetchWardsShip(districtsShip.value[0].code);
+                let matchedWard =
+                    wardsShip.value.find((w) => String(w.code) === String(addr.phuongXa)) || matchLocation(wardsShip.value, addr.phuongXa);
+                recipientWard.value = matchedWard ? matchedWard.code : (wardsShip.value[0]?.code || null);
             } else {
                 recipientDistrict.value = null;
                 recipientWard.value = null;

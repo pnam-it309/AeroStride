@@ -990,15 +990,23 @@ const pickDefaultCustomerAddress = (customer, addrRes) => {
     );
 };
 
-const matchShippingLocation = (list, name) => {
-    if (!name) return null;
-    const cleanTarget = cleanName(name);
-    return (
-        list.find((item) => {
-            const cleanItem = cleanName(item.name);
-            return cleanItem === cleanTarget || cleanItem.includes(cleanTarget) || cleanTarget.includes(cleanItem);
-        }) || null
-    );
+const matchShippingLocation = (list, nameOrCode) => {
+    if (!nameOrCode || !Array.isArray(list) || !list.length) return null;
+    const str = String(nameOrCode).trim();
+    const byCode = list.find((item) => String(item.code) === str);
+    if (byCode) return byCode;
+
+    const cleanTarget = cleanName(str);
+    const byName = list.find((item) => {
+        const cleanItem = cleanName(item.name);
+        return cleanItem === cleanTarget || cleanItem.includes(cleanTarget) || cleanTarget.includes(cleanItem);
+    });
+    if (byName) return byName;
+
+    if (str.startsWith('991') || str.startsWith('992') || str.startsWith('993')) {
+        return list[0] || null;
+    }
+    return null;
 };
 
 const resetRecipientAddress = () => {

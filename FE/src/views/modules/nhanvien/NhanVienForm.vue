@@ -65,78 +65,51 @@ const TRANG_THAI_OPTIONS = [
 ];
 
 // Address Selection Logic
-const provinces = ref([]);
-const districts = ref([]);
-const wards = ref([]);
-const loadingLocations = ref({ provinces: false, districts: false, wards: false });
+const {
+    provinces,
+    districts,
+    wards,
+    loadingLocations,
+    fetchProvinces,
+    fetchDistricts,
+    fetchWards,
+    cleanName,
+    matchLocation
+} = useLocation();
 
-const fetchProvinces = async () => {
-    loadingLocations.value.provinces = true;
-    try {
-        const res = await axios.get('https://provinces.open-api.vn/api/p/');
-        provinces.value = res.data;
-    } catch (e) {
-        console.error('Error loading provinces:', e);
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách tỉnh/thành phố', color: 'error' });
-    } finally {
-        loadingLocations.value.provinces = false;
-    }
-};
+const isApplyingAddress = ref(false);
 
-const fetchDistricts = async (provinceCode) => {
-    if (!provinceCode) return;
-    loadingLocations.value.districts = true;
-    try {
-        const res = await axios.get(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
-        districts.value = res.data.districts;
-    } catch (e) {
-        console.error('Error loading districts:', e);
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách quận/huyện', color: 'error' });
-    } finally {
-        loadingLocations.value.districts = false;
-    }
-};
-
-const fetchWards = async (districtCode) => {
-    if (!districtCode) return;
-    loadingLocations.value.wards = true;
-    try {
-        const res = await axios.get(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
-        wards.value = res.data.wards;
-    } catch (e) {
-        console.error('Error loading wards:', e);
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách phường/xã', color: 'error' });
-    } finally {
-        loadingLocations.value.wards = false;
-    }
-};
-
-import { watch } from 'vue';
 watch(
     () => employeeForm.value.tinh,
-    (newVal) => {
+    async (newVal) => {
+        if (isApplyingAddress.value) return;
         employeeForm.value.thanhPho = null;
         employeeForm.value.phuongXa = null;
-        if (newVal) fetchDistricts(newVal);
+        if (newVal) await fetchDistricts(newVal);
     }
 );
 
 watch(
     () => employeeForm.value.thanhPho,
-    (newVal) => {
+    async (newVal) => {
+        if (isApplyingAddress.value) return;
         employeeForm.value.phuongXa = null;
-        if (newVal) fetchWards(newVal);
+        if (newVal) await fetchWards(newVal);
     }
 );
 
 // Tự động phân tích địa chỉ từ chuỗi text (CCCD) và chọn combobox Tỉnh / Quận / Phường
 const applyAddressToForm = async (rawAddress) => {
     if (!rawAddress) return;
+    isApplyingAddress.value = true;
     try {
         if (!provinces.value || provinces.value.length === 0) {
             await fetchProvinces();
         }
-        const parts = rawAddress.split(',').map((p) => p.trim()).filter(Boolean);
+        const parts = rawAddress
+            .split(',')
+            .map((p) => p.trim())
+            .filter((p) => p && !/^(việt nam|vietnam|vn)$/i.test(p));
 
         if (parts.length >= 3) {
             const pName = parts[parts.length - 1];
@@ -146,23 +119,17 @@ const applyAddressToForm = async (rawAddress) => {
 
             employeeForm.value.diaChiChiTiet = detail || parts[0] || rawAddress;
 
-            const province = provinces.value.find(
-                (p) => cleanName(p.name) === cleanName(pName) || p.name.includes(pName) || pName.includes(p.name)
-            );
+            const province = matchLocation(provinces.value, pName);
             if (province) {
                 employeeForm.value.tinh = province.code;
-                await fetchDistricts(province.code);
+                const distList = await fetchDistricts(province.code);
 
-                const district = districts.value.find(
-                    (d) => cleanName(d.name) === cleanName(dName) || d.name.includes(dName) || dName.includes(d.name)
-                );
+                const district = matchLocation(distList || districts.value, dName);
                 if (district) {
                     employeeForm.value.thanhPho = district.code;
-                    await fetchWards(district.code);
+                    const wardList = await fetchWards(district.code);
 
-                    const ward = wards.value.find(
-                        (w) => cleanName(w.name) === cleanName(wName) || w.name.includes(wName) || wName.includes(w.name)
-                    );
+                    const ward = matchLocation(wardList || wards.value, wName);
                     if (ward) {
                         employeeForm.value.phuongXa = ward.code;
                     }
@@ -174,6 +141,8 @@ const applyAddressToForm = async (rawAddress) => {
     } catch (e) {
         console.error('Lỗi khi tự động điền địa chỉ từ CCCD:', e);
         employeeForm.value.diaChiChiTiet = rawAddress;
+    } finally {
+        isApplyingAddress.value = false;
     }
 };
 
@@ -246,45 +215,28 @@ const loadEmployee = async (id) => {
 
         // Load data for selects based on names from BE
         if (data.tinh || data.thanhPho || data.phuongXa) {
-            await fetchProvinces();
-            const province = provinces.value.find((p) => cleanName(p.name) === cleanName(data.tinh) || p.code === data.tinh);
-            if (province) {
-                employeeForm.value.tinh = province.code;
-                await fetchDistricts(province.code);
-                const district = districts.value.find((d) => cleanName(d.name) === cleanName(data.thanhPho) || d.code === data.thanhPho);
-                if (district) {
-                    employeeForm.value.thanhPho = district.code;
-                    await fetchWards(district.code);
-                    const ward = wards.value.find((w) => cleanName(w.name) === cleanName(data.phuongXa) || w.code === data.phuongXa);
-                    if (ward) {
-                        employeeForm.value.phuongXa = ward.code;
-                    }
-                }
-            }
-        } else if (data.diaChi && data.diaChi.includes(',')) {
-            // Fallback to parsing if separate fields are missing
-            const parts = data.diaChi.split(',').map((p) => p.trim());
-            if (parts.length >= 4) {
-                employeeForm.value.diaChiChiTiet = parts.slice(0, parts.length - 3).join(', ');
+            isApplyingAddress.value = true;
+            try {
                 await fetchProvinces();
-                const pName = parts[parts.length - 1];
-                const province = provinces.value.find((p) => p.name.includes(pName) || pName.includes(p.name));
+                const province = matchLocation(provinces.value, data.tinh);
                 if (province) {
                     employeeForm.value.tinh = province.code;
-                    await fetchDistricts(province.code);
-                    const dName = parts[parts.length - 2];
-                    const district = districts.value.find((d) => d.name.includes(dName) || dName.includes(d.name));
+                    const distList = await fetchDistricts(province.code);
+                    const district = matchLocation(distList || districts.value, data.thanhPho);
                     if (district) {
                         employeeForm.value.thanhPho = district.code;
-                        await fetchWards(district.code);
-                        const wName = parts[parts.length - 3];
-                        const ward = wards.value.find((w) => w.name.includes(wName) || wName.includes(w.name));
+                        const wardList = await fetchWards(district.code);
+                        const ward = matchLocation(wardList || wards.value, data.phuongXa);
                         if (ward) {
                             employeeForm.value.phuongXa = ward.code;
                         }
                     }
                 }
+            } finally {
+                isApplyingAddress.value = false;
             }
+        } else if (data.diaChi && data.diaChi.includes(',')) {
+            await applyAddressToForm(data.diaChi);
         }
     } catch (error) {
         console.error('Error loading employee:', error);

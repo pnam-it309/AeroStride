@@ -16,9 +16,9 @@ export function useAddressMapping() {
     const mapCodesToNames = (form, provinces, districts, wards) => {
         const payload = { ...form };
 
-        const p = provinces.find((x) => x.code === form.tinh);
-        const d = districts.find((x) => x.code === form.thanhPho);
-        const w = wards.find((x) => x.code === form.phuongXa);
+        const p = provinces?.find((x) => String(x.code) === String(form.tinh) || x.name === form.tinh);
+        const d = districts?.find((x) => String(x.code) === String(form.thanhPho) || x.name === form.thanhPho);
+        const w = wards?.find((x) => String(x.code) === String(form.phuongXa) || x.name === form.phuongXa);
 
         if (p) payload.tinh = p.name;
         if (d) payload.thanhPho = d.name;

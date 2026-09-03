@@ -106,28 +106,6 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
     @Transactional
     @CacheEvict(value = "productOptions", allEntries = true)
     public AdminAttributeResponse create(AdminAttributeRequest request) {
-        String newTen = request.getTen() != null ? request.getTen().trim() : "";
-        if (StringUtils.hasText(newTen)) {
-            Optional<E> existingByName = repository.findOne((root, query, criteriaBuilder) ->
-                    criteriaBuilder.equal(criteriaBuilder.lower(root.get("ten")), newTen.toLowerCase())
-            );
-
-            if (existingByName.isPresent()) {
-                E existing = existingByName.get();
-                if (existing.getTrangThai() != TrangThai.DANG_HOAT_DONG || Boolean.TRUE.equals(existing.getXoaMem())) {
-                    existing.setTrangThai(TrangThai.DANG_HOAT_DONG);
-                    deletedSetter.accept(existing, false);
-                    if (StringUtils.hasText(request.getMoTa())) {
-                        existing.setMoTa(normalize(request.getMoTa()));
-                    }
-                    extraValueSetter.accept(existing, normalize(extraValueExtractor.apply(request)));
-                    return toResponse(repository.save(existing));
-                } else {
-                    return toResponse(existing);
-                }
-            }
-        }
-
         validateDuplicate(request, null);
 
         E entity = entitySupplier.get();
@@ -191,26 +169,34 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
                 }
                 return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
             })) {
-                throw new BusinessException("Ma " + entityDisplayName + " da ton tai");
+                throw new BusinessException("Mã " + entityDisplayName + " đã tồn tại trong hệ thống");
             }
         }
 
         String newTen = request.getTen() != null ? request.getTen().trim() : "";
         boolean tenChanged = existingEntity == null || !newTen.equalsIgnoreCase(existingEntity.getTen() != null ? existingEntity.getTen().trim() : "");
-        if (tenChanged && repository.exists((root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(criteriaBuilder.or(
-                    criteriaBuilder.isNull(root.get("xoaMem")),
-                    criteriaBuilder.isFalse(root.get("xoaMem"))
+        if (tenChanged) {
+            Optional<E> duplicate = repository.findOne((root, query, criteriaBuilder) -> {
+                List<Predicate> predicates = new ArrayList<>();
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.isNull(root.get("xoaMem")),
+                        criteriaBuilder.isFalse(root.get("xoaMem"))
                 ));
-            predicates.add(criteriaBuilder.notEqual(root.get("trangThai"), TrangThai.DA_XOA));
-            predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("ten")), newTen.toLowerCase()));
-            if (existingEntity != null) {
-                predicates.add(criteriaBuilder.notEqual(root.get("id"), existingEntity.getId()));
+                predicates.add(criteriaBuilder.notEqual(root.get("trangThai"), TrangThai.DA_XOA));
+                predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("ten")), newTen.toLowerCase()));
+                if (existingEntity != null) {
+                    predicates.add(criteriaBuilder.notEqual(root.get("id"), existingEntity.getId()));
+                }
+                return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            });
+
+            if (duplicate.isPresent()) {
+                E dup = duplicate.get();
+                if (dup.getTrangThai() == TrangThai.NGUNG_HOAT_DONG) {
+                    throw new BusinessException(entityDisplayName + " '" + newTen + "' đã tồn tại nhưng đang ở trạng thái Ngừng hoạt động. Vui lòng kích hoạt lại trong mục Quản lý thuộc tính!");
+                }
+                throw new BusinessException(entityDisplayName + " '" + newTen + "' đã tồn tại trong hệ thống!");
             }
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        })) {
-            throw new BusinessException("Ten " + entityDisplayName + " da ton tai");
         }
     }
 
