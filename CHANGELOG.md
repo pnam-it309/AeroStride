@@ -1,3 +1,10 @@
+## [1.45.2](https://github.com/pnam-it309/AeroStride/compare/v1.45.1...v1.45.2) (2026-10-20)
+
+
+### Bug Fixes
+
+* **ci:** resolve Qodana code quality issues and add auto-heal workflow ([0faebc9](https://github.com/pnam-it309/AeroStride/commit/0faebc9e183d393d8b7974819fec38d9d2b52495))
+
 ## [1.45.1](https://github.com/pnam-it309/AeroStride/compare/v1.45.0...v1.45.1) (2026-08-21)
 
 
