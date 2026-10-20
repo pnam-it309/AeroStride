@@ -1,0 +1,1 @@
+const d=(t,n)=>{const o=window.URL.createObjectURL(new Blob([t])),e=document.createElement("a");e.href=o,e.setAttribute("download",n),document.body.appendChild(e),e.click(),e.remove(),window.URL.revokeObjectURL(o)};export{d};
