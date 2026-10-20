@@ -50,11 +50,11 @@ public class SecurityConfig {
         Map<String, PasswordEncoder> encoders = new HashMap<>();
         BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder(10);
         encoders.put(idForEncode, bcrypt);
-        
+
         DelegatingPasswordEncoder delegatingPasswordEncoder = new DelegatingPasswordEncoder(idForEncode, encoders);
         // Quan trọng: Nếu không tìm thấy {id}, mặc định dùng BCrypt để so khớp
         delegatingPasswordEncoder.setDefaultPasswordEncoderForMatches(bcrypt);
-        
+
         return delegatingPasswordEncoder;
     }
 
@@ -77,21 +77,21 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        
+
         if (org.springframework.util.StringUtils.hasText(ALLOWED_ORIGIN)) {
             Arrays.stream(ALLOWED_ORIGIN.split(","))
                     .map(String::trim)
                     .filter(origin -> !origin.isEmpty())
                     .forEach(config::addAllowedOriginPattern);
         }
-        
+
         // Always allow production domains, Render subdomains, and local dev
         config.addAllowedOriginPattern("https://*.aerostride.me");
         config.addAllowedOriginPattern("https://aerostride.me");
         config.addAllowedOriginPattern("https://*.onrender.com");
         config.addAllowedOriginPattern("http://localhost:*");
         config.addAllowedOriginPattern("http://127.0.0.1:*");
-        
+
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setExposedHeaders(List.of("Authorization", "Content-Disposition", "X-Total-Count"));
@@ -105,7 +105,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(c -> c.configurationSource(corsConfigurationSource()));
-        
+
         // CSRF protection is disabled for this REST API as we use stateless JWT authentication.
         // This is safe because JWTs are passed in headers, not automatically by the browser in cookies.
         http.csrf(csrf -> csrf.disable());
@@ -124,21 +124,21 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 // Allow all OPTIONS requests (CORS preflight)
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                
+
                 // Allow public GET for product reviews
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/customer/review/product/**").permitAll()
-                
+
                 // Public endpoints
                 .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
-                
+
                 // Modular route configurations (ordered before general authenticated prefix)
                 .requestMatchers(RoutesConstant.STAFF + "/**").hasAnyRole(VaiTro.STAFF, VaiTro.ADMIN)
                 .requestMatchers(RoutesConstant.ADMIN + "/**").hasAnyRole(VaiTro.STAFF, VaiTro.ADMIN)
                 .requestMatchers(RoutesConstant.CUSTOMER + "/**").hasRole(VaiTro.CUSTOMER)
-                
+
                 // General authenticated prefix
                 .requestMatchers(RoutesConstant.API_PREFIX + "/**").authenticated()
-                
+
                 // Deny all other requests
                 .anyRequest().denyAll());
 

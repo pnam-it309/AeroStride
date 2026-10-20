@@ -17,7 +17,6 @@ import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.infrastructure.exceptions.SystemException;
 import com.example.be.repository.*;
 import com.example.be.utils.ExcelUtils;
-import com.example.be.utils.HelperUtils;
 import com.example.be.utils.CodeUtils;
 import com.example.be.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
@@ -236,7 +235,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         lichSuTrangThaiHoaDonRepository.save(history);
 
         // Nếu giao lại (từ Giao thất bại / Khách không nhận sang Đang giao hoặc Hoàn thành) -> Kiểm tra tồn kho thay thế và trừ kho lại
-        if ((oldStatus == OrderStatus.GIAO_THAT_BAI || oldStatus == OrderStatus.KHACH_KHONG_NHAN) 
+        if ((oldStatus == OrderStatus.GIAO_THAT_BAI || oldStatus == OrderStatus.KHACH_KHONG_NHAN)
                 && (newStatus == OrderStatus.DANG_GIAO || newStatus == OrderStatus.HOAN_THANH)) {
             if (hd.getListsHoaDonChiTiet() != null) {
                 if (newStatus == OrderStatus.DANG_GIAO) {
@@ -246,7 +245,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                             int currentStock = ct.getSoLuong() != null ? ct.getSoLuong() : 0;
                             if (currentStock < detail.getSoLuong()) {
                                 String tenSP = ct.getSanPham() != null ? ct.getSanPham().getTen() : ct.getMaChiTietSanPham();
-                                throw new BusinessException("Không đủ tồn kho để lấy hàng thay thế giao lại. Sản phẩm '" 
+                                throw new BusinessException("Không đủ tồn kho để lấy hàng thay thế giao lại. Sản phẩm '"
                                         + tenSP + "' chỉ còn " + currentStock + " sản phẩm (cần " + detail.getSoLuong() + "). Vui lòng nhập thêm hàng trước khi giao lại.");
                             }
                         }
@@ -268,9 +267,9 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             hd.setDaHoanPhi(false);
         }
 
-        if (newStatus == OrderStatus.DA_HUY || newStatus == OrderStatus.HOAN_DON 
+        if (newStatus == OrderStatus.DA_HUY || newStatus == OrderStatus.HOAN_DON
                 || newStatus == OrderStatus.GIAO_THAT_BAI || newStatus == OrderStatus.KHACH_KHONG_NHAN) {
-            if ((newStatus == OrderStatus.HOAN_DON || newStatus == OrderStatus.GIAO_THAT_BAI || newStatus == OrderStatus.KHACH_KHONG_NHAN) 
+            if ((newStatus == OrderStatus.HOAN_DON || newStatus == OrderStatus.GIAO_THAT_BAI || newStatus == OrderStatus.KHACH_KHONG_NHAN)
                     && hd.getPhiVanChuyen() != null) {
                 // GHN return fee is typically equal to forward fee
                 hd.setPhiHoanHang(hd.getPhiVanChuyen());
@@ -480,14 +479,14 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHdct)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PRODUCT_DETAIL_NOT_FOUND));
-        
+
         boolean chuaTruKho = hd.getTrangThai() == OrderStatus.CHO_XAC_NHAN && isOnlineOrder(hd);
         ChiTietSanPham ct = hdct.getChiTietSanPham();
         if (ct != null && !chuaTruKho) {
             ct.setSoLuong(ct.getSoLuong() + hdct.getSoLuong());
             chiTietSanPhamRepository.saveAndFlush(ct);
         }
-        
+
         hoaDonChiTietRepository.delete(hdct);
         logHistory(hd, "Xóa sản phẩm khỏi hóa đơn");
         recalculateTotal(hd);
@@ -655,7 +654,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         // nên phải trừ shippingFee ra trước để không làm dòng "Giảm giá" trên bản in bị thiếu.
         BigDecimal payableProductTotal = payableTotal.subtract(shippingFee).max(BigDecimal.ZERO);
         BigDecimal discountAmount = subtotal.subtract(payableProductTotal).max(BigDecimal.ZERO);
-        
+
         com.example.be.entity.PhieuGiamGia pgg = hd.getPhieuGiamGia();
         if (pgg == null && hd.getPhieuGiamGiaCaNhan() != null) {
             pgg = hd.getPhieuGiamGiaCaNhan().getPhieuGiamGia();
@@ -703,7 +702,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
 
         boolean daThanhToan = hoaDon.getListsGiaoDichThanhToan() != null && hoaDon.getListsGiaoDichThanhToan().stream()
-                .anyMatch(gd -> gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG 
+                .anyMatch(gd -> gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG
                         && gd.getMaGiaoDichNgoai() != null && !gd.getMaGiaoDichNgoai().isBlank());
         if (daThanhToan) {
             throw new BusinessException("Đơn hàng này đã được thanh toán thành công.");

@@ -29,7 +29,7 @@ public class RateLimiterAspect {
         }
 
         HttpServletRequest request = attributes.getRequest();
-        
+
         // Handle IP behind proxy/load balancer
         String ip = request.getHeader("X-Forwarded-For");
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
@@ -38,10 +38,10 @@ public class RateLimiterAspect {
             // In case of multiple proxies, take the first IP
             ip = ip.split(",")[0].trim();
         }
-        
+
         String uri = request.getRequestURI();
         String method = request.getMethod();
-        
+
         // Key format: rate_limit:IP:METHOD:URI
         String key = String.format("rate_limit:%s:%s:%s", ip, method, uri);
 
@@ -54,7 +54,7 @@ public class RateLimiterAspect {
             }
 
             if (currentCount != null && currentCount > rateLimit.limit()) {
-                log.warn("Rate limit exceeded! IP: {}, Method: {}, URI: {}, Limit: {}/{}s", 
+                log.warn("Rate limit exceeded! IP: {}, Method: {}, URI: {}, Limit: {}/{}s",
                         ip, method, uri, rateLimit.limit(), rateLimit.windowSeconds());
                 throw new RateLimitException("Bạn đang thực hiện yêu cầu quá nhanh. Vui lòng thử lại sau vài phút.");
             }

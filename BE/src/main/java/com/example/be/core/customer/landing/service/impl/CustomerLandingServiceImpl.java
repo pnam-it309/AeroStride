@@ -261,25 +261,25 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
         List<CustomerLandingFeatureItemResponse> combined = new ArrayList<>();
 
         if (filters.getThuongHieus() != null) {
-            filters.getThuongHieus().stream().limit(3).forEach(b -> 
+            filters.getThuongHieus().stream().limit(3).forEach(b ->
                 combined.add(new CustomerLandingFeatureItemResponse(b.getTen(), "Thương hiệu đẳng cấp", "mdi-tag-heart", "#2962FF", "s", "idThuongHieu", b.getId()))
             );
         }
 
         if (filters.getChatLieus() != null) {
-            filters.getChatLieus().stream().limit(4).forEach(m -> 
+            filters.getChatLieus().stream().limit(4).forEach(m ->
                 combined.add(new CustomerLandingFeatureItemResponse(m.getTen(), "Chất liệu siêu việt", "mdi-texture", "#00B0FF", "m", "idChatLieu", m.getId()))
             );
         }
 
         if (filters.getMucDichChays() != null) {
-            filters.getMucDichChays().stream().limit(3).forEach(p -> 
+            filters.getMucDichChays().stream().limit(3).forEach(p ->
                 combined.add(new CustomerLandingFeatureItemResponse(p.getTen(), "Thiết kế chuẩn xác", "mdi-run-fast", "#6200EA", "l", "idMucDichChay", p.getId()))
             );
         }
 
         if (filters.getXuatXus() != null) {
-            filters.getXuatXus().stream().limit(2).forEach(o -> 
+            filters.getXuatXus().stream().limit(2).forEach(o ->
                 combined.add(new CustomerLandingFeatureItemResponse(o.getTen(), "Nguồn gốc xuất xứ", "mdi-earth", "#00E676", "m", "idXuatXu", o.getId()))
             );
         }
@@ -298,11 +298,11 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
 
         List<List<CustomerLandingFeatureItemResponse>> columns = new ArrayList<>();
         columns.add(buildLoop(final12, 3, 0));
-        
+
         List<CustomerLandingFeatureItemResponse> reversed = new ArrayList<>(final12);
         java.util.Collections.reverse(reversed);
         columns.add(buildLoop(reversed, 3, 0));
-        
+
         columns.add(buildLoop(concat(final12.subList(4, final12.size()), final12.subList(0, 4)), 3, 0));
         columns.add(buildLoop(concat(final12.subList(8, final12.size()), final12.subList(0, 8)), 3, 0));
         columns.add(buildLoop(concat(final12.subList(2, final12.size()), final12.subList(0, 2)), 3, 0));
@@ -340,8 +340,8 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
 
         DotGiamGia activeFs = flashSales.get(0);
         boolean isHappening = activeFs.getNgayBatDau() != null && activeFs.getNgayBatDau() <= now && activeFs.getNgayKetThuc() != null && now <= activeFs.getNgayKetThuc();
-        long remainingMillis = isHappening 
-                ? (activeFs.getNgayKetThuc() - now) 
+        long remainingMillis = isHappening
+                ? (activeFs.getNgayKetThuc() - now)
                 : (activeFs.getNgayBatDau() != null ? Math.max(0, activeFs.getNgayBatDau() - now) : 0L);
 
         List<ChiTietDotGiamGia> details = chiTietDotGiamGiaRepository.findByDotGiamGiaId(activeFs.getId());

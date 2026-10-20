@@ -20,7 +20,7 @@ public class CustomerChatController {
     @PostMapping("/send")
     public ResponseEntity<?> sendMessage(@RequestBody CustomerChatRequest payload) {
         chatService.sendMessage(payload.getConversationId(), payload.getText(), payload.getSender(), payload.getSessionId(), payload.getImageBase64());
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         return ResponseEntity.ok(response);

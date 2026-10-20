@@ -186,7 +186,7 @@ const getItemName = (item) => String(pickFirst(item, currentMeta.value.nameKeys)
 // Khi gửi lên backend, tên vẫn theo quy ước cũ "Size 42", còn giaTriKichThuoc chỉ giữ phần số.
 const normalizeSizeInput = (value) => {
     let sizeText = String(value || '').replace(/<[^>]*>?/gm, '');
-    sizeText = sizeText.replace(/[^a-zA-Z0-9.,\-\s]/g, '');
+    sizeText = sizeText.replace(/[^a-zA-Z0-9.,\s-]/g, '');
     sizeText = sizeText.replace(/(?:^|\s)(?:kich thuoc|size|sz)\s*/gi, '');
     sizeText = sizeText.replace(/(?:^|\s)s\s*(?=\d)/gi, '');
     return sizeText.replace(/\s+/g, ' ').trim();

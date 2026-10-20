@@ -182,7 +182,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             if (voucher.getTrangThai() != com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG) {
                 throw new RuntimeException("Voucher đã bị ngừng hoạt động");
             }
-            
+
             long now = System.currentTimeMillis();
             if (voucher.getNgayBatDau() != null && now < voucher.getNgayBatDau()) {
                 throw new RuntimeException("Voucher chưa đến thời gian sử dụng");
@@ -363,7 +363,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         // Nếu người dùng đã đăng nhập, kiểm tra quyền sở hữu đơn hàng
         if (username != null && !username.isBlank() && !"anonymousUser".equals(username)) {
             KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username).orElse(null);
-            if (khachHang != null && hoaDon.getKhachHang() != null 
+            if (khachHang != null && hoaDon.getKhachHang() != null
                     && !hoaDon.getKhachHang().getId().equals(khachHang.getId())) {
                 throw new RuntimeException("Bạn không có quyền xem đơn hàng này");
             }
@@ -634,7 +634,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         HoaDon hoaDon = findOwnedOrder(id, username);
 
         boolean daThanhToan = hoaDon.getListsGiaoDichThanhToan() != null && hoaDon.getListsGiaoDichThanhToan().stream()
-                .anyMatch(gd -> gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG 
+                .anyMatch(gd -> gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG
                         && gd.getMaGiaoDichNgoai() != null && !gd.getMaGiaoDichNgoai().isBlank());
         if (daThanhToan) {
             throw new RuntimeException("Đơn hàng này đã được thanh toán thành công");
@@ -875,7 +875,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         boolean choXacNhan = hoaDon.getTrangThai() == OrderStatus.CHO_XAC_NHAN;
         boolean laTienMat = isCashOrder(hoaDon);
         boolean daThanhToan = hoaDon.getListsGiaoDichThanhToan() != null && hoaDon.getListsGiaoDichThanhToan().stream()
-                .anyMatch(gd -> gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG 
+                .anyMatch(gd -> gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG
                         && gd.getMaGiaoDichNgoai() != null && !gd.getMaGiaoDichNgoai().isBlank());
         // Sửa thông tin nhận hàng: chỉ được sửa 1 lần duy nhất khi đang chờ xác nhận
         boolean daSuaThongTin = hasUpdatedShippingInfo(hoaDon);

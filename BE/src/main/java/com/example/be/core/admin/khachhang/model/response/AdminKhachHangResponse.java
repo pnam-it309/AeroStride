@@ -25,10 +25,10 @@ public class AdminKhachHangResponse {
     private TrangThai trangThai;
     private Long ngayTao;
     private Long ngayCapNhat;
-    
+
     // Summary address for list view - named to match frontend
     private String diaChiChiTiet;
-    
+
     // New fields for Voucher selection view
     private java.math.BigDecimal tongChiTieu;
     private Long ngayDonHangGanNhat;
@@ -38,8 +38,8 @@ public class AdminKhachHangResponse {
     private List<AdminDiaChiResponse> addresses;
 
     // Constructor for JPQL (13 args) - basic info
-    public AdminKhachHangResponse(String id, String ma, String ten, String email, String tenTaiKhoan, 
-                                 Boolean gioiTinh, String sdt, LocalDate ngaySinh, String hinhAnh, 
+    public AdminKhachHangResponse(String id, String ma, String ten, String email, String tenTaiKhoan,
+                                 Boolean gioiTinh, String sdt, LocalDate ngaySinh, String hinhAnh,
                                  String ghiChu, TrangThai trangThai, Long ngayTao, Long ngayCapNhat) {
         this.id = id;
         this.ma = ma;
@@ -57,16 +57,16 @@ public class AdminKhachHangResponse {
     }
 
     // Constructor for JPQL with address (14 args)
-    public AdminKhachHangResponse(String id, String ma, String ten, String email, String tenTaiKhoan, 
-                                 Boolean gioiTinh, String sdt, LocalDate ngaySinh, String hinhAnh, 
+    public AdminKhachHangResponse(String id, String ma, String ten, String email, String tenTaiKhoan,
+                                 Boolean gioiTinh, String sdt, LocalDate ngaySinh, String hinhAnh,
                                  String ghiChu, TrangThai trangThai, Long ngayTao, Long ngayCapNhat,
                                  String diaChiChiTiet) {
         this(id, ma, ten, email, tenTaiKhoan, gioiTinh, sdt, ngaySinh, hinhAnh, ghiChu, trangThai, ngayTao, ngayCapNhat);
         this.diaChiChiTiet = diaChiChiTiet;
     }
     // Constructor for JPQL with address and statistics (17 args)
-    public AdminKhachHangResponse(String id, String ma, String ten, String email, String tenTaiKhoan, 
-                                 Boolean gioiTinh, String sdt, LocalDate ngaySinh, String hinhAnh, 
+    public AdminKhachHangResponse(String id, String ma, String ten, String email, String tenTaiKhoan,
+                                 Boolean gioiTinh, String sdt, LocalDate ngaySinh, String hinhAnh,
                                  String ghiChu, TrangThai trangThai, Long ngayTao, Long ngayCapNhat,
                                  String diaChiChiTiet, java.math.BigDecimal tongChiTieu, Long ngayDonHangGanNhat, Long tongDonHang) {
         this(id, ma, ten, email, tenTaiKhoan, gioiTinh, sdt, ngaySinh, hinhAnh, ghiChu, trangThai, ngayTao, ngayCapNhat, diaChiChiTiet);
@@ -75,8 +75,8 @@ public class AdminKhachHangResponse {
         this.tongDonHang = tongDonHang;
     }
 
-    public AdminKhachHangResponse(String id, String ma, String ten, String email, String tenTaiKhoan, 
-                                 Boolean gioiTinh, String sdt, LocalDate ngaySinh, String hinhAnh, 
+    public AdminKhachHangResponse(String id, String ma, String ten, String email, String tenTaiKhoan,
+                                 Boolean gioiTinh, String sdt, LocalDate ngaySinh, String hinhAnh,
                                  String ghiChu, TrangThai trangThai, Long ngayTao, Long ngayCapNhat,
                                  String diaChiChiTiet, Double tongChiTieu, Long ngayDonHangGanNhat, Long tongDonHang) {
         this(id, ma, ten, email, tenTaiKhoan, gioiTinh, sdt, ngaySinh, hinhAnh, ghiChu, trangThai, ngayTao, ngayCapNhat, diaChiChiTiet);

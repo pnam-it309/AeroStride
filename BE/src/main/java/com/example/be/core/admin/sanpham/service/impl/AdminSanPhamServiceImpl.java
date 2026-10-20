@@ -42,7 +42,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     private final AdminAnhChiTietSanPhamRepository adminAnhChiTietSanPhamRepository;
     private final AdminChiTietDotGiamGiaRepository adminChiTietDotGiamGiaRepository;
     private final AdminSanPhamMapper adminSanPhamMapper;
-    
+
     // Delegate lookup logic to ProductOptionService (SRP)
     private final ProductOptionService productOptionService;
 
@@ -58,7 +58,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         }
         return response;
     }
-    
+
     // Core Repos for resolving entities
     private final ThuongHieuRepository thuongHieuRepository;
     private final XuatXuRepository xuatXuRepository;
@@ -124,10 +124,10 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             throw new com.example.be.infrastructure.exceptions.DuplicateResourceException("Tên sản phẩm đã tồn tại. Vui lòng chọn tên khác hoặc cập nhật sản phẩm cũ.");
         }
         validateVariantRequests(request.getVariants());
-        String code = StringUtils.hasText(request.getMaSanPham()) 
-                ? request.getMaSanPham().trim().toUpperCase() 
+        String code = StringUtils.hasText(request.getMaSanPham())
+                ? request.getMaSanPham().trim().toUpperCase()
                 : CodeUtils.generateRandom(SanPham.class, adminSanPhamRepository::existsByMa);
-        
+
         if (adminSanPhamRepository.existsByMaIgnoreCaseAndXoaMemFalse(code)) {
             throw new DuplicateResourceException(MessageConstants.SAN_PHAM_MA_EXISTS + code);
         }
@@ -162,10 +162,10 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
                 .and(AdminSanPhamSpecification.hasGiaBanInRange(request.getMinGia(), request.getMaxGia()));
 
         Page<SanPham> page = SearchUtils.execute(request, pageable -> adminSanPhamRepository.findAll(spec, pageable));
-        
+
         // Load statistics for better UI info
         List<String> ids = page.getContent().stream().map(SanPham::getId).toList();
-        Map<String, ProductVariantStatisticsProjection> stats = ids.isEmpty() ? Map.of() : 
+        Map<String, ProductVariantStatisticsProjection> stats = ids.isEmpty() ? Map.of() :
             adminChiTietSanPhamRepository.summarizeBySanPhamIds(ids).stream()
                 .collect(Collectors.toMap(ProductVariantStatisticsProjection::getSanPhamId, s -> s));
 
@@ -229,7 +229,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         sp.setXoaMem(true);
         sp.setTrangThai(TrangThai.DA_XOA);
         adminSanPhamRepository.save(sp);
-        
+
         adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalse(id).forEach(this::softDeleteVariant);
     }
 
@@ -244,7 +244,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         SanPham sp = getProductOrThrow(id);
         sp.setTrangThai(status);
         adminSanPhamRepository.save(sp);
-        
+
         adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalse(id).forEach(v -> {
             v.setTrangThai(status);
             adminChiTietSanPhamRepository.save(v);
@@ -345,7 +345,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         v.setGiaBan(req.getGiaBan());
         v.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : TrangThai.DANG_HOAT_DONG);
         v.setXoaMem(false);
-        
+
         if (v.getMaChiTietSanPham() == null || v.getMaChiTietSanPham().trim().isEmpty()) {
             String baseMa = sp.getMa();
             String colorPart = "";
@@ -372,9 +372,9 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             }
             v.setMaChiTietSanPham(finalMa);
         }
-        
+
         v = adminChiTietSanPhamRepository.save(v);
-        
+
         // Handle images if provided
         if (req.getImages() != null && !req.getImages().isEmpty()) {
             syncVariantImages(v, req.getImages());
@@ -506,7 +506,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             // 1. Bulk-fetch full images only when explicitly requested
             List<AnhChiTietSanPham> images = adminAnhChiTietSanPhamRepository
                     .findAllByChiTietSanPhamIdInAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(ids);
-            
+
             imageMap = images.stream()
                     .filter(img -> img.getChiTietSanPham() != null)
                     .collect(Collectors.groupingBy(
@@ -527,7 +527,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
         // 2. Bulk-fetch campaign details
         List<ChiTietDotGiamGia> relations = adminChiTietDotGiamGiaRepository.findAllByChiTietSanPhamIdIn(ids);
-        
+
         Map<String, List<ChiTietDotGiamGia>> relationMap = relations.stream()
                 .filter(rel -> rel.getChiTietSanPham() != null)
                 .collect(Collectors.groupingBy(

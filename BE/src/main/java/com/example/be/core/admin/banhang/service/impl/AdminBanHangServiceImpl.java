@@ -25,7 +25,6 @@ import com.example.be.repository.DiaChiRepository;
 import com.example.be.repository.NhanVienRepository;
 import com.example.be.repository.LichSuTrangThaiHoaDonRepository;
 import com.example.be.utils.DiscountPriceUtils;
-import com.example.be.utils.HelperUtils;
 import com.example.be.utils.CodeUtils;
 import com.example.be.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -1121,7 +1120,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                     boolean bestAlreadyApplied = appliedVoucher != null
                             && bestVoucher.getId().equals(appliedVoucher.getId());
                     BigDecimal savings = bestDisc.subtract(currentVoucherDiscount);
-                    
+
                     if (!bestAlreadyApplied && savings.compareTo(BigDecimal.ZERO) > 0) {
                         canApplySuggestedVoucher = true;
                         betterVoucherCode = getVoucherCode(bestVoucher);

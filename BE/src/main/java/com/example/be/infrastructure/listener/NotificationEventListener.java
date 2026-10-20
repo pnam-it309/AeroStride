@@ -104,8 +104,8 @@ public class NotificationEventListener {
                         itemMap.put("phanLoai", phanLoai);
                         itemMap.put("soLuong", hdct.getSoLuong());
                         itemMap.put("donGia", hdct.getDonGia());
-                        itemMap.put("thanhTien", hdct.getDonGia() != null && hdct.getSoLuong() != null 
-                                ? hdct.getDonGia().multiply(BigDecimal.valueOf(hdct.getSoLuong())) 
+                        itemMap.put("thanhTien", hdct.getDonGia() != null && hdct.getSoLuong() != null
+                                ? hdct.getDonGia().multiply(BigDecimal.valueOf(hdct.getSoLuong()))
                                 : BigDecimal.ZERO);
                         itemMaps.add(itemMap);
                     }

@@ -49,7 +49,7 @@ public interface EmailService {
     void guiEmailCapNhatTrangThaiHoaDon(String to, String tenKhachHang, String maHoaDon,
                                         String trangThaiLabel, String ghiChu);
 
-    void guiEmailXacNhanDatHang(String to, String tenNguoiNhan, String maHoaDon, 
+    void guiEmailXacNhanDatHang(String to, String tenNguoiNhan, String maHoaDon,
                                 String soDienThoai, String diaChi, String phuongThuc,
                                 java.math.BigDecimal tamTinh, java.math.BigDecimal phiVanChuyen,
                                 java.math.BigDecimal tienGiam, java.math.BigDecimal tongTien,

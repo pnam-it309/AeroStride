@@ -39,7 +39,7 @@ public class CustomerReviewResponse {
         this.video = entity.getVideo();
         this.trangThai = entity.getTrangThai() != null ? entity.getTrangThai().name() : null;
         this.ngayTao = entity.getNgayTao();
-        
+
         if (entity.getKhachHang() != null) {
             this.tenKhachHang = entity.getKhachHang().getTen();
             this.avatarKhachHang = entity.getKhachHang().getHinhAnh();

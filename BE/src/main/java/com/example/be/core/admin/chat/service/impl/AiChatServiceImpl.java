@@ -178,18 +178,18 @@ public class AiChatServiceImpl implements AiChatService {
 
         // [Handoff Interceptor] Phát hiện từ khóa yêu cầu gặp nhân viên để phản hồi tức thì
         String lowerInput = customerText.toLowerCase().trim();
-        if (lowerInput.contains("nhân viên") || lowerInput.contains("nhan vien") || 
-            lowerInput.contains("người thật") || lowerInput.contains("nguoi that") || 
-            lowerInput.contains("admin") || lowerInput.contains("gặp nhân viên") || 
-            lowerInput.contains("gặp hỗ trợ") || lowerInput.contains("gap ho tro") || 
-            lowerInput.contains("gọi hỗ trợ") || lowerInput.contains("goi ho tro") || 
-            lowerInput.contains("liên hệ hỗ trợ") || lowerInput.contains("lien he ho tro") || 
-            lowerInput.contains("kết nối hỗ trợ") || lowerInput.contains("ket noi ho tro") || 
-            lowerInput.contains("nói chuyện với hỗ trợ") || lowerInput.contains("noi chuyen voi ho tro") || 
+        if (lowerInput.contains("nhân viên") || lowerInput.contains("nhan vien") ||
+            lowerInput.contains("người thật") || lowerInput.contains("nguoi that") ||
+            lowerInput.contains("admin") || lowerInput.contains("gặp nhân viên") ||
+            lowerInput.contains("gặp hỗ trợ") || lowerInput.contains("gap ho tro") ||
+            lowerInput.contains("gọi hỗ trợ") || lowerInput.contains("goi ho tro") ||
+            lowerInput.contains("liên hệ hỗ trợ") || lowerInput.contains("lien he ho tro") ||
+            lowerInput.contains("kết nối hỗ trợ") || lowerInput.contains("ket noi ho tro") ||
+            lowerInput.contains("nói chuyện với hỗ trợ") || lowerInput.contains("noi chuyen voi ho tro") ||
             lowerInput.contains("goi admin") || lowerInput.contains("gọi admin")) {
-            
+
             log.info("Đã phát hiện từ khóa gặp nhân viên trong: '{}'. Thực hiện phản hồi handoff tức thì.", customerText);
-            
+
             // Cập nhật trạng thái hội thoại sang PENDING để Admin nhận yêu cầu
             try {
                 conversation.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.PENDING);
@@ -216,20 +216,20 @@ public class AiChatServiceImpl implements AiChatService {
             }
 
             String handoffResponse = AiChatPrompts.HANDOFF_RESPONSE;
-            
+
             // Đính kèm các câu hỏi gợi ý phù hợp trong lúc chờ nhân viên hỗ trợ
             List<String> waitingSuggs = List.of(
                 "Xem giờ mở cửa của cửa hàng",
                 "Chính sách bảo hành và đổi trả",
                 "Xem địa chỉ cửa hàng AeroStride"
             );
-            
+
             try {
                 handoffResponse += "\n\n[[SUGGESTIONS:" + objectMapper.writeValueAsString(waitingSuggs) + "]]";
             } catch (Exception e) {
                 log.error("Lỗi serialize suggestions cho handoff: {}", e.getMessage());
             }
-            
+
             saveAndBroadcast(conversation, handoffResponse);
             return;
         }
@@ -260,12 +260,12 @@ public class AiChatServiceImpl implements AiChatService {
             try {
                 log.info("Khởi động gọi OpenAI API (có ảnh: {})...", StringUtils.hasText(imageBase64));
                 String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
-                
+
                 // Giới hạn thời gian 15s cho Vision AI (có ảnh) và 8s cho text
                 long timeoutMs = StringUtils.hasText(imageBase64) ? 15000 : 8000;
                 String botResponseText = CompletableFuture.supplyAsync(() -> callOpenAiApi(apiUrl, prompt, imageBase64))
                         .get(timeoutMs, TimeUnit.MILLISECONDS);
-                        
+
                 saveAndBroadcast(conversation, botResponseText);
                 log.info("OpenAI phản hồi thành công.");
                 return; // Xử lý xong, kết thúc!
@@ -484,13 +484,13 @@ public class AiChatServiceImpl implements AiChatService {
         BigDecimal targetPrice = extractTargetPrice(queryLower);
 
         // Nhận diện từ khóa yêu cầu sắp xếp theo giá
-        boolean sortByPriceAsc = queryLower.contains("thấp đến cao") || queryLower.contains("rẻ nhất") || 
-                                 queryLower.contains("tăng dần") || queryLower.contains("giá rẻ") || 
+        boolean sortByPriceAsc = queryLower.contains("thấp đến cao") || queryLower.contains("rẻ nhất") ||
+                                 queryLower.contains("tăng dần") || queryLower.contains("giá rẻ") ||
                                  queryLower.contains("thấp nhất") || queryLower.contains("giá tốt") ||
                                  queryLower.contains("bình dân");
 
-        boolean sortByPriceDesc = queryLower.contains("cao đến thấp") || queryLower.contains("đắt nhất") || 
-                                  queryLower.contains("giảm dần") || queryLower.contains("cao nhất") || 
+        boolean sortByPriceDesc = queryLower.contains("cao đến thấp") || queryLower.contains("đắt nhất") ||
+                                  queryLower.contains("giảm dần") || queryLower.contains("cao nhất") ||
                                   queryLower.contains("đắt tiền") || queryLower.contains("sang chảnh") ||
                                   queryLower.contains("cao cấp");
 
@@ -579,7 +579,7 @@ public class AiChatServiceImpl implements AiChatService {
             String pId = first.getIdSanPham() != null ? first.getIdSanPham() : (first.getId() != null ? first.getId() : "");
             String brand = first.getTenThuongHieu() != null ? first.getTenThuongHieu() : "AeroStride";
             String code = first.getMaSanPham() != null ? first.getMaSanPham() : "";
-            String img = (first.getImages() != null && !first.getImages().isEmpty() && first.getImages().get(0) != null) 
+            String img = (first.getImages() != null && !first.getImages().isEmpty() && first.getImages().get(0) != null)
                     ? (first.getImages().get(0).getDuongDanAnh() != null ? first.getImages().get(0).getDuongDanAnh() : "") : "";
 
             sb.append(String.format("- Tên: %s (Mã SP: %s, ID: %s, Hãng: %s)\n", tenSp, code, pId, brand));
@@ -712,7 +712,7 @@ public class AiChatServiceImpl implements AiChatService {
     public String summarizeChat(CuocHoiThoai conversation) {
         String chatHistory = buildChatHistory(conversation.getId());
         String prompt = "Dựa trên lịch sử hội thoại sau, hãy tóm tắt nội dung chính (khoảng 3-4 dòng) và đánh dấu xem có cần nhân viên chú ý đặc biệt không (ví dụ: đòi hoàn tiền, khiếu nại, ...):\n\n" + chatHistory;
-        
+
         String activeOpenAiKey = getOpenAiApiKey();
         if (activeOpenAiKey != null && !activeOpenAiKey.isBlank() && !"your_openai_api_key_here".equals(activeOpenAiKey)) {
             try {
@@ -853,7 +853,7 @@ public class AiChatServiceImpl implements AiChatService {
 
         if (isGreeting) {
             sb.append(AiChatPrompts.RULE_GREETING_START);
-            
+
             // Đính kèm các sản phẩm hot bán chạy để chào mừng khách hàng
             Map<String, List<ProductVariantResponse>> grouped = variants.stream()
                     .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
@@ -878,10 +878,10 @@ public class AiChatServiceImpl implements AiChatService {
 
         } else if (lowerText.contains("giá") || lowerText.contains("nhiêu") || lowerText.contains("tiền")) {
             sb.append("Dạ, AeroStride xin gửi bạn bảng giá tham khảo của các mẫu giày nổi bật hiện có tại cửa hàng:\n\n");
-            
+
             Map<String, List<ProductVariantResponse>> grouped = variants.stream()
                     .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
-            
+
             int count = 0;
             for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
                 if (count >= 3) break;
@@ -889,20 +889,20 @@ public class AiChatServiceImpl implements AiChatService {
                 List<ProductVariantResponse> vars = entry.getValue();
                 BigDecimal minPrice = vars.stream().map(ProductVariantResponse::getGiaBan).min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
                 sb.append(String.format("• %s: giá từ %,.0f VNĐ\n", productName, minPrice));
-                
+
                 if (!vars.isEmpty()) {
                     matchedVariants.add(vars.get(0));
                 }
                 count++;
             }
             sb.append("\nBạn có thể xem chi tiết các mẫu và đặt mua trực tiếp ở thẻ sản phẩm bên dưới nhé!");
-            
+
         } else if (lowerText.contains("size") || lowerText.contains("kích") || lowerText.contains("cỡ")) {
             sb.append("Dạ, các mẫu giày tại AeroStride hiện có sẵn các size phổ biến từ 38 đến 43.\n\n");
-            
+
             Map<String, List<ProductVariantResponse>> grouped = variants.stream()
                     .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
-            
+
             int count = 0;
             for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
                 if (count >= 3) break;
@@ -910,7 +910,7 @@ public class AiChatServiceImpl implements AiChatService {
                 List<ProductVariantResponse> vars = entry.getValue();
                 String sizes = vars.stream().map(ProductVariantResponse::getGiaTriKichThuoc).distinct().sorted().collect(Collectors.joining(", "));
                 sb.append(String.format("• %s: hiện có size [%s]\n", productName, sizes));
-                
+
                 if (!vars.isEmpty()) {
                     matchedVariants.add(vars.get(0));
                 }
@@ -920,10 +920,10 @@ public class AiChatServiceImpl implements AiChatService {
 
         } else if (lowerText.contains("màu") || lowerText.contains("đen") || lowerText.contains("trắng") || lowerText.contains("đỏ") || lowerText.contains("xanh")) {
             sb.append("Chào bạn! AeroStride sở hữu bộ sưu tập giày với màu sắc cực kỳ đa dạng và thời thượng (Đen, Trắng, Đỏ, Xanh...).\n\n");
-            
+
             Map<String, List<ProductVariantResponse>> grouped = variants.stream()
                     .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
-            
+
             int count = 0;
             for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
                 if (count >= 3) break;
@@ -931,7 +931,7 @@ public class AiChatServiceImpl implements AiChatService {
                 List<ProductVariantResponse> vars = entry.getValue();
                 String colors = vars.stream().map(ProductVariantResponse::getTenMauSac).distinct().collect(Collectors.joining(", "));
                 sb.append(String.format("• %s: có các màu [%s]\n", productName, colors));
-                
+
                 if (!vars.isEmpty()) {
                     matchedVariants.add(vars.get(0));
                 }
@@ -941,10 +941,10 @@ public class AiChatServiceImpl implements AiChatService {
 
         } else if (lowerText.contains("chất liệu") || lowerText.contains("làm bằng") || lowerText.contains("da") || lowerText.contains("vải") || lowerText.contains("cao su")) {
             sb.append("Dạ, AeroStride sử dụng các chất liệu cao cấp tuyển chọn (Da bò bền bỉ, Vải Mesh thoáng khí, đế Cao su êm chân). Dưới đây là chất liệu của từng mẫu:\n\n");
-            
+
             Map<String, List<ProductVariantResponse>> grouped = variants.stream()
                     .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
-            
+
             int count = 0;
             for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
                 if (count >= 3) break;
@@ -952,7 +952,7 @@ public class AiChatServiceImpl implements AiChatService {
                 List<ProductVariantResponse> vars = entry.getValue();
                 String material = vars.get(0).getTenChatLieu() != null ? vars.get(0).getTenChatLieu() : "Da cao cấp";
                 sb.append(String.format("• %s: chất liệu [%s]\n", productName, material));
-                
+
                 if (!vars.isEmpty()) {
                     matchedVariants.add(vars.get(0));
                 }
@@ -962,10 +962,10 @@ public class AiChatServiceImpl implements AiChatService {
 
         } else if (lowerText.contains("còn hàng") || lowerText.contains("còn không") || lowerText.contains("số lượng") || lowerText.contains("hết")) {
             sb.append("Dạ, AeroStride xin cập nhật tình trạng tồn kho của các mẫu sản phẩm đang có sẵn tại shop:\n\n");
-            
+
             Map<String, List<ProductVariantResponse>> grouped = variants.stream()
                     .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
-            
+
             int count = 0;
             for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
                 if (count >= 3) break;
@@ -974,7 +974,7 @@ public class AiChatServiceImpl implements AiChatService {
                 int totalStock = vars.stream().mapToInt(v -> v.getSoLuong() != null ? v.getSoLuong() : 0).sum();
                 String stockStatus = totalStock > 20 ? "Còn nhiều hàng" : (totalStock > 0 ? "Còn ít hàng" : "Hết hàng");
                 sb.append(String.format("• %s: %s (tổng %d đôi)\n", productName, stockStatus, totalStock));
-                
+
                 if (!vars.isEmpty()) {
                     matchedVariants.add(vars.get(0));
                 }
@@ -984,10 +984,10 @@ public class AiChatServiceImpl implements AiChatService {
 
         } else if (lowerText.contains("khuyến mãi") || lowerText.contains("giảm giá") || lowerText.contains("sale") || lowerText.contains("ưu đãi")) {
             sb.append("Dạ, AeroStride xin gửi bạn các chương trình ưu đãi và giảm giá cực sốc tại shop:\n\n");
-            
+
             Map<String, List<ProductVariantResponse>> grouped = variants.stream()
                     .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
-            
+
             int count = 0;
             for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
                 if (count >= 3) break;
@@ -997,13 +997,13 @@ public class AiChatServiceImpl implements AiChatService {
                         .map(v -> v.getPhanTramGiam() != null ? v.getPhanTramGiam() : BigDecimal.ZERO)
                         .max(BigDecimal::compareTo)
                         .orElse(BigDecimal.ZERO);
-                
+
                 if (maxDiscount.compareTo(BigDecimal.ZERO) > 0) {
                     sb.append(String.format("• %s: Đang GIẢM GIÁ lên tới %s%%\n", productName, maxDiscount));
                 } else {
                     sb.append(String.format("• %s: Giá cực tốt (Đồng giá)\n", productName));
                 }
-                
+
                 if (!vars.isEmpty()) {
                     matchedVariants.add(vars.get(0));
                 }
@@ -1017,18 +1017,18 @@ public class AiChatServiceImpl implements AiChatService {
             else if (lowerText.contains("adidas")) matchedBrand = "adidas";
             else if (lowerText.contains("puma")) matchedBrand = "puma";
             else if (lowerText.contains("vans")) matchedBrand = "vans";
-            
+
             if (matchedBrand != null) {
                 String finalBrand = matchedBrand;
                 List<ProductVariantResponse> brandVars = variants.stream()
                         .filter(v -> v.getTenThuongHieu() != null && v.getTenThuongHieu().toLowerCase().contains(finalBrand))
                         .collect(Collectors.toList());
-                
+
                 if (!brandVars.isEmpty()) {
                     sb.append(String.format("Dạ, shop đang có sẵn các mẫu giày thuộc thương hiệu %s cực hot dưới đây:\n\n", matchedBrand.toUpperCase()));
                     Map<String, List<ProductVariantResponse>> grouped = brandVars.stream()
                             .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
-                    
+
                     int count = 0;
                     for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
                         if (count >= 3) break;
@@ -1036,7 +1036,7 @@ public class AiChatServiceImpl implements AiChatService {
                         List<ProductVariantResponse> vars = entry.getValue();
                         BigDecimal minPrice = vars.stream().map(ProductVariantResponse::getGiaBan).min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
                         sb.append(String.format("• %s: chỉ từ %,.0f VNĐ\n", productName, minPrice));
-                        
+
                         if (!vars.isEmpty()) {
                             matchedVariants.add(vars.get(0));
                         }
@@ -1047,10 +1047,10 @@ public class AiChatServiceImpl implements AiChatService {
                 }
             } else {
                 sb.append("Xin chào! Trợ lý ảo AeroStride rất vui được hỗ trợ bạn. Dưới đây là một số mẫu giày bán chạy nhất tuần này tại cửa hàng:\n\n");
-                
+
                 Map<String, List<ProductVariantResponse>> grouped = variants.stream()
                         .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
-                
+
                 int count = 0;
                 for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
                     if (count >= 3) break;
@@ -1058,7 +1058,7 @@ public class AiChatServiceImpl implements AiChatService {
                     List<ProductVariantResponse> vars = entry.getValue();
                     BigDecimal minPrice = vars.stream().map(ProductVariantResponse::getGiaBan).min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
                     sb.append(String.format("• %s: giá từ %,.0f VNĐ (đang bán chạy)\n", productName, minPrice));
-                    
+
                     if (!vars.isEmpty()) {
                         matchedVariants.add(vars.get(0));
                     }
@@ -1164,7 +1164,7 @@ public class AiChatServiceImpl implements AiChatService {
                 localSuggs.add("Đợt giảm giá này có voucher gì không shop?");
                 localSuggs.add("Chính sách bảo hành và đổi trả giày thế nào ạ?");
                 localSuggs.add("Bên mình hỗ trợ ship COD toàn quốc không shop?");
-                
+
                 // Trích xuất thương hiệu ngẫu nhiên từ sản phẩm hoạt động để làm gợi ý sinh động
                 if (activeVariants != null && !activeVariants.isEmpty()) {
                     Set<String> brands = activeVariants.stream()
@@ -1178,12 +1178,12 @@ public class AiChatServiceImpl implements AiChatService {
                         added++;
                     }
                 }
-                
+
                 if (localSuggs.size() < 5) {
                     localSuggs.add("Mẫu giày Nike nào đang hot nhất tuần này?");
                     localSuggs.add("Adidas có sẵn size 42 không ạ?");
                 }
-                
+
                 return localSuggs;
             } catch (Exception e) {
                 log.warn("Lỗi sinh gợi ý cục bộ: {}", e.getMessage());

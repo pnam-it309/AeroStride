@@ -5,13 +5,10 @@ import com.example.be.core.admin.sanpham.service.AdminSanPhamService;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.constants.AiChatPrompts;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Description;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.ai.tool.annotation.Tool;
@@ -29,7 +26,7 @@ public class AiToolsConfig {
     @Tool(description = "Tìm kiếm các biến thể sản phẩm (giày) trong kho của AeroStride. Trả về thông tin biến thể cụ thể bao gồm ID, size, màu, giá. Cung cấp keyword (như tên giày, size, màu) và maxPrice nếu khách hàng muốn tìm giày dưới một mức giá nào đó.")
     public String searchProducts(String keyword, String brand, BigDecimal maxPrice) {
         log.info("AI gọi hàm searchProducts: keyword={}, brand={}, maxPrice={}", keyword, brand, maxPrice);
-        
+
         // Lấy toàn bộ biến thể đang hoạt động
         List<ProductVariantResponse> allVariants = sanPhamService.getAllVariants().stream()
                 .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
@@ -38,7 +35,7 @@ public class AiToolsConfig {
         // Lọc theo các điều kiện do AI truyền vào
         List<ProductVariantResponse> filtered = allVariants.stream().filter(v -> {
             boolean match = true;
-            
+
             // Lọc theo keyword (tìm trong tên SP, màu sắc, size, thương hiệu)
             if (keyword != null && !keyword.isBlank()) {
                 String kw = keyword.toLowerCase();
@@ -49,21 +46,21 @@ public class AiToolsConfig {
                 if (v.getTenThuongHieu() != null && v.getTenThuongHieu().toLowerCase().contains(kw)) kwMatch = true;
                 if (!kwMatch) match = false;
             }
-            
+
             // Lọc theo brand
             if (brand != null && !brand.isBlank()) {
                 if (v.getTenThuongHieu() == null || !v.getTenThuongHieu().toLowerCase().contains(brand.toLowerCase())) {
                     match = false;
                 }
             }
-            
+
             // Lọc theo giá tối đa
             if (maxPrice != null) {
                 if (v.getGiaBan() != null && v.getGiaBan().compareTo(maxPrice) > 0) {
                     match = false;
                 }
             }
-            
+
             return match;
         }).limit(30).collect(Collectors.toList());
 
@@ -74,10 +71,10 @@ public class AiToolsConfig {
         StringBuilder sb = new StringBuilder();
         sb.append("Tìm thấy ").append(filtered.size()).append(" sản phẩm:\n");
         for (ProductVariantResponse v : filtered) {
-            sb.append(String.format("{\n  \"idSanPham\": \"%s\",\n  \"tenSanPham\": \"%s\",\n  \"giaBan\": %s,\n  \"tenThuongHieu\": \"%s\",\n  \"tenMauSac\": \"%s\",\n  \"giaTriKichThuoc\": \"%s\",\n  \"hinhAnh\": \"%s\",\n  \"phanTramGiam\": %s,\n  \"soLuong\": %s\n}\n", 
-                v.getIdSanPham(), 
-                v.getTenSanPham() != null ? v.getTenSanPham() : "", 
-                v.getGiaBan(), 
+            sb.append(String.format("{\n  \"idSanPham\": \"%s\",\n  \"tenSanPham\": \"%s\",\n  \"giaBan\": %s,\n  \"tenThuongHieu\": \"%s\",\n  \"tenMauSac\": \"%s\",\n  \"giaTriKichThuoc\": \"%s\",\n  \"hinhAnh\": \"%s\",\n  \"phanTramGiam\": %s,\n  \"soLuong\": %s\n}\n",
+                v.getIdSanPham(),
+                v.getTenSanPham() != null ? v.getTenSanPham() : "",
+                v.getGiaBan(),
                 v.getTenThuongHieu() != null ? v.getTenThuongHieu() : "",
                 v.getTenMauSac() != null ? v.getTenMauSac() : "",
                 v.getGiaTriKichThuoc() != null ? v.getGiaTriKichThuoc() : "",

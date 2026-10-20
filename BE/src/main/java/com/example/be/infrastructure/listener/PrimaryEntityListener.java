@@ -6,7 +6,6 @@ import com.example.be.utils.HelperUtils;
 import com.example.be.utils.CodeUtils;
 import jakarta.persistence.PrePersist;
 import java.lang.reflect.Field;
-import java.util.UUID;
 
 public class PrimaryEntityListener {
 
@@ -44,7 +43,7 @@ public class PrimaryEntityListener {
                 }
                 currentClass = currentClass.getSuperclass();
             }
-            
+
             if (maField != null) {
                 maField.setAccessible(true);
                 Object value = maField.get(entity);

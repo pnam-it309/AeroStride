@@ -5,7 +5,7 @@ public final class SecurityConstants {
 
     public static final String JWT_HEADER = "Authorization";
     public static final String JWT_PREFIX = "Bearer ";
-    
+
     public static final String[] PUBLIC_URLS = {
         RoutesConstant.AUTH + "/**",
         RoutesConstant.CUSTOMER + "/landing/**",

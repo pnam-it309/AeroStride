@@ -14,14 +14,12 @@ import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.utils.SearchUtils;
-import com.example.be.utils.CodeUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -230,7 +228,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 if (minPrice == null || price.compareTo(minPrice) < 0) minPrice = price;
                 if (maxPrice == null || price.compareTo(maxPrice) > 0) maxPrice = price;
             }
-            
+
             String color = v.getTenMauSac();
             String size = v.getTenKichThuoc();
             Integer qty = v.getSoLuong() != null ? v.getSoLuong() : 0;
@@ -240,7 +238,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 if (!availableColors.contains(color)) {
                     availableColors.add(color);
                 }
-                
+
                 stockByColor.put(color, stockByColor.getOrDefault(color, 0) + qty);
 
                 if (size != null && !size.trim().isEmpty()) {
@@ -249,7 +247,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 }
             }
         }
-        
+
         availableSizesByColor.replaceAll((c, list) -> {
             return list.stream().distinct()
                        .sorted((a, b) -> {
@@ -569,7 +567,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
 
                     if (kichThuoc != null && !kichThuoc.isBlank()) {
                         boolean matchSize = variants.stream()
-                                .anyMatch(v -> v.getKichThuoc() != null 
+                                .anyMatch(v -> v.getKichThuoc() != null
                                         && v.getKichThuoc().getId().equals(kichThuoc)
                                         && TrangThai.DANG_HOAT_DONG.equals(v.getTrangThai())
                                         && v.getSoLuong() > 0);

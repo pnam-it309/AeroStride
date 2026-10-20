@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,7 +27,7 @@ public interface AdminChiTietSanPhamRepository extends ChiTietSanPhamRepository,
 
     @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
     List<ChiTietSanPham> findBySanPhamIdAndXoaMemFalse(String sanPhamId);
- 
+
     @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
     List<ChiTietSanPham> findAllByXoaMemFalse();
 

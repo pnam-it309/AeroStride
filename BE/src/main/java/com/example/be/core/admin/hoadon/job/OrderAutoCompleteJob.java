@@ -27,7 +27,7 @@ public class OrderAutoCompleteJob {
     public void autoCompleteOrders() {
         log.info("Starting OrderAutoCompleteJob to check for DANG_GIAO orders...");
         long sevenDaysAgo = System.currentTimeMillis() - (7L * 24 * 60 * 60 * 1000);
-        
+
         List<HoaDon> orders = hoaDonRepository.findByTrangThai(OrderStatus.DANG_GIAO);
 
         for (HoaDon order : orders) {
@@ -66,7 +66,7 @@ public class OrderAutoCompleteJob {
                 lichSuTrangThaiHoaDonRepository.save(history);
             }
         }
-        
+
         log.info("Finished OrderAutoCompleteJob.");
     }
 }

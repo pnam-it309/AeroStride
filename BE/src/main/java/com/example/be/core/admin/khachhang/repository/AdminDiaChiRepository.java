@@ -3,8 +3,6 @@ package com.example.be.core.admin.khachhang.repository;
 import com.example.be.entity.DiaChi;
 import com.example.be.repository.DiaChiRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 

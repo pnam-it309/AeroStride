@@ -34,7 +34,7 @@ public class AdminAiAssistantController {
         if (chat == null) {
             return ResponseEntity.badRequest().body(ApiResponse.error(400, "Không tìm thấy cuộc hội thoại"));
         }
-        
+
         String summary = aiChatService.summarizeChat(chat);
         return ResponseEntity.ok(ApiResponse.success(summary, "Lấy tóm tắt thành công"));
     }
@@ -44,10 +44,10 @@ public class AdminAiAssistantController {
         log.info("Admin AI Assistant requested dashboard insights");
         // Count pending orders
         long pendingOrders = adminHoaDonRepository.countByTrangThai(OrderStatus.CHO_XAC_NHAN);
-        
+
         // Count low stock products (< 5)
         long lowStockItems = chiTietSanPhamRepository.countBySoLuongLessThan(5);
-        
+
         String insights = aiChatService.getDashboardInsights((int) pendingOrders, (int) lowStockItems);
         return ResponseEntity.ok(ApiResponse.success(insights, "Lấy phân tích thành công"));
     }

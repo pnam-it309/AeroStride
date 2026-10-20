@@ -534,7 +534,7 @@ watch(
             shippingFeeError.value = '';
             shippingFeeSource.value = '';
         } else {
-            if (channel === 'Giao hàng' && (oldFreeShip === true || channel !== oldChannel)) {
+            if (channel === 'Giao hàng' && (oldFreeShip || channel !== oldChannel)) {
                 void calculateShippingFee();
             } else if (channel !== oldChannel && oldChannel !== undefined) {
                 shippingFee.value = 0;

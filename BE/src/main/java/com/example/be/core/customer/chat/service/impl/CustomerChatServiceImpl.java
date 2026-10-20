@@ -17,18 +17,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -190,12 +184,12 @@ public class CustomerChatServiceImpl implements CustomerChatService {
         notification.put("timestamp", Instant.now().toString());
         publishNotification(notification);
 
-        log.info("Checking AI Trigger: senderType={}, isAccepted={}, convType={}", 
+        log.info("Checking AI Trigger: senderType={}, isAccepted={}, convType={}",
                 senderType, conversation.getDaChapNhan(), conversation.getLoaiHoiThoai());
 
         // AI Chatbot logic: Nếu khách hàng gửi tin và chưa có nhân viên tiếp nhận
-        if (ChatConstants.SENDER_TYPE_CUSTOMER.equals(senderType) && 
-            !Boolean.TRUE.equals(conversation.getDaChapNhan()) && 
+        if (ChatConstants.SENDER_TYPE_CUSTOMER.equals(senderType) &&
+            !Boolean.TRUE.equals(conversation.getDaChapNhan()) &&
             (conversation.getLoaiHoiThoai() == null || conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER)) {
             log.info("Triggering AI response for conversation: {}", conversation.getId());
             aiChatService.generateAndSendResponse(conversation, text, imageBase64);
@@ -238,7 +232,7 @@ public class CustomerChatServiceImpl implements CustomerChatService {
     public void submitRating(String sessionId, Integer rating, String feedback) {
         CuocHoiThoai conversation = conversationRepository.findByMaPhien(sessionId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy cuộc trò chuyện."));
-        
+
         conversation.setDanhGiaChat(rating);
         conversation.setPhanHoiChat(feedback);
         conversationRepository.save(conversation);

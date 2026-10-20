@@ -23,7 +23,7 @@ public class RedisWebSocketListener implements MessageListener {
     public void onMessage(Message message, byte[] pattern) {
         String channel = new String(message.getChannel(), StandardCharsets.UTF_8);
         String body = new String(message.getBody(), StandardCharsets.UTF_8);
-        
+
         log.info("Received message from Redis channel: {} - Content: {}", channel, body);
 
         // Chuyển tiếp tin nhắn từ Redis sang WebSocket cho tất cả user

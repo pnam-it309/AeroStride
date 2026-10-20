@@ -1,7 +1,6 @@
 package com.example.be.core.admin.khachhang.repository;
 
 import com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse;
-import com.example.be.infrastructure.constants.TrangThai;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -84,14 +83,14 @@ public class AdminKhachHangRepositoryCustomImpl implements AdminKhachHangReposit
             countJpql.append(condition);
             params.put("gioiTinh", request.getGioiTinh());
         }
-        
+
         if (request.getSdtSearch() != null && !request.getSdtSearch().trim().isEmpty()) {
             String condition = " AND kh.sdt LIKE :sdtSearch";
             where.append(condition);
             countJpql.append(condition);
             params.put("sdtSearch", "%" + request.getSdtSearch().trim() + "%");
         }
-        
+
         if (request.getMinTongChiTieu() != null) {
             String condition = " AND (SELECT COALESCE(SUM(hd.tongTienSauGiam), 0.0) FROM HoaDon hd WHERE hd.khachHang = kh AND hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH) >= :minTongChiTieu";
             where.append(condition);
@@ -105,7 +104,7 @@ public class AdminKhachHangRepositoryCustomImpl implements AdminKhachHangReposit
             countJpql.append(condition);
             params.put("maxTongChiTieu", request.getMaxTongChiTieu());
         }
-        
+
         if (request.getMinNgayDonHang() != null) {
             String condition = " AND (SELECT MAX(hd.ngayTao) FROM HoaDon hd WHERE hd.khachHang = kh) >= :minNgayDonHang";
             where.append(condition);
@@ -113,7 +112,7 @@ public class AdminKhachHangRepositoryCustomImpl implements AdminKhachHangReposit
             long minMillis = request.getMinNgayDonHang().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
             params.put("minNgayDonHang", minMillis);
         }
-        
+
         if (request.getMaxNgayDonHang() != null) {
             String condition = " AND (SELECT MAX(hd.ngayTao) FROM HoaDon hd WHERE hd.khachHang = kh) <= :maxNgayDonHang";
             where.append(condition);

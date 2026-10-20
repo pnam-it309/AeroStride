@@ -22,11 +22,11 @@ public class CccdController {
     public ResponseEntity<ApiResponse<CccdDto>> parseQrCode(@RequestBody Map<String, String> request) {
         String qrData = request.get("qrData");
         CccdDto result = CccdParser.parse(qrData);
-        
+
         if (result == null) {
             return ResponseEntity.badRequest().body(ApiResponse.error(400, "Failed to parse CCCD QR code data"));
         }
-        
+
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 }

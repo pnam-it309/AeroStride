@@ -20,7 +20,7 @@ public class ProductResponse {
     private String id;
     private String maSanPham;
     private String tenSanPham;
-    
+
     private String idThuongHieu;
     private String tenThuongHieu;
     private String idXuatXu;

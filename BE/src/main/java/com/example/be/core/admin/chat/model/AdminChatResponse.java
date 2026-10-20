@@ -20,13 +20,13 @@ public class AdminChatResponse {
     private Integer chuaDoc;
     @JsonProperty("avatar")
     private String anhDaiDien;
-    
+
     @JsonProperty("isAccepted")
     private Boolean daChapNhan;
-    
+
     @JsonProperty("type")
     private String loaiHoiThoai; // CUSTOMER, INTERNAL
-    
+
     @JsonProperty("status")
     private String trangThaiHoiThoai; // PENDING, ACTIVE, CLOSED
 

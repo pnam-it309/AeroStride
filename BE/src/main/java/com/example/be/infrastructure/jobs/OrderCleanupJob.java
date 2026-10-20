@@ -25,7 +25,7 @@ public class OrderCleanupJob {
         log.info("Cron Job [OrderCleanupJob] - Started POS Draft Cleanup");
         try {
             long twentyFourHoursAgo = System.currentTimeMillis() - (24 * 60 * 60 * 1000L);
-            
+
             // Delete HoaDonChiTiet for these invoices first
             int deletedDetails = entityManager.createQuery(
                     "DELETE FROM HoaDonChiTiet hdct WHERE hdct.hoaDon.id IN " +

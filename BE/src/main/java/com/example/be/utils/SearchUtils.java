@@ -35,16 +35,16 @@ public final class SearchUtils {
         // Frontend gửi 0-based index (0 = trang 1, 1 = trang 2) -> dùng trực tiếp cho Spring Data JPA
         int page = Math.max(rawPage, 0);
         int size = (req.getSize() == null || req.getSize() <= 0) ? DEFAULT_SIZE : req.getSize();
-        
+
         String sortBy = StringUtils.hasText(req.getSortBy()) ? req.getSortBy() : DEFAULT_SORT;
         String sortDirStr = StringUtils.hasText(req.getSortDirection()) ? req.getSortDirection() : "desc";
         Sort.Direction dir = "asc".equalsIgnoreCase(sortDirStr) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        
+
         // Handle special case for legacy 'id' sort if necessary
         if ("id".equals(sortBy)) {
             return org.springframework.data.domain.PageRequest.of(page, size, Sort.by(dir, "id"));
         }
-        
+
         return org.springframework.data.domain.PageRequest.of(page, size, Sort.by(dir, sortBy));
     }
 }

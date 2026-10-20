@@ -1,6 +1,5 @@
 package com.example.be.core.admin.khachhang.model.request;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -19,7 +18,7 @@ public class AdminDiaChiRequest {
     @Size(min = 2, max = 100, message = "Tên người nhận phải từ 2 đến 100 ký tự")
     private String tenNguoiNhan;
 
-    @Pattern(regexp = "^(0[3|5|7|8|9])[0-9]{8}$", message = "Số điện thoại người nhận không hợp lệ (gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09)")
+    @Pattern(regexp = "^(0[35789])[0-9]{8}$", message = "Số điện thoại người nhận không hợp lệ (gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09)")
     private String sdtNguoiNhan;
 
     private String idKhachHang;

@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDate;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 @Getter
 @Setter
@@ -32,7 +31,7 @@ public class AdminKhachHangRequest extends PageRequest {
 
     @NotBlank(message = "Số điện thoại không được để trống")
     @jakarta.validation.constraints.Pattern(
-        regexp = "^(0[3|5|7|8|9])[0-9]{8}$",
+        regexp = "^(0[35789])[0-9]{8}$",
         message = "Số điện thoại không hợp lệ (phải bắt đầu bằng 03, 05, 07, 08, 09 và gồm 10 chữ số)"
     )
     private String sdt;
@@ -56,7 +55,7 @@ public class AdminKhachHangRequest extends PageRequest {
     // search, filter
     private String keyword;        // tìm tên / email / sdt / mã
     private TrangThai trangThai;     // null = tất cả
-    
+
     // filter for stats tab
     private String sdtSearch;
     private Double minTongChiTieu;

@@ -34,7 +34,7 @@ public class AdminBanHangHoaDonResponse {
     private List<AdminBanHangHoaDonChiTietResponse> listsHoaDonChiTiet;
     private Boolean priceChanged;
     private String priceChangeMessage;
-    
+
     // UI Suggestion fields for Voucher
     private String bestVoucherId;
     private String voucherSuggestionText;

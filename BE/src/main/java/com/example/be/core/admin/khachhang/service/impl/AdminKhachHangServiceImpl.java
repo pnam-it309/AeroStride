@@ -20,7 +20,6 @@ import com.example.be.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +48,7 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     // ── TÌM KIẾM / LỌC / PHÂN TRANG — gộp 1 method ──────────────────────
     @Override
     public Page<AdminKhachHangResponse> search(AdminKhachHangRequest request) {
-        return SearchUtils.execute(request, pageable -> 
+        return SearchUtils.execute(request, pageable ->
             adminKhachHangRepository.filterAll(
                 request,
                 pageable
@@ -210,7 +209,7 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
             dc.setKhachHang(kh);
             dc.setLaMacDinh(true);
             diaChiRepository.save(dc);
-            
+
             // Sync default address field
             kh.setDiaChi(dc);
             adminKhachHangRepository.save(kh);

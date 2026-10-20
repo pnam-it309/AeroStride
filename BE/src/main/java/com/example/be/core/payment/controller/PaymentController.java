@@ -35,22 +35,22 @@ public class PaymentController {
     @GetMapping("/vnpay-callback")
     public ResponseEntity<ApiResponse<String>> vnpayCallback(@RequestParam Map<String, String> params) {
         log.info("VNPay callback received metadata: {}", params);
-        
+
         // SECURITY FIX: Verify VNPay signature first
         boolean isValid = paymentService.verifyPayment(params);
-        
+
         if (!isValid) {
             log.warn("VNPay callback rejected - invalid signature");
             return ResponseEntity.ok(ApiResponse.error(400, "Invalid VNPay signature"));
         }
-        
+
         // SECURITY FIX: Verify response code indicates successful payment
         String vnp_ResponseCode = params.get("vnp_ResponseCode");
         if (vnp_ResponseCode == null || !vnp_ResponseCode.equals("00")) {
             log.warn("VNPay payment failed with response code: {}", vnp_ResponseCode);
             return ResponseEntity.ok(ApiResponse.error(400, "Payment Failed with code: " + vnp_ResponseCode));
         }
-        
+
         // SECURITY FIX: Verify payment details match order
         try {
             validateCallbackDetails(params);
@@ -58,7 +58,7 @@ public class PaymentController {
             log.warn("VNPay callback validation failed: {}", e.getMessage());
             return ResponseEntity.ok(ApiResponse.error(400, "Payment validation failed: " + e.getMessage()));
         }
-        
+
         // Payment successful - persist payment status into DB
         try {
             paymentOrderFinalizer.markPaid(params.get("vnp_TxnRef"), params);
@@ -77,7 +77,7 @@ public class PaymentController {
         paymentOrderFinalizer.markPaid(orderId, dummyParams);
         return ResponseEntity.ok(ApiResponse.success("Order confirmed successfully"));
     }
-    
+
     /**
      * Validates callback details to ensure payment matches the expected order
      * SECURITY: Prevents payment hijacking and unauthorized payment confirmations
@@ -91,7 +91,7 @@ public class PaymentController {
         if (!vnp_ResponseCode.equals("00")) {
             throw new IllegalArgumentException("Invalid response code: " + vnp_ResponseCode);
         }
-        
+
         // Verify amount
         String vnp_Amount = params.get("vnp_Amount");
         if (vnp_Amount == null || vnp_Amount.isEmpty()) {
@@ -105,19 +105,19 @@ public class PaymentController {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid amount format: " + vnp_Amount);
         }
-        
+
         // Verify transaction reference (Order ID)
         String vnp_TxnRef = params.get("vnp_TxnRef");
         if (vnp_TxnRef == null || vnp_TxnRef.isEmpty()) {
             throw new IllegalArgumentException("Transaction reference (Order ID) is missing");
         }
-        
+
         // Verify order info format
         String vnp_OrderInfo = params.get("vnp_OrderInfo");
         if (vnp_OrderInfo == null || vnp_OrderInfo.isEmpty()) {
             throw new IllegalArgumentException("Order info is missing");
         }
-        
+
         // Verify transaction status
         String vnp_TransactionStatus = params.get("vnp_TransactionStatus");
         if (vnp_TransactionStatus != null) {
@@ -126,7 +126,7 @@ public class PaymentController {
                 throw new IllegalArgumentException("Invalid transaction status: " + vnp_TransactionStatus);
             }
         }
-        
+
         log.info("VNPay callback validation successful for order: {} with amount: {}", vnp_TxnRef, vnp_Amount);
     }
 }

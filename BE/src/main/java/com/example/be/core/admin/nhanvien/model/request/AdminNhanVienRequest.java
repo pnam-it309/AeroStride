@@ -37,7 +37,7 @@ public class AdminNhanVienRequest extends PageRequest {
     private Boolean gioiTinh;
 
     @NotBlank(message = "Số điện thoại không được để trống")
-    @Pattern(regexp = "^(0[3|5|7|8|9])+([0-9]{8})$", message = "Số điện thoại không hợp lệ (10 chữ số, bắt đầu 03, 05, 07, 08, 09)")
+    @Pattern(regexp = "^(0[35789])[0-9]{8}$", message = "Số điện thoại không hợp lệ (10 chữ số, bắt đầu 03, 05, 07, 08, 09)")
     private String sdt;
 
     private LocalDate ngaySinh;

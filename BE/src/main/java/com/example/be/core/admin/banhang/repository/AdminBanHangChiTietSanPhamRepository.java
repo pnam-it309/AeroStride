@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Lock;
 import jakarta.persistence.LockModeType;
@@ -76,7 +75,7 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
         ORDER BY ct.ngayTao DESC
         """)
     List<ChiTietSanPham> searchForPOS(
-        @Param("keyword") String keyword, 
+        @Param("keyword") String keyword,
         @Param("thuongHieu") String thuongHieu,
         @Param("chatLieu") String chatLieu,
         @Param("xuatXu") String xuatXu,

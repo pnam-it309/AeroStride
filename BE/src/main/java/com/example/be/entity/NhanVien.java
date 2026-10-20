@@ -2,7 +2,6 @@ package com.example.be.entity;
 
 import com.example.be.core.common.base.BaseCodeNameEntity;
 import com.example.be.infrastructure.annotations.CodePrefix;
-import com.example.be.infrastructure.constants.VaiTro;
 import jakarta.persistence.*;
 import lombok.*;
 

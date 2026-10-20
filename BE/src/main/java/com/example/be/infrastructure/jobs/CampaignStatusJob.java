@@ -29,7 +29,7 @@ public class CampaignStatusJob {
     public void execute() {
         long now = System.currentTimeMillis();
         log.info("Cron Job [CampaignStatusJob] - Bắt đầu đồng bộ trạng thái đợt giảm giá");
-        
+
         try {
             // 1. Kích hoạt đợt giảm giá sắp diễn ra -> Đang hoạt động
             Specification<DotGiamGia> toActivateSpec = (root, query, cb) -> cb.and(

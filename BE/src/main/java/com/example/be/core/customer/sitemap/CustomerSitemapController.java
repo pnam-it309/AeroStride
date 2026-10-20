@@ -48,7 +48,7 @@ public class CustomerSitemapController {
             String url = origin + "/product/" + p.getId();
             long timestamp = p.getNgayCapNhat() != null ? p.getNgayCapNhat() : (p.getNgayTao() != null ? p.getNgayTao() : System.currentTimeMillis());
             String lastMod = formatter.format(Instant.ofEpochMilli(timestamp));
-            
+
             xml.append("  <url>\n");
             xml.append("    <loc>").append(url).append("</loc>\n");
             xml.append("    <lastmod>").append(lastMod).append("</lastmod>\n");

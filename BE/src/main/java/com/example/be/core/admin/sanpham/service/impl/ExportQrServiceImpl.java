@@ -106,7 +106,7 @@ public class ExportQrServiceImpl implements ExportQrService {
                             anchor.setDy1(60000);
                             anchor.setDx2(-60000);
                             anchor.setDy2(-60000);
-                            
+
                             drawing.createPicture(anchor, pictureIdx);
                         }
                     }

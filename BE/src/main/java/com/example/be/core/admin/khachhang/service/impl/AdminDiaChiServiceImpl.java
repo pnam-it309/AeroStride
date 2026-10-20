@@ -69,7 +69,7 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
     public AdminDiaChiResponse add(AdminDiaChiRequest request) {
         KhachHang kh = khachHangRepository.findById(request.getIdKhachHang())
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KHACH_HANG_NOT_FOUND + request.getIdKhachHang()));
-        
+
         if (Boolean.TRUE.equals(request.getLaMacDinh())) {
             unsetOldDefault(kh.getId());
         }
@@ -83,14 +83,14 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
         if (dc.getTenNguoiNhan() != null) dc.setTenNguoiNhan(dc.getTenNguoiNhan().trim().replaceAll("\\s+", " "));
         if (dc.getSdtNguoiNhan() != null) dc.setSdtNguoiNhan(dc.getSdtNguoiNhan().trim());
         dc.setKhachHang(kh);
-        
+
         dc = repository.save(dc);
-        
+
         if (Boolean.TRUE.equals(request.getLaMacDinh())) {
             kh.setDiaChi(dc);
             khachHangRepository.save(kh);
         }
-        
+
         return toResponse(dc);
     }
 
@@ -99,7 +99,7 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
     public AdminDiaChiResponse update(String id, AdminDiaChiRequest request) {
         DiaChi dc = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DIA_CHI_NOT_FOUND));
-        
+
         if (Boolean.TRUE.equals(request.getLaMacDinh())) {
             unsetOldDefaultExcluding(dc.getKhachHang().getId(), id);
         }
@@ -112,13 +112,13 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
         if (dc.getTenNguoiNhan() != null) dc.setTenNguoiNhan(dc.getTenNguoiNhan().trim().replaceAll("\\s+", " "));
         if (dc.getSdtNguoiNhan() != null) dc.setSdtNguoiNhan(dc.getSdtNguoiNhan().trim());
         dc = repository.save(dc);
-        
+
         if (Boolean.TRUE.equals(request.getLaMacDinh())) {
             KhachHang kh = dc.getKhachHang();
             kh.setDiaChi(dc);
             khachHangRepository.save(kh);
         }
-        
+
         return toResponse(dc);
     }
 

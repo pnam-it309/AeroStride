@@ -49,7 +49,7 @@ public class ScheduledChatTasks {
 
             // Find the last message time
             Optional<TinNhan> lastMsg = tinNhanRepository.findTopByCuocHoiThoaiOrderByNgayTaoDesc(chat);
-            
+
             Long lastActivity = chat.getNgayCapNhat() != null ? chat.getNgayCapNhat() : chat.getNgayTao();
             if (lastMsg.isPresent() && lastMsg.get().getNgayTao() != null) {
                 lastActivity = lastMsg.get().getNgayTao();
@@ -61,7 +61,7 @@ public class ScheduledChatTasks {
                 if (minutesSinceLastMsg >= 30) {
                     chat.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.CLOSED);
                     chat.setNgayCapNhat(now);
-                    
+
                     // Add a system message notifying auto-close
                     TinNhan systemMsg = TinNhan.builder()
                             .cuocHoiThoai(chat)
@@ -69,7 +69,7 @@ public class ScheduledChatTasks {
                             .tenNguoiGui("SYSTEM")
                             .noiDung("Cuộc trò chuyện đã tự động kết thúc do không có phản hồi trong thời gian dài.")
                             .build();
-                    
+
                     tinNhanRepository.save(systemMsg);
                     cuocHoiThoaiRepository.save(chat);
 

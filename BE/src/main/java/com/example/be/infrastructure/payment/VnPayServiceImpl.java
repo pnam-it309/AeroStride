@@ -2,7 +2,6 @@ package com.example.be.infrastructure.payment;
 
 import com.example.be.core.payment.PaymentService;
 import com.example.be.core.payment.dto.PaymentRequest;
-import com.example.be.infrastructure.constants.RoutesConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,22 +42,22 @@ public class VnPayServiceImpl implements PaymentService {
     public String createPaymentUrl(PaymentRequest request) {
         // SECURITY FIX: Validate input parameters
         validatePaymentRequest(request);
-        
+
         log.info("Generating VNPay URL for order: {}", request.getOrderId());
-        
+
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         String vnp_TmnCode = getEffectiveTmnCode();
-        
+
         // POS frontend needs VNPay to return to the browser origin so it can verify
         // the callback and only then finalize the invoice.
         String returnUrl = request.getReturnUrl() != null && !request.getReturnUrl().isBlank()
                 ? request.getReturnUrl().trim()
                 : baseUrl + apiPrefix + "/payment/vnpay-callback";
-        
+
         // VNPay amount is multiplied by 100
         long amount = request.getAmount().multiply(new BigDecimal(100)).longValue();
-        
+
         Map<String, String> vnp_Params = new HashMap<>();
         vnp_Params.put("vnp_Version", vnp_Version);
         vnp_Params.put("vnp_Command", vnp_Command);
@@ -85,7 +84,7 @@ public class VnPayServiceImpl implements PaymentService {
 
         List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
         Collections.sort(fieldNames);
-        
+
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
         for (String fieldName : fieldNames) {
@@ -99,14 +98,14 @@ public class VnPayServiceImpl implements PaymentService {
                 query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8)).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
             }
         }
-        
+
         String queryUrl = query.toString();
         String vnp_SecureHash = hmacSHA512(getEffectiveHashSecret(), hashData.toString());
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
-        
+
         return getEffectiveVnpUrl() + "?" + queryUrl;
     }
-    
+
     /**
      * Validates payment request parameters before sending to VNPay
      * SECURITY: Prevents invalid or malicious payment requests
@@ -116,58 +115,58 @@ public class VnPayServiceImpl implements PaymentService {
         if (request.getOrderId() == null || request.getOrderId().trim().isEmpty()) {
             throw new IllegalArgumentException("Order ID cannot be empty");
         }
-        
+
         if (request.getOrderId().length() > 100) {
             throw new IllegalArgumentException("Order ID exceeds maximum length");
         }
-        
+
         // Validate Amount
         if (request.getAmount() == null) {
             throw new IllegalArgumentException("Amount cannot be null");
         }
-        
+
         if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be greater than 0");
         }
-        
+
         // VNPay maximum amount limit (1,000,000,000 VND)
         BigDecimal maxAmount = new BigDecimal("1000000000.00");
         if (request.getAmount().compareTo(maxAmount) > 0) {
             throw new IllegalArgumentException("Tổng số tiền thanh toán (" + String.format("%,.0f", request.getAmount()) + " VNĐ) vượt quá giới hạn giao dịch tối đa của VNPay (1,000,000,000 VNĐ). Vui lòng thử sản phẩm có giá trị dưới 1 tỷ VNĐ.");
         }
-        
+
         // Validate Order Info
         if (request.getOrderInfo() == null || request.getOrderInfo().trim().isEmpty()) {
             throw new IllegalArgumentException("Order info cannot be empty");
         }
-        
+
         if (request.getOrderInfo().length() > 1000) {
             throw new IllegalArgumentException("Order info exceeds maximum length");
         }
-        
-        log.info("Payment request validation successful for order: {} with amount: {}", 
+
+        log.info("Payment request validation successful for order: {} with amount: {}",
                 request.getOrderId(), request.getAmount());
     }
 
     @Override
     public boolean verifyPayment(Map<String, String> params) {
         log.info("Verifying VNPay signature");
-        
+
         // Extract secure hash before removing it from params
         String vnp_SecureHash = params.get("vnp_SecureHash");
         if (vnp_SecureHash == null || vnp_SecureHash.isEmpty()) {
             log.error("VNPay secure hash is missing from callback");
             return false;
         }
-        
+
         // Create a copy of params to avoid modifying the original
         Map<String, String> paramsCopy = new HashMap<>(params);
         paramsCopy.remove("vnp_SecureHashType");
         paramsCopy.remove("vnp_SecureHash");
-        
+
         List<String> fieldNames = new ArrayList<>(paramsCopy.keySet());
         Collections.sort(fieldNames);
-        
+
         StringBuilder hashData = new StringBuilder();
         for (String fieldName : fieldNames) {
             String fieldValue = paramsCopy.get(fieldName);
@@ -178,16 +177,16 @@ public class VnPayServiceImpl implements PaymentService {
                 hashData.append(fieldName).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
             }
         }
-        
+
         String checkSum = hmacSHA512(getEffectiveHashSecret(), hashData.toString());
         boolean isValid = checkSum.equalsIgnoreCase(vnp_SecureHash);
-        
+
         if (!isValid) {
             log.error("VNPay signature verification failed. Expected: {}, Got: {}", checkSum, vnp_SecureHash);
         } else {
             log.info("VNPay signature verification successful");
         }
-        
+
         return isValid;
     }
 

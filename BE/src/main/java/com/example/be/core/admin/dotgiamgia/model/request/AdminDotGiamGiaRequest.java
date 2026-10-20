@@ -46,7 +46,7 @@ public class AdminDotGiamGiaRequest {
     private String moTa;
 
     private TrangThai trangThai;
- 
+
     private Boolean isFlashSale;
 
     private String khungGio;

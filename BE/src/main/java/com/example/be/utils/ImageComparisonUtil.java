@@ -56,16 +56,16 @@ public class ImageComparisonUtil {
             for (int x = 0; x < BASE_SIZE; x++) {
                 int rgb1 = img1.getRGB(x, y);
                 int rgb2 = img2.getRGB(x, y);
-                
+
                 int r1 = (rgb1 >> 16) & 0xff;
                 int r2 = (rgb2 >> 16) & 0xff;
-                
+
                 diff += Math.abs(r1 - r2);
             }
         }
         double maxDiff = 255.0 * BASE_SIZE * BASE_SIZE;
         double percentage = 100.0 - (100.0 * diff / maxDiff);
-        
+
         return percentage;
     }
 }

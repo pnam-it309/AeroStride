@@ -48,7 +48,7 @@ public final class VietnameseLexicon {
     public static final Map<String, String> COMMON_TYPOS_MAP;
     static {
         Map<String, String> typos = new HashMap<>();
-        
+
         // Nhóm lỗi gõ telex sai vị trí dấu (ví dụ: chaof -> chào)
         typos.put("chaof", "chào");
         typos.put("xinchao", "xin chào");
@@ -85,7 +85,7 @@ public final class VietnameseLexicon {
         typos.put("coupon", "phiếu giảm giá");
         typos.put("km", "khuyến mãi");
         typos.put("gg", "giảm giá");
-        
+
         // Không dấu sang có dấu chuẩn
         typos.put("xin chao", "xin chào");
         typos.put("chiec giay", "chiếc giày");
@@ -111,7 +111,7 @@ public final class VietnameseLexicon {
         typos.put("tu van", "tư vấn");
         typos.put("cua hang", "cửa hàng");
         typos.put("chinh sach", "chính sách");
-        
+
         COMMON_TYPOS_MAP = Collections.unmodifiableMap(typos);
     }
 
@@ -147,25 +147,25 @@ public final class VietnameseLexicon {
         if (text == null || text.isBlank()) {
             return "";
         }
-        
+
         String lower = text.toLowerCase().trim();
-        
+
         // 1. Kiểm tra ánh xạ toàn cụm từ trong từ điển trước
         String directMatch = COMMON_TYPOS_MAP.get(lower);
         if (directMatch != null) {
             return directMatch;
         }
-        
+
         // 2. Duyệt từng từ và tự động sửa các lỗi gõ riêng lẻ hoặc ghép cụm từ
         String[] words = lower.split("\\s+");
         StringBuilder sb = new StringBuilder();
-        
+
         for (int i = 0; i < words.length; i++) {
             String word = words[i];
-            
+
             // Xử lý sửa lỗi telex cục bộ của từ đơn
             String fixedWord = COMMON_TYPOS_MAP.getOrDefault(word, word);
-            
+
             // Hỗ trợ sửa lỗi telex ghép đôi từ liền trước (ví dụ: "chiec giay" -> "chiếc giày")
             if (i > 0) {
                 String twoWords = words[i - 1] + " " + word;
@@ -179,13 +179,13 @@ public final class VietnameseLexicon {
                     fixedWord = fixedTwo;
                 }
             }
-            
+
             if (sb.length() > 0 && !sb.toString().endsWith(" ") && !fixedWord.startsWith(" ")) {
                 sb.append(" ");
             }
             sb.append(fixedWord);
         }
-        
+
         return sb.toString().trim();
     }
 }

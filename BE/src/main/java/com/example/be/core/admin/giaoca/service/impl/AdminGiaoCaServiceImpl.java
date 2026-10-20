@@ -135,10 +135,10 @@ public class AdminGiaoCaServiceImpl implements AdminGiaoCaService {
 
         giaoCa.setTongDoanhThu(tongDoanhThu);
         giaoCa.setTienThucTe(request.getTienThucTe() != null ? request.getTienThucTe() : BigDecimal.ZERO);
-        
+
         BigDecimal tienChenhLech = giaoCa.getTienThucTe().subtract(giaoCa.getTienBanDau().add(giaoCa.getTongDoanhThu()));
         giaoCa.setTienChenhLech(tienChenhLech);
-        
+
         giaoCa.setThoiGianRaCa(new Date().getTime());
         giaoCa.setGhiChu(request.getGhiChu());
         giaoCa.setTrangThai("CLOSED");

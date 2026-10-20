@@ -3,7 +3,6 @@ package com.example.be.core.admin.hoadon.service;
 import com.example.be.core.admin.hoadon.model.request.AdminHoaDonRequest;
 import com.example.be.core.admin.hoadon.model.response.AdminHoaDonDetailResponse;
 import com.example.be.core.admin.hoadon.model.response.AdminHoaDonResponse;
-import com.example.be.entity.HoaDon;
 import org.springframework.data.domain.Page;
 
 public interface AdminHoaDonService {

@@ -16,7 +16,7 @@ public final class CccdParser {
     /**
      * Parses the raw QR code string from a Vietnamese CCCD.
      * Raw string format: ID|OldID|FullName|DOB|Gender|Address|DateOfIssue
-     * 
+     *
      * @param rawData The raw string from the QR code.
      * @return CccdDto containing the parsed information.
      */

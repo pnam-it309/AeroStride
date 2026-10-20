@@ -53,7 +53,7 @@ public class CustomerProfileController {
                 .hinhAnh(khachHang.getHinhAnh());
 
         java.util.List<DiaChi> diaChis = diaChiRepository.findByKhachHangId(khachHang.getId());
-        
+
         Optional<DiaChi> defaultDiaChi = diaChis.stream()
                 .filter(dc -> Boolean.TRUE.equals(dc.getLaMacDinh()))
                 .findFirst();
@@ -68,7 +68,7 @@ public class CustomerProfileController {
                    .phuongXa(dc.getPhuongXa())
                    .quanHuyen(dc.getThanhPho())
                    .tinhThanh(dc.getTinh());
-            
+
             if (dc.getTenNguoiNhan() != null) {
                 builder.ten(dc.getTenNguoiNhan());
             }
@@ -125,7 +125,7 @@ public class CustomerProfileController {
             DiaChi saved = diaChiRepository.save(dc);
             khachHang.setDiaChi(saved);
         }
-        
+
         khachHangRepository.save(khachHang);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật hồ sơ thành công"));
     }

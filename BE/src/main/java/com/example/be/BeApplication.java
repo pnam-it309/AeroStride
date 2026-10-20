@@ -40,10 +40,10 @@ public class BeApplication {
             for (DotenvEntry entry : dotenv.entries()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                
+
                 // Các biến quan trọng (SPRING_ và JWT_) luôn được ưu tiên ghi đè vào System Properties
                 boolean isCritical = key.startsWith("SPRING_") || key.startsWith("JWT_");
-                
+
                 if (System.getProperty(key) == null || isCritical) {
                     System.setProperty(key, value);
                 }

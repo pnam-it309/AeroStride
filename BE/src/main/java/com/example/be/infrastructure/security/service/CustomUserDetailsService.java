@@ -58,7 +58,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 VaiTro role = VaiTro.isManagementRole(nhanVien) ? VaiTro.QUAN_LY : VaiTro.NHAN_VIEN;
                 return buildUserDetails(nhanVien.getTenTaiKhoan(), nhanVien.getMatKhau(), role);
             }
-            
+
             // Nếu yêu cầu đích danh ADMIN/STAFF mà không thấy thì throw luôn
             if ("ADMIN".equals(loginType) || "STAFF".equals(loginType)) {
                 throw new UsernameNotFoundException("Không tìm thấy tài khoản quản trị/nhân viên: " + realIdentifier);

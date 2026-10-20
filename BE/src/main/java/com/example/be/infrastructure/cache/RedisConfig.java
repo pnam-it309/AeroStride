@@ -55,7 +55,7 @@ public class RedisConfig implements CachingConfigurer {
     }
 
     @Bean
-    public RedisMessageListenerContainer redisContainer(RedisConnectionFactory connectionFactory, 
+    public RedisMessageListenerContainer redisContainer(RedisConnectionFactory connectionFactory,
                                                         RedisWebSocketListener listener) {
         // Ghi đè isAutoStartup để trả về false, ngăn Spring tự động khởi chạy làm lỗi context
         RedisMessageListenerContainer container = new RedisMessageListenerContainer() {

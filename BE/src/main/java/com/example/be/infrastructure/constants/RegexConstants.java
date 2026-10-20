@@ -19,7 +19,7 @@ public final class RegexConstants {
     /**
      * Vietnam phone number validation (10 digits, starts with 03, 05, 07, 08, 09).
      */
-    public static final String VIETNAM_PHONE_NUMBER = "^(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})$";
+    public static final String VIETNAM_PHONE_NUMBER = "^(0[35789])[0-9]{8}$";
 
     /**
      * Strong password validation:

@@ -9,7 +9,6 @@ import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.infrastructure.listener.PrimaryEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 

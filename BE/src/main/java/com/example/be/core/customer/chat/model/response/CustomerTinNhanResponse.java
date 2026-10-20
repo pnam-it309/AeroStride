@@ -14,25 +14,25 @@ import lombok.Setter;
 @AllArgsConstructor
 public class CustomerTinNhanResponse {
     private String id;
-    
+
     @JsonProperty("conversationId")
     private String idCuocHoiThoai;
-    
+
     @JsonProperty("sessionId")
     private String maPhien;
-    
+
     @JsonProperty("sender")
     private String nguoiGui;
-    
+
     @JsonProperty("text")
     private String noiDung;
-    
+
     @JsonProperty("time")
     private String thoiGian;
-    
+
     @JsonProperty("staffId")
     private String idNhanVien;
-    
+
     @JsonProperty("secondStaffId")
     private String idNhanVienNhan;
 

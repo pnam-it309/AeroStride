@@ -38,7 +38,7 @@ public class GhnController {
             @RequestParam String toWardCode,
             @RequestParam(required = false) Integer weight,
             @RequestParam(required = false) Integer insuranceValue) {
-        
+
         Map<String, Object> fee = ghnClient.calculateShippingFee(toDistrictId, toWardCode, weight, insuranceValue);
         if (fee != null) {
             return ResponseEntity.ok(fee);

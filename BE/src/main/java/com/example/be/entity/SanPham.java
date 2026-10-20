@@ -3,9 +3,7 @@ package com.example.be.entity;
 import com.example.be.core.common.base.BaseCodeNameEntity;
 import com.example.be.infrastructure.annotations.CodePrefix;
 import com.example.be.infrastructure.constants.GioiTinhKhachHang;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 

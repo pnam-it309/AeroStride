@@ -13,7 +13,7 @@ public enum OrderStatus {
 
     public boolean canTransitionTo(OrderStatus nextStatus) {
         if (this == nextStatus) return true;
-        
+
         return switch (this) {
             case CHO_XAC_NHAN -> nextStatus == XAC_NHAN || nextStatus == DA_HUY;
             case XAC_NHAN -> nextStatus == CHO_GIAO || nextStatus == DA_HUY;

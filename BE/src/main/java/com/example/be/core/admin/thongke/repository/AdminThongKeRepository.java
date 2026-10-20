@@ -11,11 +11,11 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface AdminThongKeRepository extends HoaDonRepository, 
+public interface AdminThongKeRepository extends HoaDonRepository,
         JpaSpecificationExecutor<HoaDon>, AdminThongKeRepositoryCustom {
 
     @Query(value = """
-            SELECT 
+            SELECT
                  COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0),
                  COUNT(hd.id),
                  SUM(CASE WHEN hd.trang_thai = 4 THEN 1 ELSE 0 END),
@@ -110,7 +110,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
     @Query(value = """
-            SELECT 
+            SELECT
                 COALESCE(kh.ten_nguoi_dung, hd.ten_nguoi_nhan, 'Khách lẻ') AS tenKhachHang,
                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0) AS tongChi,
                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hdct.so_luong ELSE 0 END), 0) AS tongSanPham,
@@ -130,7 +130,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
     @Query(value = """
-            SELECT 
+            SELECT
                 nv.ma_nhan_vien AS maNhanVien,
                 nv.ten_nhan_vien AS tenNhanVien,
                 COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0) AS tongDoanhThu,
@@ -151,7 +151,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
     @Query(value = """
-            SELECT 
+            SELECT
                 COALESCE(SUM(CASE WHEN hd.ngay_tao >= :todayStart AND hd.ngay_tao <= :todayEnd THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0),
                 SUM(CASE WHEN hd.ngay_tao >= :todayStart AND hd.ngay_tao <= :todayEnd THEN 1 ELSE 0 END),
                 COALESCE(SUM(CASE WHEN hd.ngay_tao >= :weekStart AND hd.ngay_tao <= :todayEnd THEN GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0)) ELSE 0 END), 0),
@@ -173,7 +173,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             @Param("yearStart") Long yearStart);
 
     @Query(value = """
-            SELECT 
+            SELECT
                 DATE_FORMAT(FROM_UNIXTIME(hd.ngay_tao / 1000), '%Y-%m-%d') AS ngay,
                 COALESCE(SUM(GREATEST(0, COALESCE(hd.tong_tien_sau_giam, hd.tong_tien, 0) - COALESCE(hd.phi_van_chuyen, 0))), 0) AS doanhThu,
                 COUNT(hd.id) AS soDon
@@ -209,7 +209,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
              AND (:thuongHieuId IS NULL OR :thuongHieuId = '' OR sp.id_thuong_hieu = :thuongHieuId)
              AND (:keyword IS NULL OR :keyword = '' OR LOWER(sp.ma_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(ctsp.ma_chi_tiet_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten_san_pham) LIKE LOWER(CONCAT('%', :keyword, '%')))
            GROUP BY ctsp.id, sp.ma_san_pham, ctsp.ma_chi_tiet_san_pham, sp.ten_san_pham, th.ten_thuong_hieu, ms.ten_mau_sac, kt.gia_tri_kich_thuoc, kt.ten_kich_thuoc
-           ORDER BY 
+           ORDER BY
                CASE WHEN :sortBy = 'revenueDesc' THEN COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong * hdct.don_gia ELSE 0 END), 0) END DESC,
                CASE WHEN :sortBy = 'revenueAsc' THEN COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong * hdct.don_gia ELSE 0 END), 0) END ASC,
                CASE WHEN :sortBy IN ('slowSelling', 'leastSelling', 'quantityAsc') THEN COALESCE(SUM(CASE WHEN hd.trang_thai = 4 AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay) AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay) THEN hdct.so_luong ELSE 0 END), 0) END ASC,

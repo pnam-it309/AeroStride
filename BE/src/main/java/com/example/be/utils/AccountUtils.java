@@ -60,14 +60,14 @@ public final class AccountUtils {
         if (hoTen == null || hoTen.isBlank()) return "nhanvien" + generateRandomSuffix(3, 3);
         String[] parts = hoTen.trim().split("\\s+");
         String ten = xoaDau(parts[parts.length - 1]).toLowerCase();
-        
+
         StringBuilder vietTat = new StringBuilder();
         int count = 0;
         for (int i = 0; i < parts.length - 1 && count < 2; i++) {
             vietTat.append(xoaDau(String.valueOf(parts[i].charAt(0))).toLowerCase());
             count++;
         }
-        
+
         return ten + vietTat + generateRandomSuffix(3, 3);
     }
 

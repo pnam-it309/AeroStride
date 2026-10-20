@@ -33,7 +33,7 @@ public class CustomerSanPhamController {
         request.setTrangThai(TrangThai.DANG_HOAT_DONG);
         if (request.getPage() == null) request.setPage(0);
         if (request.getSize() == null) request.setSize(12);
-        
+
         PageResponse<CustomerProductResponse> response = customerSanPhamService.getProducts(request);
         return ResponseEntity.ok(ApiResponse.success(response, "Lay danh sach san pham thanh cong"));
     }

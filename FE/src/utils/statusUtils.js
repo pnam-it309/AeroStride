@@ -21,7 +21,7 @@ export const isActiveStatus = (status) => {
     if (typeof status === 'number') return status === 0;
 
     // Nếu là Boolean
-    if (typeof status === 'boolean') return status === true;
+    if (typeof status === 'boolean') return status;
 
     const normalized = String(status).toUpperCase();
     return (

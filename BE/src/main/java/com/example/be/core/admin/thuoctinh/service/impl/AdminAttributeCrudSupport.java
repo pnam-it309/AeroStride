@@ -11,7 +11,6 @@ import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.exceptions.BusinessException;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.utils.CodeUtils;
-import com.example.be.utils.SearchUtils;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
@@ -142,7 +141,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
         entity.setMa(ma);
         entity.setTen(requireText(request.getTen(), "Ten " + entityDisplayName + " khong duoc de trong"));
         entity.setTrangThai(Optional.ofNullable(parseTrangThai(request.getTrangThai())).orElse(TrangThai.DANG_HOAT_DONG));
-        
+
         String moTa = normalize(request.getMoTa());
         if (StringUtils.hasText(moTa) && moTa.length() > 255) {
             throw new BusinessException("Mo ta " + entityDisplayName + " khong duoc vuot qua 255 ky tu");

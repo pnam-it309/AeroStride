@@ -35,7 +35,7 @@ public class ShippingConfigController {
             @RequestParam(required = false) BigDecimal totalAmount
     ) {
         BigDecimal fee = BigDecimal.ZERO;
-        
+
         // 1. Kiểm tra miễn phí vận chuyển theo giá trị đơn hàng
         if (totalAmount != null && totalAmount.compareTo(FREE_SHIP_THRESHOLD) >= 0) {
             Map<String, Object> result = new HashMap<>();

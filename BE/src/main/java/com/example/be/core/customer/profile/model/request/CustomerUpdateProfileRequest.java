@@ -24,7 +24,7 @@ public class CustomerUpdateProfileRequest {
     private String phuongXa;
 
     private String diaChiChiTiet;
-    
+
     // Optional fields if user wants to update avatar link later
     private String hinhAnh;
 }

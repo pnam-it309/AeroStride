@@ -10,7 +10,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
-import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface AdminHoaDonMapper {
@@ -161,7 +160,7 @@ public interface AdminHoaDonMapper {
         if (hoaDon == null) return null;
         if (hoaDon.getListsGiaoDichThanhToan() != null) {
             for (GiaoDichThanhToan gd : hoaDon.getListsGiaoDichThanhToan()) {
-                if (gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG 
+                if (gd.getTrangThai() == TrangThai.NGUNG_HOAT_DONG
                         || (gd.getMaGiaoDichNgoai() != null && !gd.getMaGiaoDichNgoai().isBlank())) {
                     return gd.getNgayCapNhat() != null ? gd.getNgayCapNhat() : gd.getNgayTao();
                 }

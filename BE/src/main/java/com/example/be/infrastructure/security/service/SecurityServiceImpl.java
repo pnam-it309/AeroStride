@@ -10,7 +10,7 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     public String getCurrentUserId() {
-        // Implementation depends on how UserDetails is structured. 
+        // Implementation depends on how UserDetails is structured.
         // For now, returning username.
         return getCurrentUsername();
     }

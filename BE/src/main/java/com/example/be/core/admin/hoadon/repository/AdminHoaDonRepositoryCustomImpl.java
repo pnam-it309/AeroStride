@@ -10,11 +10,6 @@ import com.example.be.entity.QHoaDon;
 import com.example.be.entity.QKhachHang;
 import com.example.be.entity.QNhanVien;
 import com.example.be.entity.QHoaDonChiTiet;
-import com.example.be.entity.QChiTietSanPham;
-import com.example.be.entity.QSanPham;
-import com.example.be.entity.QMauSac;
-import com.example.be.entity.QKichThuoc;
-import com.example.be.entity.QDiaChi;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -26,7 +21,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +48,7 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
         BooleanBuilder builder = new BooleanBuilder();
 
         // Ẩn các hóa đơn nháp (trống) do màn hình Bán Hàng tạo ra (Tổng tiền <= 0 và đang chờ xác nhận)
-        // Đồng thời, ẩn CẢ các hóa đơn có NhanVien != null đang ở trạng thái CHO_XAC_NHAN 
+        // Đồng thời, ẩn CẢ các hóa đơn có NhanVien != null đang ở trạng thái CHO_XAC_NHAN
         // (đây là các hóa đơn POS draft, dù có được đổi loaiDon thành ONLINE hay thêm sản phẩm thì vẫn là draft chưa thanh toán)
         builder.and(
             hd.trangThai.ne(OrderStatus.CHO_XAC_NHAN)
@@ -186,12 +180,12 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
 
         List<AdminHoaDonResponse> content = tuples.stream().map(t -> {
             OrderStatus status = t.get(hd.trangThai);
-            
+
             String sdtKh = t.get(kh.sdt);
             String sdtNhan = t.get(hd.soDienThoaiNguoiNhan);
             String sdtNv = t.get(nv.sdt);
-            String finalSdt = (sdtNhan != null && !sdtNhan.trim().isEmpty()) ? sdtNhan : 
-                              (sdtKh != null && !sdtKh.trim().isEmpty()) ? sdtKh : 
+            String finalSdt = (sdtNhan != null && !sdtNhan.trim().isEmpty()) ? sdtNhan :
+                              (sdtKh != null && !sdtKh.trim().isEmpty()) ? sdtKh :
                               (sdtNv != null && !sdtNv.trim().isEmpty()) ? sdtNv : "0988888888";
 
             String maNv = t.get(nv.ma);

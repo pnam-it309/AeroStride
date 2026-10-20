@@ -196,7 +196,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         PhieuGiamGia p = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PHIEU_GIAM_GIA_UPDATE_ERROR));
         TrangThai oldStatus = p.getTrangThai();
-        
+
         BeanUtils.copyProperties(req, p, "trangThai", "ma");
         p.setId(id);
         repo.save(p);
@@ -295,7 +295,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
 
     private AdminPhieuGiamGiaResponse toResponse(PhieuGiamGia p) {
         if (p == null) return null;
-        
+
         List<String> listIdKhachHang = null;
         if (HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc())) {
             listIdKhachHang = phieuGiamGiaCaNhanRepository.findByPhieuGiamGiaId(p.getId()).stream()
@@ -364,7 +364,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 TrangThai.DANG_HOAT_DONG,
                 System.currentTimeMillis()
         );
-        
+
         if (expiredVouchers == null || expiredVouchers.isEmpty()) {
             return;
         }
@@ -372,7 +372,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         for (PhieuGiamGia p : expiredVouchers) {
             p.setTrangThai(TrangThai.NGUNG_HOAT_DONG);
             repo.save(p);
-            
+
             if (HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc())) {
                 sendVoucherStatusEmail(p, "hết hạn sử dụng");
             }
@@ -383,7 +383,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         if (!HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc())) {
             return;
         }
-        
+
         List<PhieuGiamGiaCaNhan> list = phieuGiamGiaCaNhanRepository.findByPhieuGiamGiaId(p.getId());
         if (list == null || list.isEmpty()) {
             return;

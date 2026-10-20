@@ -1,6 +1,5 @@
 package com.example.be.core.common.chat.local.service;
 
-import com.example.be.entity.TuDongNghiaAi;
 import com.example.be.repository.TuDongNghiaAiRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class AiWordLibrary {
     private final TuDongNghiaAiRepository aiSynonymRepository;
-    
+
     // In-memory cache for synonyms to avoid DB queries per word
     private final Map<String, String> synonymCache = new ConcurrentHashMap<>();
     private volatile long lastCacheLoad = 0;
@@ -37,20 +36,20 @@ public class AiWordLibrary {
 
     public String normalize(String text) {
         if (text == null) return "";
-        
+
         // 1. Chuẩn hóa sửa lỗi gõ Telex và từ không dấu bằng VietnameseLexicon
         String preNormalized = VietnameseLexicon.normalizeQuery(text);
-        
+
         // 2. Loại bỏ các ký tự đặc biệt cơ bản
         String cleaned = preNormalized
                 .replaceAll("[.,!?]", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
-        
+
         if (cleaned.isEmpty()) return "";
-        
+
         ensureCacheLoaded();
-        
+
         // Word-by-word synonym replacement using high-performance cache map & optimized for loop
         String[] words = cleaned.split(" ");
         StringBuilder sb = new StringBuilder();

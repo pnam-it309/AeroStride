@@ -3,7 +3,6 @@ package com.example.be.core.admin.nhanvien.repository;
 import com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse;
 import com.example.be.entity.NhanVien;
 import com.example.be.infrastructure.constants.TrangThai;
-import com.example.be.repository.NhanVienRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

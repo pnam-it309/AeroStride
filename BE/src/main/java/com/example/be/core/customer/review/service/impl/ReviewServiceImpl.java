@@ -45,7 +45,7 @@ public class ReviewServiceImpl implements ReviewService {
         if (request.getIdHoaDon() != null && !request.getIdHoaDon().isBlank()) {
             hoaDon = hoaDonRepository.findById(request.getIdHoaDon()).orElse(null);
         }
-        
+
         SanPham sanPham = null;
         if (request.getIdSanPham() != null && !request.getIdSanPham().isBlank()) {
             sanPham = sanPhamRepository.findById(request.getIdSanPham()).orElse(null);
@@ -60,8 +60,8 @@ public class ReviewServiceImpl implements ReviewService {
         // Fallback: Nếu không tìm thấy sản phẩm trực tiếp nhưng có idHoaDon, lấy sản phẩm từ chi tiết hóa đơn
         if (sanPham == null && hoaDon != null && hoaDon.getListsHoaDonChiTiet() != null && !hoaDon.getListsHoaDonChiTiet().isEmpty()) {
             com.example.be.entity.HoaDonChiTiet firstHdct = hoaDon.getListsHoaDonChiTiet().iterator().next();
-            sanPham = (firstHdct != null && firstHdct.getChiTietSanPham() != null) 
-                    ? firstHdct.getChiTietSanPham().getSanPham() 
+            sanPham = (firstHdct != null && firstHdct.getChiTietSanPham() != null)
+                    ? firstHdct.getChiTietSanPham().getSanPham()
                     : null;
         }
 
@@ -128,8 +128,8 @@ public class ReviewServiceImpl implements ReviewService {
     public Page<CustomerReviewResponse> getReviewsByProduct(String idSanPham, Pageable pageable) {
         // Trả về đánh giá của sản phẩm (chỉ lấy APPROVED cho giao diện khách hàng)
         Page<DanhGiaSanPham> reviews = danhGiaSanPhamRepository.findBySanPham_IdAndTrangThai(
-                idSanPham, 
-                DanhGiaSanPham.TrangThaiDanhGia.APPROVED, 
+                idSanPham,
+                DanhGiaSanPham.TrangThaiDanhGia.APPROVED,
                 pageable
         );
         return reviews.map(CustomerReviewResponse::new);
@@ -146,7 +146,7 @@ public class ReviewServiceImpl implements ReviewService {
         if (hoaDon == null || hoaDon.getTrangThai() != OrderStatus.HOAN_THANH) {
             return false;
         }
-        
+
         if (hoaDon.getKhachHang() == null || !hoaDon.getKhachHang().getId().equals(idKhachHang)) {
             return false;
         }

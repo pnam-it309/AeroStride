@@ -99,7 +99,7 @@ public class CustomerSearchProductRequest extends PageRequest {
             // Price sorting is handled at the service layer after query
             // Use ngayTao as the DB sort to get all products, then re-sort by price in Java
             super.setSortDirection("desc");
-            return "ngayTao"; 
+            return "ngayTao";
         }
         return sort;
     }

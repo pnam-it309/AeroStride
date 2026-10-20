@@ -22,7 +22,7 @@ public class CustomerProductDetailResponse {
     private String id;
     private String maSanPham;
     private String tenSanPham;
-    
+
     private String idThuongHieu;
     private String tenThuongHieu;
     private String idXuatXu;
@@ -46,7 +46,7 @@ public class CustomerProductDetailResponse {
     private Long ngayCapNhat;
     private String nguoiCapNhat;
     private List<CustomerProductVariantResponse> variants;
-    
+
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
     private List<String> availableColors;

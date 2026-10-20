@@ -8,7 +8,7 @@ public class AiChatPrompts {
     public static final String FALLBACK_MESSAGE =
             "Hiện tại trợ lý AI đang bận xử lý. Hệ thống đã chuyển tiếp cuộc trò chuyện tới nhân viên hỗ trợ trực tiếp. Xin vui lòng đợi trong giây lát!";
 
-    public static final String HANDOFF_RESPONSE = 
+    public static final String HANDOFF_RESPONSE =
             "Tôi đã kết nối bạn với nhân viên hỗ trợ. Vui lòng chờ trong giây lát...";
 
     public static final String STORE_POLICIES_CONTEXT =
@@ -38,7 +38,7 @@ public class AiChatPrompts {
             "7. Hỗ trợ gặp nhân viên (Human Agent Handoff):\n" +
             "   - Nếu khách muốn gặp nhân viên hoặc có khiếu nại nghiêm trọng, hãy bảo khách nhắn 'Gặp nhân viên' hoặc 'Gọi admin' để nhân viên trực tiếp tiếp quản hỗ trợ.\n\n";
 
-    public static final String MAIN_SYSTEM_PROMPT = 
+    public static final String MAIN_SYSTEM_PROMPT =
             "Bạn là chuyên gia tư vấn thời trang giày sneaker cấp cao của AeroStride. " +
             "AeroStride là hệ thống giày chính hãng quy mô lớn với hàng trăm mẫu giày đa dạng từ Nike, Adidas, Puma, Asics, Biti's, Vans... " +
             "Dưới đây là thông tin và danh sách các mẫu giày tiêu biểu đang có sẵn trong hệ thống:\n\n" +
@@ -55,7 +55,7 @@ public class AiChatPrompts {
             "Khách hàng hỏi: \"%s\"\n\n" +
             "Câu trả lời của bạn:";
 
-    public static final String WELCOME_SUGGESTIONS_PROMPT = 
+    public static final String WELCOME_SUGGESTIONS_PROMPT =
             "Bạn là trợ lý ảo AI thông minh của cửa hàng giày AeroStride.\n" +
             "Dựa trên danh sách sản phẩm và chính sách của cửa hàng dưới đây:\n" +
             "%s\n" + // productContext
@@ -68,18 +68,18 @@ public class AiChatPrompts {
 
     // Rule-based messages
     public static final String RULE_NO_PRODUCTS = "Dạ, hiện tại cửa hàng đang cập nhật danh mục sản phẩm mới nên chưa có sẵn các mẫu giày trong hệ thống. Bạn vui lòng quay lại sau ít phút hoặc nhắn tin để nhân viên tư vấn hỗ trợ trực tiếp cho bạn nhé!";
-    
+
     public static final String RULE_GREETING_START = "Dạ, AeroStride xin kính chào quý khách! Em là trợ lý ảo hỗ trợ khách hàng tự động.\n\n" +
             "Hiện tại AeroStride đang có sẵn các mẫu giày cực đẹp và thời trang của Nike, Adidas, Puma, Vans...\n" +
             "Bạn đang muốn tham khảo bảng giá, kiểm tra size, chọn màu sắc hay tìm hiểu về chương trình khuyến mãi nào ạ?";
-    
+
     public static final String RULE_GREETING_END = "\n\nBạn cũng có thể xem nhanh các mẫu bán chạy ở bên dưới nha!";
-    
+
     public static final String RULE_THANK_YOU = "Dạ không có gì ạ! Được hỗ trợ quý khách chọn được đôi giày ưng ý là niềm hạnh phúc lớn nhất của AeroStride.\n\n" +
             "Nếu cần thêm bất kỳ sự giúp đỡ nào, bạn cứ nhắn tin ở đây nhé. Chúc bạn một ngày thật nhiều niềm vui và may mắn!";
-            
+
     public static final String RULE_GOODBYE = "Dạ, AeroStride xin chào tạm biệt quý khách ạ!\n\n" +
             "Chúc bạn luôn tràn đầy năng lượng và có những bước đi vững chắc cùng những đôi giày tuyệt đẹp. Hy vọng sớm được gặp lại bạn!";
-            
+
     public static final String RULE_ACKNOWLEDGE = "Dạ vâng ạ! Shop luôn ở đây sẵn sàng phục vụ. Bạn có muốn tham khảo thêm các mẫu giày hot nhất tuần này không ạ?";
 }

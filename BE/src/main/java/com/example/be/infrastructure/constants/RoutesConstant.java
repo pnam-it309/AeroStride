@@ -4,10 +4,10 @@ public final class RoutesConstant {
     private RoutesConstant() {}
 
     public static final String API_PREFIX = "/api/v1";
-    
+
     // Auth routes
     public static final String AUTH = API_PREFIX + "/auth";
-    
+
     // Admin routes
     public static final String ADMIN = API_PREFIX + "/admin";
     public static final String ADMIN_DOT_GIAM_GIA = ADMIN + "/dot-giam-gia";
@@ -36,7 +36,7 @@ public final class RoutesConstant {
 
     // Staff routes
     public static final String STAFF = API_PREFIX + "/staff";
-    
+
     // Customer routes (Mobile/Web)
     public static final String CUSTOMER = API_PREFIX + "/customer";
     public static final String CUSTOMER_CHAT = CUSTOMER + "/chat";
@@ -50,7 +50,7 @@ public final class RoutesConstant {
     public static final String CUSTOMER_SAN_PHAM = CUSTOMER + "/san-pham";
     public static final String CUSTOMER_SITEMAP = CUSTOMER + "/sitemap";
     public static final String CUSTOMER_PHIEU_GIAM_GIA = CUSTOMER + "/phieu-giam-gia";
-    
+
     // Other API routes
     public static final String PAYMENT = API_PREFIX + "/payment";
     public static final String STORAGE = API_PREFIX + "/storage";

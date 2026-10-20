@@ -68,7 +68,7 @@ public class GhnClient {
 
     public Map<String, Object> calculateShippingFee(Integer toDistrictId, String toWardCode, Integer weight, Integer insuranceValue) {
         String url = apiUrl + "/v2/shipping-order/fee";
-        
+
         HttpHeaders headers = new HttpHeaders();
         headers.set("token", apiToken);
         headers.set("ShopId", shopId);

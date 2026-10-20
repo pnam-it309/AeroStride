@@ -2,7 +2,6 @@ package com.example.be.infrastructure.security.service;
 
 import com.example.be.entity.KhachHang;
 import com.example.be.infrastructure.constants.TrangThai;
-import com.example.be.infrastructure.constants.VaiTro;
 import com.example.be.repository.KhachHangRepository;
 import com.example.be.repository.NhanVienRepository;
 import com.example.be.utils.CodeUtils;
@@ -42,12 +41,12 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                         .email(email)
                         .matKhau("") // OAuth2 users don't have a password
                         .build();
-                
+
                 // Set base class fields not available in Lombok @Builder
                 newKhachHang.setTen(name != null ? name : "Khách hàng");
                 newKhachHang.setMa(CodeUtils.generateRandom(KhachHang.class, khachHangRepository::existsByMa));
                 newKhachHang.setTrangThai(TrangThai.DANG_HOAT_DONG);
-                
+
                 khachHangRepository.save(newKhachHang);
             }
         }

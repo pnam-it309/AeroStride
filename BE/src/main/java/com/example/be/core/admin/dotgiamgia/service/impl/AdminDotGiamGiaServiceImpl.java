@@ -16,13 +16,11 @@ import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.infrastructure.exceptions.SystemException;
 import com.example.be.core.admin.dotgiamgia.repository.AdminChiTietDotGiamGiaRepository;
-import com.example.be.utils.AccountUtils;
 import com.example.be.utils.ExcelUtils;
 import com.example.be.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +28,6 @@ import com.example.be.core.admin.dotgiamgia.repository.AdminDotGiamGiaSpecificat
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Sort;
 import com.example.be.core.admin.sanpham.repository.AdminAnhChiTietSanPhamRepository;
-import com.example.be.entity.AnhChiTietSanPham;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;

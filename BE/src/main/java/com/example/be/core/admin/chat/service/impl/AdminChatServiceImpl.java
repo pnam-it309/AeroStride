@@ -6,7 +6,6 @@ import com.example.be.core.admin.chat.repository.AdminCuocHoiThoaiRepository;
 import com.example.be.core.admin.chat.repository.AdminTinNhanRepository;
 import com.example.be.core.admin.chat.service.AdminChatService;
 import com.example.be.infrastructure.constants.ChatConstants;
-import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.VaiTro;
 import com.example.be.entity.CuocHoiThoai;
 import com.example.be.entity.TinNhan;
@@ -23,22 +22,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -92,7 +85,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                 return (hinhAnh != null && !hinhAnh.trim().isEmpty()) ? hinhAnh : DEFAULT_AVATAR;
             }
         }
-        
+
         return DEFAULT_AVATAR;
     }
 
@@ -117,11 +110,11 @@ public class AdminChatServiceImpl implements AdminChatService {
         if (c.getMaPhien() != null && c.getMaPhien().startsWith("user_")) {
             return c.getMaPhien().substring(5);
         }
-        
+
         if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
             boolean isSender = c.getNhanVien() != null && c.getNhanVien().getTenTaiKhoan().equals(currentUsername);
             boolean isReceiver = c.getNhanVienNhan() != null && c.getNhanVienNhan().getTenTaiKhoan().equals(currentUsername);
-            
+
             if (isSender && c.getNhanVienNhan() != null) {
                 return c.getNhanVienNhan().getTen();
             } else if (isReceiver && c.getNhanVien() != null) {
@@ -135,20 +128,20 @@ public class AdminChatServiceImpl implements AdminChatService {
             }
             return ChatConstants.DEFAULT_STAFF_NAME;
         }
-        
+
         // Khách vãng lai: Ghép 4 ký tự cuối của sessionId
         String sessionId = c.getMaPhien();
         if (sessionId != null && sessionId.length() > 4) {
             String shortId = sessionId.substring(sessionId.length() - 4);
             return ChatConstants.DEFAULT_CUSTOMER_NAME + " #" + shortId.toUpperCase();
         }
-        
+
         // Fallback dùng 4 ký tự cuối của Conversation ID
         if (c.getId() != null && c.getId().length() > 4) {
             String shortId = c.getId().substring(c.getId().length() - 4);
             return ChatConstants.DEFAULT_CUSTOMER_NAME + " #" + shortId.toUpperCase();
         }
-        
+
         return ChatConstants.DEFAULT_CUSTOMER_NAME;
     }
 
@@ -166,7 +159,7 @@ public class AdminChatServiceImpl implements AdminChatService {
         String currentUsername = getCurrentUsername();
         NhanVien currentNv = nhanVienRepository.findByTenTaiKhoan(currentUsername).orElse(null);
         boolean isManager = currentNv != null && VaiTro.isManagementRole(currentNv);
-        
+
         List<CuocHoiThoai> rawConvs = conversationRepository.findAllWithDetails().stream()
                 .filter(c -> {
                     // Logic lọc hội thoại:
@@ -174,7 +167,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                     if (c.getTrangThaiHoiThoai() == CuocHoiThoai.TrangThaiHoiThoai.PENDING) {
                         return true;
                     }
-                    
+
                     // 2. Nếu là CUSTOMER và đã ACTIVE hoặc CLOSED: Quản lý thấy tất cả, nhân viên thấy cuộc mình tiếp nhận.
                     if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER) {
                         if (isManager) {
@@ -182,14 +175,14 @@ public class AdminChatServiceImpl implements AdminChatService {
                         }
                         return c.getNhanVien() != null && c.getNhanVien().getTenTaiKhoan().equals(currentUsername);
                     }
-                    
+
                     // 3. Nếu là INTERNAL: Quản lý hoặc người gửi/người nhận mới thấy.
                     if (c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL) {
                         boolean isSender = c.getNhanVien() != null && c.getNhanVien().getTenTaiKhoan().equals(currentUsername);
                         boolean isReceiver = c.getNhanVienNhan() != null && c.getNhanVienNhan().getTenTaiKhoan().equals(currentUsername);
                         return isManager || isSender || isReceiver;
                     }
-                    
+
                     return false;
                 })
                 .toList();
@@ -346,7 +339,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                             .timestamp(0L)
                             .build())
                     .collect(Collectors.toList());
-            
+
             allConvs.addAll(allStaff);
         }
 
@@ -368,11 +361,11 @@ public class AdminChatServiceImpl implements AdminChatService {
     @Transactional(readOnly = true)
     public Map<String, Long> getConversationStats(String type) {
         List<AdminChatResponse> allConvs = getAllConversations(type, null, null);
-        
+
         long activeCount = allConvs.stream().filter(c -> CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name().equals(c.getTrangThaiHoiThoai())).count();
         long pendingCount = allConvs.stream().filter(c -> CuocHoiThoai.TrangThaiHoiThoai.PENDING.name().equals(c.getTrangThaiHoiThoai())).count();
         long closedCount = allConvs.stream().filter(c -> CuocHoiThoai.TrangThaiHoiThoai.CLOSED.name().equals(c.getTrangThaiHoiThoai())).count();
-        
+
         Map<String, Long> stats = new HashMap<>();
         stats.put("ACTIVE", activeCount);
         stats.put("PENDING", pendingCount);
@@ -384,7 +377,7 @@ public class AdminChatServiceImpl implements AdminChatService {
     @Transactional
     public List<TinNhanResponse> getMessagesByConversation(String id) {
         if (id.startsWith("NEW_INTERNAL_")) {
-            return List.of(); 
+            return List.of();
         }
         messageRepository.markAllAsReadByConversationId(id);
         List<TinNhan> rawMessages = messageRepository.findByCuocHoiThoai_IdOrderByNgayTaoAsc(id);
@@ -440,26 +433,26 @@ public class AdminChatServiceImpl implements AdminChatService {
         if (conversation != null) {
             conversation.setDaChapNhan(true);
             conversation.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.ACTIVE);
-            
+
             String currentUsername = getCurrentUsername();
             Optional<NhanVien> nhanVienOpt = nhanVienRepository.findByTenTaiKhoan(currentUsername);
-            
+
             if (nhanVienOpt.isPresent()) {
                 NhanVien nv = nhanVienOpt.get();
                 conversation.setNhanVien(nv);
-                
+
                 conversation = conversationRepository.save(conversation);
-                
+
                 String systemMessageText = "Nhân viên " + nv.getMa() + " đã tiếp nhận cuộc trò chuyện.";
-                
+
                 TinNhan systemMessage = TinNhan.builder()
                         .cuocHoiThoai(conversation)
                         .loaiNguoiGui(ChatConstants.SENDER_TYPE_SYSTEM)
                         .noiDung(systemMessageText)
                         .build();
-                
+
                 TinNhan savedMessage = messageRepository.save(systemMessage);
-                
+
                 TinNhanResponse response = TinNhanResponse.builder()
                         .id(savedMessage.getId())
                         .idCuocHoiThoai(conversation.getId())
@@ -469,7 +462,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                         .noiDung(systemMessageText)
                         .thoiGian(formatTime(savedMessage.getNgayTao()))
                         .build();
-                
+
                 publishMessage(response);
             } else {
                 conversationRepository.save(conversation);
@@ -490,23 +483,23 @@ public class AdminChatServiceImpl implements AdminChatService {
             }
             conversation.setTrangThaiHoiThoai(CuocHoiThoai.TrangThaiHoiThoai.CLOSED);
             conversation.setNgayCapNhat(System.currentTimeMillis());
-            
+
             String currentUsername = getCurrentUsername();
             Optional<NhanVien> nhanVienOpt = nhanVienRepository.findByTenTaiKhoan(currentUsername);
             String operatorName = nhanVienOpt.isPresent() ? nhanVienOpt.get().getMa() : "Nhân viên";
-            
+
             conversation = conversationRepository.save(conversation);
-            
+
             String systemMessageText = "Cuộc trò chuyện đã được đóng bởi nhân viên " + operatorName + ".";
-            
+
             TinNhan systemMessage = TinNhan.builder()
                     .cuocHoiThoai(conversation)
                     .loaiNguoiGui(ChatConstants.SENDER_TYPE_SYSTEM)
                     .noiDung(systemMessageText)
                     .build();
-            
+
             TinNhan savedMessage = messageRepository.save(systemMessage);
-            
+
             TinNhanResponse response = TinNhanResponse.builder()
                     .id(savedMessage.getId())
                     .idCuocHoiThoai(conversation.getId())
@@ -516,9 +509,9 @@ public class AdminChatServiceImpl implements AdminChatService {
                     .noiDung(systemMessageText)
                     .thoiGian(formatTime(savedMessage.getNgayTao()))
                     .build();
-            
+
             publishMessage(response);
-            
+
             Map<String, String> notification = new HashMap<>();
             notification.put("content", "CLOSED_CONVERSATION_" + id);
             notification.put("timestamp", Instant.now().toString());
@@ -572,10 +565,10 @@ public class AdminChatServiceImpl implements AdminChatService {
             String currentUsername = getCurrentUsername();
             NhanVien sender = nhanVienRepository.findByTenTaiKhoan(currentUsername)
                     .orElseThrow(() -> new RuntimeException(ChatConstants.ERR_SENDER_NOT_FOUND));
-            
+
             // Check if conversation already exists
             Optional<CuocHoiThoai> existing = conversationRepository.findInternalConversation(sender.getId(), targetStaffId);
-            
+
             if (existing.isPresent()) {
                 conversation = existing.get();
             } else {
@@ -667,12 +660,12 @@ public class AdminChatServiceImpl implements AdminChatService {
         notification.put("timestamp", Instant.now().toString());
         publishNotification(notification);
 
-        log.info("Checking AI Trigger: senderType={}, isAccepted={}, convType={}", 
+        log.info("Checking AI Trigger: senderType={}, isAccepted={}, convType={}",
                 senderType, conversation.getDaChapNhan(), conversation.getLoaiHoiThoai());
 
         // AI Chatbot logic: Nếu khách hàng gửi tin và chưa có nhân viên tiếp nhận
-        if (ChatConstants.SENDER_TYPE_CUSTOMER.equals(senderType) && 
-            Boolean.FALSE.equals(conversation.getDaChapNhan()) && 
+        if (ChatConstants.SENDER_TYPE_CUSTOMER.equals(senderType) &&
+            Boolean.FALSE.equals(conversation.getDaChapNhan()) &&
             (conversation.getLoaiHoiThoai() == null || conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER)) {
             log.info("Triggering AI response for conversation: {}", conversation.getId());
             aiChatService.generateAndSendResponse(conversation, text);

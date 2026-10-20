@@ -67,7 +67,7 @@ public class CustomerCartServiceImpl implements CustomerCartService {
 
             Integer requestedQty = item.getSoLuong() == null ? 1 : item.getSoLuong();
             Integer stock = ctsp.getSoLuong();
-            
+
             boolean isAvailable = true;
             String message = null;
             Integer finalQty = requestedQty;

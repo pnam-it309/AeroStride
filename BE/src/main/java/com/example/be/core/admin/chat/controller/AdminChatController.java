@@ -7,7 +7,6 @@ import com.example.be.core.admin.chat.service.AdminChatService;
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import com.example.be.infrastructure.constants.VaiTro;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

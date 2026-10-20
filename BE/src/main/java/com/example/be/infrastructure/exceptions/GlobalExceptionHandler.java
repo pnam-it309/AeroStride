@@ -8,12 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.ServletWebRequest;
-import org.springframework.web.context.request.WebRequest;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 @RestControllerAdvice
@@ -109,7 +106,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleNoResourceFoundException(
             org.springframework.web.servlet.resource.NoResourceFoundException e, HttpServletRequest request) {
         log.info("Resource not found at {}: {}", request.getRequestURI(), e.getResourcePath());
-        return buildErrorResponse(HttpStatus.NOT_FOUND, "ERR_RESOURCE_NOT_FOUND", 
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "ERR_RESOURCE_NOT_FOUND",
                 "Tài nguyên không tồn tại: " + e.getResourcePath(), request.getRequestURI(), ErrorSeverity.RECOVERABLE);
     }
 
@@ -117,14 +114,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleMethodNotSupportedException(
             org.springframework.web.HttpRequestMethodNotSupportedException e, HttpServletRequest request) {
         log.warn("Method not supported at {}: {}", request.getRequestURI(), e.getMessage());
-        return buildErrorResponse(HttpStatus.METHOD_NOT_ALLOWED, "ERR_METHOD_NOT_ALLOWED", 
+        return buildErrorResponse(HttpStatus.METHOD_NOT_ALLOWED, "ERR_METHOD_NOT_ALLOWED",
                 e.getMessage(), request.getRequestURI(), ErrorSeverity.SYNTAX);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGeneralException(Exception e, HttpServletRequest request) {
         log.error("UNHANDLED CRITICAL at {}: ", request.getRequestURI(), e);
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "ERR_INTERNAL_SERVER", 
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "ERR_INTERNAL_SERVER",
                 "An unexpected server error occurred. Our engineers have been notified.", request.getRequestURI(), ErrorSeverity.RUNTIME);
     }
 

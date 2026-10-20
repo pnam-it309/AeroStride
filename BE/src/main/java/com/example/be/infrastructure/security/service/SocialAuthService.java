@@ -135,7 +135,7 @@ public class SocialAuthService {
             if (needSave) {
                 kh = khachHangRepository.save(kh);
             }
-            log.info("Đã liên kết đăng nhập {} với tài khoản khách hàng có sẵn: username=[{}], email=[{}]", 
+            log.info("Đã liên kết đăng nhập {} với tài khoản khách hàng có sẵn: username=[{}], email=[{}]",
                     provider, kh.getTenTaiKhoan(), kh.getEmail());
             return kh;
         }

@@ -2,16 +2,12 @@ package com.example.be.core.admin.thongke.service.impl;
 
 import com.example.be.core.admin.thongke.model.response.AdminThongKeResponse;
 import com.example.be.core.admin.thongke.repository.AdminThongKeRepository;
-import com.example.be.core.admin.thongke.repository.AdminThongKeSpecification;
 import com.example.be.core.admin.thongke.service.AdminThongKeService;
-import com.example.be.entity.HoaDon;
-import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.repository.KhachHangRepository;
 import com.example.be.repository.SanPhamRepository;
 import com.example.be.utils.AccountUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -166,10 +162,10 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
     private AdminThongKeResponse.ChuKyDoanhThu buildChuKy(String label, Object revObj, Object countObj) {
         BigDecimal revenue = revObj != null ? new BigDecimal(revObj.toString()) : BigDecimal.ZERO;
         Long count = countObj != null ? Long.parseLong(countObj.toString()) : 0L;
-        BigDecimal avg = count > 0 
+        BigDecimal avg = count > 0
             ? revenue.divide(BigDecimal.valueOf(count), 2, java.math.RoundingMode.HALF_UP)
             : BigDecimal.ZERO;
-            
+
         return AdminThongKeResponse.ChuKyDoanhThu.builder()
             .tenChuKy(label)
             .doanhThu(revenue)

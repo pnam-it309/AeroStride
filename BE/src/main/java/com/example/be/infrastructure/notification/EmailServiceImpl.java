@@ -2,7 +2,6 @@ package com.example.be.infrastructure.notification;
 
 import com.example.be.core.notification.EmailService;
 import com.example.be.core.notification.dto.EmailRequest;
-import com.example.be.infrastructure.exceptions.EmailProcessingException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +59,7 @@ public class EmailServiceImpl implements EmailService {
         }
         try {
             log.info("Starting to send async email to: {}", request.getTo());
-            
+
             Map<String, Object> vars = request.getVariables() != null ? new HashMap<>(request.getVariables()) : new HashMap<>();
             vars.putIfAbsent("baseUrl", frontendUrl);
             vars.putIfAbsent("frontendUrl", frontendUrl);
@@ -83,8 +82,8 @@ public class EmailServiceImpl implements EmailService {
             if (fromEmail != null && !fromEmail.isBlank()) {
                 MimeMessage message = mailSender.createMimeMessage();
                 MimeMessageHelper helper = new MimeMessageHelper(
-                        message, 
-                        MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, 
+                        message,
+                        MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
                         StandardCharsets.UTF_8.name()
                 );
 
@@ -102,7 +101,7 @@ public class EmailServiceImpl implements EmailService {
             } else {
                 log.warn("Không thể gửi email đến {}: Chưa cấu hình RESEND_API_KEY hoặc MAIL_USERNAME.", request.getTo());
             }
-            
+
         } catch (MessagingException | MailException e) {
             log.error("Failed to send email to: {}. Error: {}", request.getTo(), e.getMessage());
         } catch (Exception e) {
@@ -113,7 +112,7 @@ public class EmailServiceImpl implements EmailService {
     private boolean sendViaResend(String to, String subject, String html) {
         try {
             log.info("Sending email to {} via Resend HTTP API...", to);
-            
+
             Map<String, Object> payload = new HashMap<>();
             payload.put("from", resendFrom != null && !resendFrom.isBlank() ? resendFrom : "AeroStride <onboarding@resend.dev>");
             payload.put("to", List.of(to));
@@ -155,14 +154,14 @@ public class EmailServiceImpl implements EmailService {
         Map<String, Object> variables = new HashMap<>();
         variables.put("name", name);
         variables.put("title", "Welcome to AeroStride");
-        
+
         EmailRequest request = EmailRequest.builder()
                 .to(to)
                 .subject("Welcome to AeroStride!")
                 .templateName("welcome-email")
                 .variables(variables)
                 .build();
-        
+
         this.sendHtmlEmail(request);
     }
 
@@ -230,7 +229,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Async("mailExecutor")
     @Override
-    public void guiEmailXacNhanDatHang(String to, String tenNguoiNhan, String maHoaDon, 
+    public void guiEmailXacNhanDatHang(String to, String tenNguoiNhan, String maHoaDon,
                                         String soDienThoai, String diaChi, String phuongThuc,
                                         java.math.BigDecimal tamTinh, java.math.BigDecimal phiVanChuyen,
                                         java.math.BigDecimal tienGiam, java.math.BigDecimal tongTien,

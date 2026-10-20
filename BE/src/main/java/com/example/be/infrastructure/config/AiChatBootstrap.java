@@ -24,7 +24,7 @@ public class AiChatBootstrap implements CommandLineRunner {
     public void run(String... args) {
         if (knowledgeRepository.count() == 0) {
             log.info("Bootstrapping AI Knowledge Base...");
-            
+
             List<KienThucAi> initialKnowledge = Arrays.asList(
                 KienThucAi.builder()
                     .mucDich("GREETING")
@@ -57,13 +57,13 @@ public class AiChatBootstrap implements CommandLineRunner {
                     .doUuTien(8)
                     .build()
             );
-            
+
             knowledgeRepository.saveAll(initialKnowledge);
         }
 
         if (synonymRepository.count() == 0) {
             log.info("Bootstrapping AI Word Library (Synonyms)...");
-            
+
             List<TuDongNghiaAi> initialSynonyms = Arrays.asList(
                 TuDongNghiaAi.builder().tuGoc("hi").tuChuanHoa("chào").build(),
                 TuDongNghiaAi.builder().tuGoc("hello").tuChuanHoa("chào").build(),
@@ -75,7 +75,7 @@ public class AiChatBootstrap implements CommandLineRunner {
                 TuDongNghiaAi.builder().tuGoc("tiền").tuChuanHoa("giá").build(),
                 TuDongNghiaAi.builder().tuGoc("sale").tuChuanHoa("giảm giá").build()
             );
-            
+
             synonymRepository.saveAll(initialSynonyms);
         }
     }

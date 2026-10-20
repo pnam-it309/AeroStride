@@ -28,7 +28,6 @@ import com.example.be.repository.MauSacRepository;
 import com.example.be.repository.ChiTietDotGiamGiaRepository;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -113,10 +112,10 @@ public class DataRetrievalLibrary {
             if (products.isEmpty()) {
                 return "Hiện tại AeroStride chưa có sản phẩm nào mới đăng bán.";
             }
-            
+
             StringBuilder sb = new StringBuilder();
             NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-            
+
             for (SanPham p : products) {
                 sb.append("👟 **").append(p.getTen()).append("** (Mã: ").append(p.getMa()).append(")\n");
                 if (p.getMoTaChiTiet() != null && !p.getMoTaChiTiet().isBlank()) {
@@ -244,9 +243,9 @@ public class DataRetrievalLibrary {
     public String getPromoProductsInfo() {
         return getOrCompute("promo_products_info", () -> {
             long now = System.currentTimeMillis();
-            
+
             List<ChiTietDotGiamGia> activePromoDetails = chiTietDotGiamGiaRepository.findAll().stream()
-                    .filter(ct -> ct.getDotGiamGia() != null 
+                    .filter(ct -> ct.getDotGiamGia() != null
                             && ct.getDotGiamGia().getTrangThai() == TrangThai.DANG_HOAT_DONG)
                     .filter(ct -> {
                         DotGiamGia d = ct.getDotGiamGia();
@@ -283,7 +282,7 @@ public class DataRetrievalLibrary {
                         discountType = d.getLoaiGiamGia(); // simplified, usually all are percentages based on requirement
                     }
                 }
-                
+
                 if (!validCampaigns.isEmpty()) {
                     validCampaigns.sort((c1, c2) -> c2.getSoTienGiam().compareTo(c1.getSoTienGiam()));
                     if (validCampaigns.size() == 1) {
@@ -333,7 +332,7 @@ public class DataRetrievalLibrary {
                 if (sp.getThuongHieu() != null) {
                     sb.append("   - *Thương hiệu:* ").append(sp.getThuongHieu().getTen()).append("\n");
                 }
-                
+
                 String discountStr = "";
                 if ("PHAN_TRAM".equalsIgnoreCase(discountType) || (maxDiscountVal.compareTo(new BigDecimal(100)) <= 0)) {
                     discountStr = maxDiscountVal.stripTrailingZeros().toPlainString() + "% OFF";

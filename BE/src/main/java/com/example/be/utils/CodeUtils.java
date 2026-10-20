@@ -92,7 +92,7 @@ public final class CodeUtils {
         if (clazz.isAnnotationPresent(CodePrefix.class)) {
             return clazz.getAnnotation(CodePrefix.class).value();
         }
-        
+
         // Fallback to legacy switch for classes not yet annotated
         return getPrefix(clazz.getSimpleName());
     }

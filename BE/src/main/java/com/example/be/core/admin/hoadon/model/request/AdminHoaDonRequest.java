@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AdminHoaDonRequest extends PageRequest {
-    
+
     private String search;        // Tìm kiếm nhanh (thường là Mã hóa đơn)
 
     private String idKhachHang;   // Lọc chính xác theo ID khách hàng

@@ -64,8 +64,8 @@ public class CustomerBirthdayJob {
                 String expectedPrefix = "BDAY" + currentYear + "-";
                 List<PhieuGiamGiaCaNhan> existingPersonal = phieuGiamGiaCaNhanRepository.findByKhachHangId(customer.getId());
                 boolean alreadyGifted = existingPersonal.stream()
-                        .anyMatch(pgn -> pgn.getPhieuGiamGia() != null 
-                                && pgn.getPhieuGiamGia().getMa() != null 
+                        .anyMatch(pgn -> pgn.getPhieuGiamGia() != null
+                                && pgn.getPhieuGiamGia().getMa() != null
                                 && pgn.getPhieuGiamGia().getMa().startsWith(expectedPrefix));
 
                 if (alreadyGifted) {

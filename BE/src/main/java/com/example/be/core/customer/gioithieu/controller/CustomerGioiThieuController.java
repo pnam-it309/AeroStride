@@ -71,9 +71,9 @@ public class CustomerGioiThieuController {
             Map<String, Object> map = new HashMap<>();
             map.put("id", nv.getId());
             map.put("name", nv.getTen() != null ? nv.getTen() : "Quản lý " + (i + 1));
-            
-            String roleName = nv.getPhanQuyen() != null && nv.getPhanQuyen().getTen() != null 
-                    ? nv.getPhanQuyen().getTen() 
+
+            String roleName = nv.getPhanQuyen() != null && nv.getPhanQuyen().getTen() != null
+                    ? nv.getPhanQuyen().getTen()
                     : defaultRoles[i % defaultRoles.length];
             map.put("role", roleName);
 

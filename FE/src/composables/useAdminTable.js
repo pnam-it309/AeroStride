@@ -158,7 +158,7 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
         pagination.value.page = 1;
         if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
 
-        if (immediate === true) {
+        if (immediate) {
             loadData();
             return;
         }

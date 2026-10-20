@@ -1,7 +1,6 @@
 package com.example.be.entity;
 
 import com.example.be.core.common.base.PrimaryEntity;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
