@@ -1,3 +1,10 @@
+## [1.45.7](https://github.com/pnam-it309/AeroStride/compare/v1.45.6...v1.45.7) (2026-10-26)
+
+
+### Bug Fixes
+
+* **core:** resolve Qodana warnings - NullableProblems, StreamAPI, imports, type safety ([b902e4c](https://github.com/pnam-it309/AeroStride/commit/b902e4c619b2dc57a639f219b161c525d7dedfce))
+
 ## [1.45.6](https://github.com/pnam-it309/AeroStride/compare/v1.45.5...v1.45.6) (2026-10-26)
 
 
