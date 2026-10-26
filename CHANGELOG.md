@@ -1,3 +1,10 @@
+## [1.45.3](https://github.com/pnam-it309/AeroStride/compare/v1.45.2...v1.45.3) (2026-10-26)
+
+
+### Bug Fixes
+
+* **quality:** resolve Qodana code smells and fix duplicate artifact in CI ([2260e8f](https://github.com/pnam-it309/AeroStride/commit/2260e8f196a3dbd3c207028b6cf10f7f397cddca))
+
 ## [1.45.2](https://github.com/pnam-it309/AeroStride/compare/v1.45.1...v1.45.2) (2026-10-20)
 
 
