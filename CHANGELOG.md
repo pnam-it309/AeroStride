@@ -1,3 +1,10 @@
+## [1.45.6](https://github.com/pnam-it309/AeroStride/compare/v1.45.5...v1.45.6) (2026-10-26)
+
+
+### Bug Fixes
+
+* **ci:** sync package-lock.json with axios 1.20.0 in FE and mobile ([7929604](https://github.com/pnam-it309/AeroStride/commit/7929604887af0681f07165b6fa08354a9a1daa31))
+
 ## [1.45.5](https://github.com/pnam-it309/AeroStride/compare/v1.45.4...v1.45.5) (2026-10-26)
 
 
