@@ -55,7 +55,7 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
         for (PhieuGiamGia v : validVouchers) {
             BigDecimal discount = BigDecimal.ZERO;
             if (LoaiPhieuGiamGia.isPhanTram(v.getLoaiPhieu()) && v.getPhanTramGiamGia() != null) {
-                discount = orderValue.multiply(new BigDecimal(v.getPhanTramGiamGia())).divide(new BigDecimal(100));
+                discount = orderValue.multiply(new BigDecimal(v.getPhanTramGiamGia())).divide(new BigDecimal(100), 0, java.math.RoundingMode.HALF_UP);
                 if (v.getGiamToiDa() != null && discount.compareTo(v.getGiamToiDa()) > 0) {
                     discount = v.getGiamToiDa();
                 }

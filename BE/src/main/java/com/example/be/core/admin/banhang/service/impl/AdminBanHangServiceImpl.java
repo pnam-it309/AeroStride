@@ -923,7 +923,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             if (currentVoucher.getId() != null) {
                 currentVoucher = phieuGiamGiaRepository.findById(currentVoucher.getId()).orElse(currentVoucher);
             }
-            if (currentVoucher == null || !isVoucherAvailableForOrder(currentVoucher, hd, now)) {
+            if (!isVoucherAvailableForOrder(currentVoucher, hd, now)) {
                 // Voucher bị hủy, hết hạn, hoặc hết lượt dùng -> gỡ bỏ
                 hd.setPhieuGiamGia(null);
             } else {

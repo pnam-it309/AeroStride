@@ -60,19 +60,16 @@ public enum VaiTro {
         }
         if (nv.getTenTaiKhoan() != null) {
             String user = nv.getTenTaiKhoan().toLowerCase();
-            if (user.equals("admin") || user.startsWith("admin")) {
+            if (user.startsWith("admin")) {
                 return true;
             }
         }
-        if (nv.getId() != null && (nv.getId().equals("nv1") || nv.getId().equals("nv2") || nv.getId().equals("nv3") || nv.getId().equals("nv4") || nv.getId().equals("nv5"))) {
-            return true;
-        }
-        return false;
+        return nv.getId() != null && (nv.getId().equals("nv1") || nv.getId().equals("nv2") || nv.getId().equals("nv3") || nv.getId().equals("nv4") || nv.getId().equals("nv5"));
     }
 
     public static boolean isManagementRoleCode(String ma) {
         if (ma == null) return false;
         String upper = ma.trim().toUpperCase();
-        return upper.equals(ADMIN) || upper.equals("ROLE_" + ADMIN) || upper.contains("QUAN_LY") || upper.contains("ADMIN") || upper.contains("MANAGER") || upper.contains("QUAN_TRI");
+        return upper.contains("ADMIN") || upper.contains("QUAN_LY") || upper.contains("MANAGER") || upper.contains("QUAN_TRI");
     }
 }

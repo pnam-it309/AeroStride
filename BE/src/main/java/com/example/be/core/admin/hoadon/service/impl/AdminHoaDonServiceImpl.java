@@ -291,7 +291,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             }
 
             // Hoàn lại số lượng voucher nếu đơn hàng bị hủy
-            if (newStatus == OrderStatus.DA_HUY && hd.getPhieuGiamGia() != null && oldStatus != OrderStatus.DA_HUY) {
+            if (newStatus == OrderStatus.DA_HUY && hd.getPhieuGiamGia() != null) {
                 PhieuGiamGia v = hd.getPhieuGiamGia();
                 if (v.getSoLuong() != null && v.getSoLuong() >= 0) {
                     v.setSoLuong(v.getSoLuong() + 1);
