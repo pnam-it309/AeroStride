@@ -3,7 +3,8 @@
 ####################################################################################################################
 
 version: "1.0"
-linter: qodana-jvm
+linter: jetbrains/qodana-jvm-community:latest
+projectJDK: "17"
 profile:
   name: qodana.recommended
 include:
