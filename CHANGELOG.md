@@ -1,3 +1,10 @@
+## [1.45.5](https://github.com/pnam-it309/AeroStride/compare/v1.45.4...v1.45.5) (2026-10-26)
+
+
+### Bug Fixes
+
+* **ci:** switch Qodana to community linter to eliminate mandatory cloud token failure ([da9b63c](https://github.com/pnam-it309/AeroStride/commit/da9b63c10c9a5bbfbcb6e70d1c507c728d54e783))
+
 ## [1.45.4](https://github.com/pnam-it309/AeroStride/compare/v1.45.3...v1.45.4) (2026-10-26)
 
 
