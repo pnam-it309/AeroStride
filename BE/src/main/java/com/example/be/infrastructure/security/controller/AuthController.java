@@ -50,7 +50,7 @@ public class AuthController {
     private final SocialAuthService socialAuthService;
 
     @PostMapping("/social-login")
-    @RateLimit(limit = 10, windowSeconds = 60)
+    @RateLimit(limit = 10)
     public ResponseEntity<ApiResponse<AuthResponse>> socialLogin(@Valid @RequestBody SocialLoginRequest request) {
         log.info("SOCIAL LOGIN ATTEMPT: Provider [{}] Email [{}]", request.getProvider(), request.getEmail());
         AuthResponse authResponse = socialAuthService.processSocialLogin(request);
@@ -58,7 +58,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @RateLimit(limit = 5, windowSeconds = 60)
+    @RateLimit(limit = 5)
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
         log.info("LOGIN ATTEMPT: User [{}] Type [{}]", loginRequest.getUsername(), loginRequest.getLoginType());
 
@@ -88,7 +88,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @RateLimit(limit = 5, windowSeconds = 60)
+    @RateLimit(limit = 5)
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         String username = request.getTenTaiKhoan() != null ? request.getTenTaiKhoan().trim() : "";
         String email = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
@@ -112,7 +112,7 @@ public class AuthController {
                 .sdt(sdt)
                 .matKhau(passwordEncoder.encode(request.getMatKhau()))
                 .ngaySinh(request.getNgaySinh())
-                .gioiTinh(request.getGioiTinh() != null ? request.getGioiTinh() : true)
+                .gioiTinh(request.getGioiTinh() == null || request.getGioiTinh())
                 .xoaMem(false)
                 .build();
         khachHang.setTen(request.getTen());

@@ -33,12 +33,12 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         Object[] overviewRow = stats != null && !stats.isEmpty() ? stats.get(0) : new Object[10];
 
         BigDecimal tongDoanhThu = overviewRow[0] != null ? new BigDecimal(overviewRow[0].toString()) : BigDecimal.ZERO;
-        Long tongDonHang = overviewRow[1] != null ? Long.parseLong(overviewRow[1].toString()) : 0L;
-        Long donHoanThanh = overviewRow[2] != null ? Long.parseLong(overviewRow[2].toString()) : 0L;
-        Long donChoXacNhan = overviewRow[3] != null ? Long.parseLong(overviewRow[3].toString()) : 0L;
-        Long donDangGiao = overviewRow[4] != null ? Long.parseLong(overviewRow[4].toString()) : 0L;
-        Long donDaHuy = overviewRow[5] != null ? Long.parseLong(overviewRow[5].toString()) : 0L;
-        Long donHoan = overviewRow[6] != null ? Long.parseLong(overviewRow[6].toString()) : 0L;
+        long tongDonHang = overviewRow[1] != null ? Long.parseLong(overviewRow[1].toString()) : 0L;
+        long donHoanThanh = overviewRow[2] != null ? Long.parseLong(overviewRow[2].toString()) : 0L;
+        long donChoXacNhan = overviewRow[3] != null ? Long.parseLong(overviewRow[3].toString()) : 0L;
+        long donDangGiao = overviewRow[4] != null ? Long.parseLong(overviewRow[4].toString()) : 0L;
+        long donDaHuy = overviewRow[5] != null ? Long.parseLong(overviewRow[5].toString()) : 0L;
+        long donHoan = overviewRow[6] != null ? Long.parseLong(overviewRow[6].toString()) : 0L;
         BigDecimal dtChoXacNhan = overviewRow[7] != null ? new BigDecimal(overviewRow[7].toString()) : BigDecimal.ZERO;
         BigDecimal dtDangGiao = overviewRow[8] != null ? new BigDecimal(overviewRow[8].toString()) : BigDecimal.ZERO;
         BigDecimal dtDaHuy = overviewRow[9] != null ? new BigDecimal(overviewRow[9].toString()) : BigDecimal.ZERO;
@@ -161,7 +161,7 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
 
     private AdminThongKeResponse.ChuKyDoanhThu buildChuKy(String label, Object revObj, Object countObj) {
         BigDecimal revenue = revObj != null ? new BigDecimal(revObj.toString()) : BigDecimal.ZERO;
-        Long count = countObj != null ? Long.parseLong(countObj.toString()) : 0L;
+        long count = countObj != null ? Long.parseLong(countObj.toString()) : 0L;
         BigDecimal avg = count > 0
             ? revenue.divide(BigDecimal.valueOf(count), 2, java.math.RoundingMode.HALF_UP)
             : BigDecimal.ZERO;

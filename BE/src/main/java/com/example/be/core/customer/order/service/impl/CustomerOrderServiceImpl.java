@@ -117,7 +117,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         // Lấy đợt giảm giá đang áp dụng cho các biến thể để tính giá thực tế (đồng bộ trang sản phẩm/giỏ hàng)
         List<String> variantIds = request.getItems().stream()
                 .map(CustomerOrderCheckoutRequest.CartItem::getIdChiTietSanPham)
-                .collect(Collectors.toList());
+                .toList();
         Map<String, List<ChiTietDotGiamGia>> relationMap = chiTietDotGiamGiaRepository
                 .findAllByChiTietSanPhamIdIn(variantIds).stream()
                 .filter(rel -> rel.getChiTietSanPham() != null)
@@ -341,16 +341,16 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                                 String maSP = hdct.getChiTietSanPham().getSanPham().getMa();
                                 String tenSP = hdct.getChiTietSanPham().getSanPham().getTen();
                                 if (maSP != null && maSP.toLowerCase().contains(kw)) return true;
-                                if (tenSP != null && tenSP.toLowerCase().contains(kw)) return true;
+                                return tenSP != null && tenSP.toLowerCase().contains(kw);
                             }
                             return false;
                         });
                     }
                     return false;
                 })
-                .collect(Collectors.toList());
+                .toList();
 
-        return hoaDons.stream().map(hd -> mapToResponse(hd, null)).collect(Collectors.toList());
+        return hoaDons.stream().map(hd -> mapToResponse(hd, null)).toList();
     }
 
     // Lấy thông tin chi tiết của một đơn hàng cụ thể thuộc về khách hàng
@@ -383,7 +383,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             throw new RuntimeException("Vui lòng nhập Mã đơn hàng hoặc Số điện thoại để tra cứu.");
         }
 
-        HoaDon hoaDon = null;
+        HoaDon hoaDon;
         if (hasCode && hasPhone) {
             hoaDon = hoaDonRepository.findByMaHoaDon(maHoaDon.trim())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với mã: " + maHoaDon));
@@ -591,7 +591,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
         // Xử lý Phụ phí / Hoàn phí nếu đơn đã thanh toán trước (hoặc trả trước)
         StringBuilder noteBuilder = new StringBuilder("Khách hàng cập nhật số lượng sản phẩm");
-        if (doiGiaNote.length() > 0) {
+        if (!doiGiaNote.isEmpty()) {
             noteBuilder.append(". ").append(doiGiaNote.toString().trim());
         }
 
@@ -825,7 +825,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                     .soLuong(hdct.getSoLuong())
                     .thanhTien(hdct.getDonGia().multiply(BigDecimal.valueOf(hdct.getSoLuong())))
                     .build();
-        }).collect(Collectors.toList());
+        }).toList();
 
         // Lịch sử trạng thái (Truy vấn trực tiếp từ repository và khử trùng lặp)
         List<CustomerOrderResponse.OrderStatusHistory> lichSuList = new ArrayList<>();
@@ -844,7 +844,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                             .thoiGian(ls.getNgayTao())
                             .ghiChu(ls.getGhiChu())
                             .build())
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         // Tính tiền giảm
@@ -880,8 +880,6 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         // Sửa thông tin nhận hàng: chỉ được sửa 1 lần duy nhất khi đang chờ xác nhận
         boolean daSuaThongTin = hasUpdatedShippingInfo(hoaDon);
         boolean choPhepSuaThongTin = choXacNhan && !daSuaThongTin;
-        // Sửa số lượng sản phẩm: cho phép khi đang chờ xác nhận (cả tiền mặt & trả trước)
-        boolean choPhepSuaSanPham = choXacNhan;
         boolean choPhepHuy = choXacNhan && !daThanhToan;
         // Đơn còn chờ xác nhận và CHƯA thanh toán thành công -> cho thanh toán lại
         boolean choPhepThanhToanLai = choXacNhan && !daThanhToan;
@@ -897,7 +895,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .daThanhToan(daThanhToan)
                 .daSuaThongTin(daSuaThongTin)
                 .choPhepSuaThongTin(choPhepSuaThongTin)
-                .choPhepSuaSanPham(choPhepSuaSanPham)
+                .choPhepSuaSanPham(choXacNhan)
                 .choPhepHuy(choPhepHuy)
                 .choPhepThanhToanLai(choPhepThanhToanLai)
                 .tienHoanTraTruoc(tienHoanTraTruoc)
@@ -939,7 +937,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .filter(hd -> hd.getOrderType() == OrderType.ONLINE
                         || (hd.getOrderType() == null && hd.getNhanVien() == null
                                 && OrderType.ONLINE.name().equalsIgnoreCase(hd.getLoaiDon())))
-                .collect(java.util.stream.Collectors.toList());
+                .toList();
 
         long total = onlineOrders.size();
         long completed = onlineOrders.stream().filter(o -> o.getTrangThai() != null && o.getTrangThai() == OrderStatus.HOAN_THANH).count();

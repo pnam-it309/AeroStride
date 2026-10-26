@@ -76,7 +76,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                 .anyMatch(a -> a.getAuthority().equals("ROLE_" + VaiTro.ADMIN) || a.getAuthority().equals(VaiTro.ADMIN));
 
         String staffId = null;
-        if (isStaff && !isAdmin && auth != null) {
+        if (isStaff && !isAdmin) {
             String identifier = auth.getName();
             if (identifier != null && identifier.contains(":")) {
                 identifier = identifier.substring(identifier.indexOf(":") + 1);
@@ -100,7 +100,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                         .caId(l.getCaId())
                         .ngay(l.getNgayLam() != null ? l.getNgayLam().format(dateFormatter) : "")
                         .trangThai(resolveTrangThaiString(l.getTrangThaiLich()))
-                        .tangCa(l.getTangCa() != null ? l.getTangCa() : false)
+                        .tangCa(l.getTangCa() != null && l.getTangCa())
                         .gioBatDauTangCa(l.getGioBatDauTangCa() != null ? l.getGioBatDauTangCa().format(timeFormatter) : null)
                         .gioKetThucTangCa(l.getGioKetThucTangCa() != null ? l.getGioKetThucTangCa().format(timeFormatter) : null)
                         .gioVao(l.getGioVao() != null ? l.getGioVao().format(timeFormatter) : null)
@@ -108,7 +108,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                         .tongSoGio(calculateTotalHours(l.getGioVao(), l.getGioRa(), l.getGioBatDauCa(), l.getGioKetThucCa()))
                         .ghiChu(l.getGhiChu())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private String resolveTrangThaiString(LichLamViec.TrangThaiLichLamViec status) {
@@ -131,7 +131,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                         .gioKetThuc(c.getGioKetThuc() != null ? c.getGioKetThuc().format(timeFormatter) : "")
                         .moTa(c.getMoTa())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -330,7 +330,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         List<NhanVien> activeEmployees = nhanVienRepository.findAll().stream()
                 .filter(nv -> (nv.getXoaMem() == null || !nv.getXoaMem()) && nv.getTrangThai() == TrangThai.DANG_HOAT_DONG)
                 .filter(nv -> !VaiTro.isManagementRole(nv))
-                .collect(Collectors.toList());
+                .toList();
 
         if (activeEmployees.isEmpty()) {
             throw new RuntimeException("Không tìm thấy nhân viên đang hoạt động nào trong hệ thống!");

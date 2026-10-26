@@ -37,7 +37,7 @@ public class ProductVariantRequest {
 
     /** Gia ban goc cua bien the; dot giam gia se tinh gia hien thi rieng. */
     @NotNull(message = "giaBan khong duoc de trong")
-    @DecimalMin(value = "0.0", inclusive = true, message = "giaBan phai lon hon hoac bang 0")
+    @DecimalMin(value = "0.0", message = "giaBan phai lon hon hoac bang 0")
     private BigDecimal giaBan;
 
     /** Trang thai kinh doanh cua bien the: dang ban hoac ngung hoat dong. */

@@ -3,7 +3,6 @@ package com.example.be.core.customer.landing.service.impl;
 import com.example.be.core.customer.landing.model.response.CustomerLandingFeatureItemResponse;
 import com.example.be.core.customer.landing.model.response.CustomerLandingProductResponse;
 import com.example.be.core.customer.landing.model.response.CustomerLandingVariantResponse;
-import com.example.be.core.customer.landing.model.response.CustomerLandingVariantResponse;
 import com.example.be.core.customer.landing.repository.CustomerLandingRepository;
 import com.example.be.core.customer.landing.service.CustomerLandingService;
 import com.example.be.core.customer.sanpham.model.response.CustomerProductVariantStats;

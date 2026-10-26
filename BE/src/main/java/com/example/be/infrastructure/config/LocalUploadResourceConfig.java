@@ -2,6 +2,7 @@ package com.example.be.infrastructure.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -16,11 +17,14 @@ public class LocalUploadResourceConfig implements WebMvcConfigurer {
     private String localUploadDir;
 
     @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
         Path uploadRoot = Paths.get(localUploadDir).toAbsolutePath().normalize();
         File uploadFolder = uploadRoot.toFile();
         if (!uploadFolder.exists()) {
-            uploadFolder.mkdirs();
+            boolean created = uploadFolder.mkdirs();
+            if (!created) {
+                // Directory may already exist or creation failed; proceed regardless
+            }
         }
         String uploadUri = uploadRoot.toUri().toString();
         if (!uploadUri.endsWith("/")) {

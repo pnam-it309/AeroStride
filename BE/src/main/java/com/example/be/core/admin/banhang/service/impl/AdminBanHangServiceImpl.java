@@ -385,7 +385,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         if (hd.getPhieuGiamGia() != null) {
             PhieuGiamGia v = phieuGiamGiaRepository.findById(hd.getPhieuGiamGia().getId()).orElse(null);
             long now = System.currentTimeMillis();
-            if (v == null || !isVoucherAvailableForOrder(v, hd, now)) {
+            if (!isVoucherAvailableForOrder(v, hd, now)) {
                 throw new BusinessException("Phiếu giảm giá áp dụng cho đơn hàng này đã hết hạn hoặc bị hủy. Vui lòng kiểm tra lại trước khi thanh toán.");
             }
             BigDecimal total = hd.getTongTien() != null ? hd.getTongTien() : BigDecimal.ZERO;
@@ -416,7 +416,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         }
 
         // Xử lý Voucher từ FE gửi lên hoặc tự động tự tìm phiếu mới nếu phiếu cũ hết hạn/ngừng hoạt động
-        PhieuGiamGia voucher = null;
+        PhieuGiamGia voucher;
         if (request.getIdPhieuGiamGia() != null && !request.getIdPhieuGiamGia().isEmpty()) {
             PhieuGiamGia v = phieuGiamGiaRepository.findById(request.getIdPhieuGiamGia()).orElse(null);
             long currentTime = System.currentTimeMillis();
@@ -438,9 +438,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         hd.setPhieuGiamGia(voucher);
 
         // Set nhanVien based on currently authenticated user
-        SecurityUtils.getCurrentUserEmail().ifPresent(username -> {
-            nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(username, username, username, username).ifPresent(hd::setNhanVien);
-        });
+        SecurityUtils.getCurrentUserEmail()
+                .flatMap(username -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(username, username, username, username))
+                .ifPresent(hd::setNhanVien);
 
         // Tồn kho đã được trừ lúc thêm vào giỏ hàng, nên không cần trừ lại ở đây nữa.
         // Chỉ cần cập nhật trạng thái hóa đơn.
@@ -576,10 +576,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         }
 
         if (sdt != null) {
-            KhachHang existedByPhone = khachHangRepository.findFirstBySdt(sdt).orElse(null);
-            if (existedByPhone != null) {
-                return existedByPhone;
-            }
+            return khachHangRepository.findFirstBySdt(sdt).orElse(null);
         }
 
         return null;
@@ -738,9 +735,6 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             if (discount.compareTo(maxDiscount) > 0) {
                 maxDiscount = discount;
                 bestVoucher = voucher;
-            } else if (discount.compareTo(maxDiscount) == 0 && discount.compareTo(BigDecimal.ZERO) > 0) {
-                // Nếu giảm giá bằng nhau, lấy cái nào mức % hoặc cái mới hơn. Để đơn giản cứ giữ cái đầu.
-            }
         }
         return bestVoucher;
     }
@@ -776,7 +770,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         if (v == null) return BigDecimal.ZERO;
         BigDecimal amount = baseAmount.max(BigDecimal.ZERO);
         if (LoaiPhieuGiamGia.isPhanTram(v.getLoaiPhieu())) {
-            Integer percent = v.getPhanTramGiamGia() != null ? v.getPhanTramGiamGia() : 0;
+            int percent = v.getPhanTramGiamGia() != null ? v.getPhanTramGiamGia() : 0;
             BigDecimal discount = amount.multiply(BigDecimal.valueOf(percent)).divide(BigDecimal.valueOf(100), java.math.RoundingMode.HALF_UP);
             if (v.getGiamToiDa() != null && v.getGiamToiDa().compareTo(BigDecimal.ZERO) > 0) {
                 discount = discount.min(v.getGiamToiDa());
@@ -952,8 +946,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
         BigDecimal discount;
         if (LoaiPhieuGiamGia.isPhanTram(voucher.getLoaiPhieu())) {
-            Integer percent = voucher.getPhanTramGiamGia() != null ? voucher.getPhanTramGiamGia() : 0;
-            discount = subtotal.multiply(BigDecimal.valueOf(percent)).divide(BigDecimal.valueOf(100));
+            int percent = voucher.getPhanTramGiamGia() != null ? voucher.getPhanTramGiamGia() : 0;
+            discount = subtotal.multiply(BigDecimal.valueOf(percent)).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
             BigDecimal max = normalizeMoney(voucher.getGiamToiDa());
             if (max.compareTo(BigDecimal.ZERO) > 0 && discount.compareTo(max) > 0) {
                 discount = max;
@@ -1066,15 +1060,15 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         String bestVoucherId = null;
         String voucherSuggestionText = "";
         String betterVoucherSuggestionText = "";
-        Boolean canApplySuggestedVoucher = false;
+        boolean canApplySuggestedVoucher = false;
 
-        Boolean voucherIneligible = false;
+        boolean voucherIneligible = false;
         String voucherIneligibleReason = null;
         String voucherIneligibleMessage = null;
         BigDecimal voucherMinOrder = null;
         BigDecimal voucherShortfall = null;
 
-        Boolean voucherRemoved = false;
+        boolean voucherRemoved = false;
         String voucherRemovedMessage = null;
 
         String betterVoucherCode = null;
@@ -1136,7 +1130,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 }
             } else {
                 PhieuGiamGia nextBetterVoucher = getNextBetterVoucher(hd, null, activeVouchers);
-                if (nextBetterVoucher == null && !Boolean.TRUE.equals(voucherIneligible)) {
+                if (nextBetterVoucher == null && !voucherIneligible) {
                     voucherSuggestionText = "Chưa có phiếu giảm giá phù hợp cho đơn hiện tại.";
                 }
             }
@@ -1238,7 +1232,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
                 if (giaBan != null && dotGiamGia != null) {
                     BigDecimal soTienGiam = dotGiamGia.getSoTienGiam();
-                    Integer phanTramGiam = 0;
+                    int phanTramGiam = 0;
 
                     // Tính % giảm giá dựa trên số tiền giảm
                     if (soTienGiam != null && giaBan.compareTo(BigDecimal.ZERO) > 0) {

@@ -5,6 +5,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
+import org.springframework.lang.NonNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,7 +32,7 @@ public class ExcelItemReader<T> implements ItemStreamReader<T> {
     }
 
     @Override
-    public void open(ExecutionContext executionContext) throws ItemStreamException {
+    public void open(@NonNull ExecutionContext executionContext) throws ItemStreamException {
         if (filePath == null || filePath.trim().isEmpty()) {
             return;
         }
@@ -77,7 +78,7 @@ public class ExcelItemReader<T> implements ItemStreamReader<T> {
     }
 
     @Override
-    public void update(ExecutionContext executionContext) throws ItemStreamException {
+    public void update(@NonNull ExecutionContext executionContext) throws ItemStreamException {
         // No-op for read-only stream
     }
 

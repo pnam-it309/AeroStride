@@ -180,7 +180,7 @@ public final class VietnameseLexicon {
                 }
             }
 
-            if (sb.length() > 0 && !sb.toString().endsWith(" ") && !fixedWord.startsWith(" ")) {
+            if (!sb.isEmpty() && !sb.toString().endsWith(" ") && !fixedWord.startsWith(" ")) {
                 sb.append(" ");
             }
             sb.append(fixedWord);

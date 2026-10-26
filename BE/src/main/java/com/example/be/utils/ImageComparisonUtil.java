@@ -64,8 +64,6 @@ public class ImageComparisonUtil {
             }
         }
         double maxDiff = 255.0 * BASE_SIZE * BASE_SIZE;
-        double percentage = 100.0 - (100.0 * diff / maxDiff);
-
-        return percentage;
+        return 100.0 - (100.0 * diff / maxDiff);
     }
 }

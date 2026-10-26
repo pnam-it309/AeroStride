@@ -263,8 +263,7 @@ public class AiLocalService {
             if (t.contains(b)) return true;
         }
         if (extractPrice(t) != null) return true;
-        if (t.contains("size") || t.contains("màu") || t.contains("trắng") || t.contains("đen") || t.contains("đỏ") || t.contains("xanh") || t.contains("vàng") || t.contains("hồng") || t.contains("chạy") || t.contains("sneaker") || t.contains("thể thao")) return true;
-        return false;
+        return t.contains("size") || t.contains("màu") || t.contains("trắng") || t.contains("đen") || t.contains("đỏ") || t.contains("xanh") || t.contains("vàng") || t.contains("hồng") || t.contains("chạy") || t.contains("sneaker") || t.contains("thể thao");
     }
 
     private String handleComplaint(ChatState state, String lowerInput) {
@@ -291,7 +290,7 @@ public class AiLocalService {
         Matcher cmMatcher = Pattern.compile("(\\d{2}(?:\\.\\d+)?)\\s*(?:cm|centimet)").matcher(lowerInput);
         if (cmMatcher.find()) {
             double length = Double.parseDouble(cmMatcher.group(1));
-            String size = "40";
+            String size;
             if (length <= 24.0) size = "38";
             else if (length <= 24.5) size = "39";
             else if (length <= 25.0) size = "40";
@@ -326,7 +325,7 @@ public class AiLocalService {
         }
         List<ProductVariantResponse> all = rawAll.stream()
                 .filter(v -> v != null && v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                .collect(Collectors.toList());
+                .toList();
 
         List<ProductVariantResponse> fresh = new ArrayList<>();
         Set<String> seenProductIds = new HashSet<>();
@@ -374,7 +373,7 @@ public class AiLocalService {
 
         List<ProductVariantResponse> allVariants = rawVariants.stream()
                 .filter(v -> v != null && v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                .collect(Collectors.toList());
+                .toList();
 
         if (allVariants.isEmpty()) {
             return List.of();
@@ -538,7 +537,7 @@ public class AiLocalService {
 
         List<ProductVariantResponse> all = raw.stream()
                 .filter(v -> v != null && v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                .collect(Collectors.toList());
+                .toList();
 
         List<ProductVariantResponse> distinctList = new ArrayList<>();
         Set<String> seenProductIds = new HashSet<>();
@@ -562,7 +561,7 @@ public class AiLocalService {
                 .filter(v -> v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(BigDecimal.ZERO) > 0)
                 .sorted((a, b) -> b.getPhanTramGiam().compareTo(a.getPhanTramGiam()))
                 .limit(4)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private String removeDiacritics(String str) {

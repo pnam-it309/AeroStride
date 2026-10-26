@@ -158,7 +158,7 @@ public class AdminChatServiceImpl implements AdminChatService {
     public List<AdminChatResponse> getAllConversations(String type, String status, String keyword) {
         String currentUsername = getCurrentUsername();
         NhanVien currentNv = nhanVienRepository.findByTenTaiKhoan(currentUsername).orElse(null);
-        boolean isManager = currentNv != null && VaiTro.isManagementRole(currentNv);
+        boolean isManager = VaiTro.isManagementRole(currentNv);
 
         List<CuocHoiThoai> rawConvs = conversationRepository.findAllWithDetails().stream()
                 .filter(c -> {
@@ -238,7 +238,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                         } else if (c.getNhanVien() != null) {
                             partner = c.getNhanVien();
                         }
-                        if (partner != null && VaiTro.isManagementRole(partner)) {
+                        if (VaiTro.isManagementRole(partner)) {
                             role = "ROLE_QUAN_LY";
                         }
                     }
@@ -282,7 +282,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                         }
                     }
 
-                    Long lastMsgTimestamp = lastMsg != null && lastMsg.getNgayTao() != null
+                    long lastMsgTimestamp = lastMsg != null && lastMsg.getNgayTao() != null
                             ? lastMsg.getNgayTao()
                             : (c.getNgayCapNhat() != null ? c.getNgayCapNhat() : 0L);
                     String lastMessageText = lastMsg != null && lastMsg.getNoiDung() != null ? lastMsg.getNoiDung() : "";
@@ -297,7 +297,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                             .anhDaiDien(getAvatarUrl(c, currentUsername))
                             .thoiGian(formatTime(lastMsgTimestamp > 0 ? lastMsgTimestamp : c.getNgayCapNhat()))
                             .chuaDoc(unreadCount)
-                            .daChapNhan(c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL ? true : c.getDaChapNhan())
+                            .daChapNhan(c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL || c.getDaChapNhan())
                             .loaiHoiThoai(c.getLoaiHoiThoai() != null ? c.getLoaiHoiThoai().name() : CuocHoiThoai.LoaiHoiThoai.CUSTOMER.name())
                             .trangThaiHoiThoai(c.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.INTERNAL ? internalStatus : (c.getTrangThaiHoiThoai() != null ? c.getTrangThaiHoiThoai().name() : CuocHoiThoai.TrangThaiHoiThoai.PENDING.name()))
                             .idNhanVien(c.getNhanVien() != null ? c.getNhanVien().getId() : null)
@@ -338,7 +338,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                             .vaiTro(VaiTro.isManagementRole(nv) ? "ROLE_QUAN_LY" : "ROLE_NHAN_VIEN")
                             .timestamp(0L)
                             .build())
-                    .collect(Collectors.toList());
+                    .toList();
 
             allConvs.addAll(allStaff);
         }
@@ -348,7 +348,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                 .filter(c -> type == null || type.isEmpty() || type.equals(c.getLoaiHoiThoai()))
                 .filter(c -> status == null || status.isEmpty() || status.equals(c.getTrangThaiHoiThoai()))
                 .filter(c -> keyword == null || keyword.isEmpty() || c.getTen().toLowerCase().contains(keyword.toLowerCase()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -407,7 +407,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                         .hinhAnh(m.getHinhAnh())
                         .thoiGian(formatTime(m.getNgayTao()))
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -423,7 +423,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                         .hinhAnh(m.getHinhAnh())
                         .thoiGian(formatTime(m.getNgayTao()))
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

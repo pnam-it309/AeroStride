@@ -219,7 +219,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
         java.math.BigDecimal maxPrice = null;
         List<String> availableColors = new java.util.ArrayList<>();
         java.util.Map<String, List<String>> availableSizesByColor = new java.util.LinkedHashMap<>();
-        Integer totalStock = 0;
+        int totalStock = 0;
         java.util.Map<String, Integer> stockByColor = new java.util.HashMap<>();
 
         for (CustomerProductVariantResponse v : variantResponses) {

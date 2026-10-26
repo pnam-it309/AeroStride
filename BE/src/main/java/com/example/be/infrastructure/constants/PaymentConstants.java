@@ -40,13 +40,8 @@ public final class PaymentConstants {
         if (gd == null) {
             return false;
         }
-        if (isCashOrCod(gd.getLoaiGiaoDich())) {
-            return true;
-        }
-        if (gd.getPhuongThucThanhToan() != null && isCashOrCod(gd.getPhuongThucThanhToan().getTen())) {
-            return true;
-        }
-        return false;
+        return isCashOrCod(gd.getLoaiGiaoDich())
+                || (gd.getPhuongThucThanhToan() != null && isCashOrCod(gd.getPhuongThucThanhToan().getTen()));
     }
 
     /**

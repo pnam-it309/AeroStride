@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,9 +28,9 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
                         && (v.getNgayBatDau() == null || v.getNgayBatDau() <= now)
                         && (v.getNgayKetThuc() == null || v.getNgayKetThuc() >= now)
                         && (v.getSoLuong() == null || v.getSoLuong() != 0))
-                .collect(Collectors.toList());
+                .toList();
 
-        return vouchers.stream().map(this::convertToResponse).collect(Collectors.toList());
+        return vouchers.stream().map(this::convertToResponse).toList();
     }
 
     @Override
@@ -47,7 +46,7 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
                         && (v.getNgayKetThuc() == null || v.getNgayKetThuc() >= now)
                         && (v.getSoLuong() == null || v.getSoLuong() != 0)
                         && (v.getDonHangToiThieu() == null || orderValue.compareTo(v.getDonHangToiThieu()) >= 0))
-                .collect(Collectors.toList());
+                .toList();
 
         PhieuGiamGia bestVoucher = null;
         BigDecimal maxDiscount = BigDecimal.ZERO;

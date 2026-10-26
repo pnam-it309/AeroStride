@@ -18,8 +18,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.data.redis.core.RedisTemplate;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -79,7 +77,7 @@ public class AiChatServiceImpl implements AiChatService {
             openAiApiKeysList = Arrays.stream(openAiApiKeyString.split(","))
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
+                    .toList();
             log.info("Đã nạp thành công {} API Keys cho OpenAI.", openAiApiKeysList.size());
         }
     }
@@ -459,7 +457,7 @@ public class AiChatServiceImpl implements AiChatService {
             if (allVariants != null) {
                 cachedVariants = allVariants.stream()
                         .filter(v -> v != null && v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                        .collect(Collectors.toList());
+                        .toList();
             } else {
                 cachedVariants = new ArrayList<>();
             }
@@ -472,7 +470,7 @@ public class AiChatServiceImpl implements AiChatService {
         }
 
         if (text == null || text.isBlank()) {
-            return cachedVariants.stream().limit(MAX_CONTEXT_PRODUCTS).collect(Collectors.toList());
+            return cachedVariants.stream().limit(MAX_CONTEXT_PRODUCTS).toList();
         }
 
         String queryLower = text.toLowerCase().trim();
@@ -504,10 +502,9 @@ public class AiChatServiceImpl implements AiChatService {
         }
 
         List<ScoredVariant> scoredList = new ArrayList<>();
-        BigDecimal finalTargetPrice = targetPrice;
         for (ProductVariantResponse v : cachedVariants) {
             if (v == null) continue;
-            int score = calculateMatchScore(v, queryLower, queryUnaccent, queryWords, unaccentWords, finalTargetPrice);
+            int score = calculateMatchScore(v, queryLower, queryUnaccent, queryWords, unaccentWords, targetPrice);
             if (score == 0 && (sortByPriceAsc || sortByPriceDesc)) {
                 score = 1;
             }
@@ -551,10 +548,10 @@ public class AiChatServiceImpl implements AiChatService {
         List<ProductVariantResponse> filtered = scoredList.stream()
                 .map(sv -> sv.variant)
                 .limit(MAX_CONTEXT_PRODUCTS)
-                .collect(Collectors.toList());
+                .toList();
 
         if (filtered.isEmpty()) {
-            return cachedVariants.stream().limit(15).collect(Collectors.toList());
+            return cachedVariants.stream().limit(15).toList();
         }
 
         return filtered;
@@ -585,7 +582,7 @@ public class AiChatServiceImpl implements AiChatService {
             sb.append(String.format("- Tên: %s (Mã SP: %s, ID: %s, Hãng: %s)\n", tenSp, code, pId, brand));
             String sizes = vars.stream()
                     .filter(Objects::nonNull)
-                    .map(v -> v.getGiaTriKichThuoc() != null ? String.valueOf(v.getGiaTriKichThuoc()) : "N/A")
+                    .map(v -> v.getGiaTriKichThuoc() != null ? v.getGiaTriKichThuoc() : "N/A")
                     .distinct().sorted().collect(Collectors.joining(", "));
             String colors = vars.stream()
                     .filter(Objects::nonNull)
@@ -953,9 +950,7 @@ public class AiChatServiceImpl implements AiChatService {
                 String material = vars.get(0).getTenChatLieu() != null ? vars.get(0).getTenChatLieu() : "Da cao cấp";
                 sb.append(String.format("• %s: chất liệu [%s]\n", productName, material));
 
-                if (!vars.isEmpty()) {
-                    matchedVariants.add(vars.get(0));
-                }
+                matchedVariants.add(vars.get(0));
                 count++;
             }
             sb.append("\nCác chất liệu này giúp nâng niu bàn chân và mang lại trải nghiệm đi giày thoải mái nhất!");
@@ -1022,7 +1017,7 @@ public class AiChatServiceImpl implements AiChatService {
                 String finalBrand = matchedBrand;
                 List<ProductVariantResponse> brandVars = variants.stream()
                         .filter(v -> v.getTenThuongHieu() != null && v.getTenThuongHieu().toLowerCase().contains(finalBrand))
-                        .collect(Collectors.toList());
+                        .toList();
 
                 if (!brandVars.isEmpty()) {
                     sb.append(String.format("Dạ, shop đang có sẵn các mẫu giày thuộc thương hiệu %s cực hot dưới đây:\n\n", matchedBrand.toUpperCase()));
@@ -1135,7 +1130,7 @@ public class AiChatServiceImpl implements AiChatService {
         String productContext = buildProductContextFromVariants(activeVariants);
 
         // 2. Tạo prompt yêu cầu sinh mảng gợi ý bằng tiếng Việt ngắn gọn, thiết thực
-        String systemTimeContext = String.format("Thời gian hiện tại: %s. ", java.time.LocalDateTime.now().toString());
+        String systemTimeContext = String.format("Thời gian hiện tại: %s. ", java.time.LocalDateTime.now());
         String prompt = String.format(
                 AiChatPrompts.WELCOME_SUGGESTIONS_PROMPT,
                 productContext, AiChatPrompts.STORE_POLICIES_CONTEXT, systemTimeContext

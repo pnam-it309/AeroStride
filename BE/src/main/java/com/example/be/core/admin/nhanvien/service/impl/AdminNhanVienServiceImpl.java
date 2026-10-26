@@ -208,7 +208,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
             boolean willRemainAdmin = false;
             if (request.getIdPhanQuyen() != null) {
                 com.example.be.entity.PhanQuyen newPq = phanQuyenRepository.findById(request.getIdPhanQuyen()).orElse(null);
-                if (newPq != null && VaiTro.isManagementRole(newPq)) {
+                if (VaiTro.isManagementRole(newPq)) {
                     willRemainAdmin = true;
                 }
             }

@@ -62,7 +62,8 @@ public class SocialAuthService {
                         if (googleInfo.avatarUrl != null) avatarUrl = googleInfo.avatarUrl;
                         if (googleInfo.id != null) providerId = googleInfo.id;
                     }
-                } else if ("FACEBOOK".equals(provider)) {
+                } else {
+                    // provider == "FACEBOOK"
                     SocialUserInfo fbInfo = verifyFacebookToken(token);
                     if (fbInfo != null) {
                         if (fbInfo.email != null) email = fbInfo.email;

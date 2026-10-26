@@ -39,9 +39,7 @@ public enum VaiTro {
         }
         if (phanQuyen.getQuyenHan() != null) {
             String upper = phanQuyen.getQuyenHan().toUpperCase();
-            if (upper.contains("MANAGEMENT") || upper.contains("ADMIN") || upper.contains("FULL_ACCESS") || upper.contains("QUAN_LY")) {
-                return true;
-            }
+            return upper.contains("MANAGEMENT") || upper.contains("ADMIN") || upper.contains("FULL_ACCESS") || upper.contains("QUAN_LY");
         }
         return false;
     }

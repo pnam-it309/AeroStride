@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.ai.tool.annotation.Tool;
 
@@ -30,7 +29,7 @@ public class AiToolsConfig {
         // Lấy toàn bộ biến thể đang hoạt động
         List<ProductVariantResponse> allVariants = sanPhamService.getAllVariants().stream()
                 .filter(v -> v.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                .collect(Collectors.toList());
+                .toList();
 
         // Lọc theo các điều kiện do AI truyền vào
         List<ProductVariantResponse> filtered = allVariants.stream().filter(v -> {
@@ -44,7 +43,9 @@ public class AiToolsConfig {
                 if (v.getTenMauSac() != null && v.getTenMauSac().toLowerCase().contains(kw)) kwMatch = true;
                 if (v.getGiaTriKichThuoc() != null && v.getGiaTriKichThuoc().toLowerCase().contains(kw)) kwMatch = true;
                 if (v.getTenThuongHieu() != null && v.getTenThuongHieu().toLowerCase().contains(kw)) kwMatch = true;
-                if (!kwMatch) match = false;
+                if (!kwMatch) {
+                    match = false;
+                }
             }
 
             // Lọc theo brand
@@ -62,7 +63,7 @@ public class AiToolsConfig {
             }
 
             return match;
-        }).limit(30).collect(Collectors.toList());
+        }).limit(30).toList();
 
         if (filtered.isEmpty()) {
             return "Không tìm thấy sản phẩm nào khớp với yêu cầu tìm kiếm trong hệ thống.";

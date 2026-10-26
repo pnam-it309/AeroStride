@@ -103,7 +103,7 @@ public class DataRetrievalLibrary {
     }
 
     public List<SanPham> getTopProducts(int limit) {
-        return getAllProductsCached().stream().limit(limit).collect(Collectors.toList());
+        return getAllProductsCached().stream().limit(limit).toList();
     }
 
     public String getTopProductsInfo(int limit) {
@@ -145,7 +145,7 @@ public class DataRetrievalLibrary {
         return getAllProductsCached().stream()
                 .filter(p -> p.getTen().toLowerCase().contains(keyword.toLowerCase()))
                 .limit(5)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public String getActiveDiscountsInfo() {
@@ -156,7 +156,7 @@ public class DataRetrievalLibrary {
                     .filter(d -> d.getNgayBatDau() == null || d.getNgayBatDau() <= now)
                     .filter(d -> d.getNgayKetThuc() == null || d.getNgayKetThuc() >= now)
                     .filter(d -> !Boolean.TRUE.equals(d.getXoaMem()))
-                    .collect(Collectors.toList());
+                    .toList();
 
             if (campaigns.isEmpty()) {
                 return "Dạ hiện tại bên em chưa diễn ra đợt giảm giá lớn nào. Tuy nhiên, shop luôn có các ưu đãi mặc định siêu hấp dẫn cho dòng sản phẩm bán chạy, anh/chị tham khảo nhé! 💖";
@@ -199,7 +199,7 @@ public class DataRetrievalLibrary {
                     .filter(p -> p.getNgayBatDau() == null || p.getNgayBatDau() <= now)
                     .filter(p -> p.getNgayKetThuc() == null || p.getNgayKetThuc() >= now)
                     .filter(p -> p.getSoLuong() == null || p.getSoLuong() > 0)
-                    .collect(Collectors.toList());
+                    .toList();
 
             if (vouchers.isEmpty()) {
                 return "Dạ hiện tại hệ thống chưa phát hành phiếu giảm giá (Voucher) công khai mới. Tuy nhiên, shop luôn có ưu đãi mã **AERO10** giảm 10% cho khách hàng mới đấy ạ! 😉";
@@ -254,7 +254,7 @@ public class DataRetrievalLibrary {
                     })
                     .filter(ct -> ct.getChiTietSanPham() != null && !Boolean.TRUE.equals(ct.getChiTietSanPham().getXoaMem()))
                     .filter(ct -> ct.getChiTietSanPham().getSanPham() != null && !Boolean.TRUE.equals(ct.getChiTietSanPham().getSanPham().getXoaMem()))
-                    .collect(Collectors.toList());
+                    .toList();
 
             if (activePromoDetails.isEmpty()) {
                 return "Dạ hiện tại chưa có sản phẩm cụ thể nào đang áp dụng chương trình giảm giá lớn. Tuy nhiên, shop luôn có ưu đãi mã **AERO10** giảm 10% cho đơn hàng đầu tiên đấy ạ! 👟";
@@ -333,7 +333,7 @@ public class DataRetrievalLibrary {
                     sb.append("   - *Thương hiệu:* ").append(sp.getThuongHieu().getTen()).append("\n");
                 }
 
-                String discountStr = "";
+                String discountStr;
                 if ("PHAN_TRAM".equalsIgnoreCase(discountType) || (maxDiscountVal.compareTo(new BigDecimal(100)) <= 0)) {
                     discountStr = maxDiscountVal.stripTrailingZeros().toPlainString() + "% OFF";
                 } else {
@@ -355,7 +355,7 @@ public class DataRetrievalLibrary {
             List<DeGiay> list = deGiayRepository.findAll().stream()
                     .filter(item -> !Boolean.TRUE.equals(item.getXoaMem()))
                     .filter(item -> item.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                    .collect(Collectors.toList());
+                    .toList();
             if (list.isEmpty()) {
                 return "Dạ hiện tại hệ thống chưa cập nhật thông tin về các loại đế giày ạ.";
             }
@@ -376,7 +376,7 @@ public class DataRetrievalLibrary {
             List<ChatLieu> list = chatLieuRepository.findAll().stream()
                     .filter(item -> !Boolean.TRUE.equals(item.getXoaMem()))
                     .filter(item -> item.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                    .collect(Collectors.toList());
+                    .toList();
             if (list.isEmpty()) {
                 return "Dạ hiện tại hệ thống chưa cập nhật thông tin về các loại chất liệu giày ạ.";
             }
@@ -397,7 +397,7 @@ public class DataRetrievalLibrary {
             List<CoGiay> list = coGiayRepository.findAll().stream()
                     .filter(item -> !Boolean.TRUE.equals(item.getXoaMem()))
                     .filter(item -> item.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                    .collect(Collectors.toList());
+                    .toList();
             if (list.isEmpty()) {
                 return "Dạ hiện tại hệ thống chưa cập nhật thông tin về các kiểu cổ giày ạ.";
             }
@@ -418,7 +418,7 @@ public class DataRetrievalLibrary {
             List<ThuongHieu> list = thuongHieuRepository.findAll().stream()
                     .filter(item -> !Boolean.TRUE.equals(item.getXoaMem()))
                     .filter(item -> item.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                    .collect(Collectors.toList());
+                    .toList();
             if (list.isEmpty()) {
                 return "Dạ hiện tại bên em chưa có danh mục thương hiệu cụ thể ạ.";
             }
@@ -439,7 +439,7 @@ public class DataRetrievalLibrary {
             List<XuatXu> list = xuatXuRepository.findAll().stream()
                     .filter(item -> !Boolean.TRUE.equals(item.getXoaMem()))
                     .filter(item -> item.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                    .collect(Collectors.toList());
+                    .toList();
             if (list.isEmpty()) {
                 return "Dạ hiện tại chưa có thông tin xuất xứ sản phẩm ạ.";
             }
@@ -460,7 +460,7 @@ public class DataRetrievalLibrary {
             List<KichThuoc> list = kichThuocRepository.findAll().stream()
                     .filter(item -> !Boolean.TRUE.equals(item.getXoaMem()))
                     .filter(item -> item.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                    .collect(Collectors.toList());
+                    .toList();
             if (list.isEmpty()) {
                 return "Dạ hiện tại hệ thống chưa cập nhật danh sách size giày ạ.";
             }
@@ -481,7 +481,7 @@ public class DataRetrievalLibrary {
             List<MauSac> list = mauSacRepository.findAll().stream()
                     .filter(item -> !Boolean.TRUE.equals(item.getXoaMem()))
                     .filter(item -> item.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                    .collect(Collectors.toList());
+                    .toList();
             if (list.isEmpty()) {
                 return "Dạ hiện tại chưa có thông tin bảng màu sắc giày ạ.";
             }

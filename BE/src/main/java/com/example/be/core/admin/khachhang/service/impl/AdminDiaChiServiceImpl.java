@@ -162,7 +162,7 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
     private void unsetOldDefaultExcluding(String khId, String excludeAddrId) {
         List<DiaChi> list = repository.findByKhachHangId(khId);
         for (DiaChi addr : list) {
-            if (excludeAddrId == null || !addr.getId().equals(excludeAddrId)) {
+            if (!addr.getId().equals(excludeAddrId)) {
                 if (Boolean.TRUE.equals(addr.getLaMacDinh())) {
                     addr.setLaMacDinh(false);
                     repository.save(addr);

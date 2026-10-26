@@ -90,7 +90,7 @@ public class VnPayServiceImpl implements PaymentService {
         for (String fieldName : fieldNames) {
             String fieldValue = vnp_Params.get(fieldName);
             if (fieldValue != null && !fieldValue.isBlank()) {
-                if (hashData.length() > 0) {
+                if (!hashData.isEmpty()) {
                     hashData.append('&');
                     query.append('&');
                 }
@@ -171,7 +171,7 @@ public class VnPayServiceImpl implements PaymentService {
         for (String fieldName : fieldNames) {
             String fieldValue = paramsCopy.get(fieldName);
             if (fieldValue != null && !fieldValue.isBlank()) {
-                if (hashData.length() > 0) {
+                if (!hashData.isEmpty()) {
                     hashData.append('&');
                 }
                 hashData.append(fieldName).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));

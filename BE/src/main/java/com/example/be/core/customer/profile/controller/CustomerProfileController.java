@@ -108,14 +108,11 @@ public class CustomerProfileController {
             if (defaultDiaChi.isEmpty() && !diaChis.isEmpty()) {
                 defaultDiaChi = Optional.of(diaChis.get(0));
             }
-            DiaChi dc = defaultDiaChi.orElseGet(() -> {
-                DiaChi newDc = DiaChi.builder()
+            DiaChi dc = defaultDiaChi.orElseGet(() -> DiaChi.builder()
                         .maDiaChi("DC" + System.currentTimeMillis())
                         .khachHang(khachHang)
                         .laMacDinh(true)
-                        .build();
-                return newDc;
-            });
+                        .build());
             dc.setTenNguoiNhan(khachHang.getTen());
             dc.setSdtNguoiNhan(khachHang.getSdt());
             if (request.getTinh() != null) dc.setTinh(request.getTinh());

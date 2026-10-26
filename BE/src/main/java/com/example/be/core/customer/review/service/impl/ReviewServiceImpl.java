@@ -154,9 +154,7 @@ public class ReviewServiceImpl implements ReviewService {
         Long completionTime = hoaDon.getNgayCapNhat() != null ? hoaDon.getNgayCapNhat() : hoaDon.getNgayTao();
         if (completionTime != null) {
             long daysSinceCompletion = ChronoUnit.DAYS.between(Instant.ofEpochMilli(completionTime), Instant.now());
-            if (daysSinceCompletion > 30) {
-                return false;
-            }
+            return daysSinceCompletion <= 30;
         }
 
         return true;

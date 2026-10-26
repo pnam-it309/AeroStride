@@ -94,10 +94,14 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
         // Explicitly initialize collections that were removed from EntityGraph to avoid MultipleBagFetchException
         // Hibernate will load each in a single efficient query (1 query per collection)
-        if (hd.getListsLichSuHoaDon() != null) hd.getListsLichSuHoaDon().size();
+        if (hd.getListsLichSuHoaDon() != null) {
+            int ignored = hd.getListsLichSuHoaDon().size(); // trigger lazy load
+        }
         if (hd.getListsGiaoDichThanhToan() != null) {
             hd.getListsGiaoDichThanhToan().forEach(gd -> {
-                if (gd.getPhuongThucThanhToan() != null) gd.getPhuongThucThanhToan().getTen();
+                if (gd.getPhuongThucThanhToan() != null) {
+                    String ignoredTen = gd.getPhuongThucThanhToan().getTen(); // trigger lazy load
+                }
             });
         }
         AdminHoaDonDetailResponse response = hoaDonMapper.toDetailResponse(hd);
@@ -208,11 +212,9 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
 
 
         // Gán nhân viên xử lý hóa đơn khi có nhân viên đăng nhập thực hiện chuyển trạng thái
-        com.example.be.utils.SecurityUtils.getCurrentUserEmail().ifPresent(email -> {
-            nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email).ifPresent(staff -> {
-                hd.setNhanVien(staff);
-            });
-        });
+        com.example.be.utils.SecurityUtils.getCurrentUserEmail()
+                .flatMap(email -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email))
+                .ifPresent(hd::setNhanVien);
 
         hd.setTrangThai(newStatus);
         hd.setNgayCapNhat(System.currentTimeMillis());
@@ -525,14 +527,14 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
 
     private void logHistory(HoaDon hd, String note) {
         // Gán nhân viên xử lý nếu đơn chưa có nhân viên
-        com.example.be.utils.SecurityUtils.getCurrentUserEmail().ifPresent(email -> {
-            nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email).ifPresent(staff -> {
-                if (hd.getNhanVien() == null) {
-                    hd.setNhanVien(staff);
-                    repository.save(hd);
-                }
-            });
-        });
+        if (hd.getNhanVien() == null) {
+            com.example.be.utils.SecurityUtils.getCurrentUserEmail()
+                    .flatMap(email -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email))
+                    .ifPresent(staff -> {
+                        hd.setNhanVien(staff);
+                        repository.save(hd);
+                    });
+        }
 
         String nguoiThucHienName = com.example.be.utils.SecurityUtils.getCurrentUserEmail()
                 .map(email -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email)

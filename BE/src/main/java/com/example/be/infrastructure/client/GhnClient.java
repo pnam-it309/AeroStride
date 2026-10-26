@@ -66,6 +66,7 @@ public class GhnClient {
         this.restTemplate = new RestTemplate(factory);
     }
 
+    @SuppressWarnings("unchecked")
     public Map<String, Object> calculateShippingFee(Integer toDistrictId, String toWardCode, Integer weight, Integer insuranceValue) {
         String url = apiUrl + "/v2/shipping-order/fee";
 
@@ -147,6 +148,7 @@ public class GhnClient {
         return res;
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, Object> executeGet(String url) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("token", apiToken);

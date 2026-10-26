@@ -4,6 +4,7 @@ import com.example.be.entity.DanhGiaSanPham;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,7 +20,9 @@ public interface DanhGiaSanPhamRepository extends JpaRepository<DanhGiaSanPham, 
 
     boolean existsByHoaDon_IdAndSanPham_Id(String idHoaDon, String idSanPham);
 
-    Page<DanhGiaSanPham> findAll(Pageable pageable);
+    @Override
+    @NonNull
+    Page<DanhGiaSanPham> findAll(@NonNull Pageable pageable);
 
     long countByTrangThai(DanhGiaSanPham.TrangThaiDanhGia trangThai);
 }

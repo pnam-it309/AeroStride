@@ -23,7 +23,7 @@ public class CustomerLandingController {
     private final CustomerLandingService landingService;
 
     @GetMapping("/products")
-    @RateLimit(limit = 60, windowSeconds = 60)
+    @RateLimit(limit = 60)
     public ResponseEntity<ApiResponse<List<CustomerLandingProductResponse>>> getLandingProducts(
             @RequestParam(defaultValue = "6") Integer size
     ) {
@@ -37,7 +37,7 @@ public class CustomerLandingController {
     }
 
     @GetMapping("/featured-variants")
-    @RateLimit(limit = 60, windowSeconds = 60)
+    @RateLimit(limit = 60)
     public ResponseEntity<ApiResponse<List<CustomerLandingVariantResponse>>> getFeaturedVariants(
             @RequestParam(defaultValue = "12") Integer size
     ) {
@@ -46,7 +46,7 @@ public class CustomerLandingController {
     }
 
     @GetMapping("/discounted-variants")
-    @RateLimit(limit = 60, windowSeconds = 60)
+    @RateLimit(limit = 60)
     public ResponseEntity<ApiResponse<List<CustomerLandingVariantResponse>>> getDiscountedVariants(
             @RequestParam(defaultValue = "12") Integer size
     ) {
@@ -55,7 +55,7 @@ public class CustomerLandingController {
     }
 
     @GetMapping("/top-variants")
-    @RateLimit(limit = 60, windowSeconds = 60)
+    @RateLimit(limit = 60)
     public ResponseEntity<ApiResponse<List<CustomerLandingVariantResponse>>> getTopVariantsByQuantity(
             @RequestParam(defaultValue = "5") Integer size
     ) {
@@ -64,7 +64,7 @@ public class CustomerLandingController {
     }
 
     @GetMapping("/flash-sale")
-    @RateLimit(limit = 60, windowSeconds = 60)
+    @RateLimit(limit = 60)
     public ResponseEntity<ApiResponse<com.example.be.core.customer.landing.model.response.CustomerLandingFlashSaleResponse>> getFlashSale() {
         var response = landingService.getFlashSale();
         return ResponseEntity.ok(ApiResponse.success(response, "Lấy thông tin Flash Sale thành công"));

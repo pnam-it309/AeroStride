@@ -2,14 +2,17 @@ package com.example.be.infrastructure.websocket;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+
+import org.springframework.lang.NonNull;
 
 @Component
 public class WebSocketContextHolder implements ApplicationContextAware {
     private static ApplicationContext context;
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) {
+    public void setApplicationContext(@NonNull ApplicationContext applicationContext) {
         context = applicationContext;
     }
 
