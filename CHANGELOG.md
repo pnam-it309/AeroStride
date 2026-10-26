@@ -1,3 +1,10 @@
+## [1.45.4](https://github.com/pnam-it309/AeroStride/compare/v1.45.3...v1.45.4) (2026-10-26)
+
+
+### Bug Fixes
+
+* **sec:** bump axios to 1.20.0 and resolve regex duplicate characters in phone validations ([07537e9](https://github.com/pnam-it309/AeroStride/commit/07537e9b1ceddec3d3b9394243a54a06c643d71d))
+
 ## [1.45.3](https://github.com/pnam-it309/AeroStride/compare/v1.45.2...v1.45.3) (2026-10-26)
 
 
