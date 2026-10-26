@@ -71,6 +71,7 @@ class PaymentOrderFinalizerTest {
     @Test
     void markPaid_setsStatusToXacNhanAndDeductsStock() {
         when(hoaDonRepository.findById("order-vnpay-1")).thenReturn(Optional.of(onlineOrder));
+        when(giaoDichRepository.findAllByHoaDon(onlineOrder)).thenReturn(List.of(paymentTxn));
 
         Map<String, String> params = Map.of(
                 "vnp_TransactionNo", "14567890",
