@@ -203,7 +203,7 @@ onMounted(() => {
                                             density="comfortable"
                                             hide-details="auto"
                                             class="modern-input"
-                                            :rules="[(v) => !!v?.trim() || 'Vui lòng nhập số điện thoại', (v) => /^0[3|5|7|8|9][0-9]{8}$/.test(v?.trim() || '') || 'Số điện thoại không hợp lệ']"
+                                            :rules="[(v) => !!v?.trim() || 'Vui lòng nhập số điện thoại', (v) => /^0[35789][0-9]{8}$/.test(v?.trim() || '') || 'Số điện thoại không hợp lệ']"
                                         ></v-text-field>
                                     </v-col>
                                     <v-col cols="12" class="mb-3">

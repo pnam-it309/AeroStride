@@ -615,7 +615,7 @@ const emailRules = [
 const phoneRules = [
     (v) => !!v || 'Vui lòng nhập số điện thoại',
     (v) =>
-        /^(0[3|5|7|8|9])[0-9]{8}$/.test(v) ||
+        /^(0[35789])[0-9]{8}$/.test(v) ||
         'Số điện thoại không hợp lệ (phải bắt đầu bằng 03, 05, 07, 08, 09 và gồm 10 chữ số)'
 ];
 

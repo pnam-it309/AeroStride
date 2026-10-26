@@ -116,7 +116,7 @@ const submitQuickAdd = async () => {
         return;
     }
 
-    const phoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;
+    const phoneRegex = /^(0[35789])[0-9]{8}$/;
     if (!phoneRegex.test(phone)) {
         addNotification({
             title: 'SĐT không hợp lệ',

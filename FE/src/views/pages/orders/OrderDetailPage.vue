@@ -836,7 +836,7 @@ onMounted(async () => {
                     prepend-inner-icon="mdi-phone-outline"
                     maxlength="10"
                     counter="10"
-                    :rules="[(v) => !!v?.trim() || 'Vui lòng nhập SĐT', (v) => /^0[3|5|7|8|9][0-9]{8}$/.test(v?.trim() || '') || 'SĐT 10 số không hợp lệ']"
+                    :rules="[(v) => !!v?.trim() || 'Vui lòng nhập SĐT', (v) => /^0[35789][0-9]{8}$/.test(v?.trim() || '') || 'SĐT 10 số không hợp lệ']"
                 />
                 <v-textarea
                     v-model="editForm.diaChiNguoiNhan"

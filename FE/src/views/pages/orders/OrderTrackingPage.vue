@@ -137,7 +137,7 @@ const handleTrackOrder = async () => {
                             maxlength="10"
                             color="primary"
                             bg-color="white"
-                            :rules="[(v) => !v || /^0[3|5|7|8|9][0-9]{8}$/.test(v.trim()) || 'SĐT 10 số không hợp lệ (VD: 0912345678)']"
+                            :rules="[(v) => !v || /^0[35789][0-9]{8}$/.test(v.trim()) || 'SĐT 10 số không hợp lệ (VD: 0912345678)']"
                         />
                     </div>
 

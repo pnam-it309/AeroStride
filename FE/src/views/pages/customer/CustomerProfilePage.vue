@@ -61,7 +61,7 @@ const passwordData = ref({
     xacNhanMatKhau: ''
 });
 
-const phoneRegex = /^0[3|5|7|8|9][0-9]{8}$/;
+const phoneRegex = /^0[35789][0-9]{8}$/;
 
 const nameRules = [
     (v) => !isEditing.value || !!v?.trim() || 'Vui lòng nhập họ và tên',

@@ -233,7 +233,7 @@ const handleSaveAddress = async () => {
         return;
     }
 
-    const phoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;
+    const phoneRegex = /^(0[35789])[0-9]{8}$/;
     if (!phoneRegex.test(phone)) {
         addNotification({ title: 'SĐT không hợp lệ', subtitle: 'Số điện thoại phải có 10 chữ số và bắt đầu bằng 03, 05, 07, 08, hoặc 09.', color: 'warning' });
         return;

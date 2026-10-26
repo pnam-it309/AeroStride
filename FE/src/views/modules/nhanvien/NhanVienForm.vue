@@ -273,7 +273,7 @@ const handleSave = () => {
         addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập số điện thoại', color: 'error' });
         return;
     }
-    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+    const phoneRegex = /^(0[35789])[0-9]{8}$/;
     const phoneClean = String(phone).trim();
     if (!phoneRegex.test(phoneClean) || phoneClean.length !== 10) {
         addNotification({ title: 'Lỗi', subtitle: 'Số điện thoại không hợp lệ (gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09)', color: 'error' });
@@ -437,7 +437,7 @@ const emailRules = [
 
 const phoneRules = [
     (v) => !!v || 'Vui lòng nhập số điện thoại',
-    (v) => /^(0[3|5|7|8|9])+([0-9]{8})$/.test(v) || 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 03, 05, 07, 08, 09'
+    (v) => /^(0[35789])[0-9]{8}$/.test(v) || 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 03, 05, 07, 08, 09'
 ];
 
 const roleRules = [

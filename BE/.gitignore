@@ -49,3 +49,4 @@ node_modules/
 .local-uploads/
 .codex-run/
 .env
+*.sarif*
