@@ -1,3 +1,10 @@
+# [1.46.0](https://github.com/pnam-it309/AeroStride/compare/v1.45.7...v1.46.0) (2026-11-02)
+
+
+### Features
+
+* **infra:** integrate Prometheus, Grafana, cAdvisor monitoring and Sonar analysis ([5d12eb5](https://github.com/pnam-it309/AeroStride/commit/5d12eb53cbc185153be6e5ce3376f34ad4c5deb3))
+
 ## [1.45.7](https://github.com/pnam-it309/AeroStride/compare/v1.45.6...v1.45.7) (2026-10-26)
 
 
