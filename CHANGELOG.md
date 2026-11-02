@@ -1,3 +1,10 @@
+## [1.46.5](https://github.com/pnam-it309/AeroStride/compare/v1.46.4...v1.46.5) (2026-11-02)
+
+
+### Bug Fixes
+
+* **mcp:** harden CORS origin filtering and set request body limit ([f71c911](https://github.com/pnam-it309/AeroStride/commit/f71c91143241f9b612e5f8459481cfc87bab03a8))
+
 ## [1.46.4](https://github.com/pnam-it309/AeroStride/compare/v1.46.3...v1.46.4) (2026-11-02)
 
 
