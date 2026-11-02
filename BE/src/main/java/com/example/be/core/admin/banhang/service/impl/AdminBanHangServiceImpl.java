@@ -735,6 +735,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             if (discount.compareTo(maxDiscount) > 0) {
                 maxDiscount = discount;
                 bestVoucher = voucher;
+            }
         }
         return bestVoucher;
     }
