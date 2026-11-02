@@ -22,7 +22,7 @@ RUN apk add --no-cache git
 COPY mobile/package*.json ./
 
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+    npm ci --ignore-scripts
 
 # Copy source code
 COPY mobile/ .

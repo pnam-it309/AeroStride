@@ -338,21 +338,21 @@ ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- Thêm Khách Hàng Mới
 INSERT INTO khach_hang (id, id_dia_chi, ma_nguoi_dung, ten_nguoi_dung, email, ten_tai_khoan, mat_khau, gioi_tinh, sdt, ngay_sinh, hinh_anh, ghi_chu, trang_thai, ngay_tao) VALUES
-('kh11', 'dc11', 'KH011', 'Phạm Thị D', 'khach11@gmail.com', 'khach11', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0912777888', '1995-03-25', 'kh11.jpg', NULL, 0, 1711814900000),
-('kh12', 'dc12', 'KH012', 'Hoàng Văn E', 'khach12@gmail.com', 'khach12', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0912999000', '1993-07-30', 'kh12.jpg', NULL, 0, 1711814900000),
-('kh13', 'dc13', 'KH013', 'Ngô Thị F', 'khach13@gmail.com', 'khach13', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0913123456', '1991-11-05', 'kh13.jpg', NULL, 0, 1711814900000),
-('kh14', 'dc14', 'KH014', 'Đỗ Văn G', 'khach14@gmail.com', 'khach14', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0913234567', '1987-01-12', 'kh14.jpg', NULL, 0, 1711814900000),
-('kh15', 'dc15', 'KH015', 'Bùi Thị H', 'khach15@gmail.com', 'khach15', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0913345678', '1996-09-18', 'kh15.jpg', NULL, 0, 1711814900000),
-('kh16', 'dc16', 'KH016', 'Trần Văn X', 'khach16@gmail.com', 'khach16', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0916111222', '1990-01-01', 'kh16.jpg', NULL, 0, 1711814900000),
-('kh17', 'dc17', 'KH017', 'Lê Thị Y', 'khach17@gmail.com', 'khach17', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0916222333', '1991-02-02', 'kh17.jpg', NULL, 0, 1711814900000),
-('kh18', 'dc18', 'KH018', 'Nguyễn Văn Z', 'khach18@gmail.com', 'khach18', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0916333444', '1992-03-03', 'kh18.jpg', NULL, 0, 1711814900000),
-('kh19', 'dc19', 'KH019', 'Phạm Thị M', 'khach19@gmail.com', 'khach19', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0916444555', '1993-04-04', 'kh19.jpg', NULL, 0, 1711814900000),
-('kh20', 'dc20', 'KH020', 'Đặng Văn N', 'khach20@gmail.com', 'khach20', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0916555666', '1994-05-05', 'kh20.jpg', NULL, 0, 1711814900000),
-('kh21', 'dc21', 'KH021', 'Hoàng Văn P', 'khach21@gmail.com', 'khach21', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0916666777', '1995-06-06', 'kh21.jpg', NULL, 0, 1711814900000),
-('kh22', 'dc22', 'KH022', 'Vũ Thị Q', 'khach22@gmail.com', 'khach22', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0916777888', '1996-07-07', 'kh22.jpg', NULL, 0, 1711814900000),
-('kh23', 'dc23', 'KH023', 'Lý Văn R', 'khach23@gmail.com', 'khach23', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0916888999', '1997-08-08', 'kh23.jpg', NULL, 0, 1711814900000),
-('kh24', 'dc24', 'KH024', 'Chu Thị S', 'khach24@gmail.com', 'khach24', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0916999000', '1998-09-09', 'kh24.jpg', NULL, 0, 1711814900000),
-('kh25', 'dc25', 'KH025', 'Tạ Văn T', 'khach25@gmail.com', 'khach25', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0916000111', '1999-10-10', 'kh25.jpg', NULL, 0, 1711814900000)
+('kh11', 'dc11', 'KH011', 'Phạm Thị D', 'khach11@gmail.com', 'khach11', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 0, '0912777888', '1995-03-25', 'kh11.jpg', NULL, 0, 1711814900000),
+('kh12', 'dc12', 'KH012', 'Hoàng Văn E', 'khach12@gmail.com', 'khach12', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 1, '0912999000', '1993-07-30', 'kh12.jpg', NULL, 0, 1711814900000),
+('kh13', 'dc13', 'KH013', 'Ngô Thị F', 'khach13@gmail.com', 'khach13', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 0, '0913123456', '1991-11-05', 'kh13.jpg', NULL, 0, 1711814900000),
+('kh14', 'dc14', 'KH014', 'Đỗ Văn G', 'khach14@gmail.com', 'khach14', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 1, '0913234567', '1987-01-12', 'kh14.jpg', NULL, 0, 1711814900000),
+('kh15', 'dc15', 'KH015', 'Bùi Thị H', 'khach15@gmail.com', 'khach15', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 0, '0913345678', '1996-09-18', 'kh15.jpg', NULL, 0, 1711814900000),
+('kh16', 'dc16', 'KH016', 'Trần Văn X', 'khach16@gmail.com', 'khach16', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 1, '0916111222', '1990-01-01', 'kh16.jpg', NULL, 0, 1711814900000),
+('kh17', 'dc17', 'KH017', 'Lê Thị Y', 'khach17@gmail.com', 'khach17', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 0, '0916222333', '1991-02-02', 'kh17.jpg', NULL, 0, 1711814900000),
+('kh18', 'dc18', 'KH018', 'Nguyễn Văn Z', 'khach18@gmail.com', 'khach18', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 1, '0916333444', '1992-03-03', 'kh18.jpg', NULL, 0, 1711814900000),
+('kh19', 'dc19', 'KH019', 'Phạm Thị M', 'khach19@gmail.com', 'khach19', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 0, '0916444555', '1993-04-04', 'kh19.jpg', NULL, 0, 1711814900000),
+('kh20', 'dc20', 'KH020', 'Đặng Văn N', 'khach20@gmail.com', 'khach20', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 1, '0916555666', '1994-05-05', 'kh20.jpg', NULL, 0, 1711814900000),
+('kh21', 'dc21', 'KH021', 'Hoàng Văn P', 'khach21@gmail.com', 'khach21', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 1, '0916666777', '1995-06-06', 'kh21.jpg', NULL, 0, 1711814900000),
+('kh22', 'dc22', 'KH022', 'Vũ Thị Q', 'khach22@gmail.com', 'khach22', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 0, '0916777888', '1996-07-07', 'kh22.jpg', NULL, 0, 1711814900000),
+('kh23', 'dc23', 'KH023', 'Lý Văn R', 'khach23@gmail.com', 'khach23', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 1, '0916888999', '1997-08-08', 'kh23.jpg', NULL, 0, 1711814900000),
+('kh24', 'dc24', 'KH024', 'Chu Thị S', 'khach24@gmail.com', 'khach24', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 0, '0916999000', '1998-09-09', 'kh24.jpg', NULL, 0, 1711814900000),
+('kh25', 'dc25', 'KH025', 'Tạ Văn T', 'khach25@gmail.com', 'khach25', CONCAT('{bcrypt}', '$2a$10$', 'oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq'), 1, '0916000111', '1999-10-10', 'kh25.jpg', NULL, 0, 1711814900000)
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- Thêm Hóa Đơn Trạng Thái Đã Hủy (Trạng thái = 4)

@@ -1,5 +1,11 @@
-import random
+import secrets
 from datetime import datetime, timedelta
+
+def secure_randint(a, b):
+    return a + secrets.randbelow(b - a + 1)
+
+def secure_choice(seq):
+    return secrets.choice(seq)
 
 # Settings
 num_invoices = 200
@@ -33,30 +39,30 @@ counter = start_id
 i = 35 # Start from 35 days ago to be safe
 while len(results) < num_invoices:
     day = current_date - timedelta(days=i)
-    count = random.randint(invoices_per_day_min, invoices_per_day_max)
+    count = secure_randint(invoices_per_day_min, invoices_per_day_max)
     
     for _ in range(count):
         if len(results) >= num_invoices:
             break
             
         # Random time within the day
-        hour = random.randint(8, 21)
-        minute = random.randint(0, 59)
+        hour = secure_randint(8, 21)
+        minute = secure_randint(0, 59)
         invoice_time = day.replace(hour=hour, minute=minute)
         ts = int(invoice_time.timestamp() * 1000)
         
         id_val = f'hd{counter}'
         ma_val = f'HD{counter:03}'
-        kh = random.choice(customers)
-        nv = random.choice(employees)
-        inv_type = random.choice(types)
-        status = random.choice(statuses)
+        kh = secure_choice(customers)
+        nv = secure_choice(employees)
+        inv_type = secure_choice(types)
+        status = secure_choice(statuses)
         phi = 30000.0 if inv_type == 'ONLINE' else 0.0
-        tong = random.randint(5, 50) * 100000.0
+        tong = secure_randint(5, 50) * 100000.0
         sau_giam = tong + phi
-        tra = sau_giam if status == 3 else random.choice([0, sau_giam])
-        addr = random.choice(addresses) if inv_type == 'ONLINE' else 'Mua tại quầy'
-        sdt = f'09{random.randint(10000000, 99999999)}'
+        tra = sau_giam if status == 3 else secure_choice([0, sau_giam])
+        addr = secure_choice(addresses) if inv_type == 'ONLINE' else 'Mua tại quầy'
+        sdt = f'09{secure_randint(10000000, 99999999)}'
         du_kien = ts + (3 * 24 * 3600 * 1000) if inv_type == 'ONLINE' else 'NULL'
         note = 'NULL'
         
@@ -74,7 +80,7 @@ while len(results) < num_invoices:
 # Generate Details (1-3 products per invoice)
 detail_results = []
 detail_counter = 100
-variant_pool = [f'ct_sp{random.randint(1,25)}_{random.randint(1,10)}' for _ in range(100)] # Realistic variant IDs
+variant_pool = [f'ct_sp{secure_randint(1,25)}_{secure_randint(1,10)}' for _ in range(100)] # Realistic variant IDs
 
 for res in results:
     import re
@@ -85,11 +91,11 @@ for res in results:
     inv_id = f'hd{match.group(1)}'
     ts = match.group(2)
     
-    num_items = random.randint(1, 3)
+    num_items = secure_randint(1, 3)
     for _ in range(num_items):
-        v_id = random.choice(variant_pool)
-        qty = random.randint(1, 2)
-        price = random.randint(10, 50) * 100000.0
+        v_id = secure_choice(variant_pool)
+        qty = secure_randint(1, 2)
+        price = secure_randint(10, 50) * 100000.0
         
         detail_line = "('hdct{dc}', '{inv}', '{var}', 'HDCT{dc}', {qty}, {price}, 0, {ts})".format(
             dc=detail_counter, inv=inv_id, var=v_id, qty=qty, price=price, ts=ts
