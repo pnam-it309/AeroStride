@@ -10,15 +10,17 @@ dotenv.config();
 
 const app = express();
 app.disable('x-powered-by');
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-    : ['http://localhost:5173', 'http://localhost:3000', 'https://aerostride.me'];
+const allowedOrigins: string[] = (
+    process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+        : ['http://localhost:5173', 'http://localhost:3000', 'https://aerostride.me']
+).filter(origin => origin && origin !== '*');
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
             callback(new Error('CORS policy: origin not allowed'));
@@ -26,7 +28,8 @@ app.use(cors({
     },
     credentials: true
 }));
-app.use(express.json());
+
+app.use(express.json({ limit: '1mb' }));
 
 function createMcpServer() {
     console.log("Initializing AeroStride MCP Server...");
@@ -81,6 +84,9 @@ app.post(["/message", "/sse/message"], async (req, res) => {
             await sseTransport.handlePostMessage(req, res, req.body);
         } catch (error) {
             console.error("Error handling MCP message:", error);
+            if (!res.headersSent) {
+                res.status(500).json({ error: "Failed to process MCP message" });
+            }
         }
     } else {
         res.status(400).send("SSE connection not established");
@@ -88,5 +94,5 @@ app.post(["/message", "/sse/message"], async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`AeroStride MCP Server is running on http://localhost:${PORT}`);
+    console.log(`AeroStride MCP Server is running on port ${PORT}`);
 });
