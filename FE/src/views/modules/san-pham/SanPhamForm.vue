@@ -1,4 +1,3 @@
-
 <script setup>
 /**
  * Module: Form san pham
@@ -14,7 +13,15 @@ import { dichVuBienThe } from '@/services/product/dichVuBienThe';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import { useNotifications } from '@/services/notificationService';
 import { getBackendErrorMessage } from '@/utils/errorUtils';
-import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs, TableEmptyState, FormattedNumberField } from '@/components/common';
+import {
+    AdminFilter,
+    AdminTable,
+    AdminPagination,
+    AdminConfirm,
+    AdminBreadcrumbs,
+    TableEmptyState,
+    FormattedNumberField
+} from '@/components/common';
 import { useUIStore } from '@/stores/ui';
 import SafeProductImage from './components/SafeProductImage.vue';
 import VariantFormModal from '@/views/modules/bien-the-san-pham/components/VariantFormModal.vue';
@@ -459,9 +466,7 @@ const bulkEditModal = reactive({
 const openBulkEdit = () => {
     bulkEditModal.scope = activeColorTab.value !== 'ALL' ? 'BY_COLOR' : 'ALL';
     bulkEditModal.targetColorIds =
-        activeColorTab.value !== 'ALL'
-            ? [String(activeColorTab.value)]
-            : Object.keys(variantsByColor.value).map(String);
+        activeColorTab.value !== 'ALL' ? [String(activeColorTab.value)] : Object.keys(variantsByColor.value).map(String);
     bulkEditModal.targetVariantKeys = variantItems.value.map((v) => v.clientKey || v.idMauSac + '-' + v.idKichThuoc);
     bulkEditModal.form = { soLuong: '', giaBan: '' };
     bulkEditModal.show = true;
@@ -515,9 +520,7 @@ const bulkEditTargetCount = computed(() => {
         return variantItems.value.length;
     }
     if (bulkEditModal.scope === 'BY_COLOR') {
-        return variantItems.value.filter((item) =>
-            bulkEditModal.targetColorIds.map(String).includes(String(item.idMauSac))
-        ).length;
+        return variantItems.value.filter((item) => bulkEditModal.targetColorIds.map(String).includes(String(item.idMauSac))).length;
     }
     if (bulkEditModal.scope === 'BY_VARIANT') {
         return bulkEditModal.targetVariantKeys.length;
@@ -1345,9 +1348,7 @@ const executeGenerateVariants = () => {
     selectedColors.value.forEach((colorId) => {
         selectedSizes.value.forEach((sizeId) => {
             const combinationKey = getVariantCombinationKey(colorId, sizeId);
-            nextVariants.push(
-                createGeneratedVariant(colorId, sizeId, existingVariantMap.get(combinationKey))
-            );
+            nextVariants.push(createGeneratedVariant(colorId, sizeId, existingVariantMap.get(combinationKey)));
         });
     });
 
@@ -2147,7 +2148,6 @@ const handleSave = async () => {
             </div>
         </div>
 
-
         <v-row class="form-grid">
             <v-col cols="12" :lg="isEditMode ? 12 : 8" class="d-flex flex-column">
                 <v-card class="premium-card h-100 d-flex flex-column">
@@ -2217,7 +2217,11 @@ const handleSave = async () => {
                                                         {{ item.raw.isNew ? `+ Thêm nhanh "${item.raw.ten}"` : item.raw.ten }}
                                                     </span>
                                                     <v-chip
-                                                        v-if="item.raw.isNew || item.raw.isQuickAdded || quickAddedAttributeIds.has(item.raw.id)"
+                                                        v-if="
+                                                            item.raw.isNew ||
+                                                            item.raw.isQuickAdded ||
+                                                            quickAddedAttributeIds.has(item.raw.id)
+                                                        "
                                                         size="x-small"
                                                         color="primary"
                                                         variant="tonal"
@@ -2262,7 +2266,11 @@ const handleSave = async () => {
                                                         {{ item.raw.isNew ? `+ Thêm nhanh "${item.raw.ten}"` : item.raw.ten }}
                                                     </span>
                                                     <v-chip
-                                                        v-if="item.raw.isNew || item.raw.isQuickAdded || quickAddedAttributeIds.has(item.raw.id)"
+                                                        v-if="
+                                                            item.raw.isNew ||
+                                                            item.raw.isQuickAdded ||
+                                                            quickAddedAttributeIds.has(item.raw.id)
+                                                        "
                                                         size="x-small"
                                                         color="primary"
                                                         variant="tonal"
@@ -2305,7 +2313,11 @@ const handleSave = async () => {
                                                         {{ item.raw.isNew ? `+ Thêm nhanh "${item.raw.ten}"` : item.raw.ten }}
                                                     </span>
                                                     <v-chip
-                                                        v-if="item.raw.isNew || item.raw.isQuickAdded || quickAddedAttributeIds.has(item.raw.id)"
+                                                        v-if="
+                                                            item.raw.isNew ||
+                                                            item.raw.isQuickAdded ||
+                                                            quickAddedAttributeIds.has(item.raw.id)
+                                                        "
                                                         size="x-small"
                                                         color="primary"
                                                         variant="tonal"
@@ -2365,7 +2377,11 @@ const handleSave = async () => {
                                                         {{ item.raw.isNew ? `+ Thêm nhanh "${item.raw.ten}"` : item.raw.ten }}
                                                     </span>
                                                     <v-chip
-                                                        v-if="item.raw.isNew || item.raw.isQuickAdded || quickAddedAttributeIds.has(item.raw.id)"
+                                                        v-if="
+                                                            item.raw.isNew ||
+                                                            item.raw.isQuickAdded ||
+                                                            quickAddedAttributeIds.has(item.raw.id)
+                                                        "
                                                         size="x-small"
                                                         color="primary"
                                                         variant="tonal"
@@ -2410,7 +2426,11 @@ const handleSave = async () => {
                                                         {{ item.raw.isNew ? `+ Thêm nhanh "${item.raw.ten}"` : item.raw.ten }}
                                                     </span>
                                                     <v-chip
-                                                        v-if="item.raw.isNew || item.raw.isQuickAdded || quickAddedAttributeIds.has(item.raw.id)"
+                                                        v-if="
+                                                            item.raw.isNew ||
+                                                            item.raw.isQuickAdded ||
+                                                            quickAddedAttributeIds.has(item.raw.id)
+                                                        "
                                                         size="x-small"
                                                         color="primary"
                                                         variant="tonal"
@@ -2453,7 +2473,11 @@ const handleSave = async () => {
                                                         {{ item.raw.isNew ? `+ Thêm nhanh "${item.raw.ten}"` : item.raw.ten }}
                                                     </span>
                                                     <v-chip
-                                                        v-if="item.raw.isNew || item.raw.isQuickAdded || quickAddedAttributeIds.has(item.raw.id)"
+                                                        v-if="
+                                                            item.raw.isNew ||
+                                                            item.raw.isQuickAdded ||
+                                                            quickAddedAttributeIds.has(item.raw.id)
+                                                        "
                                                         size="x-small"
                                                         color="primary"
                                                         variant="tonal"
@@ -2949,31 +2973,36 @@ const handleSave = async () => {
                                             <v-table class="variant-inner-table h-100" fixed-header>
                                                 <thead class="bg-white">
                                                     <tr>
-                                                        <th scope="col"
+                                                        <th
+                                                            scope="col"
                                                             class="text-left font-weight-bold text-slate-800 text-caption"
                                                             style="border-bottom: 1px solid #cbd5e1 !important"
                                                         >
                                                             Màu sắc
                                                         </th>
-                                                        <th scope="col"
+                                                        <th
+                                                            scope="col"
                                                             class="text-left font-weight-bold text-slate-800 text-caption"
                                                             style="border-bottom: 1px solid #cbd5e1 !important"
                                                         >
                                                             Kích cỡ
                                                         </th>
-                                                        <th scope="col"
+                                                        <th
+                                                            scope="col"
                                                             class="text-left font-weight-bold text-slate-800 text-caption"
                                                             style="width: 140px; border-bottom: 1px solid #cbd5e1 !important"
                                                         >
                                                             Giá bán (đ)
                                                         </th>
-                                                        <th scope="col"
+                                                        <th
+                                                            scope="col"
                                                             class="text-left font-weight-bold text-slate-800 text-caption"
                                                             style="width: 110px; border-bottom: 1px solid #cbd5e1 !important"
                                                         >
                                                             Số lượng sản phẩm
                                                         </th>
-                                                        <th scope="col"
+                                                        <th
+                                                            scope="col"
                                                             class="text-center font-weight-bold text-slate-800 text-caption"
                                                             style="width: 60px; border-bottom: 1px solid #cbd5e1 !important"
                                                         >
@@ -3277,16 +3306,47 @@ const handleSave = async () => {
                                         <span class="text-primary">{{ formatNumber(variant.soLuong) }}</span>
                                     </td>
                                     <td class="data-cell text-center">
-                                        <div v-if="variant.phanTramGiam && Number(variant.phanTramGiam) > 0" class="d-flex flex-column align-center">
-                                            <span class="text-caption text-slate-400 text-decoration-line-through" style="font-size: 11px; line-height: 1.1">
-                                                {{ formatCurrency(variant.giaGoc || variant.giaBan / (1 - Number(variant.phanTramGiam) / 100)) }}
+                                        <div
+                                            v-if="variant.phanTramGiam && Number(variant.phanTramGiam) > 0"
+                                            class="d-flex flex-column align-center"
+                                        >
+                                            <span
+                                                class="text-caption text-slate-400 text-decoration-line-through"
+                                                style="font-size: 11px; line-height: 1.1"
+                                            >
+                                                {{
+                                                    formatCurrency(
+                                                        variant.giaGoc || variant.giaBan / (1 - Number(variant.phanTramGiam) / 100)
+                                                    )
+                                                }}
                                             </span>
                                             <div class="d-flex align-center justify-center ga-1 mt-0.5">
-                                                <span class="text-primary font-weight-bold text-truncate" style="font-size: 13px; color: #1e40af !important;">{{ formatCurrency(variant.giaBan) }}</span>
-                                                <v-chip size="x-small" color="error" variant="flat" class="px-1 font-weight-bold" style="height: 16px; font-size: 10px; background-color: #ef4444 !important; color: #ffffff !important">-{{ Math.round(variant.phanTramGiam) }}%</v-chip>
+                                                <span
+                                                    class="text-primary font-weight-bold text-truncate"
+                                                    style="font-size: 13px; color: #1e40af !important"
+                                                    >{{ formatCurrency(variant.giaBan) }}</span
+                                                >
+                                                <v-chip
+                                                    size="x-small"
+                                                    color="error"
+                                                    variant="flat"
+                                                    class="px-1 font-weight-bold"
+                                                    style="
+                                                        height: 16px;
+                                                        font-size: 10px;
+                                                        background-color: #ef4444 !important;
+                                                        color: #ffffff !important;
+                                                    "
+                                                    >-{{ Math.round(variant.phanTramGiam) }}%</v-chip
+                                                >
                                             </div>
                                         </div>
-                                        <div v-else class="text-primary font-weight-bold text-truncate" style="color: #1e40af !important;" :title="formatCurrency(variant.giaBan)">
+                                        <div
+                                            v-else
+                                            class="text-primary font-weight-bold text-truncate"
+                                            style="color: #1e40af !important"
+                                            :title="formatCurrency(variant.giaBan)"
+                                        >
                                             {{ formatCurrency(variant.giaBan) }}
                                         </div>
                                     </td>
@@ -3376,7 +3436,9 @@ const handleSave = async () => {
                         <v-icon icon="mdi-flash-circle" color="white" class="mr-2" size="24" />
                         <div>
                             <div class="font-weight-bold text-subtitle-1">Thiết Lập Nhanh Giá Bán & Số Lượng</div>
-                            <div class="text-caption opacity-90">Áp dụng giá và số lượng đồng loạt cho toàn bộ hoặc từng biến thể tùy chọn</div>
+                            <div class="text-caption opacity-90">
+                                Áp dụng giá và số lượng đồng loạt cho toàn bộ hoặc từng biến thể tùy chọn
+                            </div>
                         </div>
                     </div>
                     <v-btn icon size="small" variant="text" color="white" @click="bulkEditModal.show = false">
@@ -3387,9 +3449,7 @@ const handleSave = async () => {
                 <v-card-text class="pa-6">
                     <!-- KHỐI 1: NHẬP GIÁ TRỊ CẦN THIẾT LẬP -->
                     <div class="pa-4 rounded-xl bg-slate-50 border mb-5">
-                        <div class="text-caption font-weight-bold text-slate-700 mb-3 text-uppercase">
-                            1. Nhập giá trị muốn áp dụng
-                        </div>
+                        <div class="text-caption font-weight-bold text-slate-700 mb-3 text-uppercase">1. Nhập giá trị muốn áp dụng</div>
                         <v-row dense>
                             <v-col cols="12" sm="6">
                                 <div class="field-label mb-1">Số lượng (SP)</div>
@@ -3424,9 +3484,7 @@ const handleSave = async () => {
 
                     <!-- KHỐI 2: CHỌN PHẠM VI ÁP DỤNG -->
                     <div class="mb-4">
-                        <div class="text-caption font-weight-bold text-slate-700 mb-2 text-uppercase">
-                            2. Chọn phạm vi áp dụng
-                        </div>
+                        <div class="text-caption font-weight-bold text-slate-700 mb-2 text-uppercase">2. Chọn phạm vi áp dụng</div>
                         <v-btn-toggle
                             v-model="bulkEditModal.scope"
                             color="primary"
@@ -3440,7 +3498,11 @@ const handleSave = async () => {
                             <v-btn value="BY_COLOR" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-palette-outline">
                                 Theo màu sắc ({{ Object.keys(variantsByColor).length }})
                             </v-btn>
-                            <v-btn value="BY_VARIANT" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-checkbox-multiple-marked-outline">
+                            <v-btn
+                                value="BY_VARIANT"
+                                class="flex-grow-1 text-none font-weight-bold"
+                                prepend-icon="mdi-checkbox-multiple-marked-outline"
+                            >
                                 Tùy chọn biến thể
                             </v-btn>
                         </v-btn-toggle>
@@ -3462,22 +3524,29 @@ const handleSave = async () => {
                         <div class="d-flex align-center justify-space-between mb-3">
                             <span class="text-caption font-weight-bold text-slate-600">Chọn các màu muốn áp dụng:</span>
                             <div class="ga-2 d-flex">
-                                <v-btn size="x-small" variant="tonal" color="primary" class="text-none rounded-pill" @click="selectAllBulkColors(true)">
+                                <v-btn
+                                    size="x-small"
+                                    variant="tonal"
+                                    color="primary"
+                                    class="text-none rounded-pill"
+                                    @click="selectAllBulkColors(true)"
+                                >
                                     Chọn tất cả
                                 </v-btn>
-                                <v-btn size="x-small" variant="text" color="slate-600" class="text-none rounded-pill" @click="selectAllBulkColors(false)">
+                                <v-btn
+                                    size="x-small"
+                                    variant="text"
+                                    color="slate-600"
+                                    class="text-none rounded-pill"
+                                    @click="selectAllBulkColors(false)"
+                                >
                                     Bỏ chọn
                                 </v-btn>
                             </div>
                         </div>
 
                         <v-row dense>
-                            <v-col
-                                v-for="(items, colorId) in variantsByColor"
-                                :key="colorId"
-                                cols="12"
-                                sm="6"
-                            >
+                            <v-col v-for="(items, colorId) in variantsByColor" :key="colorId" cols="12" sm="6">
                                 <div
                                     :class="[
                                         'pa-3 rounded-lg border cursor-pointer d-flex align-center justify-space-between transition-all',
@@ -3522,10 +3591,22 @@ const handleSave = async () => {
                         <div class="d-flex align-center justify-space-between mb-2">
                             <span class="text-caption font-weight-bold text-slate-600">Tích chọn từng biến thể cụ thể:</span>
                             <div class="ga-2 d-flex">
-                                <v-btn size="x-small" variant="tonal" color="primary" class="text-none rounded-pill" @click="selectAllBulkVariants(true)">
+                                <v-btn
+                                    size="x-small"
+                                    variant="tonal"
+                                    color="primary"
+                                    class="text-none rounded-pill"
+                                    @click="selectAllBulkVariants(true)"
+                                >
                                     Chọn tất cả ({{ variantItems.length }})
                                 </v-btn>
-                                <v-btn size="x-small" variant="text" color="slate-600" class="text-none rounded-pill" @click="selectAllBulkVariants(false)">
+                                <v-btn
+                                    size="x-small"
+                                    variant="text"
+                                    color="slate-600"
+                                    class="text-none rounded-pill"
+                                    @click="selectAllBulkVariants(false)"
+                                >
                                     Bỏ chọn
                                 </v-btn>
                             </div>
@@ -3545,13 +3626,21 @@ const handleSave = async () => {
                                     <tr
                                         v-for="variant in variantItems"
                                         :key="variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc"
-                                        :class="{ 'bg-primary-lighten-5': isVariantSelectedForBulk(variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc) }"
+                                        :class="{
+                                            'bg-primary-lighten-5': isVariantSelectedForBulk(
+                                                variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc
+                                            )
+                                        }"
                                         class="cursor-pointer"
                                         @click="toggleVariantForBulk(variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc)"
                                     >
                                         <td class="text-center pa-1">
                                             <v-checkbox-btn
-                                                :model-value="isVariantSelectedForBulk(variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc)"
+                                                :model-value="
+                                                    isVariantSelectedForBulk(
+                                                        variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc
+                                                    )
+                                                "
                                                 density="compact"
                                                 color="primary"
                                                 hide-details

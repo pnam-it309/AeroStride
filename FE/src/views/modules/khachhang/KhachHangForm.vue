@@ -601,10 +601,7 @@ const nameRules = [
     (v) => (v && v.trim().length > 0) || 'Vui lòng nhập Họ và tên',
     (v) => (v && v.trim().length >= 2) || 'Họ và tên phải có ít nhất 2 ký tự',
     (v) => (v && v.trim().length <= 255) || 'Họ và tên không được vượt quá 255 ký tự',
-    (v) =>
-        !v ||
-        /^[\p{L}0-9\s]+$/u.test(v.trim()) ||
-        'Họ và tên không được chứa ký tự đặc biệt'
+    (v) => !v || /^[\p{L}0-9\s]+$/u.test(v.trim()) || 'Họ và tên không được chứa ký tự đặc biệt'
 ];
 
 const emailRules = [
@@ -614,9 +611,7 @@ const emailRules = [
 
 const phoneRules = [
     (v) => !!v || 'Vui lòng nhập số điện thoại',
-    (v) =>
-        /^(0[35789])[0-9]{8}$/.test(v) ||
-        'Số điện thoại không hợp lệ (phải bắt đầu bằng 03, 05, 07, 08, 09 và gồm 10 chữ số)'
+    (v) => /^(0[35789])[0-9]{8}$/.test(v) || 'Số điện thoại không hợp lệ (phải bắt đầu bằng 03, 05, 07, 08, 09 và gồm 10 chữ số)'
 ];
 
 const noteRules = [(v) => !v || v.length <= 500 || 'Ghi chú không được vượt quá 500 ký tự'];
