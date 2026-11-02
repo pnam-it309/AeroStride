@@ -27,8 +27,12 @@ interface ChatEnvelope<T> {
   data: T;
 }
 
-const generateSessionId = (): string =>
-  `mobile-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+const generateSessionId = (): string => {
+  const randomPart = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID().replace(/-/g, '').slice(0, 8)
+    : Math.random().toString(36).slice(2, 10);
+  return `mobile-${Date.now()}-${randomPart}`;
+};
 
 export const chatService = {
   /** Get a stable session id for this device or user account. */

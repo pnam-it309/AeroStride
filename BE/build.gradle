@@ -151,7 +151,7 @@ sonar {
         property 'sonar.tests', 'src/test/java'
         property 'sonar.java.binaries', 'build/classes/java/main'
         property 'sonar.coverage.jacoco.xmlReportPaths', 'build/reports/jacoco/test/jacocoTestReport.xml'
-        property 'sonar.exclusions', '**/entity/Q*.java,**/infrastructure/constants/**'
+        property 'sonar.exclusions', '**/entity/Q*.java,**/infrastructure/constants/**,**/db/migration/**,**/db/seeds/**'
     }
 }
 

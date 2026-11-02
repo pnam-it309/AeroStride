@@ -625,7 +625,7 @@ const sendMessage = async () => {
     const currentUsername = authStore.user?.username || 'STAFF';
 
     // Đẩy tin nhắn optimistic lên UI ngay lập tức để hiển thị tức thì cả ảnh và chữ
-    const tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    const tempId = 'temp_' + Date.now() + '_' + (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID().replace(/-/g, '').slice(0, 5) : Math.random().toString(36).substr(2, 5));
     const optimisticMessage = {
         id: tempId,
         conversationId: activeChat.value.id,

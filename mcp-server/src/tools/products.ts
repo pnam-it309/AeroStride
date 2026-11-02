@@ -19,7 +19,8 @@ export const searchProductsTool = {
             }
             const apiUrl = `${baseUrl}/customer/san-pham/hien-thi?keyword=${encodeURIComponent(query)}&size=10`;
             
-            console.log(`[ProductsTool] Searching API: ${apiUrl}`);
+            const safeQuery = query ? query.replace(/[\r\n]/g, "").slice(0, 100) : "";
+            console.log(`[ProductsTool] Searching API with query: ${safeQuery}`);
             
             const response = await fetch(apiUrl);
             if (!response.ok) {

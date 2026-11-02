@@ -66,8 +66,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Services
+        env:
+          DOCKER_ENV: ${{ secrets.DOCKER_ENV }}
         run: |
-          echo "${{ secrets.DOCKER_ENV }}" > docker/.env
+          echo "$DOCKER_ENV" > docker/.env
           BACKEND_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest \
           FRONTEND_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest \
           docker compose -f docker/docker-compose.yml --env-file docker/.env pull

@@ -10,9 +10,15 @@
 const fs = require('fs');
 const path = require('path');
 
-const buildJsonPath = process.argv[2];
-if (!buildJsonPath) {
+const rawArg = process.argv[2];
+if (!rawArg) {
   console.error('Usage: node scripts/update-release-info.js <path-to-eas-build-json>');
+  process.exit(1);
+}
+
+const buildJsonPath = path.resolve(process.cwd(), path.normalize(rawArg));
+if (!fs.existsSync(buildJsonPath) || !fs.statSync(buildJsonPath).isFile()) {
+  console.error(`Invalid build JSON path: ${rawArg}`);
   process.exit(1);
 }
 
@@ -65,5 +71,5 @@ readme = readme
 
 fs.writeFileSync(readmePath, readme);
 console.log(`Updated ${readmePath}`);
-console.log(`APK: ${apkUrl}`);
+console.log(`Build ID: ${buildId}`);
 console.log(`Version: ${version} (build ${buildNumber})`);

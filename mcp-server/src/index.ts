@@ -9,6 +9,7 @@ import { searchProductsTool } from './tools/products';
 dotenv.config();
 
 const app = express();
+app.disable('x-powered-by');
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -61,7 +62,7 @@ app.get(["/sse", "/sse/sse"], async (req, res) => {
 });
 
 app.post(["/message", "/sse/message"], async (req, res) => {
-    console.log("Received MCP message:", req.body);
+    console.log("Received MCP message event");
     if (sseTransport) {
         try {
             await sseTransport.handlePostMessage(req, res, req.body);

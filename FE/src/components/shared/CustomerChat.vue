@@ -69,6 +69,13 @@ const resetGuestInactivityTimer = () => {
     }, GUEST_TIMEOUT_SECONDS * 1000);
 };
 
+const getSecureRandomSuffix = (len = 9) => {
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+        return window.crypto.randomUUID().replace(/-/g, '').slice(0, len);
+    }
+    return Math.random().toString(36).substr(2, len);
+};
+
 const handleGuestSessionExpired = () => {
     clearGuestTimer();
     if (!authStore.isLoggedIn) {
@@ -78,7 +85,7 @@ const handleGuestSessionExpired = () => {
         // Reset session guest và dữ liệu lịch sử tạm thời
         localStorage.removeItem('chat_session_id');
         localStorage.removeItem('chat_last_activity');
-        const newGuestId = `guest_${Math.random().toString(36).substr(2, 9)}`;
+        const newGuestId = `guest_${getSecureRandomSuffix(9)}`;
         localStorage.setItem('chat_session_id', newGuestId);
         sessionId.value = newGuestId;
 
@@ -163,7 +170,7 @@ const getSessionId = () => {
 
     if (lastActivity && now - parseInt(lastActivity) > 30 * 60 * 1000) {
         localStorage.removeItem('chat_session_id');
-        const newId = `guest_${Math.random().toString(36).substr(2, 9)}`;
+        const newId = `guest_${getSecureRandomSuffix(9)}`;
         localStorage.setItem('chat_session_id', newId);
         localStorage.setItem('chat_last_activity', now.toString());
         return newId;
@@ -174,7 +181,7 @@ const getSessionId = () => {
         return savedSessionId;
     }
 
-    const newId = `guest_${Math.random().toString(36).substr(2, 9)}`;
+    const newId = `guest_${getSecureRandomSuffix(9)}`;
     localStorage.setItem('chat_session_id', newId);
     localStorage.setItem('chat_last_activity', now.toString());
     return newId;
@@ -568,7 +575,7 @@ const sendMessage = () => {
     clearImage();
 
     // Tạm thời hiển thị tin nhắn user để UI phản hồi tức thì
-    const tempId = 'temp_' + now + '_' + Math.random().toString(36).substr(2, 5);
+    const tempId = 'temp_' + now + '_' + getSecureRandomSuffix(5);
     chatHistory.value.push({
         id: tempId,
         sender: 'user',
