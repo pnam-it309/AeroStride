@@ -70,10 +70,15 @@ const resetGuestInactivityTimer = () => {
 };
 
 const getSecureRandomSuffix = (len = 9) => {
-    if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
-        return window.crypto.randomUUID().replace(/-/g, '').slice(0, len);
+    if (typeof window !== 'undefined' && window.crypto) {
+        if (typeof window.crypto.randomUUID === 'function') {
+            return window.crypto.randomUUID().replace(/-/g, '').slice(0, len);
+        }
+        const bytes = new Uint8Array(len);
+        window.crypto.getRandomValues(bytes);
+        return Array.from(bytes, b => (b % 36).toString(36)).join('');
     }
-    return Math.random().toString(36).substr(2, len);
+    return Date.now().toString(36).slice(-len);
 };
 
 const handleGuestSessionExpired = () => {

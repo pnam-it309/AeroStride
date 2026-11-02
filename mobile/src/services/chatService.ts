@@ -28,10 +28,11 @@ interface ChatEnvelope<T> {
 }
 
 const generateSessionId = (): string => {
-  const randomPart = typeof crypto !== 'undefined' && crypto.randomUUID
+  const timestamp = Date.now().toString(36);
+  const randomPart = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID().replace(/-/g, '').slice(0, 8)
-    : Math.random().toString(36).slice(2, 10);
-  return `mobile-${Date.now()}-${randomPart}`;
+    : (Date.now() ^ 0x5f3759df).toString(36).slice(-8);
+  return `mobile-${timestamp}-${randomPart}`;
 };
 
 export const chatService = {

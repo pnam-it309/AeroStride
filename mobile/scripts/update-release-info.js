@@ -16,9 +16,12 @@ if (!rawArg) {
   process.exit(1);
 }
 
-const buildJsonPath = path.resolve(process.cwd(), path.normalize(rawArg));
-if (!fs.existsSync(buildJsonPath) || !fs.statSync(buildJsonPath).isFile()) {
-  console.error(`Invalid build JSON path: ${rawArg}`);
+const baseDir = path.resolve(process.cwd());
+const sanitizedFileName = path.basename(rawArg);
+const buildJsonPath = path.resolve(baseDir, sanitizedFileName);
+
+if (!buildJsonPath.startsWith(baseDir) || !fs.existsSync(buildJsonPath) || !fs.statSync(buildJsonPath).isFile()) {
+  console.error('Invalid build JSON file');
   process.exit(1);
 }
 
@@ -70,6 +73,4 @@ readme = readme
   .replace(/Expo Build #[a-f0-9]+/g, `Expo Build #${buildId.split('-')[0]}`);
 
 fs.writeFileSync(readmePath, readme);
-console.log(`Updated ${readmePath}`);
-console.log(`Build ID: ${buildId}`);
-console.log(`Version: ${version} (build ${buildNumber})`);
+console.log('Successfully updated release info in README and app-version.json');

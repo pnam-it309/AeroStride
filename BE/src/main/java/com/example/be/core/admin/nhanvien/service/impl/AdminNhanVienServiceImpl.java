@@ -364,9 +364,11 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         }
     }
 
+    private static final java.security.SecureRandom SECURE_RANDOM = new java.security.SecureRandom();
+
     /** Small random numeric suffix to avoid username collisions. */
     private static String SECURE_RANDOM_SUFFIX() {
-        return String.valueOf((int) (Math.random() * 1000));
+        return String.valueOf(SECURE_RANDOM.nextInt(1000));
     }
 
     @Override
