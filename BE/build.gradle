@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.6'
     id 'jacoco'
+    id 'org.sonarqube' version '5.1.0.4882'
 }
 
 group = 'com.example'
@@ -60,6 +61,7 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
@@ -139,6 +141,20 @@ jacocoTestReport {
 // split between the Gradle daemons and this JVM, so the heap is set explicitly
 // via BOOT_RUN_JVM_ARGS from docker/.env. Empty outside Docker -> IDE/local runs
 // keep the JVM defaults.
+
+sonar {
+    properties {
+        property 'sonar.projectKey', 'AeroStride_BE'
+        property 'sonar.projectName', 'AeroStride Backend'
+        property 'sonar.sourceEncoding', 'UTF-8'
+        property 'sonar.sources', 'src/main/java'
+        property 'sonar.tests', 'src/test/java'
+        property 'sonar.java.binaries', 'build/classes/java/main'
+        property 'sonar.coverage.jacoco.xmlReportPaths', 'build/reports/jacoco/test/jacocoTestReport.xml'
+        property 'sonar.exclusions', '**/entity/Q*.java,**/infrastructure/constants/**'
+    }
+}
+
 tasks.named('bootRun') {
     def extraJvmArgs = System.getenv('BOOT_RUN_JVM_ARGS')
     if (extraJvmArgs) {

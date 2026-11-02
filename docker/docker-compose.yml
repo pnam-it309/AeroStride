@@ -235,6 +235,86 @@ services:
     profiles:
       - full
 
+  prometheus:
+    image: ${PROMETHEUS_IMAGE:-prom/prometheus:v2.54.1}
+    container_name: aerostride-prometheus
+    <<: *common
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "${PROMETHEUS_PORT_HOST:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      backend:
+        condition: service_started
+    profiles:
+      - monitoring
+      - full
+    deploy:
+      resources:
+        limits:
+          memory: ${PROMETHEUS_MEMORY_LIMIT:-256M}
+        reservations:
+          memory: ${PROMETHEUS_MEMORY_RESERVATION:-64M}
+
+  cadvisor:
+    image: ${CADVISOR_IMAGE:-gcr.io/cadvisor/cadvisor:v0.49.1}
+    container_name: aerostride-cadvisor
+    <<: *common
+    privileged: true
+    ports:
+      - "${CADVISOR_PORT_HOST:-8082}:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    profiles:
+      - monitoring
+      - full
+    deploy:
+      resources:
+        limits:
+          memory: ${CADVISOR_MEMORY_LIMIT:-128M}
+        reservations:
+          memory: ${CADVISOR_MEMORY_RESERVATION:-32M}
+
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana:11.1.0}
+    container_name: aerostride-grafana
+    <<: *common
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "${GRAFANA_PORT_HOST:-3001}:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      prometheus:
+        condition: service_started
+    profiles:
+      - monitoring
+      - full
+    deploy:
+      resources:
+        limits:
+          memory: ${GRAFANA_MEMORY_LIMIT:-256M}
+        reservations:
+          memory: ${GRAFANA_MEMORY_RESERVATION:-64M}
+
 networks:
   aerostride-net:
     driver: bridge
@@ -247,3 +327,5 @@ volumes:
   mobile-node-modules:
   mobile-metro-cache:
   mysql-data:
+  prometheus-data:
+  grafana-data:
