@@ -1,3 +1,10 @@
+## [1.46.1](https://github.com/pnam-it309/AeroStride/compare/v1.46.0...v1.46.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* **security:** resolve SonarCloud blockers, secret scans, random generators, and log disclosures ([2b172a3](https://github.com/pnam-it309/AeroStride/commit/2b172a34f7d860d77c6b8409b3b22994011672dd))
+
 # [1.46.0](https://github.com/pnam-it309/AeroStride/compare/v1.45.7...v1.46.0) (2026-11-02)
 
 
