@@ -334,7 +334,7 @@ const confirmSaveItem = () => {
         const parsedStr = normalizedSize.replace(',', '.');
         const sizeNumber = Number(parsedStr);
 
-        if (isNaN(sizeNumber)) {
+        if (Number.isNaN(sizeNumber)) {
             addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải là số (VD: 39 hoặc 39.5)', color: 'error' });
             return;
         }

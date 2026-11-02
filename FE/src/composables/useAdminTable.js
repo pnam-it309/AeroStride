@@ -141,7 +141,7 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
     let hasBeenMounted = false;
     onActivated(() => {
         if (hasBeenMounted) {
-            loadData();
+            void loadData();
         }
         hasBeenMounted = true;
     });
@@ -150,7 +150,7 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
         () => [pagination.value.page, pagination.value.size],
         () => {
             if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
-            loadData();
+            void loadData();
         }
     );
 
@@ -159,13 +159,13 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
         if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
 
         if (immediate) {
-            loadData();
+            void loadData();
             return;
         }
 
         // 250ms debounce – phản hồi nhanh nhưng không re-render quá nhiều
         searchDebounceTimer = setTimeout(() => {
-            loadData();
+            void loadData();
         }, 250);
     };
 
@@ -178,7 +178,7 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
             ...initialFilters
         };
         pagination.value.page = 1;
-        loadData(true);
+        void loadData(true);
     };
 
     return {

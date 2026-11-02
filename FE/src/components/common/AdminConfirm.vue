@@ -42,7 +42,7 @@ const handleCancel = () => {
 </script>
 
 <template>
-    <v-dialog v-model="props.show" max-width="480" persistent transition="confirm-dialog-transition">
+    <v-dialog :model-value="props.show" @update:model-value="val => emit('update:show', val)" max-width="480" persistent transition="confirm-dialog-transition">
         <v-card class="premium-confirm-card">
             <v-card-text class="pa-8 pb-4">
                 <div class="d-flex align-start">
@@ -63,7 +63,7 @@ const handleCancel = () => {
 
                 <div v-if="showInput" class="mt-6">
                     <div class="d-flex align-center justify-space-between mb-2">
-                        <label class="text-body-2 text-slate-700 font-weight-medium">{{ inputLabel }}</label>
+                        <label for="admin-confirm-textarea" class="text-body-2 text-slate-700 font-weight-medium">{{ inputLabel }}</label>
                     </div>
                     <div v-if="suggestions && suggestions.length > 0" class="d-flex flex-wrap ga-1 mb-2">
                         <v-chip
@@ -79,6 +79,7 @@ const handleCancel = () => {
                         </v-chip>
                     </div>
                     <v-textarea
+                        id="admin-confirm-textarea"
                         v-model="inputValue"
                         variant="outlined"
                         density="comfortable"

@@ -114,7 +114,7 @@ export default function ChatScreen() {
     const socket = new ChatSocket();
     socketRef.current = socket;
 
-    (async () => {
+    void (async () => {
       const sid = await chatService.getSessionId();
       if (!active) return;
       setSessionId(sid);

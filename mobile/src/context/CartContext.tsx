@@ -40,7 +40,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Load cart from AsyncStorage on mount
   useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
         const savedCart = await storage.getCart();
         setItems(savedCart);
@@ -55,7 +55,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Persist cart whenever items change
   useEffect(() => {
     if (!isLoading) {
-      storage.setCart(items);
+      void storage.setCart(items);
     }
   }, [items, isLoading]);
 

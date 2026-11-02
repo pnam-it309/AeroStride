@@ -137,13 +137,14 @@ const originalPrice = computed(() => {
 <style scoped lang="scss">
 .product-showcase-card {
     background: #ffffff;
+
     border-radius: 16px;
     width: 220px;
     min-width: 220px;
     max-width: 220px;
     flex-shrink: 0;
     transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    background: #ffffff;
+
     border: 1px solid #e2e8f0;
     cursor: pointer;
     animation: cardPopIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;

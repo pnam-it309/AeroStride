@@ -288,8 +288,8 @@ const onKeyUpEnter = (event, field, service, type, label) => {
                 return;
             }
 
-            const sizeNum = parseInt(val, 10);
-            if (isNaN(sizeNum) || sizeNum < 40 || sizeNum > 60) {
+            const sizeNum = Number.parseInt(val, 10);
+            if (Number.isNaN(sizeNum) || sizeNum < 40 || sizeNum > 60) {
                 addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải từ 40 đến 60', color: 'error' });
                 return;
             }

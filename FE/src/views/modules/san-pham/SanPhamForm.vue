@@ -213,9 +213,7 @@ const handleAddCustomSize = async () => {
 
     // 2. Range 40 đến 70
     if (sizeNumber < 35 || sizeNumber > 60) {
-        addNotification({ title: 'Loi', subtitle: 'Kich thuoc phai tu 35 den 60', color: 'error' });
-        return;
-        addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải từ 40 đến 70', color: 'error' });
+        addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải từ 35 đến 60', color: 'error' });
         return;
     }
 

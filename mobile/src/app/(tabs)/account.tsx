@@ -62,7 +62,7 @@ export default function AccountScreen() {
       cancelText: 'Hủy',
       destructive: true,
     });
-    if (confirmed) logout();
+    if (confirmed) void logout();
   };
 
   return (

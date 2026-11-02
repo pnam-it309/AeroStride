@@ -42,8 +42,8 @@ export function useLandingCatalog(activeSectionRef) {
     };
 
     onMounted(() => {
-        loadInitialCatalog();
-        loadSecondaryCatalog();
+        void loadInitialCatalog();
+        void loadSecondaryCatalog();
     });
 
     if (activeSectionRef) {
@@ -51,7 +51,7 @@ export function useLandingCatalog(activeSectionRef) {
             activeSectionRef,
             (sectionIndex) => {
                 if (sectionIndex >= 1) {
-                    loadSecondaryCatalog();
+                    void loadSecondaryCatalog();
                 }
             },
             { immediate: true }

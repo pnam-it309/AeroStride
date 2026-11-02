@@ -52,7 +52,7 @@ export function useCustomerSelect(selectedOrder, updateOrderInList, refreshBestV
     watch(customerSearch, () => {
         if (customerDebounce) clearTimeout(customerDebounce);
         customerDebounce = setTimeout(() => {
-            searchCustomers(true);
+            void searchCustomers(true);
         }, 300);
     });
 

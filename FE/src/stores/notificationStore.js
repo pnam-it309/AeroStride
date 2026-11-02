@@ -53,7 +53,7 @@ export const useNotificationStore = defineStore('notification', {
                         this.markChatUnread(message.conversationId);
                     }
                     // Hiển thị thông báo Toast góc trên bên phải
-                    import('@/stores/toastStore').then(({ useToastStore }) => {
+                    void import('@/stores/toastStore').then(({ useToastStore }) => {
                         const toastStore = useToastStore();
                         toastStore.showToast(
                             message.message || `Khách hàng [${message.customerName || 'Khách'}] vừa yêu cầu gặp nhân viên hỗ trợ!`,
@@ -128,11 +128,11 @@ export const useNotificationStore = defineStore('notification', {
                 message &&
                 (message.type === 'PRODUCT_STOCK_UPDATE' || (message.id && message.soLuongTon !== undefined && message.maChiTietSanPham))
             ) {
-                import('@/stores/banHangStore').then(({ useBanHangStore }) => {
+                void import('@/stores/banHangStore').then(({ useBanHangStore }) => {
                     const banHangStore = useBanHangStore();
                     banHangStore.updateProductStock(message.id, message.soLuongTon);
                 });
-                import('@/stores/cartStore').then(({ useCartStore }) => {
+                void import('@/stores/cartStore').then(({ useCartStore }) => {
                     const cartStore = useCartStore();
                     cartStore.syncWithBackend();
                 });

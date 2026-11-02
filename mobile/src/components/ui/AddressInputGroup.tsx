@@ -75,7 +75,7 @@ export const AddressInputGroup: React.FC<AddressInputGroupProps> = ({
 
   // Load initial provinces on mount
   useEffect(() => {
-    locationService.getProvinces().then((list) => {
+    void locationService.getProvinces().then((list) => {
       setProvinces(list);
 
       // Pre-select if initial values passed
@@ -101,7 +101,7 @@ export const AddressInputGroup: React.FC<AddressInputGroupProps> = ({
               if (foundD) {
                 setQuanHuyen(foundD);
                 // Load wards
-                locationService.getWards(foundD.code).then((wList) => {
+                void locationService.getWards(foundD.code).then((wList) => {
                   setWards(wList);
                   if (initialPhuongXa) {
                     const foundW = wList.find(

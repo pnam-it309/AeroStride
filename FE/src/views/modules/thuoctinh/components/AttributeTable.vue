@@ -120,7 +120,8 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
 
             <template #pagination>
                 <AdminPagination
-                    v-model="pagination.page"
+                    :model-value="pagination.page"
+                    @update:model-value="emit('update:page', $event)"
                     :page-size="pagination.size"
                     :total-pages="pagination.totalPages"
                     :total-elements="pagination.totalElements"

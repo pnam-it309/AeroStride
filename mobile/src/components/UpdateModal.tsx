@@ -31,7 +31,7 @@ let globalCheckForUpdate: ((manual?: boolean) => Promise<void>) | null = null;
 
 export function triggerAppUpdateCheck(manual = true) {
   if (globalCheckForUpdate) {
-    globalCheckForUpdate(manual);
+    void globalCheckForUpdate(manual);
   }
 }
 

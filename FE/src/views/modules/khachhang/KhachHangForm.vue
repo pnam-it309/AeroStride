@@ -203,7 +203,7 @@ const handleSave = async () => {
             }
         }
         const bd = new Date(formattedDate);
-        if (isNaN(bd.getTime())) {
+        if (Number.isNaN(bd.getTime())) {
             addNotification({ title: 'Lỗi xác thực', subtitle: 'Định dạng ngày sinh không hợp lệ', color: 'error' });
             return;
         }
@@ -647,7 +647,7 @@ const dobRules = [
         const bd = new Date(formattedDate);
 
         // 3. Kiểm tra tính hợp lệ
-        if (isNaN(bd.getTime())) return 'Định dạng ngày sinh không hợp lệ';
+        if (Number.isNaN(bd.getTime())) return 'Định dạng ngày sinh không hợp lệ';
 
         // 4. Đưa thời gian về 0h để so sánh
         const now = new Date();

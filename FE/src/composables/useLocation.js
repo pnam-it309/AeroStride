@@ -367,7 +367,7 @@ export function useLocation(options = {}) {
     // Tu dong lang nghe su kien bat mang tro lai (Online) de chuyen ve Live API
     const handleOnline = () => {
         if (provinces.value.some((p) => p.source === 'LOCAL' || p.source === 'OPEN_API')) {
-            fetchProvinces(true);
+            void fetchProvinces(true);
         }
     };
 

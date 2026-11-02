@@ -167,7 +167,7 @@ const formatDuration = (start, end) => {
     if (!start) return '--';
     const startTime = typeof start === 'number' ? start : new Date(start).getTime();
     const endTime = end ? (typeof end === 'number' ? end : new Date(end).getTime()) : Date.now();
-    if (isNaN(startTime) || isNaN(endTime) || endTime < startTime) return '--';
+    if (Number.isNaN(startTime) || Number.isNaN(endTime) || endTime < startTime) return '--';
 
     const diffMinutes = Math.floor((endTime - startTime) / (1000 * 60));
     const hours = Math.floor(diffMinutes / 60);

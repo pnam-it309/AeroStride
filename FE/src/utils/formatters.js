@@ -17,7 +17,7 @@ export const formatNumber = (value) => {
 export const formatDate = (date, formatStr = 'dd/MM/yyyy') => {
     if (!date) return '';
     try {
-        const d = typeof date === 'number' ? new Date(date) : new Date(date);
+        const d = new Date(date);
         return format(d, formatStr, { locale: vi });
     } catch (e) {
         return '';
@@ -30,7 +30,8 @@ export const formatDateTime = (date) => {
 
 export const formatNumberWithDots = (num) => {
     if (num === null || num === undefined || num === '') return '';
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const parsed = Number(num);
+    return Number.isNaN(parsed) ? '' : new Intl.NumberFormat('vi-VN').format(parsed);
 };
 
 export const parseNumberFromDots = (str) => {

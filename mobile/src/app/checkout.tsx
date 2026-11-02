@@ -175,7 +175,7 @@ export default function CheckoutScreen() {
       if (paymentMethod === 'VNPAY') {
         await handleVnPay(order.id);
       } else {
-        showSuccess();
+        await showSuccess();
       }
     } catch (error: any) {
       const message = getApiErrorMessage(error, 'Không thể đặt hàng. Vui lòng thử lại.');

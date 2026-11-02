@@ -149,7 +149,8 @@ const handleRealtimeStockUpdate = (event) => {
 
     const variantId = detail.id;
     const productId = detail.idSanPham;
-    const isSameProduct = (productId && String(productId) === String(product.value.id)) ||
+    const isSameProduct =
+        (productId && String(productId) === String(product.value.id)) ||
         (product.value.chiTietSanPhams && product.value.chiTietSanPhams.some((v) => String(v.id) === String(variantId)));
 
     if (!isSameProduct) return;
@@ -265,7 +266,7 @@ import { optimizeImageUrl } from '@/utils/imageDisplay';
 
 const getValidImgUrl = (raw, width = 800, quality = 75) => {
     if (!raw) return null;
-    let url = typeof raw === 'object' ? (raw.duongDanAnh || raw.hinhAnh || raw.url || '') : raw;
+    let url = typeof raw === 'object' ? raw.duongDanAnh || raw.hinhAnh || raw.url || '' : raw;
     const resolved = resolveImg(url);
     if (!resolved || isInvalidImage(resolved)) return null;
     return optimizeImageUrl(resolved, width, quality);
@@ -327,7 +328,11 @@ const currentPrice = computed(() => {
 });
 
 const oldPrice = computed(() => {
-    if (selectedVariant.value && selectedVariant.value.giaGoc && Number(selectedVariant.value.giaGoc) > Number(selectedVariant.value.giaBan)) {
+    if (
+        selectedVariant.value &&
+        selectedVariant.value.giaGoc &&
+        Number(selectedVariant.value.giaGoc) > Number(selectedVariant.value.giaBan)
+    ) {
         return selectedVariant.value.giaGoc;
     }
     return null;
@@ -666,10 +671,7 @@ const addToCart = async () => {
 
     const variant = selectedVariant.value;
     if (!variant || variant.soLuong <= 0) {
-        showStockAlert(
-            'Sản phẩm đã hết hàng',
-            'Phiên bản màu sắc và kích thước này hiện đã hết hàng. Vui lòng chọn phiên bản khác.'
-        );
+        showStockAlert('Sản phẩm đã hết hàng', 'Phiên bản màu sắc và kích thước này hiện đã hết hàng. Vui lòng chọn phiên bản khác.');
         return;
     }
 
@@ -760,9 +762,7 @@ const toggleFavorite = () => {
                 <v-col cols="12" md="6" lg="6" class="image-gallery">
                     <div class="product-gallery-wrapper">
                         <!-- Main Image Box (Vuông & To) -->
-                        <div
-                            class="rounded-2xl bg-grey-lighten-4 mb-4 elevation-1 position-relative overflow-hidden main-image-box-custom"
-                        >
+                        <div class="rounded-2xl bg-grey-lighten-4 mb-4 elevation-1 position-relative overflow-hidden main-image-box-custom">
                             <!-- Floating Zoom Button -->
                             <v-btn
                                 icon
@@ -914,7 +914,14 @@ const toggleFavorite = () => {
                                 {{ formattedOldPrice }}
                             </span>
                             <span v-if="discountPercent > 0" class="discount-badge-new"> -{{ discountPercent }}% </span>
-                            <v-chip v-if="activeDiscountName" color="error" size="small" variant="tonal" prepend-icon="mdi-tag-outline" class="font-weight-bold ml-2">
+                            <v-chip
+                                v-if="activeDiscountName"
+                                color="error"
+                                size="small"
+                                variant="tonal"
+                                prepend-icon="mdi-tag-outline"
+                                class="font-weight-bold ml-2"
+                            >
                                 {{ activeDiscountName }}
                             </v-chip>
                         </div>
@@ -1013,20 +1020,53 @@ const toggleFavorite = () => {
                             <h3 class="desc-section-title mb-3">Mô tả sản phẩm</h3>
                             <p class="desc-text-new">{{ productDescription }}</p>
                             <div class="d-flex flex-wrap gap-3 mt-4">
-                                <v-chip size="small" variant="flat" color="#F1F5F9" class="font-weight-medium text-grey-darken-3" v-if="product.tenXuatXu">
+                                <v-chip
+                                    size="small"
+                                    variant="flat"
+                                    color="#F1F5F9"
+                                    class="font-weight-medium text-grey-darken-3"
+                                    v-if="product.tenXuatXu"
+                                >
                                     <v-icon start size="14" color="grey-darken-2">mdi-earth</v-icon> Xuất xứ: {{ product.tenXuatXu }}
                                 </v-chip>
-                                <v-chip size="small" variant="flat" color="#F1F5F9" class="font-weight-medium text-grey-darken-3" v-if="product.maSanPham || product.id">
-                                    <v-icon start size="14" color="grey-darken-2">mdi-barcode</v-icon> Mã: {{ product.maSanPham || product.id }}
+                                <v-chip
+                                    size="small"
+                                    variant="flat"
+                                    color="#F1F5F9"
+                                    class="font-weight-medium text-grey-darken-3"
+                                    v-if="product.maSanPham || product.id"
+                                >
+                                    <v-icon start size="14" color="grey-darken-2">mdi-barcode</v-icon> Mã:
+                                    {{ product.maSanPham || product.id }}
                                 </v-chip>
-                                <v-chip size="small" variant="flat" color="#F1F5F9" class="font-weight-medium text-grey-darken-3" v-if="product.tenChatLieu">
-                                    <v-icon start size="14" color="grey-darken-2">mdi-tshirt-crew-outline</v-icon> Chất liệu: {{ product.tenChatLieu }}
+                                <v-chip
+                                    size="small"
+                                    variant="flat"
+                                    color="#F1F5F9"
+                                    class="font-weight-medium text-grey-darken-3"
+                                    v-if="product.tenChatLieu"
+                                >
+                                    <v-icon start size="14" color="grey-darken-2">mdi-tshirt-crew-outline</v-icon> Chất liệu:
+                                    {{ product.tenChatLieu }}
                                 </v-chip>
-                                <v-chip size="small" variant="flat" color="#F1F5F9" class="font-weight-medium text-grey-darken-3" v-if="product.tenDeGiay">
+                                <v-chip
+                                    size="small"
+                                    variant="flat"
+                                    color="#F1F5F9"
+                                    class="font-weight-medium text-grey-darken-3"
+                                    v-if="product.tenDeGiay"
+                                >
                                     <v-icon start size="14" color="grey-darken-2">mdi-shoe-print</v-icon> Đế giày: {{ product.tenDeGiay }}
                                 </v-chip>
-                                <v-chip size="small" variant="flat" color="#F1F5F9" class="font-weight-medium text-grey-darken-3" v-if="product.tenMucDichChay">
-                                    <v-icon start size="14" color="grey-darken-2">mdi-run-fast</v-icon> Mục đích: {{ product.tenMucDichChay }}
+                                <v-chip
+                                    size="small"
+                                    variant="flat"
+                                    color="#F1F5F9"
+                                    class="font-weight-medium text-grey-darken-3"
+                                    v-if="product.tenMucDichChay"
+                                >
+                                    <v-icon start size="14" color="grey-darken-2">mdi-run-fast</v-icon> Mục đích:
+                                    {{ product.tenMucDichChay }}
                                 </v-chip>
                             </div>
                         </div>
@@ -1232,8 +1272,6 @@ const toggleFavorite = () => {
             </v-card>
         </v-dialog>
 
-
-
         <!-- Image Detail / Lightbox Modal -->
         <v-dialog v-model="showImageLightbox" max-width="1000" class="image-lightbox-dialog">
             <v-card class="bg-slate-950 text-white rounded-2xl overflow-hidden elevation-24 position-relative">
@@ -1291,7 +1329,10 @@ const toggleFavorite = () => {
                 </div>
 
                 <!-- Footer Strip of Thumbnails -->
-                <div v-if="allImages.length > 1" class="px-4 py-3 bg-slate-900 border-t border-slate-800 d-flex justify-center ga-3 overflow-x-auto">
+                <div
+                    v-if="allImages.length > 1"
+                    class="px-4 py-3 bg-slate-900 border-t border-slate-800 d-flex justify-center ga-3 overflow-x-auto"
+                >
                     <div
                         v-for="(img, idx) in allImages"
                         :key="'lb-thumb-' + idx"

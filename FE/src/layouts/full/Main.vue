@@ -119,10 +119,10 @@ onMounted(() => {
 
         <perfect-scrollbar class="scrollnavbar bg-containerBg" :style="{ height: 'calc(100vh - 136px)' }">
             <v-list class="py-4 px-2 bg-containerBg">
-                <template v-for="(item, i) in sidebarMenu">
+                <template v-for="(item, i) in sidebarMenu" :key="item.title || i">
                     <NavGroup :item="item" v-if="item.header && !sidebarCollapsed" :key="item.title" />
-                    <NavCollapse :item="item" v-else-if="item.children" :hide-title="sidebarCollapsed" />
-                    <NavItem :item="item" v-else class="leftPadding" :hide-title="sidebarCollapsed" />
+                    <NavCollapse :item="item" v-else-if="item.children" :key="item.title || i" :hide-title="sidebarCollapsed" />
+                    <NavItem :item="item" v-else :key="item.title || i" class="leftPadding" :hide-title="sidebarCollapsed" />
                 </template>
             </v-list>
         </perfect-scrollbar>

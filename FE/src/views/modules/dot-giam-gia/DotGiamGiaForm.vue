@@ -498,7 +498,7 @@ const init = async () => {
         const options = results[2] || {};
 
         const maxPriceNum = Number(maxPrice);
-        if (!isNaN(maxPriceNum) && maxPriceNum > 0) {
+        if (!Number.isNaN(maxPriceNum) && maxPriceNum > 0) {
             dynamicMaxPrice.value = Math.max(maxPriceNum, 50000);
         } else {
             dynamicMaxPrice.value = 6500000;
@@ -610,7 +610,7 @@ const handleSave = () => {
                 let giamToiDaValue = null;
                 if (rawGiamToiDa !== null && rawGiamToiDa !== undefined && rawGiamToiDa !== '') {
                     const parsed = Number(String(rawGiamToiDa).replace(/[^\d.]/g, ''));
-                    if (!isNaN(parsed) && parsed > 0) {
+                    if (!Number.isNaN(parsed) && parsed > 0) {
                         giamToiDaValue = parsed;
                     }
                 }
@@ -628,7 +628,7 @@ const handleSave = () => {
                     if (val instanceof Date) return val.getTime();
                     if (typeof val === 'number') return val;
                     const d = new Date(val);
-                    return isNaN(d.getTime()) ? null : d.getTime();
+                    return Number.isNaN(d.getTime()) ? null : d.getTime();
                 };
 
                 const payload = {
