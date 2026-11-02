@@ -7,6 +7,12 @@ on:
       - 'mobile/**'
       - '.github/workflows/mobile-cd.yml'
   workflow_dispatch:
+    inputs:
+      build_apk:
+        description: 'Build Android APK on EAS'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -50,6 +56,7 @@ jobs:
           eas update --channel preview --message "$(git log -1 --pretty=%s)" --non-interactive
 
       - name: Build Android APK on EAS
+        if: ${{ github.event.inputs.build_apk == 'true' }}
         working-directory: ./mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -58,6 +65,7 @@ jobs:
           cat eas-build-result.json
 
       - name: Upload EAS Build Result
+        if: ${{ github.event.inputs.build_apk == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: eas-build-result
@@ -65,6 +73,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Update release info & commit
+        if: ${{ github.event.inputs.build_apk == 'true' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898026+github-actions[bot]@users.noreply.github.com"

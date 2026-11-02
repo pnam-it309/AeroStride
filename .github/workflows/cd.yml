@@ -53,6 +53,7 @@ jobs:
 
   deploy:
     needs: release-and-publish
+    if: ${{ vars.ENABLE_SELF_HOSTED_DEPLOY == 'true' }}
     runs-on: self-hosted
     name: Deploy to On-Premise
     steps:
