@@ -13,7 +13,7 @@ export function toNumber(value: number | string | undefined | null, fallback = 0
 }
 
 export function formatCurrency(amount: number | string | undefined | null): string {
-  const value = toNumber(amount, NaN);
+  const value = toNumber(amount, Number.NaN);
   if (!Number.isFinite(value)) return '0₫';
   return value.toLocaleString('vi-VN') + '₫';
 }
@@ -27,8 +27,8 @@ export function formatPriceRange(
   max: number | string | undefined | null
 ): string {
   if (min == null && max == null) return 'Liên hệ';
-  const minValue = min == null ? null : toNumber(min, NaN);
-  const maxValue = max == null ? null : toNumber(max, NaN);
+  const minValue = min == null ? null : toNumber(min, Number.NaN);
+  const maxValue = max == null ? null : toNumber(max, Number.NaN);
   if (minValue === maxValue || maxValue == null) return formatCurrency(minValue);
   if (min == null) return formatCurrency(max);
   return `${formatCurrency(minValue)} - ${formatCurrency(maxValue)}`;

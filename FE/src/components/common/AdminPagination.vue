@@ -73,8 +73,8 @@ const goToPage = async (p) => {
 const handleJump = (e) => {
     const val = e.target.value;
     if (!val) return;
-    const p = parseInt(val);
-    if (!isNaN(p)) {
+    const p = Number.parseInt(val, 10);
+    if (!Number.isNaN(p)) {
         goToPage(p);
     }
     e.target.value = '';

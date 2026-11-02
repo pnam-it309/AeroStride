@@ -23,7 +23,7 @@ const getDeterministicFallback = (id) => {
     const str = String(id);
     for (let i = 0; i < str.length; i++) {
         hash = (hash << 5) - hash + str.charCodeAt(i);
-        hash |= 0;
+        hash = Math.trunc(hash);
     }
     const idx = Math.abs(hash) % FALLBACK_SHOES.length;
     return FALLBACK_SHOES[idx];

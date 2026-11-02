@@ -75,8 +75,8 @@ const handleQuantityChange = async (id, delta) => {
 };
 
 const handleQuantityInput = async (item, eventTargetValue) => {
-    let num = parseInt(eventTargetValue, 10);
-    if (isNaN(num) || num <= 0) {
+    let num = Number.parseInt(eventTargetValue, 10);
+    if (Number.isNaN(num) || num <= 0) {
         await cartStore.updateQuantity(item.idChiTietSanPham, 1);
         return;
     }

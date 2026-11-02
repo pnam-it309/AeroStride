@@ -3,7 +3,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --ignore-scripts
+RUN npm ci --ignore-scripts
 
 COPY tsconfig.json ./
 COPY src/ ./src/
@@ -15,7 +15,7 @@ FROM node:18-alpine AS runtime
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --only=production --ignore-scripts
+RUN npm ci --only=production --ignore-scripts
 
 COPY --from=builder /app/dist ./dist
 

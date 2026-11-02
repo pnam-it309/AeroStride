@@ -319,7 +319,7 @@ const isShippingValid = computed(() => {
         shippingInfo.value.soDienThoai.trim() &&
         shippingInfo.value.email &&
         shippingInfo.value.email.trim() &&
-        /.+@.+\..+/.test(shippingInfo.value.email.trim()) &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingInfo.value.email.trim()) &&
         shippingInfo.value.tinhThanh &&
         shippingInfo.value.quanHuyen &&
         shippingInfo.value.phuongXa &&

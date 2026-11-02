@@ -169,7 +169,7 @@ const {
 } = useCustomerSelect(
     computed(() => orders.value[activeOrderIndex.value] || null),
     (updated) => updateOrderInList(updated),
-    (order, autoApply) => refreshBestVoucher(order, autoApply),
+    (order) => refreshBestVoucher(order),
     addNotification
 );
 

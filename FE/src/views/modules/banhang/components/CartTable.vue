@@ -17,8 +17,8 @@ const handleDirectInput = (item, event) => {
         event.target.value = item.soLuong;
         return;
     }
-    let newQty = parseInt(val, 10);
-    if (isNaN(newQty) || newQty < 0) newQty = 0;
+    let newQty = Number.parseInt(val, 10);
+    if (Number.isNaN(newQty) || newQty < 0) newQty = 0;
 
     const delta = newQty - item.soLuong;
     if (delta !== 0) {
@@ -46,15 +46,15 @@ const handleDirectInput = (item, event) => {
             </colgroup>
             <thead>
                 <tr>
-                    <th class="text-center">STT</th>
-                    <th class="text-left">Mã sản phẩm</th>
-                    <th class="text-left">Tên sản phẩm</th>
-                    <th class="text-left">Màu sắc</th>
-                    <th class="text-left">Kích cỡ</th>
-                    <th class="text-center">Số lượng</th>
-                    <th class="text-right">Đơn giá</th>
-                    <th class="text-right">Thành tiền</th>
-                    <th class="text-center">Thao tác</th>
+                    <th scope="col" class="text-center">STT</th>
+                    <th scope="col" class="text-left">Mã sản phẩm</th>
+                    <th scope="col" class="text-left">Tên sản phẩm</th>
+                    <th scope="col" class="text-left">Màu sắc</th>
+                    <th scope="col" class="text-left">Kích cỡ</th>
+                    <th scope="col" class="text-center">Số lượng</th>
+                    <th scope="col" class="text-right">Đơn giá</th>
+                    <th scope="col" class="text-right">Thành tiền</th>
+                    <th scope="col" class="text-center">Thao tác</th>
                 </tr>
             </thead>
             <tbody>

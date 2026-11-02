@@ -176,8 +176,8 @@ export const generateNextSku = (prefix, existingSkus = []) => {
     existingSkus.forEach((sku) => {
         if (sku && sku.startsWith(fullPrefix)) {
             const parts = sku.split('-');
-            const num = parseInt(parts[parts.length - 1], 10);
-            if (!isNaN(num) && num > maxSuffix) {
+            const num = Number.parseInt(parts[parts.length - 1], 10);
+            if (!Number.isNaN(num) && num > maxSuffix) {
                 maxSuffix = num;
             }
         }

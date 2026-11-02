@@ -395,8 +395,8 @@ const getNextSku = () => {
         const sku = item.maChiTietSanPham || item.sku || item.maSku || item.maBienThe || item.ma || '';
         if (sku.startsWith(prefix)) {
             const parts = sku.split('-');
-            const num = parseInt(parts[parts.length - 1], 10);
-            if (!isNaN(num) && num > maxSuffix) {
+            const num = Number.parseInt(parts[parts.length - 1], 10);
+            if (!Number.isNaN(num) && num > maxSuffix) {
                 maxSuffix = num;
             }
         }
@@ -945,7 +945,7 @@ onBeforeUnmount(() => {
 
             <template #headers>
                 <tr>
-                    <th class="header-cell px-0" style="width: 40px; text-align: center">
+                    <th scope="col" class="header-cell px-0" style="width: 40px; text-align: center">
                         <v-checkbox-btn
                             :model-value="allVariantsSelected"
                             :indeterminate="someVariantsSelected"
@@ -956,16 +956,16 @@ onBeforeUnmount(() => {
                             @update:model-value="toggleSelectAllVariants"
                         />
                     </th>
-                    <th class="header-cell" style="width: 60px">STT</th>
-                    <th class="header-cell" style="width: 110px">Mã sản phẩm</th>
-                    <th class="header-cell" style="width: 70px">Hình ảnh</th>
-                    <th class="header-cell" style="width: 220px">Mã SKU</th>
-                    <th class="header-cell" style="width: 90px">Màu sắc</th>
-                    <th class="header-cell" style="width: 90px">Kích thước</th>
-                    <th class="header-cell" style="width: 90px">Số lượng</th>
-                    <th class="header-cell" style="width: 110px">Giá bán</th>
-                    <th class="header-cell" style="width: 130px">Trạng thái</th>
-                    <th class="header-cell" style="width: 110px">Hành động</th>
+                    <th scope="col" class="header-cell" style="width: 60px">STT</th>
+                    <th scope="col" class="header-cell" style="width: 110px">Mã sản phẩm</th>
+                    <th scope="col" class="header-cell" style="width: 70px">Hình ảnh</th>
+                    <th scope="col" class="header-cell" style="width: 220px">Mã SKU</th>
+                    <th scope="col" class="header-cell" style="width: 90px">Màu sắc</th>
+                    <th scope="col" class="header-cell" style="width: 90px">Kích thước</th>
+                    <th scope="col" class="header-cell" style="width: 90px">Số lượng</th>
+                    <th scope="col" class="header-cell" style="width: 110px">Giá bán</th>
+                    <th scope="col" class="header-cell" style="width: 130px">Trạng thái</th>
+                    <th scope="col" class="header-cell" style="width: 110px">Hành động</th>
                 </tr>
             </template>
 

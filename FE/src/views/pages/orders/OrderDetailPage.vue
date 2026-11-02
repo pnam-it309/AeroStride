@@ -235,7 +235,7 @@ const cancelEditItems = () => {
 };
 
 const changeQty = (idChiTietSanPham, delta) => {
-    const current = parseInt(editQuantities.value[idChiTietSanPham], 10) || 1;
+    const current = Number.parseInt(editQuantities.value[idChiTietSanPham], 10) || 1;
     const next = current + delta;
     if (next < 1) return;
     editQuantities.value[idChiTietSanPham] = next;
@@ -248,16 +248,16 @@ const handleQuantityInput = (idChiTietSanPham, event) => {
         editQuantities.value[idChiTietSanPham] = '';
         return;
     }
-    const num = parseInt(val, 10);
+    const num = Number.parseInt(val, 10);
     editQuantities.value[idChiTietSanPham] = num > 0 ? num : 1;
 };
 
 const handleQuantityBlur = (idChiTietSanPham) => {
     const current = editQuantities.value[idChiTietSanPham];
-    if (!current || parseInt(current, 10) < 1) {
+    if (!current || Number.parseInt(current, 10) < 1) {
         editQuantities.value[idChiTietSanPham] = 1;
     } else {
-        editQuantities.value[idChiTietSanPham] = parseInt(current, 10);
+        editQuantities.value[idChiTietSanPham] = Number.parseInt(current, 10);
     }
 };
 

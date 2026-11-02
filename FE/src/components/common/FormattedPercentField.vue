@@ -56,7 +56,7 @@ const parseNumericValue = (val) => {
     if (val === null || val === undefined || val === '') return null;
     const digitsOnly = String(val).replace(/\D/g, '');
     if (!digitsOnly) return null;
-    let num = parseInt(digitsOnly, 10);
+    let num = Number.parseInt(digitsOnly, 10);
     if (num > props.max) num = props.max;
     return num;
 };
@@ -96,12 +96,12 @@ const handleKeydown = (event) => {
     const end = input ? (input.selectionEnd ?? currentVal.length) : currentVal.length;
 
     const nextValStr = currentVal.slice(0, start) + event.key + currentVal.slice(end);
-    const nextNum = parseInt(nextValStr, 10);
+    const nextNum = Number.parseInt(nextValStr, 10);
 
     // Nếu giá trị dự kiến vượt quá max (vd: 100):
     // 1. Chặn hoàn toàn phím vừa gõ
     // 2. Nếu ô nhập chưa đạt max, tự động đưa về max
-    if (!isNaN(nextNum) && nextNum > props.max) {
+    if (!Number.isNaN(nextNum) && nextNum > props.max) {
         event.preventDefault();
 
         if (Number(currentVal) !== props.max) {
@@ -126,7 +126,7 @@ const handleInput = (event) => {
         return;
     }
 
-    let num = parseInt(digitsOnly, 10);
+    let num = Number.parseInt(digitsOnly, 10);
     if (num > props.max) {
         num = props.max;
     }
@@ -153,8 +153,8 @@ const handlePaste = (event) => {
     const end = input ? (input.selectionEnd ?? currentVal.length) : currentVal.length;
     const nextValStr = currentVal.slice(0, start) + digitsOnly + currentVal.slice(end);
 
-    let num = parseInt(nextValStr, 10);
-    if (isNaN(num)) return;
+    let num = Number.parseInt(nextValStr, 10);
+    if (Number.isNaN(num)) return;
     if (num > props.max) num = props.max;
 
     displayValue.value = String(num);

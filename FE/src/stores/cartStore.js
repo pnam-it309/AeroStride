@@ -23,7 +23,7 @@ const CART_VERSION_KEY = 'aerostride_cart_version';
  */
 function loadCartFromStorage() {
     const key = getCartStorageKey();
-    const savedVersion = parseInt(localStorage.getItem(CART_VERSION_KEY) || '1', 10);
+    const savedVersion = Number.parseInt(localStorage.getItem(CART_VERSION_KEY) || '1', 10);
     if (savedVersion < CART_VERSION) {
         // Clear stale cart data khi đổi cấu trúc
         localStorage.removeItem(key);
@@ -230,7 +230,7 @@ export const useCartStore = defineStore('cart', {
 
         openDrawer() {
             this.isDrawerOpen = true;
-            this.syncWithBackend();
+            void this.syncWithBackend();
         },
 
         closeDrawer() {
@@ -240,7 +240,7 @@ export const useCartStore = defineStore('cart', {
         toggleDrawer() {
             this.isDrawerOpen = !this.isDrawerOpen;
             if (this.isDrawerOpen) {
-                this.syncWithBackend();
+                void this.syncWithBackend();
             }
         }
     }
@@ -258,7 +258,7 @@ if (typeof window !== 'undefined') {
                     if (affectedItem) {
                         const newStock = Number(detail.soLuongTon) || 0;
                         if (newStock === 0) {
-                            import('@/services/notificationService').then(({ useNotifications }) => {
+                            void import('@/services/notificationService').then(({ useNotifications }) => {
                                 const { addNotification } = useNotifications();
                                 addNotification({
                                     title: 'Sản phẩm hết hàng',
@@ -267,7 +267,7 @@ if (typeof window !== 'undefined') {
                                 });
                             });
                         } else if (newStock < affectedItem.soLuong) {
-                            import('@/services/notificationService').then(({ useNotifications }) => {
+                            void import('@/services/notificationService').then(({ useNotifications }) => {
                                 const { addNotification } = useNotifications();
                                 addNotification({
                                     title: 'Cập nhật số lượng',
@@ -278,7 +278,7 @@ if (typeof window !== 'undefined') {
                         }
                     }
                 }
-                store.syncWithBackend();
+                void store.syncWithBackend();
             }
         } catch (e) {
             // Ignore error if Pinia not yet ready
@@ -287,7 +287,7 @@ if (typeof window !== 'undefined') {
 
     // Ensure websocket connection is active for receiving stock/variant updates
     setTimeout(() => {
-        import('@/services/auth/websocketService').then(({ default: webSocketService }) => {
+        void import('@/services/auth/websocketService').then(({ default: webSocketService }) => {
             if (webSocketService && !webSocketService.connected && !webSocketService.connecting) {
                 webSocketService.connect((message) => {
                     if (
@@ -297,7 +297,7 @@ if (typeof window !== 'undefined') {
                         try {
                             const store = useCartStore();
                             if (store && store.items && store.items.length > 0) {
-                                store.syncWithBackend();
+                                void store.syncWithBackend();
                             }
                         } catch (e) {}
                     }

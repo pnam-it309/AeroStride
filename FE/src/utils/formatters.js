@@ -2,7 +2,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 export const formatCurrency = (value) => {
-    if (isNaN(value)) return '0 ₫';
+    if (Number.isNaN(Number(value))) return '0 ₫';
     return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: 'VND'
@@ -35,8 +35,8 @@ export const formatNumberWithDots = (num) => {
 
 export const parseNumberFromDots = (str) => {
     if (!str) return 0;
-    const parsed = parseInt(str.toString().replace(/\./g, ''), 10);
-    return isNaN(parsed) ? 0 : parsed;
+    const parsed = Number.parseInt(str.toString().replace(/\./g, ''), 10);
+    return Number.isNaN(parsed) ? 0 : parsed;
 };
 
 export const formatShortAmount = (num) => {

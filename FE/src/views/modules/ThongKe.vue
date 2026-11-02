@@ -875,7 +875,7 @@ const loadStatistics = async () => {
                 dailyData.forEach((item) => {
                     if (item.ngay) {
                         const parts = item.ngay.split('-');
-                        const m = parseInt(parts[1], 10);
+                        const m = Number.parseInt(parts[1], 10);
                         if (m >= 1 && m <= 12) {
                             months[m - 1].revenue += Number(item.doanhThu || 0);
                             months[m - 1].customers += Number(item.soDon || 0);
@@ -1150,7 +1150,7 @@ const resetProductFilters = () => {
 };
 
 const changeProductPageSize = (newSize) => {
-    if (typeof newSize === 'number' && !isNaN(newSize)) {
+    if (typeof newSize === 'number' && !Number.isNaN(newSize)) {
         productPageSize.value = newSize;
     }
     productPage.value = 1;
@@ -1158,7 +1158,7 @@ const changeProductPageSize = (newSize) => {
 };
 
 const goToProductPage = (page) => {
-    if (typeof page === 'number' && !isNaN(page)) {
+    if (typeof page === 'number' && !Number.isNaN(page)) {
         productPage.value = Math.min(Math.max(page, 1), productTotalPages.value);
     }
     fetchProductStats();
@@ -1496,10 +1496,10 @@ onMounted(async () => {
                         <table v-else class="cust-stats-table">
                             <thead>
                                 <tr>
-                                    <th class="text-left" style="min-width: 120px">Chu kỳ</th>
-                                    <th class="text-right">Doanh thu</th>
-                                    <th class="text-right">Số đơn</th>
-                                    <th class="text-right">Trung bình đơn</th>
+                                    <th scope="col" class="text-left" style="min-width: 120px">Chu kỳ</th>
+                                    <th scope="col" class="text-right">Doanh thu</th>
+                                    <th scope="col" class="text-right">Số đơn</th>
+                                    <th scope="col" class="text-right">Trung bình đơn</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1545,10 +1545,10 @@ onMounted(async () => {
                         <table v-else class="cust-stats-table">
                             <thead>
                                 <tr>
-                                    <th class="text-left" style="min-width: 140px">Tên khách hàng</th>
-                                    <th class="text-right">Tổng chi</th>
-                                    <th class="text-right">Tổng sản phẩm</th>
-                                    <th class="text-right">Đơn thành công</th>
+                                    <th scope="col" class="text-left" style="min-width: 140px">Tên khách hàng</th>
+                                    <th scope="col" class="text-right">Tổng chi</th>
+                                    <th scope="col" class="text-right">Tổng sản phẩm</th>
+                                    <th scope="col" class="text-right">Đơn thành công</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1606,11 +1606,11 @@ onMounted(async () => {
                         <table v-else class="cust-stats-table">
                             <thead>
                                 <tr>
-                                    <th class="text-left" style="min-width: 90px">Mã NV</th>
-                                    <th class="text-left" style="min-width: 140px">Tên nhân viên</th>
-                                    <th class="text-right">Tổng doanh thu</th>
-                                    <th class="text-right">Tổng sản phẩm</th>
-                                    <th class="text-right">Tổng đơn hàng</th>
+                                    <th scope="col" class="text-left" style="min-width: 90px">Mã NV</th>
+                                    <th scope="col" class="text-left" style="min-width: 140px">Tên nhân viên</th>
+                                    <th scope="col" class="text-right">Tổng doanh thu</th>
+                                    <th scope="col" class="text-right">Tổng sản phẩm</th>
+                                    <th scope="col" class="text-right">Tổng đơn hàng</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1731,14 +1731,14 @@ onMounted(async () => {
                     >
                         <template #headers>
                             <tr>
-                                <th class="header-cell text-center" style="width: 50px">STT</th>
-                                <th class="header-cell text-center" style="width: 110px">Mã SP</th>
-                                <th class="header-cell text-center" style="width: 190px; min-width: 170px">Mã SKU</th>
-                                <th class="header-cell text-left" style="width: 220px; max-width: 240px">Tên sản phẩm</th>
-                                <th class="header-cell text-center" style="width: 120px">Thương hiệu</th>
-                                <th class="header-cell text-center" style="width: 110px">Màu sắc</th>
-                                <th class="header-cell text-center" style="width: 90px">Kích thước</th>
-                                <th class="header-cell text-center cursor-pointer select-none" style="width: 120px" @click="toggleSoldSort">
+                                <th scope="col" class="header-cell text-center" style="width: 50px">STT</th>
+                                <th scope="col" class="header-cell text-center" style="width: 110px">Mã SP</th>
+                                <th scope="col" class="header-cell text-center" style="width: 190px; min-width: 170px">Mã SKU</th>
+                                <th scope="col" class="header-cell text-left" style="width: 220px; max-width: 240px">Tên sản phẩm</th>
+                                <th scope="col" class="header-cell text-center" style="width: 120px">Thương hiệu</th>
+                                <th scope="col" class="header-cell text-center" style="width: 110px">Màu sắc</th>
+                                <th scope="col" class="header-cell text-center" style="width: 90px">Kích thước</th>
+                                <th scope="col" class="header-cell text-center cursor-pointer select-none" style="width: 120px" @click="toggleSoldSort">
                                     <div class="d-inline-flex align-center justify-center ga-1 font-weight-bold">
                                         <span>Đã bán</span>
                                         <v-icon size="16" :color="(!productSortBy || productSortBy === 'bestSelling' || productSortBy === 'slowSelling') ? 'primary' : 'slate-400'">
@@ -1749,7 +1749,7 @@ onMounted(async () => {
                                         {{ productSortBy === 'bestSelling' ? 'Sắp xếp: Đã bán cao nhất (Bấm để đổi sang thấp nhất)' : (productSortBy === 'slowSelling' ? 'Sắp xếp: Đã bán thấp nhất (Bấm để đổi sang cao nhất)' : 'Bấm để sắp xếp theo Đã bán') }}
                                     </v-tooltip>
                                 </th>
-                                <th class="header-cell text-center cursor-pointer select-none" style="width: 140px" @click="toggleRevenueSort">
+                                <th scope="col" class="header-cell text-center cursor-pointer select-none" style="width: 140px" @click="toggleRevenueSort">
                                     <div class="d-inline-flex align-center justify-center ga-1 font-weight-bold">
                                         <span>Doanh thu</span>
                                         <v-icon size="16" :color="productSortBy && productSortBy.startsWith('revenue') ? 'primary' : 'slate-400'">

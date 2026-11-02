@@ -32,7 +32,7 @@ const getDeterministicFallback = (id) => {
     const str = String(id);
     for (let i = 0; i < str.length; i++) {
         hash = (hash << 5) - hash + str.charCodeAt(i);
-        hash |= 0;
+        hash = Math.trunc(hash);
     }
     const idx = Math.abs(hash) % FALLBACK_SHOES.length;
     return FALLBACK_SHOES[idx];
@@ -602,8 +602,8 @@ watch(maxQuantity, (newMax) => {
 });
 
 const handleQuantityInput = (val) => {
-    let num = parseInt(val, 10);
-    if (isNaN(num) || num <= 0) {
+    let num = Number.parseInt(val, 10);
+    if (Number.isNaN(num) || num <= 0) {
         selectedQuantity.value = 1;
         return;
     }
@@ -634,7 +634,7 @@ const onQuantityInput = (e) => {
 
 const onQuantityBlur = (e) => {
     const val = e.target.value.replace(/\D/g, '');
-    if (!val || parseInt(val, 10) < 1) {
+    if (!val || Number.parseInt(val, 10) < 1) {
         selectedQuantity.value = 1;
         e.target.value = '1';
     } else {

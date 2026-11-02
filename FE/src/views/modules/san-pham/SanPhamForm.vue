@@ -206,7 +206,7 @@ const handleAddCustomSize = async () => {
     const sizeNumber = Number(parsedStr);
 
     // 1. Phải là số
-    if (isNaN(sizeNumber)) {
+    if (Number.isNaN(sizeNumber)) {
         addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải là số (VD: 39 hoặc 39.5)', color: 'error' });
         return;
     }
@@ -298,8 +298,8 @@ const sortedSizes = computed(() => {
         }
     }
     const sortFn = (a, b) => {
-        const numA = parseFloat(a.ten.replace(/[^0-9.]/g, '')) || 0;
-        const numB = parseFloat(b.ten.replace(/[^0-9.]/g, '')) || 0;
+        const numA = Number.parseFloat(a.ten.replace(/[^0-9.]/g, '')) || 0;
+        const numB = Number.parseFloat(b.ten.replace(/[^0-9.]/g, '')) || 0;
         return numA - numB;
     };
     quickAdded.sort(sortFn);
@@ -1833,7 +1833,7 @@ const validateProduct = () => {
         const soLuong = Number(item.soLuong);
         const giaBan = Number(item.giaBan);
 
-        if (isNaN(soLuong) || soLuong < 0 || !Number.isInteger(soLuong)) {
+        if (Number.isNaN(soLuong) || soLuong < 0 || !Number.isInteger(soLuong)) {
             addNotification({
                 title: 'Lỗi',
                 subtitle: 'Số lượng của biến thể không hợp lệ (phải là số nguyên lớn hơn hoặc bằng 0).',
@@ -1842,7 +1842,7 @@ const validateProduct = () => {
             return false;
         }
 
-        if (isNaN(giaBan) || giaBan < 0) {
+        if (Number.isNaN(giaBan) || giaBan < 0) {
             addNotification({
                 title: 'Lỗi',
                 subtitle: 'Giá bán của biến thể không hợp lệ.',
@@ -2951,31 +2951,31 @@ const handleSave = async () => {
                                             <v-table class="variant-inner-table h-100" fixed-header>
                                                 <thead class="bg-white">
                                                     <tr>
-                                                        <th
+                                                        <th scope="col"
                                                             class="text-left font-weight-bold text-slate-800 text-caption"
                                                             style="border-bottom: 1px solid #cbd5e1 !important"
                                                         >
                                                             Màu sắc
                                                         </th>
-                                                        <th
+                                                        <th scope="col"
                                                             class="text-left font-weight-bold text-slate-800 text-caption"
                                                             style="border-bottom: 1px solid #cbd5e1 !important"
                                                         >
                                                             Kích cỡ
                                                         </th>
-                                                        <th
+                                                        <th scope="col"
                                                             class="text-left font-weight-bold text-slate-800 text-caption"
                                                             style="width: 140px; border-bottom: 1px solid #cbd5e1 !important"
                                                         >
                                                             Giá bán (đ)
                                                         </th>
-                                                        <th
+                                                        <th scope="col"
                                                             class="text-left font-weight-bold text-slate-800 text-caption"
                                                             style="width: 110px; border-bottom: 1px solid #cbd5e1 !important"
                                                         >
                                                             Số lượng sản phẩm
                                                         </th>
-                                                        <th
+                                                        <th scope="col"
                                                             class="text-center font-weight-bold text-slate-800 text-caption"
                                                             style="width: 60px; border-bottom: 1px solid #cbd5e1 !important"
                                                         >
@@ -3186,7 +3186,7 @@ const handleSave = async () => {
                         >
                             <template #headers>
                                 <tr>
-                                    <th class="header-cell" style="width: 70px">
+                                    <th scope="col" class="header-cell" style="width: 70px">
                                         <v-checkbox-btn
                                             :model-value="allVisibleVariantsSelected"
                                             :indeterminate="someVisibleVariantsSelected"
@@ -3196,15 +3196,15 @@ const handleSave = async () => {
                                             @update:model-value="toggleSelectVisibleVariants"
                                         />
                                     </th>
-                                    <th class="header-cell" style="width: 60px">STT</th>
-                                    <th class="header-cell" style="width: 80px">Ảnh</th>
-                                    <th class="header-cell" style="width: 140px">Màu sắc</th>
-                                    <th class="header-cell" style="width: 140px">Kích thước</th>
-                                    <th class="header-cell" style="width: 240px">Mã SKU</th>
-                                    <th class="header-cell" style="width: 110px">Số lượng</th>
-                                    <th class="header-cell" style="width: 130px">Giá bán</th>
-                                    <th class="header-cell" style="width: 160px">Trạng thái</th>
-                                    <th class="header-cell" style="width: 120px">Thao tác</th>
+                                    <th scope="col" class="header-cell" style="width: 60px">STT</th>
+                                    <th scope="col" class="header-cell" style="width: 80px">Ảnh</th>
+                                    <th scope="col" class="header-cell" style="width: 140px">Màu sắc</th>
+                                    <th scope="col" class="header-cell" style="width: 140px">Kích thước</th>
+                                    <th scope="col" class="header-cell" style="width: 240px">Mã SKU</th>
+                                    <th scope="col" class="header-cell" style="width: 110px">Số lượng</th>
+                                    <th scope="col" class="header-cell" style="width: 130px">Giá bán</th>
+                                    <th scope="col" class="header-cell" style="width: 160px">Trạng thái</th>
+                                    <th scope="col" class="header-cell" style="width: 120px">Thao tác</th>
                                 </tr>
                             </template>
 
@@ -3537,10 +3537,10 @@ const handleSave = async () => {
                             <v-table density="compact">
                                 <thead>
                                     <tr class="bg-slate-50">
-                                        <th style="width: 40px" class="text-center">#</th>
-                                        <th class="text-left font-weight-bold text-caption">Màu sắc & Size</th>
-                                        <th class="text-right font-weight-bold text-caption">Giá hiện tại</th>
-                                        <th class="text-right font-weight-bold text-caption">Số lượng</th>
+                                        <th scope="col" style="width: 40px" class="text-center">#</th>
+                                        <th scope="col" class="text-left font-weight-bold text-caption">Màu sắc & Size</th>
+                                        <th scope="col" class="text-right font-weight-bold text-caption">Giá hiện tại</th>
+                                        <th scope="col" class="text-right font-weight-bold text-caption">Số lượng</th>
                                     </tr>
                                 </thead>
                                 <tbody>
