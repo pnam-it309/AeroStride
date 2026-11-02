@@ -1,3 +1,10 @@
+## [1.46.2](https://github.com/pnam-it309/AeroStride/compare/v1.46.1...v1.46.2) (2026-11-02)
+
+
+### Bug Fixes
+
+* **ci:** fix AdminBanHangServiceImpl syntax, SonarCloud Action, Node 22 for EAS, and tsconfig resolution ([89be816](https://github.com/pnam-it309/AeroStride/commit/89be81628e1ac9a4aa43f0f28c7820d23e884f97))
+
 ## [1.46.1](https://github.com/pnam-it309/AeroStride/compare/v1.46.0...v1.46.1) (2026-11-02)
 
 
