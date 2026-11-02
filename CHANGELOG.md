@@ -1,3 +1,10 @@
+## [1.46.3](https://github.com/pnam-it309/AeroStride/compare/v1.46.2...v1.46.3) (2026-11-02)
+
+
+### Bug Fixes
+
+* **security:** resolve SonarCloud pinned SHA, secret expansion, path traversal, and PRNG issues ([30f5e59](https://github.com/pnam-it309/AeroStride/commit/30f5e593e11c5a817e087f1a8fed792de4d06ea0))
+
 ## [1.46.2](https://github.com/pnam-it309/AeroStride/compare/v1.46.1...v1.46.2) (2026-11-02)
 
 
