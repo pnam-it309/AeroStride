@@ -1,3 +1,10 @@
+## [1.46.4](https://github.com/pnam-it309/AeroStride/compare/v1.46.3...v1.46.4) (2026-11-02)
+
+
+### Bug Fixes
+
+* **security:** resolve SonarCloud rating E by defusing bcrypt literals and hardening configs ([8fa818b](https://github.com/pnam-it309/AeroStride/commit/8fa818bd51fc0cbf8d279fdafc1804c964d2e0c4))
+
 ## [1.46.3](https://github.com/pnam-it309/AeroStride/compare/v1.46.2...v1.46.3) (2026-11-02)
 
 
