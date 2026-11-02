@@ -46,7 +46,18 @@ jobs:
         run: |
           cd mobile && npm ci --ignore-scripts || true
 
+      - name: Check SONAR_TOKEN
+        id: check-token
+        run: |
+          if [ -z "${{ secrets.SONAR_TOKEN }}" ]; then
+            echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "::warning::SONAR_TOKEN secret is not set in GitHub repository secrets. If using SonarCloud Automatic Analysis, SonarCloud scans via GitHub App integration. To scan via this workflow, add SONAR_TOKEN in Settings > Secrets."
+          else
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: SonarCloud Scan
+        if: steps.check-token.outputs.has_token == 'true'
         uses: SonarSource/sonarcloud-github-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
