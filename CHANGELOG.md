@@ -1,3 +1,10 @@
+## [1.46.6](https://github.com/pnam-it309/AeroStride/compare/v1.46.5...v1.46.6) (2026-11-02)
+
+
+### Bug Fixes
+
+* **mcp:** resolve TypeScript type declarations and SonarQube lint rules ([43e02c8](https://github.com/pnam-it309/AeroStride/commit/43e02c8c2550296eeac95d355babe92b099a137b))
+
 ## [1.46.5](https://github.com/pnam-it309/AeroStride/compare/v1.46.4...v1.46.5) (2026-11-02)
 
 
