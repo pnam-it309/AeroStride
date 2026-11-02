@@ -1,3 +1,10 @@
+## [1.46.9](https://github.com/pnam-it309/AeroStride/compare/v1.46.8...v1.46.9) (2026-11-02)
+
+
+### Bug Fixes
+
+* **quality:** resolve remaining SonarCloud issues across FE, BE, and mobile ([c8f7ab3](https://github.com/pnam-it309/AeroStride/commit/c8f7ab3298f03e882e7ba648d04ea82cddff1ccf))
+
 ## [1.46.8](https://github.com/pnam-it309/AeroStride/compare/v1.46.7...v1.46.8) (2026-11-02)
 
 
