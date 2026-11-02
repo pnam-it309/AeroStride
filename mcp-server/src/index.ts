@@ -1,4 +1,5 @@
 import express from 'express';
+import type { Request, Response } from 'express';
 import cors from 'cors';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
@@ -10,17 +11,18 @@ dotenv.config();
 
 const app = express();
 app.disable('x-powered-by');
-const PORT = parseInt(process.env.PORT || '3000', 10);
+const PORT = Number.parseInt(process.env.PORT || '3000', 10);
 
-const allowedOrigins: string[] = (
-    process.env.ALLOWED_ORIGINS
-        ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+const allowedOrigins: Set<string> = new Set(
+    (process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',').map((o: string) => o.trim())
         : ['http://localhost:5173', 'http://localhost:3000', 'https://aerostride.me']
-).filter(origin => origin && origin !== '*');
+    ).filter((origin: string) => Boolean(origin) && origin !== '*')
+);
 
 app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        if (!origin || allowedOrigins.has(origin)) {
             callback(null, true);
         } else {
             callback(new Error('CORS policy: origin not allowed'));
@@ -58,13 +60,13 @@ function createMcpServer() {
 let sseTransport: SSEServerTransport | null = null;
 let activeServer: McpServer | null = null;
 
-app.get(["/sse", "/sse/sse"], async (req, res) => {
+app.get(["/sse", "/sse/sse"], async (req: Request, res: Response) => {
     console.log("New SSE connection established");
     if (sseTransport) {
         try {
             console.log("Closing previous SSE transport...");
             await activeServer?.close();
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("Error closing previous transport:", e);
         }
     }
@@ -77,12 +79,12 @@ app.get(["/sse", "/sse/sse"], async (req, res) => {
     res.write(": " + "x".repeat(2048) + "\n\n");
 });
 
-app.post(["/message", "/sse/message"], async (req, res) => {
+app.post(["/message", "/sse/message"], async (req: Request, res: Response) => {
     console.log("Received MCP message event");
     if (sseTransport) {
         try {
             await sseTransport.handlePostMessage(req, res, req.body);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Error handling MCP message:", error);
             if (!res.headersSent) {
                 res.status(500).json({ error: "Failed to process MCP message" });

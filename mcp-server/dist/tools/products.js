@@ -10,12 +10,18 @@ exports.searchProductsTool = {
     },
     handler: async ({ query }) => {
         try {
-            const backendHost = process.env.BACKEND_HOST || 'backend';
-            const backendPort = process.env.BE_INTERNAL_PORT || process.env.BACKEND_PORT || '8080';
-            const apiPrefix = process.env.APP_API_PREFIX || '/api/v1';
-            const baseUrl = `http://${backendHost}:${backendPort}${apiPrefix}`;
+            let baseUrl = process.env.BACKEND_URL;
+            if (!baseUrl) {
+                const backendHost = process.env.BACKEND_HOST || 'localhost';
+                const backendPort = process.env.BE_INTERNAL_PORT || process.env.BACKEND_PORT || '8080';
+                const apiPrefix = process.env.APP_API_PREFIX || '/api/v1';
+                const protocol = backendHost.startsWith('http') ? '' : 'http://';
+                const portStr = (backendHost.includes(':') || backendHost.startsWith('https://')) ? '' : `:${backendPort}`;
+                baseUrl = `${protocol}${backendHost}${portStr}${apiPrefix}`;
+            }
             const apiUrl = `${baseUrl}/customer/san-pham/hien-thi?keyword=${encodeURIComponent(query)}&size=10`;
-            console.log(`[ProductsTool] Searching API: ${apiUrl}`);
+            const safeQuery = query ? query.replace(/[\r\n]/g, "").slice(0, 100) : "";
+            console.log(`[ProductsTool] Searching API with query: ${safeQuery}`);
             const response = await fetch(apiUrl);
             if (!response.ok) {
                 console.error(`[ProductsTool] Backend API returned status ${response.status}`);

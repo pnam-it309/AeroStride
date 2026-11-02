@@ -12,9 +12,23 @@ const policies_1 = require("./tools/policies");
 const products_1 = require("./tools/products");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-const PORT = process.env.PORT || 3000;
-app.use((0, cors_1.default)());
-app.use(express_1.default.json());
+app.disable('x-powered-by');
+const PORT = Number.parseInt(process.env.PORT || '3000', 10);
+const allowedOrigins = new Set((process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+    : ['http://localhost:5173', 'http://localhost:3000', 'https://aerostride.me']).filter((origin) => Boolean(origin) && origin !== '*'));
+app.use((0, cors_1.default)({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.has(origin)) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error('CORS policy: origin not allowed'));
+        }
+    },
+    credentials: true
+}));
+app.use(express_1.default.json({ limit: '1mb' }));
 function createMcpServer() {
     console.log("Initializing AeroStride MCP Server...");
     const server = new mcp_js_1.McpServer({
@@ -39,19 +53,22 @@ app.get(["/sse", "/sse/sse"], async (req, res) => {
         }
     }
     activeServer = createMcpServer();
-    const absoluteEndpoint = `http://aerostride-mcp-server:3000/message`;
+    const absoluteEndpoint = process.env.MCP_MESSAGE_ENDPOINT || "/message";
     sseTransport = new sse_js_1.SSEServerTransport(absoluteEndpoint, res);
     await activeServer.connect(sseTransport);
     res.write(": " + "x".repeat(2048) + "\n\n");
 });
-app.post("/message", async (req, res) => {
-    console.log("Received MCP message:", req.body);
+app.post(["/message", "/sse/message"], async (req, res) => {
+    console.log("Received MCP message event");
     if (sseTransport) {
         try {
             await sseTransport.handlePostMessage(req, res, req.body);
         }
         catch (error) {
             console.error("Error handling MCP message:", error);
+            if (!res.headersSent) {
+                res.status(500).json({ error: "Failed to process MCP message" });
+            }
         }
     }
     else {
@@ -59,5 +76,5 @@ app.post("/message", async (req, res) => {
     }
 });
 app.listen(PORT, () => {
-    console.log(`AeroStride MCP Server is running on http://localhost:${PORT}`);
+    console.log(`AeroStride MCP Server is running on port ${PORT}`);
 });
