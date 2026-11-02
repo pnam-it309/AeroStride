@@ -1,3 +1,10 @@
+## [1.46.7](https://github.com/pnam-it309/AeroStride/compare/v1.46.6...v1.46.7) (2026-11-02)
+
+
+### Bug Fixes
+
+* **ci:** restore official actions/ tags in sonar.yml ([cf2efd4](https://github.com/pnam-it309/AeroStride/commit/cf2efd4cee17366d014834750e42dd7185af0e36))
+
 ## [1.46.6](https://github.com/pnam-it309/AeroStride/compare/v1.46.5...v1.46.6) (2026-11-02)
 
 
